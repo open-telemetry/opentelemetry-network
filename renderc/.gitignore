@@ -1,0 +1,12 @@
+src-gen/
+xtend-gen/
+.gradle/
+build/
+
+# suggested by https://github.com/vorburger/eclipse-typescript-xtext/blob/master/.gitignore
+bin
+target
+generated
+generated-sources
+.antlr-generator-*.jar
+DS_Store

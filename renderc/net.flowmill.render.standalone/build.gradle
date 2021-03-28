@@ -1,0 +1,23 @@
+plugins {
+  id 'application'
+  id 'com.github.johnrengelman.shadow' version '5.2.0' apply false
+}
+
+repositories {
+  jcenter()
+}
+
+application {
+  mainClassName = 'net.flowmill.render.standalone.Main'
+}
+
+apply plugin: 'com.github.johnrengelman.shadow'
+shadowJar {
+  from("plugin.properties")
+}
+
+dependencies {
+  implementation project(':net.flowmill.render')
+  implementation "org.eclipse.xtext:org.eclipse.xtext.builder.standalone:${xtextVersion}"
+  implementation "args4j:args4j:2.33"
+}

@@ -1,0 +1,39 @@
+add_library(
+  config_file
+  STATIC
+    config_file.cc
+)
+target_link_libraries(
+  config_file
+    yamlcpp
+    spdlog
+)
+
+add_library(
+  http_proxy_config
+  STATIC
+    http_proxy_config.cc
+)
+target_link_libraries(
+  http_proxy_config
+		base64
+    environment_variables
+    logging
+    absl::strings
+)
+
+add_library(
+  intake_config
+  STATIC
+    intake_config.cc
+)
+target_link_libraries(
+  intake_config
+    render_flowmill_ingest_writer
+    tls_channel
+    libuv-interface
+    http_proxy_config
+    args_parser
+    file_ops
+    environment_variables
+)

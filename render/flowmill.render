@@ -1,0 +1,1494 @@
+package flowmill
+
+/* RPC ID ranges.
+ *
+ * NOTE: when modifying, make sure that existing IDs stay the same
+ *       (add IDs higher than previously used, add at the end of the list).
+ * RPC IDs are allocated here, but mapped over the list of contiguous app message ids
+ * for each message. 300 is the first allocated RPC id per historical convention.
+ */
+namespace {
+  ingest: 301-310,321-330,341,350-360,390-420,491-520,531-550
+  agent_internal: 331-340,361-380
+  kernel_collector: 521-530
+  aws_collector: 441-450
+}
+
+app agent_internal {
+  span agent_internal
+    impl "flowmill::agent_internal::AgentInternalSpanBase"
+    include "<generated/flowmill/agent_internal/span_base.h>"
+  {
+    pool_size 1
+    singleton
+    0: log dns_packet {
+      description "a DNS packet sent or received by an application"
+      severity 0
+      1: u64 sk
+      2: string pkt
+      3: u16 total_len
+      4: u8 is_rx                 // 0 = sent, 1 = received
+    }
+    1: log reset_tcp_counters {
+      description "new_socket and the sk has the following counters"
+      severity 0
+      1: u64 sk
+      2: u64 bytes_acked
+      3: u32 packets_delivered
+      4: u32 packets_retrans
+      5: u64 bytes_received
+      6: u32 pid
+    }
+    2: log new_sock_created {
+      description "new socket has been created"
+      severity 0
+      1: u32 pid
+      2: u64 sk
+    }
+    3: log udp_new_socket {
+      description "found new or scanned existing udp socket"
+      severity 0
+      1: u32 pid
+      2: u64 sk
+      3: u8 laddr[16]
+      4: u16 lport
+    }
+    4: log udp_destroy_socket {
+      description "udp socket was destroyed"
+      severity 0
+      1: u64 sk
+    }
+    5: log udp_stats {
+      description "udp socket sent datagrams"
+      severity 0
+      1: u64 sk
+      2: u8 raddr[16]
+      3: u32 packets
+      4: u32 bytes
+      5: u8 changed_af
+      6: u16 rport
+      7: u8 is_rx
+      8: u8 laddr[16]
+      9: u16 lport
+      10: u32 drops
+    }
+    6: log pid_info {
+      description "new process info"
+      severity 0
+      1: u32 pid
+      2: u8 comm[16]
+      3: u64 cgroup
+      4: s32 parent_pid
+    }
+    7: log pid_close {
+      description "close process info"
+      severity 0
+      1: u32 pid
+      2: u8 comm[16]
+    }
+    20: log pid_set_comm {
+      description "process comm change"
+      severity 0
+      1: u32 pid
+      2: u8 comm[16]
+    }
+    8: log set_state_ipv4 {
+      description "socket state changed or enumerating sockets"
+      severity 0
+      1: u32 dest
+      2: u32 src
+      3: u16 dport
+      4: u16 sport
+      5: u64 sk
+      7: u32 tx_rx // 0-unknown, 1-connector, 2-listener
+    }
+    9: log set_state_ipv6 {
+      description "socket state changed or enumerating sockets"
+      severity 0
+      1: u8 dest[16]
+      2: u8 src[16]
+      3: u16 dport
+      4: u16 sport
+      5: u64 sk
+      7: u32 tx_rx // 0-unknown, 1-connector, 2-listener
+    }
+    10: log rtt_estimator {
+      description "periodic telemetry about a socket"
+      severity 0
+      1: u32 srtt
+      2: u32 snd_cwnd
+      3: u64 bytes_acked
+      4: u8 ca_state
+      5: u64 sk
+      6: u32 packets_in_flight
+      7: u32 packets_delivered
+      8: u32 packets_retrans
+      9: u32 rcv_holes
+      10: u64 bytes_received
+      11: u32 rcv_delivered
+      12: u32 rcv_rtt
+    }
+    11: log close_sock_info {
+      description "close socket info"
+      severity 0
+      1: u64 sk
+    }
+    12: log kill_css {
+      description "destroy a css"
+      severity 0
+      1: u64 cgroup
+      2: u64 cgroup_parent
+      3: u8 name[64]
+      // Container ID goes up to 64 chars even though max name length
+      // in kernfs_node is 255. This keeps us from going over the 512
+      // byte limit for the bpf stack as well.
+    }
+    13: log css_populate_dir {
+      description "create subsys files in a cgroup directory"
+      severity 0
+      1: u64 cgroup
+      2: u64 cgroup_parent
+      3: u8 name[64] // See kill_css note.
+    }
+    14: log cgroup_clone_children_read {
+      description "cgroup_clone_children_read"
+      severity 0
+      1: u64 cgroup
+      2: u64 cgroup_parent
+      3: u8 name[64] // See kill_css note.
+    }
+    15: log cgroup_attach_task {
+      description "cgroup_attach_task"
+      severity 0
+      1: u64 cgroup
+      2: u32 pid
+      3: u8 comm[16]
+    }
+    // unpacks connection information from the params of this function
+    // struct nf_conn ct.tuplehash holds two nf_conntrack_tuple structs
+    // see nf_conntrack_tuple.h for more info
+    16: log nf_conntrack_alter_reply {
+      description "nf_conntrack_alter_reply"
+      severity 0
+      1: u64 ct
+      2: u32 src_ip // in network byte order
+      3: u16 src_port // in network byte order
+      4: u32 dst_ip // in network byte order
+      5: u16 dst_port // in network byte order
+      6: u8 proto
+      7: u32 nat_src_ip // in network byte order
+      8: u16 nat_src_port // in network byte order
+      9: u32 nat_dst_ip // in network byte order
+      10: u16 nat_dst_port // in network byte order
+      11: u8 nat_proto
+    }
+    17: log nf_nat_cleanup_conntrack {
+      description "nf_nat_cleanup_conntrack"
+      severity 0
+      1: u64 ct
+      2: u32 src_ip // in network byte order
+      3: u16 src_port // in network byte order
+      4: u32 dst_ip // in network byte order
+      5: u16 dst_port // in network byte order
+      6: u8 proto
+    }
+    18: log existing_conntrack_tuple {
+      description "existing_conntrack_tuple"
+      severity 0
+      1: u64 ct
+      2: u32 src_ip // in network byte order
+      3: u16 src_port // in network byte order
+      4: u32 dst_ip // in network byte order
+      5: u16 dst_port // in network byte order
+      6: u8 proto
+      7: u8 dir
+    }
+    19: log tcp_syn_timeout {
+      description "tcp socket experienced a timeout in SYN_RECV or SYN_SENT state"
+      severity 0
+      1: u64 sk
+    }
+    21: log http_response {
+      description "http response code and latency"
+      severity 0
+      1: u64 sk
+      2: u32 pid
+      3: u16 code           // http response code
+      4: u64 latency_ns     // in nanoseconds (client=round-trip time, server=processing time)
+      5: u8 client_server   // 0 = client, 1 = server
+    }
+    22: log bpf_log {
+      description "log/warning/error event"
+      severity 0
+      1: u64 filelineid // file/line debug information id
+      2: u64 code       // error/warning/message code
+      3: u64 arg0       // code-specific arguments (generic)
+      4: u64 arg1
+      5: u64 arg2
+    }
+    23: log stack_trace {
+      description "debugging stack trace event"
+      severity 0
+      1: s32 kernel_stack_id  // id of the kernel stack trace
+      2: s32 user_stack_id    // id of the userland stack trace
+      3: u32 tgid             // tgid
+      4: u8 comm[16]          // process command
+    }
+    24: log tcp_data {
+      description "tcp packet data from bpf"
+      severity 0
+      1: u64 sk               // sock
+      2: u32 pid              // tgid
+      3: u32 length           // data length
+      4: u64 offset           // offset into the stream for the data
+      5: u8 stream_type       // enum STREAM_TYPE { ST_SEND = 0, ST_RECV = 1 }
+      6: u8 client_server     // enum CLIENT_SERVER_TYPE { SC_CLIENT = 0, SC_SERVER = 1 }
+    }
+    25: log nic_queue_state {
+      description "nic queue state change"
+      severity 0
+      1: u8 if_name[16]
+      2: u64 busy_ns
+    }
+    26: log report_task_status {
+      description "reports task status"
+      severity 0
+
+      // thread group id of task
+      1: u64 tgid
+      // process id of task
+      2: u32 pid
+
+      // this is non-zero when the report is sent while the task is exiting
+      // (last time the report is sent for this PID), or zero otherwise
+      3: u8 on_exit
+
+      // cumulative time (ns) spent on userland and kernel space
+      //
+      // see `struct task_struct` in the linux kernel source for more info:
+      // https://elixir.bootlin.com/linux/v5.8-rc3/source/include/linux/sched.h#L633
+      4: u64 user_time_ns
+      5: u64 system_time_ns
+
+      // number of threads for the given task
+      //
+      // see `struct task_signal` in the linux kernel source for more info:
+      // https://elixir.bootlin.com/linux/v5.8-rc3/source/include/linux/sched/signal.h#L85
+      6: u32 thread_count
+
+      // number of resident file mapping pages
+      //
+      // see `struct task_rss_stat` in the linux kernel source for more info:
+      // https://elixir.bootlin.com/linux/v5.8-rc3/source/include/linux/mm_types_task.h#L54
+      7: u64 resident_pages_file_mapping
+
+      // number of resident anonymous pages
+      //
+      // see `struct task_rss_stat` in the linux kernel source for more info:
+      // https://elixir.bootlin.com/linux/v5.8-rc3/source/include/linux/mm_types_task.h#L54
+      8: u64 resident_pages_anonymous
+
+      // number of resident shared memory pages
+      //
+      // see `struct task_rss_stat` in the linux kernel source for more info:
+      // https://elixir.bootlin.com/linux/v5.8-rc3/source/include/linux/mm_types_task.h#L54
+      9: u64 resident_pages_shared_memory
+
+      // cumulative number of page faults
+      //
+      // see `struct task_struct` in the linux kernel source for more info:
+      // https://elixir.bootlin.com/linux/v5.8-rc3/source/include/linux/sched.h#L633
+      10: u64 minor_page_faults
+      11: u64 major_page_faults
+
+      // cumulative time (ns) spent in io/wait caused by synchronous block io completion
+      // and cumulative number of such occurences
+      //
+      // see `struct task_delay_info` in the linux kernel source for more info:
+      // https://elixir.bootlin.com/linux/v5.8-rc3/source/include/linux/delayacct.h#L21
+      12: u64 block_io_delay_ns
+      13: u32 block_io_delay_count
+
+      // cumulative time (ns) spent in io/wait caused by swap in block io completion
+      // and cumulative number of such occurences
+      //
+      // see `struct task_delay_info` in the linux kernel source for more info:
+      // https://elixir.bootlin.com/linux/v5.8-rc3/source/include/linux/delayacct.h#L21
+      14: u64 swap_in_delay_ns
+      15: u32 swap_in_delay_count
+
+      // cumulative time (ns) spent in io/wait caused by memory reclaim
+      // and cumulative number of such occurences
+      //
+      // see `struct task_delay_info` in the linux kernel source for more info:
+      // https://elixir.bootlin.com/linux/v5.8-rc3/source/include/linux/delayacct.h#L21
+      16: u64 free_pages_delay_ns
+      17: u32 free_pages_delay_count
+
+      // cumulative time (ns) spent in io/wait caused by thrashing page
+      // and cumulative number of such occurences
+      //
+      // see `struct task_delay_info` in the linux kernel source for more info:
+      // https://elixir.bootlin.com/linux/v5.8-rc3/source/include/linux/delayacct.h#L21
+      18: u64 thrashing_page_delay_ns
+      19: u32 thrashing_page_delay_count
+
+      // cumulative number of I/O operations, that is, syscalls such as
+      // read(2), pread(2) and write(2)
+      //
+      // see `struct task_io_accounting` in the linux kernel source for more info:
+      // https://elixir.bootlin.com/linux/v5.8-rc3/source/include/linux/task_io_accounting.h#L12
+      20: u64 read_syscalls
+      21: u64 write_syscalls
+
+      // cumulative number of bytes the process actually caused to be exchanged
+      // with the storage layer
+      //
+      // see `struct task_io_accounting` in the linux kernel source for more info:
+      // https://elixir.bootlin.com/linux/v5.8-rc3/source/include/linux/task_io_accounting.h#L12
+      22: u64 bytes_logically_read
+      23: u64 bytes_logically_written
+
+      // cumulative number of bytes the process actually caused or shall be
+      // caused to be exchanged with the storage layer
+      //
+      // see `struct task_io_accounting` in the linux kernel source for more info:
+      // https://elixir.bootlin.com/linux/v5.8-rc3/source/include/linux/task_io_accounting.h#L12
+      24: u64 bytes_physically_read
+      25: u64 bytes_physically_written
+
+      // cumulative amount of bytes that were requested to be written but
+      // cancelled due to later operations (e.g.: write then delete the file
+      // will cause no writes)
+      //
+      // see `struct task_io_accounting` in the linux kernel source for more info:
+      // https://elixir.bootlin.com/linux/v5.8-rc3/source/include/linux/task_io_accounting.h#L12
+      26: u64 cancelled_write_bytes
+
+      // cumulative number of context switches
+      27: u64 voluntary_context_switches
+      28: u64 involuntary_context_switches
+    }
+    27: log pid_exit {
+      description "called when a thread exits"
+      severity 0
+
+      1: u64 tgid
+      2: u32 pid
+
+      3: s32 exit_code
+    }
+    28: log report_debug_event {
+      description "called when a bpf debug event is triggered - for debugging purposes"
+      severity 0
+
+      1: u16 event // unique dentifying code for the debug event
+      2: u64 arg1 // event dependent data
+      3: u64 arg2 // event dependent data
+      4: u64 arg3 // event dependent data
+      5: u64 arg4 // event dependent data
+    }
+    29: log tcp_reset {
+      description "tcp RST was sent/received"
+      severity 0
+      1: u64 sk
+      2: u8 is_rx
+    }
+  }
+} /* app agent_internal */
+
+app ingest {
+  jit
+
+  span process {
+    0: start pid_info ref pid {
+      description "new process info"
+      severity 0
+      1: u32 pid
+      2: u8 comm[16]
+    }
+    5: end pid_close_info ref pid {
+      description "close process info"
+      severity 0
+      1: u32 pid
+      2: u8 comm[16]
+    }
+    35: start pid_info_create_deprecated ref pid {
+      description "new process info"
+      severity 0
+      1: u32 pid
+      2: u8 comm[16]
+      3: u64 cgroup
+    }
+    108: start pid_info_create ref pid {
+      description "new process info"
+      severity 0
+      1: u32 pid
+      2: u8 comm[16]
+      3: u64 cgroup
+      4: s32 parent_pid
+      5: string cmdline
+    }
+    39: log pid_cgroup_move ref pid {
+      description "process attached to a cgroup"
+      severity 0
+      1: u32 pid
+      3: u64 cgroup
+    }
+    41: log pid_set_comm ref pid {
+      description "process comm changed"
+      severity 0
+      1: u32 pid
+      2: u8 comm[16]
+    }
+    109: log pid_set_cmdline ref pid {
+      description "process command-line changed"
+      severity 0
+      1: u32 pid
+      2: string cmdline
+    }
+  } /* span process */
+
+  // processes proxied by the kernel collector
+  // transitional span so we can migrate from the non-proxied version
+  // gradually without breaking existing functionality
+  span tracked_process {
+    72: msg _start {}
+    73: msg _end {}
+
+    74: msg set_tgid {
+      description "set tgid"
+      severity 0
+      1: u32 tgid
+    }
+
+    75: msg set_cgroup {
+      description "set cgroup"
+      severity 0
+      1: u64 cgroup
+    }
+
+    76: msg set_command {
+      description "set cmd line"
+      severity 0
+      1: string command
+    }
+
+    89: msg pid_exit {
+      description "reports task status"
+      severity 0
+
+      // the TGID this PID belongs to
+      1: u64 tgid
+
+      // the PID that's exiting
+      2: u32 pid
+
+      // the exit code of the PID when it finished execution
+      3: s32 exit_code
+    }
+
+    77: msg report_process_status_deprecated {
+      description "reports process status telemetry"
+      severity 0
+
+      // timestamp of the data in ns starting from an unspecified epoch (the
+      // absolute value is of no significance)
+      // guaranteed to be monotonically non-decreasing
+      1: u64 sample_timestamp_ns
+
+      2: string/*u64*/ start_time_ticks
+      3: string/*u64*/ user_time_ticks
+      4: string/*u64*/ system_time_ticks
+
+      5: u8 process_state // `ProcessState` from `util/process_state.h`
+      6: string/*u32*/ thread_count
+
+      7: string/*s32*/ priority
+      8: string/*s32*/ nice
+
+      9: string/*u64*/ resident_set_size_pages
+      10: string/*u64*/ minor_page_faults
+      11: string/*u64*/ major_page_faults
+
+      12: string/*u64*/ block_io_delay_ticks
+    }
+
+    81: msg report_process_status {
+      description "reports process status telemetry"
+      severity 0
+
+      // timestamp of the data in ns starting from an unspecified epoch (the
+      // absolute value is of no significance)
+      // guaranteed to be monotonically non-decreasing
+      1: u64 sample_timestamp_ns
+
+      2: string/*u64*/ start_time_ticks
+      3: string/*u64*/ user_time_ticks
+      4: string/*u64*/ system_time_ticks
+      5: string/*u64*/ waited_for_children_user_time_ticks
+      6: string/*u64*/ waited_for_children_system_time_ticks
+
+      7: u8 process_state // `ProcessState` from `util/process_state.h`
+      8: string/*u32*/ thread_count
+
+      9: string/*s32*/ priority
+      10: string/*s32*/ nice
+
+      11: string/*u64*/ resident_set_size_pages
+      12: string/*u64*/ minor_page_faults
+      13: string/*u64*/ major_page_faults
+      14: string/*u64*/ waited_for_children_minor_page_faults
+      15: string/*u64*/ waited_for_children_major_page_faults
+
+      16: string/*u64*/ block_io_delay_ticks
+
+      17: string/*u64*/ guest_time_ticks
+      18: string/*u64*/ children_guest_time_ticks
+    }
+
+    88: msg report_task_status_deprecated {
+      description "reports task status"
+      severity 0
+
+      1: u32 pid
+      2: u8 on_exit
+
+      3: u64 user_time_ns
+      4: u64 system_time_ns
+
+      5: u64 resident_bytes_file_mapping
+      6: u64 resident_bytes_anonymous
+      7: u64 resident_bytes_shared_memory
+
+      8: u64 minor_page_faults
+      9: u64 major_page_faults
+
+      10: u64 block_io_delay_ns
+      11: u32 block_io_delay_count
+
+      12: u64 swap_in_delay_ns
+      13: u32 swap_in_delay_count
+
+      14: u64 free_pages_delay_ns
+      15: u32 free_pages_delay_count
+    }
+
+    78: msg report_io {
+      description "reports io stats for the process"
+      severity 0
+
+      // according to proc(5), this is an attempt to count the actual number of
+      // I/O operations, that is, syscalls such as read(2), pread(2) and write(2)
+      1: string/*u64*/ read_syscalls
+      2: string/*u64*/ write_syscalls
+
+      // according to proc(5), this is an attempt to count the actual number of
+      // bytes the process actually caused to be exchanged with the storage layer
+      3: string/*u64*/ bytes_logically_read
+      4: string/*u64*/ bytes_logically_written
+
+      // according to proc(5), this is an attempt to count the actual number of
+      // bytes the process actually caused to be exchanged with the storage layer
+      5: string/*u64*/ bytes_physically_read
+      6: string/*u64*/ bytes_physically_written
+
+      // according to proc(5) this is the amount of bytes that were requested
+      // to be written but cancelled due to later operations (e.g.: write then
+      // delete the file will cause no writes)
+      7: string/*u64*/ cancelled_write_bytes
+    }
+
+    79: msg report_context_switches {
+      description "reports context switch count for the process"
+      severity 0
+
+      1: string/*u64*/ voluntary
+      2: string/*u64*/ involuntary
+    }
+
+    92: msg report_task_cpu_deprecated {
+      description "reports task status"
+      severity 0
+
+      1: u32 pid
+      2: u8 on_exit
+
+      3: u64 user_time_ns
+      4: u64 system_time_ns
+      5: u32 thread_count
+    }
+
+    93: msg report_task_context_switches_deprecated {
+      description "reports task context switches"
+      severity 0
+
+      1: u32 pid
+      2: u8 on_exit
+
+      3: u64 voluntary
+      4: u64 involuntary
+    }
+
+    94: msg report_task_rss_deprecated {
+      description "reports task status"
+      severity 0
+
+      1: u32 pid
+      2: u8 on_exit
+
+      3: u64 resident_bytes_file_mapping
+      4: u64 resident_bytes_anonymous
+      5: u64 resident_bytes_shared_memory
+    }
+
+    95: msg report_task_page_faults_deprecated {
+      description "reports task status"
+      severity 0
+
+      1: u32 pid
+      2: u8 on_exit
+
+      3: u64 minor
+      4: u64 major
+    }
+
+    96: msg report_task_io_deprecated {
+      description "reports task io"
+      severity 0
+
+      1: u32 pid
+      2: u8 on_exit
+
+      3: u64 read_syscalls
+      4: u64 write_syscalls
+
+      5: u64 bytes_logically_read
+      6: u64 bytes_logically_written
+
+      7: u64 bytes_physically_read
+      8: u64 bytes_physically_written
+      9: u64 cancelled_write_bytes
+    }
+
+    97: msg report_task_io_wait_deprecated {
+      description "reports task status"
+      severity 0
+
+      1: u32 pid
+      2: u8 on_exit
+
+      3: u64 block_io_delay_ns
+      4: u32 block_io_delay_count
+
+      5: u64 swap_in_delay_ns
+      6: u32 swap_in_delay_count
+
+      7: u64 free_pages_delay_ns
+      8: u32 free_pages_delay_count
+
+      9: u64 thrashing_page_delay_ns
+      10: u32 thrashing_page_delay_count
+    }
+
+    101: msg report_task_cpu {
+      description "reports task status"
+      severity 0
+
+      1: u64 user_time_ns
+      2: u64 system_time_ns
+      3: u32 thread_count
+    }
+
+    102: msg report_task_context_switches {
+      description "reports task context switches"
+      severity 0
+
+      1: u64 voluntary
+      2: u64 involuntary
+    }
+
+    103: msg report_task_rss {
+      description "reports task status"
+      severity 0
+
+      1: u64 resident_bytes_file_mapping
+      2: u64 resident_bytes_anonymous
+      3: u64 resident_bytes_shared_memory
+    }
+
+    104: msg report_task_page_faults {
+      description "reports task status"
+      severity 0
+
+      1: u64 minor
+      2: u64 major
+    }
+
+    105: msg report_task_io {
+      description "reports task io"
+      severity 0
+
+      1: u64 read_syscalls
+      2: u64 write_syscalls
+
+      3: u64 bytes_logically_read
+      4: u64 bytes_logically_written
+
+      5: u64 bytes_physically_read
+      6: u64 bytes_physically_written
+      7: u64 cancelled_write_bytes
+    }
+
+    106: msg report_task_io_wait {
+      description "reports task status"
+      severity 0
+
+      1: u64 block_io_delay_ns
+      2: u32 block_io_delay_count
+
+      3: u64 swap_in_delay_ns
+      4: u32 swap_in_delay_count
+
+      5: u64 free_pages_delay_ns
+      6: u32 free_pages_delay_count
+
+      7: u64 thrashing_page_delay_ns
+      8: u32 thrashing_page_delay_count
+    }
+  } /* span tracked_process_span */
+
+  span cgroup {
+    36: start cgroup_create ref cgroup {
+      description "cgroup created"
+      severity 0
+      1: u64 cgroup
+      2: u64 cgroup_parent
+      3: u8 name[64]
+    }
+    37: end cgroup_close ref cgroup {
+      description "cgroup destroyed"
+      severity 0
+      1: u64 cgroup
+    }
+    38: log container_metadata ref cgroup {
+      description "Container metadata"
+      severity 0
+      1: u64 cgroup
+      2: string id
+      3: string name
+      4: string image
+      5: string ip_addr
+      6: string cluster
+      7: string container_name
+      8: string task_family
+      9: string task_version
+      10: string ns
+    }
+    52: log pod_name ref cgroup {
+      description "The name of the pod derived from docker metadata"
+      severity 0
+      1: u64 cgroup
+      2: string _deprecated_pod_uid
+      3: string name
+    }
+    80: log nomad_metadata ref cgroup {
+      description "Nomad metadata extracted from the container's environment"
+      severity 0
+      1: u64 cgroup
+      2: string ns
+      3: string group_name
+      4: string task_name
+      5: string job_name
+    }
+    84: log k8s_metadata ref cgroup {
+      description "K8s metadata extracted from the container's labels"
+      severity 0
+      1: u64 cgroup
+      2: string container_name
+      3: string pod_name
+      4: string pod_ns
+      5: string pod_uid
+      6: string sandbox_uid
+    }
+    85: log k8s_metadata_port ref cgroup {
+      description "K8s ports metadata extracted from the container's labels"
+      severity 0
+      1: u64 cgroup
+      2: u16 port
+      3: u8 protocol // as in `PortProtocol` from `common/port_protocol.h`
+      4: string name
+    }
+    86: log container_resource_limits_deprecated ref cgroup {
+      description "container resource limits"
+      severity 0
+      1: u64 cgroup
+      2: u16 cpu_shares
+      3: u16 cpu_period
+      4: u16 cpu_quota
+      5: u8 memory_swappiness
+      6: u64 memory_limit
+      7: u64 memory_soft_limit
+      8: s64 total_memory_limit
+    }
+    90: log container_resource_limits ref cgroup { description "container resource limits"
+      severity 0
+      1: u64 cgroup
+      2: u16 cpu_shares
+      3: u32 cpu_period
+      4: u32 cpu_quota
+      5: u8 memory_swappiness
+      6: u64 memory_limit
+      7: u64 memory_soft_limit
+      8: s64 total_memory_limit
+    }
+    100: log container_annotation ref cgroup {
+      description "Container annotation from `Config.Labels`"
+      severity 0
+      1: u64 cgroup
+      2: string key
+      3: string value
+    }
+  } /* span cgroup */
+
+  span socket {
+    1: start new_sock_info ref sk {
+      description "new socket info"
+      severity 0
+      1: u32 pid
+      2: u64 sk
+    }
+    2: log set_state_ipv4 ref sk {
+      description "socket state changed or enumerating sockets"
+      severity 0
+      1: u32 dest
+      2: u32 src
+      3: u16 dport
+      4: u16 sport
+      5: u64 sk
+      7: u32 tx_rx
+    }
+    3: log set_state_ipv6 ref sk {
+      description "socket state changed or enumerating sockets"
+      severity 0
+      1: u8 dest[16]
+      2: u8 src[16]
+      3: u16 dport
+      4: u16 sport
+      5: u64 sk
+      7: u32 tx_rx
+    }
+    15: log socket_stats ref sk {
+      description "aggregated statistics for the socket"
+      severity 0
+      1: u64 sk
+      2: u64 diff_bytes
+      3: u32 diff_delivered
+      4: u32 diff_retrans
+      5: u32 max_srtt
+      6: u8 is_rx
+    }
+    31: log nat_remapping ref sk {
+      description "NAT remapping for a connection"
+      severity 0
+      1: u64 sk
+      2: u32 src
+      3: u32 dst
+      4: u16 sport
+      5: u16 dport
+    }
+    7: end close_sock_info ref sk {
+      description "close socket info"
+      severity 0
+      1: u64 sk
+    }
+    40: log syn_timeout ref sk {
+      description "tcp socket experienced a timeout in SYN_RECV or SYN_SENT state"
+      severity 0
+      1: u64 sk
+    }
+    43: log http_response ref sk {
+      description "http response code and latency"
+      severity 0
+      1: u64 sk
+      2: u32 pid
+      3: u16 code           // http response code
+      4: u64 latency_ns     // in nanoseconds (client=round-trip time, server=processing time)
+      5: u8 client_server   // 0 = client, 1 = server
+    }
+    91: log tcp_reset ref sk {
+      description "tcp RST was sent/received"
+      severity 0
+      1: u64 sk
+      2: u8 is_rx
+    }
+  } /* span socket */
+
+  span agent {
+    singleton
+
+    6: log process_steady_state {
+      description "sent when we reach steady state for processes"
+      severity 0
+      1: u64 time
+    }
+    8: log socket_steady_state {
+      description "sent when we reach steady state for sockets"
+      severity 0
+      1: u64 time
+    }
+    9: log version_info {
+      description "reported to the server when the agent starts"
+      severity 0
+      no_authorization_needed
+      pipeline_only
+
+      1: u32 major
+      2: u32 minor
+      3: u32 build
+    }
+    57: log set_node_info {
+      description "reports node information from agent"
+      severity 0
+      1: string az
+      2: string role
+      3: string instance_id
+      4: string instance_type
+    }
+    58: log set_config_label {
+      description "report a custom label"
+      severity 0
+      1: string key
+      2: string value
+    }
+    10: log set_availability_zone_deprecated {
+      description "reports availability zone"
+      severity 0
+      1: u8 retcode
+      2: u8 az[16]
+    }
+    11: log set_iam_role_deprecated {
+      description "reports cloud platform IAM role"
+      severity 0
+      1: u8 retcode
+      2: u8 role[64]
+    }
+    12: log set_instance_id_deprecated {
+      description "reports cloud platform instance name, the 17 char hex notation"
+      severity 0
+      1: u8 retcode
+      2: u8 id[17]
+    }
+    13: log set_instance_type_deprecated {
+      description "reports cloud platform instance type"
+      severity 0
+      1: u8 retcode
+      2: u8 val[17]
+    }
+    14: log dns_response_fake {
+      description "Used to manually set a DNS entry at the server"
+      severity 0
+      1: u16 total_dn_len
+      2: string ips
+      3: string domain_name
+    }
+    33: log dns_response_dep_a_deprecated {
+      description "The domain and information from a DNS response"
+      severity 0
+      1: u16 total_dn_len
+      2: string domain_name
+      3: string ipv4_addrs
+      4: string ipv6_addrs
+    }
+    16: log set_config_label_deprecated {
+      description "report a label specified in the config file"
+      severity 0
+      1: u8 key[20]
+      2: u8 val[40]
+    }
+    23: log api_key {
+      description "the api key"
+      severity 0
+      no_authorization_needed
+      pipeline_only
+
+      1: u8 tenant[20]
+      2: u8 api_key[64]
+    }
+    24: log private_ipv4_addr {
+      description "a private ipv4 address"
+      severity 0
+      1: u32 addr // in network byte order
+      2: u8 vpc_id[22]
+    }
+    25: log ipv6_addr {
+      description "an ipv6 address"
+      severity 0
+      1: u8 addr[16]
+      2: u8 vpc_id[22]
+    }
+    26: log public_to_private_ipv4 {
+      description "the mapping of a public to private ipv4 address"
+      severity 0
+      1: u32 public_addr // in network byte order
+      2: u32 private_addr // in network byte order
+      3: u8 vpc_id[22]
+    }
+    27: log metadata_complete {
+      description "sent when we've finished sending all the agent's metadata"
+      severity 0
+      1: u64 time
+    }
+    28: log bpf_lost_samples {
+      description "perf reported that samples were lost"
+      severity 1
+      pipeline_only
+
+      1: u64 count
+    }
+    29: log pod_new_legacy {
+      description "New POD"
+      severity 0
+      1: string uid
+      2: u32 ip
+      3: string owner_name
+      4: u8 owner_kind
+      5: string owner_uid
+      6: u8 is_host_network
+      // namespace of the pod
+      7: string ns
+    }
+    56: log pod_new_legacy2 {
+      description "New POD"
+      severity 0
+      1: string uid
+      2: u32 ip
+      3: string owner_name
+      4: u8 owner_kind
+      5: string owner_uid
+      6: u8 is_host_network
+      // namespace of the pod
+      7: string ns
+      8: string version
+    }
+    87: log pod_new_with_name {
+      description "New POD"
+      severity 0
+      1: string uid
+      2: u32 ip
+      3: string owner_name
+      4: string pod_name
+      5: u8 owner_kind
+      6: string owner_uid
+      7: u8 is_host_network
+      8: string ns
+      9: string version
+    }
+    42: log pod_container_legacy {
+      description "POD has a container"
+      severity 0
+      1: string uid
+      2: string container_id
+    }
+    66: log pod_container {
+      description "POD has a container"
+      severity 0
+      1: string uid
+      2: string container_id
+      3: string container_name
+      4: string container_image
+    }
+    30: log pod_delete {
+      description "POD is deleted"
+      severity 0
+      1: string uid
+    }
+    32: log pod_resync {
+      description "Current live pod info is staled. Clean then up"
+      severity 0
+      1: u64 resync_count
+    }
+    22: log span_duration_info {
+      description "the duration and span type"
+      severity 0
+      1: u64 duration
+    }
+    34: log heartbeat {
+      description "heartbeat signal from agent/collector to server."
+      severity 0
+      pipeline_only
+    }
+    46: log authz_authenticate {
+      description "called by the agent to authenticate itself with an authz token"
+      severity 0
+      no_authorization_needed
+      pipeline_only
+
+      1: string token
+      2: u8 collector_type // ClientType enum
+      3: string hostname
+    }
+    51: log health_check {
+      description "called to perform a health check on the server"
+      severity 0
+      no_authorization_needed
+      pipeline_only
+
+      1: u8 client_type // ClientType enum
+      2: string origin
+    }
+
+    53: log log_message {
+      description "log agent warnings"
+      severity 0
+      pipeline_only
+
+      1: u8 log_level // spdlog::level::level_enum
+      2: string message
+    }
+
+    54: log agent_resource_usage {
+      description "logs resource usage by the agent"
+      severity 0
+      pipeline_only
+
+      1: u64 user_mode_time_us
+      2: u64 kernel_mode_time_us
+      3: u64 max_resident_set_size
+      4: u32 minor_page_faults
+      5: u32 major_page_faults
+      6: u32 block_input_count
+      7: u32 block_output_count
+      8: u32 voluntary_context_switch_count
+      9: u32 involuntary_context_switch_count
+      10: u16 cpu_usage_by_agent // per-thousand fixed point, lowest 3 digits are fractional
+      11: u16 cpu_idle // per-thousand fixed point, lowest 3 digits are fractional
+    }
+
+    55: log cloud_platform {
+      description "logs which cloud platform the agent is running on"
+      severity 0
+
+      1: u16 cloud_platform // as per `common/cloud_platform.h`
+    }
+
+    61: log os_info_deprecated {
+      description "reports the os and distro under which the agent is running"
+      severity 0
+
+      1: u8 os // as per `common/operating_system.h`
+      2: u8 flavor // as per `common/linux_distro.h`
+      3: string kernel_version
+
+      // this message is forwards compatible with support for new operating systems
+      // the field `distro` could be repurposed with, say, the OSX release or Windows version
+    }
+
+    107: log os_info {
+      description "reports the os and distro under which the agent is running"
+      severity 0
+
+      1: u8 os // as per `common/operating_system.h`
+      2: u8 flavor // as per `common/linux_distro.h`
+      3: string os_version
+      4: string kernel_version
+
+      // this message is forwards compatible with support for new operating systems
+      // the field `distro` could be repurposed with, say, the OSX release or Windows version
+    }
+
+    62: log kernel_headers_source {
+      description "logs the source used to obtain kernel headers"
+      severity 0
+      pipeline_only
+
+      1: u8 source // as per `collector/kernel/kernel_headers_source.h`
+    }
+
+    63: log entrypoint_error {
+      description "logs errors that happen before launching the agent, at the container entrypoint"
+      severity 0
+      pipeline_only
+
+      1: u8 error // as per `collector/kernel/entrypoint_error.h`
+    }
+
+    64: log bpf_compiled {
+      description "tells the server that BPF was successfully compiled by the kernel collector"
+      severity 0
+      pipeline_only
+    }
+
+    65: log begin_telemetry {
+      description "tells the server that agent setup is complete and telemetry is about to flow"
+      severity 0
+      pipeline_only
+    }
+
+    67: log cloud_platform_account_info {
+      description "log under which cloud platform account id this collector is running"
+      severity 0
+      1: string account_id
+    }
+
+    68: log collector_health {
+      description "reports health status about collectors"
+      severity 0
+      pipeline_only
+
+      1: u16 status // CollectorStatus enum in `common/collector_status.h`
+      2: u16 detail // extended info about the collector's status
+                    // aws-collector: the http status code for api calls
+    }
+
+    69: log nic_stats {
+      description "various NIC statistics"
+      severity 0
+      1: string if_name
+      2: u64 tx_bytes_total
+      3: u64 rx_bytes_total
+      4: u64 tx_bytes_rate
+      5: u64 rx_bytes_rate
+      6: u64 tx_errors
+      7: u64 rx_errors
+      8: u64 time_busy_ns
+      9: u64 time_free_ns
+    }
+
+    70: log system_wide_process_settings {
+      description "reports system-wide settings that matters for process stats"
+      severity 0
+
+      1: u64 clock_ticks_per_second
+      2: u64 memory_page_bytes
+    }
+
+    71: log report_cpu_mem_io_polling_stats {
+      description "reports status about the collection of process data from /proc"
+      severity 0
+      pipeline_only
+
+      // the wall time from the start of a batch to the start of the next
+      1: u64 batch_period_ns
+      // the time taken to process the whole batch (time spent in poll/parse/send)
+      2: u64 batch_duration_ns
+      // how many batches were necessary to collect data for all processes
+      3: u64 batch_count
+      // how many processes in total on all batches
+      4: u64 total_batch_size
+      // how many processes in the smallest batch
+      5: u64 min_batch_size
+      // how many processes in the biggest batch
+      6: u64 max_batch_size
+
+      // counters for success/failures ow /proc/{pid}/stat parsing
+      7: u64 successful_proc_stat_reads
+      8: u64 failed_proc_stat_reads
+
+      // counters for success/failures ow /proc/{pid}/io parsing
+      9: u64 successful_proc_io_reads
+      10: u64 failed_proc_io_reads
+
+      // counters for success/failures ow /proc/{pid}/status parsing
+      11: u64 successful_proc_status_reads
+      12: u64 failed_proc_status_reads
+    }
+
+    82: log report_cpu_mem_io_parse_errors {
+      pipeline_only
+
+      1: u64 failed_proc_stat_parse
+      2: u64 failed_proc_io_parse
+      3: u64 failed_proc_status_parse
+    }
+
+    // use cases for this message:
+    // - unexpected error condition has been met, so agent collects information and
+    //   submits to the server for further inspection
+    //
+    // NOTE: calls to this message should be rate limited to avoid network overhead
+    83: log collect_blob {
+      description "a generic message used to collect random pieces of information from agents"
+      severity 0
+      pipeline_only
+
+      1: u16 blob_type // as in the `CollectedBlobType` enum from `common/collected_blob_type.h`
+      2: u64 subtype // extra metadata field whose meaning varies by `type`
+      3: string metadata // some descriptive metadata about the blob
+      4: string blob // the contents of the blob
+    }
+
+    98: log report_cpu_cores {
+      1: u32 cpu_core_count
+    }
+
+    99: log bpf_log {
+      description "reports health status about collectors"
+      severity 0
+      pipeline_only
+
+      1: string filename
+      2: u32 line
+      2: u64 code       // error/warning/message code
+      3: u64 arg0       // code-specific arguments (generic)
+      4: u64 arg1
+      5: u64 arg2
+    }
+
+  } /* span agent */
+
+  span aws_network_interface {
+    index (ip)
+
+    u128 ip
+
+    48: msg _start {}
+    49: msg _end {}
+
+    50: msg network_interface_info_deprecated {
+      description "information about the network interface"
+      severity 0
+      1: u8 ip_owner_id[18]
+      2: u8 vpc_id[22]
+      3: u8 az[16]
+      4: string interface_id
+      5: u16 interface_type
+      6: string instance_id
+      7: string instance_owner_id
+      8: string public_dns_name
+      9: string private_dns_name
+      10: string interface_description
+    }
+
+    59: msg network_interface_info {
+      description "information about the network interface"
+      severity 0
+      1: string ip_owner_id
+      2: string vpc_id
+      3: string az
+      4: string interface_id
+      5: u16 interface_type
+      6: string instance_id
+      7: string instance_owner_id
+      8: string public_dns_name
+      9: string private_dns_name
+      10: string interface_description
+    }
+  } /* span aws_network_interface */
+
+  span udp_socket {
+    17: start udp_new_socket ref sk_id {
+      description "new udp socket was initialized"
+      severity 0
+      1: u32 pid
+      2: u32 sk_id
+      3: u8 laddr[16]
+      4: u16 lport
+    }
+    19: log udp_stats_addr_unchanged ref sk_id {
+      description "udp socket sent datagrams"
+      severity 0
+      1: u32 sk_id
+      2: u8 is_rx
+      3: u32 packets
+      4: u32 bytes
+    }
+    20: log udp_stats_addr_changed_v4 ref sk_id {
+      description "udp socket sent datagrams"
+      severity 0
+      1: u32 sk_id
+      2: u8 is_rx
+      3: u32 packets
+      4: u32 bytes
+      5: u32 raddr
+      6: u16 rport
+      // TODO: Can uncomment this once we decide to support laddr info
+      //7: u32 laddr
+      //8: u16 lport
+    }
+    21: log udp_stats_addr_changed_v6 ref sk_id {
+      description "udp socket sent datagrams"
+      severity 0
+      1: u32 sk_id
+      2: u8 is_rx
+      3: u32 packets
+      4: u32 bytes
+      5: u8 raddr[16]
+      6: u16 rport
+      // TODO: Can uncomment this once we decide to support laddr info
+      //7: u8 laddr[16]
+      //8: u16 lport
+    }
+    44: log dns_response_dep_b ref sk_id { // deprecated
+      description "DNS A/AAAA record query response, with name, response address(es), and latency information"
+      severity 0
+      1: u32 sk_id
+      2: u16 total_dn_len                 // Total length of domain name without truncation (MAX_ENCODED_DOMAIN_NAME)
+      3: string domain_name               // Domain name being queried (possibly truncated)
+      4: string ipv4_addrs                // IPv4 addresses corresponding to domain name 'dn'
+      5: string ipv6_addrs                // IPv6 addresses corresponding to domain name 'dn'
+      6: u64 latency_ns                   // Request to response latency (in ns)
+    }
+    45: log dns_timeout ref sk_id {
+      description "A DNS A/AAAA record request timeout"
+      severity 0
+      1: u32 sk_id
+      2: u16 total_dn_len                 // Total length of domain name without truncation (MAX_ENCODED_DOMAIN_NAME)
+      3: string domain_name               // Domain name being queried (possibly truncated)
+      4: u64 timeout_ns                   // Timeout duration for request (in ns)
+    }
+    47: log udp_stats_drops_changed ref sk_id {
+      description "udp socket drops"
+      severity 0
+      1: u32 sk_id
+      2: u32 drops
+    }
+    60: log dns_response ref sk_id {
+      description "DNS A/AAAA record query response, with name, response address(es), and latency information, with direction"
+      severity 0
+      1: u32 sk_id
+      2: u16 total_dn_len                 // Total length of domain name without truncation (MAX_ENCODED_DOMAIN_NAME)
+      3: string domain_name               // Domain name being queried (possibly truncated)
+      4: string ipv4_addrs                // IPv4 addresses corresponding to domain name 'dn'
+      5: string ipv6_addrs                // IPv6 addresses corresponding to domain name 'dn'
+      6: u64 latency_ns                   // Request to response total time (in ns) for clients, or processing time for servers
+      7: u8 client_server                 // 0 = client received response, 1 = server sent response
+    }
+
+    18: end udp_destroy_socket ref sk_id {
+      description "udp socket was destroyed"
+      severity 0
+      1: u32 sk_id
+    }
+  } /* span udp_socket */
+
+} /* app ingest */
+
+app kernel_collector {
+  span tracked_process
+    impl "flowmill::kernel_collector::TrackedProcessSpanBase"
+    include "<flowmill/kernel_collector/span_base.h>"
+  {
+    pool_size 600000
+    index (cgroup, tgid)
+
+    proxy ingest.tracked_process
+
+    u64 cgroup
+    u32 tgid
+  }
+} /* app kernel_collector */
+
+app aws_collector {
+  span aws_network_interface
+    impl "flowmill::aws_collector::AwsNetworkInterfaceSpanBase"
+    include "<flowmill/aws_collector/span_base.h>"
+  {
+    pool_size 60000
+    index (ip)
+
+    proxy ingest.aws_network_interface
+
+    u128 ip
+  }
+} /* app aws_collector */
