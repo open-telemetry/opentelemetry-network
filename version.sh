@@ -18,7 +18,7 @@ export FLOWMILL_MINOR_VERSION='9'
 # bumping the major or minor versions, so there is no ambiguity with previously
 # built versions.
 # The commit hash must be a valid git hash in the flowmill-collector repository.
-COLLECTOR_BUILD_NUMBER_BASE="74011dab40a97d484b2205fc429b4981c3d1530b"
+COLLECTOR_BUILD_NUMBER_BASE="3598385a6f5288ced0f7bbe9150837c4497d6bc8"
 GIT_REVISION="HEAD"
 
 # build number is the number of commits since the latest tag
