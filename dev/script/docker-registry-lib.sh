@@ -32,6 +32,12 @@ function gcr_login {
   echo -e "done\\n"
 }
 
+function okta_login {
+  echo "logging in to okta ..."
+  okta-docker-login
+  echo -e "done\\n"
+}
+
 function flowmill_detect_docker_registry {
   docker_registry="$1"; shift
   if [ -z "${docker_registry}" ]; then

@@ -10,6 +10,7 @@ if [ "$#" -lt 1 ]; then
   echo "registry:"
   echo "  ecr: log in to ECR"
   echo "  gcr: log in to GCR"
+  echo "  okta: login through the okta plugin"
   echo "  env: log in to the docker registry auto-detected off the env var FLOWMILL_DOCKER_REGISTRY"
   echo "       if the variable is unset, no login attempts are made"
   echo "  the docker registry URL can also be given, in which case its type will be auto-detected"
@@ -42,6 +43,12 @@ function auto_detected_login {
       gcr_login
       ;;
 
+    okta)
+      echo "okta detected at '${FLOWMILL_DOCKER_REGISTRY}'"
+      okta_login
+      ;;
+
+
     *)
       echo "ERROR: unrecognized docker registry '${FLOWMILL_DOCKER_REGISTRY}'"
       return 1
@@ -63,6 +70,10 @@ while [ "$#" -gt 0 ]; do
 
     gcr)
       gcr_login
+      ;;
+
+    okta)
+      okta_login
       ;;
 
     env)
