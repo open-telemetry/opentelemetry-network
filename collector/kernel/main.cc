@@ -446,13 +446,6 @@ int main(int argc, char *argv[]) {
   LOG::info("Userland TCP: {}", enabled_disabled[enable_userland_tcp]);
 
   /* CPU/Mem/IO */
-  ProcessHandler::CpuMemIoSettings const cpu_mem_io_settings{
-    .min_batch_size = *cpu_mem_io_min_batch,
-    .max_batch_size = *cpu_mem_io_max_batch,
-    .poll_budget = std::chrono::microseconds{*cpu_mem_io_poll_budget_us},
-    .batch_poll_count_cooldown = *cpu_mem_io_cooldown
-  };
-
   bool const enable_cpu_mem_io = enable_cpu_mem_io_flag.Matched();
   LOG::info("CPU/MEM/IO stat gathering: {}", enabled_disabled[enable_cpu_mem_io]);
 
@@ -652,7 +645,7 @@ int main(int argc, char *argv[]) {
       .force_docker_metadata = *force_docker_metadata,
       .dump_docker_metadata = *dump_docker_metadata,
     },
-    enable_cpu_mem_io ? &cpu_mem_io_settings : nullptr,
+    nullptr,
     bpf_dump_file.Get(),
     HostInfo{
       .os = OperatingSystem::Linux,
