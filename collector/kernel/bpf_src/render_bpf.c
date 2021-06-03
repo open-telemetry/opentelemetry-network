@@ -140,7 +140,7 @@ BPF_HASH(nic_info_table, struct net_device *, struct nic_info, TABLE_SIZE__NIC_I
 
 
 BEGIN_DECLARE_SAVED_ARGS(cgroup_exit)
-struct task_struct *tsk;
+pid_t tgid;
 END_DECLARE_SAVED_ARGS(cgroup_exit)
 
 
@@ -275,7 +275,7 @@ static int set_task_group_dead(struct pt_regs *ctx, struct task_struct *tsk)
   }
   else if(ret!=0) {
 #if DEBUG_OTHER_MAP_ERRORS
-    bpf_trace_printk("insert_tgid_info: unknown return code from map insert: ret=%d (tsk=%llx)\n", ret, tsk);
+    bpf_trace_printk("set_task_group_dead: unknown return code from map insert: ret=%d (tsk=%llx)\n", ret, tsk);
 #endif
     bpf_log(ctx, BPF_LOG_TABLE_BAD_INSERT, BPF_TABLE_DEAD_GROUP_TASKS, 0, ret);
     return 0;
@@ -472,6 +472,14 @@ int on_taskstats_exit(struct pt_regs *ctx, struct task_struct *tsk, int group_de
 // but after all of the resources has been cleaned up, including file descriptor references
 int on_cgroup_exit(struct pt_regs *ctx, struct task_struct *tsk)
 {
+  int ret;
+  pid_t tgid = 0;
+  ret = bpf_probe_read(&tgid, sizeof(tgid), &(tsk->tgid));
+  if (ret != 0) {
+    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, (u64)ret, 0, 0);
+    return 0;
+  }
+
   // only consider tasks that are the last task in the thread group
   // since the process will not be terminating if there are more threads left
   if(!task_group_check_dead_and_remove(ctx, tsk)) {
@@ -481,7 +489,7 @@ int on_cgroup_exit(struct pt_regs *ctx, struct task_struct *tsk)
   GET_PID_TGID;
 
   BEGIN_SAVE_ARGS(cgroup_exit)
-  SAVE_ARG(tsk)
+  SAVE_ARG(tgid)
   END_SAVE_ARGS(cgroup_exit)
 
   return 0;
@@ -496,36 +504,23 @@ int onret_cgroup_exit(struct pt_regs *ctx)
     return 0;
   }
 
-  u64 now = get_timestamp();
+  pid_t tgid = args->tgid;
 
-  int ret;
-  pid_t tgid = 0;
-  ret = bpf_probe_read(&tgid, sizeof(tgid), &(args->tsk->tgid));
-  if (ret != 0) {
-    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, (u64)ret, 0, 0);
-    return 0;
-  }
-  pid_t pid = 0;
-  ret = bpf_probe_read(&tgid, sizeof(tgid), &(args->tsk->pid));
-  if (ret != 0) {
-    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, (u64)ret, 0, 0);
-    return 0;
-  }
+  DELETE_ARGS(cgroup_exit);
 
   // do some cleanup from our hashmap
   // if we didn't record this tgid before, a log message will have
   // fired, and won't send this along to the server
   if(!remove_tgid_info(ctx, tgid)) {
-    DELETE_ARGS(cgroup_exit);
     return 0;
   }
+
+  u64 now = get_timestamp();
 
   char comm[16] = {};
   bpf_get_current_comm(comm, sizeof(comm));
 
   perf_submit_agent_internal__pid_close(ctx, now, tgid, comm);
-
-  DELETE_ARGS(cgroup_exit);
 
   return 0;
 }
