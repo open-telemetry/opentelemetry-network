@@ -51,6 +51,13 @@ class WriterGenerator {
 			using clock_t = std::function<u64()>;
 
 			Writer(IBufferedWriter &buffer, clock_t clock, u64 time_adjustment = 0, Encoder *encoder = nullptr);
+
+			Writer(Writer const &);
+			Writer(Writer &&);
+
+			Writer &operator =(Writer const &) = delete;
+			Writer &operator =(Writer &&) = delete;
+
 			«FOR msg : app.spans.flatMap[messages].toSet»
 
 				/* «msg.name» */
@@ -111,6 +118,20 @@ class WriterGenerator {
 			encoder_(encoder ? encoder : &default_encoder_),
 			clock_(std::move(clock)),
 			time_adjustment_(time_adjustment)
+		{}
+
+		Writer::Writer(Writer const &rhs):
+			buffer_(rhs.buffer_),
+			encoder_(rhs.encoder_ == &rhs.default_encoder_ ? &default_encoder_ : rhs.encoder_),
+			clock_(rhs.clock_),
+			time_adjustment_(rhs.time_adjustment_)
+		{}
+
+		Writer::Writer(Writer &&rhs):
+			buffer_(rhs.buffer_),
+			encoder_(rhs.encoder_ == &rhs.default_encoder_ ? &default_encoder_ : rhs.encoder_),
+			clock_(std::move(rhs.clock_)),
+			time_adjustment_(std::move(rhs.time_adjustment_))
 		{}
 
 		} /* namespace «app.pkg.name»::«app.name» */
