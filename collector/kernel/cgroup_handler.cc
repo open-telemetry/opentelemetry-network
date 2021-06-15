@@ -17,6 +17,7 @@
 #include <collector/kernel/cgroup_handler.h>
 
 #include <collector/agent_log.h>
+#include <collector/constants.h>
 #include <common/constants.h>
 #include <config.h>
 #include <util/docker_host_config_metadata.h>
@@ -419,9 +420,21 @@ void CgroupHandler::handle_docker_response(u64 cgroup, std::string const &respon
     k8s_metadata.emplace(labels);
 
     for (auto const &item: labels.items()) {
-      auto const &value = item.value();
-      if (!value.is_string()) { continue; }
-      writer_.container_annotation(cgroup, blob(item.key()), blob(value));
+      if (!item.value().is_string()) { continue; }
+
+      std::string_view key = item.key();
+      std::string_view value = item.value().get<std::string>();
+
+      if ((key.size() + value.size() + sizeof(u64) +
+           jb_ingest__container_annotation__data_size) > WRITE_BUFFER_SIZE) {
+        // NOTE: we use a substring of the key to make sure it fits in the
+        // warning message.
+        log_.warn("Docker metadata label for key '{}' is too large to send",
+                  key.substr(0, 256));
+        continue;
+      }
+
+      writer_.container_annotation(cgroup, jb_blob{key}, jb_blob{value});
     }
   } catch (json::exception &e) {
     log_.error("failed to parse response data: {}", e.what());
