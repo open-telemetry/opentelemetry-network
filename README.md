@@ -110,9 +110,16 @@ Linux kernel, therefore these settings need to be passed to docker: `--privilege
 Flowmill collector can alternatively send telemetry to OpenTelemetry Collector
 (otel-col) in the form of Log entries.
 
+### Quick-start for the OpenTelemetry Collector ###
+
+A minimal config is included in `dev/otel-config.yaml`, and it is possible to run 
+the standard otel distribution docker image on port 8000 with:
+```
+docker run -v dev/otel-config.yaml:/etc/otel/config.yaml -p 8000:8000 otel/opentelemetry-collector
+```
 ### Configuring otel-col to receive telemetry ###
 
-A few changes need to be made to otel-col's config file. Please refer to
+A few changes need to be made to otel-col's config file. Please refer to 
 otel-col's documentation for details on [how to run the
 collector](https://opentelemetry.io/docs/collector/getting-started/#docker).
 
@@ -161,14 +168,15 @@ encoding. For otel-col's receiver the encoding must be set to `otlp_log`.
 Intake settings are controlled by environment variables set on Flowmill
 Collector's container (e.g.: can be set with `docker`'s --env command line
 argument). Below is a list of settings along with the name of the environment
-variable and suggested values for a proof-of-concept:
-
-- host: `FLOWMILL_INTAKE_HOST=127.0.0.1`
-- port: `FLOWMILL_INTAKE_PORT=8000`
-- tls: `FLOWMILL_INTAKE_DISABLE_TLS=true`
-- encoder: `FLOWMILL_INTAKE_ENCODER=otlp_log`
-- name (if [TLS SNI](https://en.wikipedia.org/wiki/Server_Name_Indication) is
-  needed): `FLOWMILL_INTAKE_NAME=oss`
+variable and suggested values for a proof-of-concept (note that these are already 
+present in the `docker run` command below):
+```
+export FLOWMILL_INTAKE_HOST=127.0.0.1    # host
+export FLOWMILL_INTAKE_PORT=8000         # port
+export FLOWMILL_INTAKE_DISABLE_TLS=true  # TLS
+export FLOWMILL_INTAKE_ENCODER=otlp_log  # encoder
+export FLOWMILL_INTAKE_NAME=oss          # name for [TLS SNI](https://en.wikipedia.org/wiki/Server_Name_Indication)
+```
 
 Here's an example:
 
@@ -178,13 +186,12 @@ docker run -it --rm \
   --env FLOWMILL_INTAKE_PORT="8000" \
   --env FLOWMILL_INTAKE_DISABLE_TLS=true \
   --env FLOWMILL_INTAKE_ENCODER="otlp_log" \
+  --env FLOWMILL_INTAKE_NAME="oss" \
   --env FLOWMILL_AUTH_KEY_ID="KFIIHR5SFKS3TQFPZWZK" \
   --env FLOWMILL_AUTH_SECRET="DatfNxs42qP1v8u281G9lyNNmFvWLmehNwVHQ9LT" \
-  --env FLOWMILL_INTAKE_NAME="oss" \
   --privileged \
   --pid host \
   --network host \
-  --log-console \
   --volume /var/run/docker.sock:/var/run/docker.sock \
   --volume /sys/fs/cgroup:/hostfs/sys/fs/cgroup \
   --volume /etc:/var/run/flowmill/host/etc \
