@@ -154,6 +154,12 @@ static inline void eq_start_read_batch(struct element_queue *eq)
 int eq_peek(struct element_queue *eq);
 
 /**
+ * Reads the next element's offset into data, or -ENOENT if no element exists
+ * @param lenp: [out] if not NULL, where to store the element length
+ */
+int eq_peek_offset(struct element_queue *eq, u32 *lenp);
+
+/**
  * Read data from a element_queue
  * @param eq: the element_queue to read from
  * @param lenp: [out] length of the buffer to read

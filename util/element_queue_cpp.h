@@ -105,6 +105,18 @@ public:
   /* @see eq_peek */
   int peek();
 
+  /* @see eq_peek_offset */
+  int peek(char *&output);
+
+  /**
+   * Peeks a value of the specified type.
+   * @returns the size of that value on success;
+   *   -ENOENT if no element exists;
+   *   -EINVAL if there is not enough data for that type
+   */
+  template <typename T>
+  int peek_value(T &output);
+
   /**
    * Reads an element from the element queue.
    * @return an element on success. throws otherwise
@@ -236,6 +248,37 @@ inline void ElementQueue::start_read_batch()
 inline int ElementQueue::peek()
 {
   return eq_peek(this);
+}
+
+inline int ElementQueue::peek(char *&output)
+{
+  u32 len;
+  int offset = eq_peek_offset(this, &len);
+
+  if (offset < 0) {
+    return offset;
+  }
+
+  output = data + offset;
+  return len;
+}
+
+template <typename T>
+int ElementQueue::peek_value(T &output)
+{
+  u32 len;
+  int offset = eq_peek_offset(this, &len);
+
+  if (offset < 0) {
+    return offset;
+  }
+
+  if (len < sizeof(T)) {
+    return -EINVAL;
+  }
+
+  output = *reinterpret_cast<T *>(data + offset);
+  return len;
 }
 
 inline std::string ElementQueue::read()
