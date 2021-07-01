@@ -24,6 +24,7 @@ import net.flowmill.render.render.Span
 import net.flowmill.render.render.RenderPackage
 import net.flowmill.render.render.Message
 import net.flowmill.render.render.MessageType
+import net.flowmill.render.render.RpcIdRange
 import static extension net.flowmill.render.extensions.MessageExtensions.span
 
 /**
@@ -144,6 +145,36 @@ class RenderValidator extends AbstractRenderValidator {
 		if (refs.size > 0) {
 			error("Span '" + span.name + "' is a target of a proxy so it can't have reference fields in its key",
 				RenderPackage.Literals.SPAN__REMOTE_SPAN)
+		}
+	}
+
+	@Check
+	def void checkRpcIdRange(RpcIdRange range) {
+		// RPC ID needs to fit in a u16.
+		// Upper half of the range is reserved for future use.
+		val rpcIdRangeMin = 0;
+		val rpcIdRangeMax = 32767;
+
+		if (range.start < rpcIdRangeMin) {
+			error('''Invalid RPC ID range (start < «rpcIdRangeMin»)''',
+				RenderPackage.Literals.RPC_ID_RANGE__START)
+		}
+
+		if (range.start > rpcIdRangeMax) {
+			error('''Invalid RPC ID range (start > «rpcIdRangeMax»)''',
+				RenderPackage.Literals.RPC_ID_RANGE__START)
+		}
+
+		if (range.hasEnd) {
+			if (range.end < range.start) {
+				error("Invalid RPC ID range (end < start)",
+					RenderPackage.Literals.RPC_ID_RANGE__END)
+			}
+
+			if (range.end > rpcIdRangeMax) {
+				error('''Invalid RPC ID range (end > «rpcIdRangeMax»)''',
+					RenderPackage.Literals.RPC_ID_RANGE__END)
+			}
 		}
 	}
 }
