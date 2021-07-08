@@ -15,10 +15,7 @@ namespace {
 }
 
 app agent_internal {
-  span agent_internal
-    impl "flowmill::agent_internal::AgentInternalSpanBase"
-    include "<generated/flowmill/agent_internal/span_base.h>"
-  {
+  span agent_internal {
     pool_size 1
     singleton
     0: log dns_packet {

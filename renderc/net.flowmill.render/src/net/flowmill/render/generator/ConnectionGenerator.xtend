@@ -434,12 +434,13 @@ class ConnectionGenerator {
 		'''
 		void Connection::«app.c_name»_«msg.name»(u64 t, char *msg_buf)
 		{
+			struct «pmsg.struct_name» *msg = (struct «pmsg.struct_name» *)msg_buf;
+
 			LOG::trace_in(
 				client_type_, "[{} at '{}'] Connection::«app.c_name»_«msg.name»:"
-				" entered handler",
-				client_type_, client_location_
+				" entered handler (rpc_id={})",
+				client_type_, client_location_, msg->_rpc_id
 			);
-			struct «pmsg.struct_name» *msg = (struct «pmsg.struct_name» *)msg_buf;
 
 			«IF msg.type == MessageType.START»
 				/* start message: insert */
@@ -471,7 +472,6 @@ class ConnectionGenerator {
 				auto converter = auto_handle_converters::«span.name»(std::move(ref));
 
 				auto pos = «fixedHashName(span)».insert(msg->«msg.reference_field.name», std::move(converter));
-				auto entry = pos.entry;
 				if (pos.index == «fixedHashName(span)».invalid) {
 					if («fixedHashName(span)».full()) {
 						LOG::trace_in(client_type_,
@@ -510,7 +510,6 @@ class ConnectionGenerator {
 			«ELSEIF (!span.isSingleton)»
 				/* get the destination span */
 				auto pos = «fixedHashName(span)».find(msg->«msg.reference_field.name»);
-				auto entry = pos.entry;
 				if (pos.index == «fixedHashName(span)».invalid) {
 					LOG::trace_in(client_type_,
 						"[{} at '{}'] Connection::«app.c_name»_«msg.name»:"
@@ -522,13 +521,16 @@ class ConnectionGenerator {
 					message_errors.changed.«app.c_name»_«msg.name»_span_find_failed = 1;
 					return;
 				}
-			«ELSE»
-				/* singleton */
-				auto entry = &«span.instanceName»;
 			«ENDIF»
 
+			«IF span.impl !== null»
 			{
 				/* call the span's handler */
+				«IF span.isSingleton»
+				auto entry = &«span.instanceName»;
+				«ELSE»
+				auto entry = pos.entry;
+				«ENDIF»
 				auto span_ref = entry->access(index_);
 				LOG::trace_in(
 					client_type_, "[{} at '{}'] Connection::«app.c_name»_«msg.name»:"
@@ -537,8 +539,9 @@ class ConnectionGenerator {
 				);
 				span_ref.impl().«msg.name»(span_ref, t, msg);
 			}
-			«IF msg.type == MessageType.END»
+			«ENDIF»
 
+			«IF msg.type == MessageType.END»
 				/* end message: remove from hash */
 				«fixedHashName(span)»[pos.index].put(index_);
 				bool erase_res = «fixedHashName(span)».erase(msg->«msg.reference_field.name»);
