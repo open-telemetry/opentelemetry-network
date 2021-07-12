@@ -38,18 +38,48 @@ import static extension net.flowmill.render.extensions.FieldTypeExtensions.*
 @Accessors(PUBLIC_GETTER, PROTECTED_SETTER)
 class AppPacker {
 
+	// RPC ID needs to fit in a u16.
+	// Upper half of the u16 range is reserved for special messages and future use.
+	public static val rpcIdRangeMin = 0
+	public static val rpcIdRangeMax = 32767
+
+	public static val pulseMessageRpcId = 65535
+	public static val pulseMessageName = "pulse"
+
 	static def populate(App app) {
+		val factory = new RenderFactoryImpl
+
+		app.spans.add(makePulseSpan(factory))
 
 		for (span : app.spans) {
 			for (msg : span.messages) {
-				make_message(msg, true)
-				make_message(msg, false)
+				make_message(factory, msg, true)
+				make_message(factory, msg, false)
 			}
 		}
 
 		annotate_class(app)
 
 		return app
+	}
+
+	static private def makePulseSpan(RenderFactoryImpl factory)
+	{
+		val span = factory.createSpan()
+
+		span.name = "__pulsar"
+		span.isSingleton = true
+
+		val pulseMessage = factory.createMessage()
+
+		pulseMessage.id = pulseMessageRpcId
+		pulseMessage.name = pulseMessageName
+		pulseMessage.type = MessageType.LOG
+		pulseMessage.pipelineOnly = true
+
+		span.messages.add(pulseMessage)
+
+		return span
 	}
 
 	static private def createField(RenderFactoryImpl factory, int id, String name, FieldTypeEnum type) {
@@ -70,9 +100,8 @@ class AppPacker {
 		return result
 	}
 
-	static def make_message(Message msg, boolean packedStrings)
+	static def make_message(RenderFactoryImpl factory, Message msg, boolean packedStrings)
 	{
-		val factory = new RenderFactoryImpl
 		var packed_msg = factory.createXPackedMessage()
 
 		if (msg.type == MessageType.MSG) {
@@ -194,24 +223,30 @@ class AppPacker {
 		val app = msg.eContainer.eContainer as App
 		val document = app.eContainer as Document
 
-
 		// find rpc_id
-		val namespace = document.namespace
-		val app_map = namespace.mappings.findFirst[x | x.app == app ]
-		var rpc_index = msg.id
 		var rpc_id_found = false
-		for (range : app_map.ranges) {
-			val range_end = if (range.hasEnd) range.end + 1 else range.start + 1
-			val range_size = range_end - range.start
-			if (!rpc_id_found && (rpc_index < range_size)) {
-				packed_msg.rpc_id = range.start + rpc_index
-				rpc_id_found = true
+		if (msg.id > rpcIdRangeMax) {
+			// messages with IDs outside normal RPC ID range are special messages
+			packed_msg.rpc_id = msg.id
+			rpc_id_found = true
+		} else {
+			val namespace = document.namespace
+			val app_map = namespace.mappings.findFirst[x | x.app == app ]
+			var rpc_index = msg.id
+			for (range : app_map.ranges) {
+				val range_end = if (range.hasEnd) range.end + 1 else range.start + 1
+				val range_size = range_end - range.start
+				if (!rpc_id_found && (rpc_index < range_size)) {
+					packed_msg.rpc_id = range.start + rpc_index
+					rpc_id_found = true
+				}
+				rpc_index -= range_size
 			}
-			rpc_index -= range_size
 		}
 
-		if (!rpc_id_found)
-			throw new RuntimeException("could not find rpc_id for message" + msg)
+		if (!rpc_id_found) {
+			throw new RuntimeException("could not find rpc_id for message " + msg)
+		}
 
 		val c_package = app.name.split("\\.").join("_")
 

@@ -25,6 +25,8 @@ import net.flowmill.render.render.RenderPackage
 import net.flowmill.render.render.Message
 import net.flowmill.render.render.MessageType
 import net.flowmill.render.render.RpcIdRange
+import static net.flowmill.render.generator.AppPacker.rpcIdRangeMin
+import static net.flowmill.render.generator.AppPacker.rpcIdRangeMax
 import static extension net.flowmill.render.extensions.MessageExtensions.span
 
 /**
@@ -150,11 +152,6 @@ class RenderValidator extends AbstractRenderValidator {
 
 	@Check
 	def void checkRpcIdRange(RpcIdRange range) {
-		// RPC ID needs to fit in a u16.
-		// Upper half of the range is reserved for future use.
-		val rpcIdRangeMin = 0;
-		val rpcIdRangeMax = 32767;
-
 		if (range.start < rpcIdRangeMin) {
 			error('''Invalid RPC ID range (start < «rpcIdRangeMin»)''',
 				RenderPackage.Literals.RPC_ID_RANGE__START)

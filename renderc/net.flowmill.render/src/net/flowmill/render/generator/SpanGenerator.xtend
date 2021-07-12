@@ -31,6 +31,8 @@ import org.eclipse.emf.ecore.resource.Resource
 import net.flowmill.render.render.FieldTypeEnum
 import java.util.Arrays
 
+import static net.flowmill.render.generator.AppPacker.pulseMessageName
+
 import static extension net.flowmill.render.extensions.AppExtensions.*
 import static extension net.flowmill.render.extensions.FieldExtensions.*
 import static extension net.flowmill.render.extensions.SpanExtensions.*
@@ -387,6 +389,11 @@ class SpanGenerator {
 			 */
 			Index& operator=(const Index&) = delete;
 
+			/**
+			 * Send a heartbeat pulse to all downstream peers
+			 */
+			void send_pulse();
+
 			«FOR remote_app_name : app.remoteApps.map[name].sort»
 				/* Writer for sending proxy span messages to «remote_app_name» app */
 				std::vector<::«pkg_name»::«remote_app_name»::Writer> «remote_app_name»_writers_;
@@ -427,6 +434,15 @@ class SpanGenerator {
 		{
 			«FOR span : app.spans»
 				f("«span.name»", «span.name».size(), «span.name».max_size(), «span.pool_size»);
+			«ENDFOR»
+		}
+
+		void «pkg_name»::«app.name»::Index::send_pulse()
+		{
+			«FOR ran : app.remoteApps.map[name].sort»
+				for (auto &writer : «ran»_writers_) {
+					writer.«pulseMessageName»();
+				}
 			«ENDFOR»
 		}
 
