@@ -158,7 +158,7 @@ otel-col on port `8000`.
 For more information on the OTLP receiver, refer to [otel-col's
 documentation](https://github.com/open-telemetry/opentelemetry-collector/blob/main/receiver/otlpreceiver/README.md).
 
-### Configuring Flowmill collector send telemetry to otel-col ###
+### Configuring Flowmill collector to send telemetry to otel-col ###
 
 The flowmill collector needs to know a few things in order to connect to
 otel-col's receiver as its intake. The difference between connecting to the
