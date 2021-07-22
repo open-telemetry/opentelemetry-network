@@ -278,47 +278,58 @@ void KernelCollector::on_authenticated()
 
 void KernelCollector::probe_holdoff_timeout(uv_timer_t *timer)
 {
+  auto const upstream_connection_flush_and_close = [this] () {
+    upstream_connection_.flush();
+    upstream_connection_.close();
+  };
+
   if (entrypoint_error_ != EntrypointError::none) {
-    print_troubleshooting_message_and_exit(log_, host_info_, entrypoint_error_);
+    print_troubleshooting_message_and_exit(host_info_, entrypoint_error_, log_, upstream_connection_flush_and_close);
+    return;
   }
 
   LOG::trace("Adding probes");
 
   last_probe_monotonic_time_ns_ = monotonic();
 
+  auto const handle_exception = [&] (TroubleshootItem item, std::exception const &e) {
+    log_.error("Exception during BPFHandler initialization, closing connection: {}", e.what());
+    print_troubleshooting_message_and_exit(host_info_, item, e, log_, upstream_connection_flush_and_close);
+  };
+
+  auto potential_troubleshoot_item = TroubleshootItem::bpf_compilation_failed;
   try {
     bpf_handler_.emplace(loop_, full_program_, enable_http_metrics_, enable_userland_tcp_, bpf_dump_file_, log_, encoder_.get());
+
+    potential_troubleshoot_item = TroubleshootItem::unexpected_exception;
     writer_.bpf_compiled();
-  } catch (std::exception &e) {
-    print_troubleshooting_message_and_exit(log_,
-                                           host_info_,
-                                           TroubleshootItem::bpf_compilation_failed,
-                                           e);
-    upstream_connection_.flush();
-    upstream_connection_.close();
-    return;
-  }
 
-  bpf_handler_->load_buffered_poller(upstream_connection_.buffered_writer(),
-                                     boot_time_adjustment_, curl_engine_, nic_poller_,
-                                     cgroup_settings_, cpu_mem_io_settings_);
+    bpf_handler_->load_buffered_poller(upstream_connection_.buffered_writer(),
+                                       boot_time_adjustment_, curl_engine_, nic_poller_,
+                                       cgroup_settings_, cpu_mem_io_settings_);
 
-  try {
+    potential_troubleshoot_item = TroubleshootItem::bpf_load_probes_failed;
     bpf_handler_->load_probes(writer_);
+
+    /* Start running buf_poller in steady-state */
+    potential_troubleshoot_item = TroubleshootItem::unexpected_exception;
+    writer_.begin_telemetry();
+    writer_.collector_health(integer_value(::collector::CollectorStatus::healthy), 0);
+    LOG::info("Agent connected successfully. Telemetry is flowing!");
+    is_connected_ = true;
+
+    enter_polling_state();
+  } catch (std::system_error &e) {
+    if (e.code().value() == EPERM) {
+      handle_exception(TroubleshootItem::operation_not_permitted, e);
+      return;
+    }
+    handle_exception(potential_troubleshoot_item, e);
+    return;
   } catch (std::exception &e) {
-    log_.error("BPFHandler threw exception when loading probes, closing connection: {}", e.what());
-    upstream_connection_.flush();
-    upstream_connection_.close();
+    handle_exception(potential_troubleshoot_item, e);
     return;
   }
-
-  /* Start running buf_poller in steady-state */
-  writer_.begin_telemetry();
-  writer_.collector_health(integer_value(::collector::CollectorStatus::healthy), 0);
-  LOG::info("Agent connected successfully. Telemetry is flowing!");
-  is_connected_ = true;
-
-  enter_polling_state();
 }
 
 void KernelCollector::send_connection_metadata()

@@ -42,8 +42,9 @@ BPFHandler::BPFHandler(uv_loop_t &loop, std::string full_program,
     full_program = "#define ENABLE_TCP_DATA_STREAM 1\n" + full_program;
   }
   int res = probe_handler_.start_bpf_module(full_program, bpf_module_, perf_);
-  if (res != 0)
-    throw std::runtime_error("ProbeHandler couldn't load BPFModule");
+  if (res != 0) {
+    throw std::system_error(errno, std::generic_category(), "ProbeHandler couldn't load BPFModule");
+  }
 }
 
 BPFHandler::~BPFHandler()

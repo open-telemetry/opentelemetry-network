@@ -21,6 +21,7 @@
 #include <collector/constants.h>
 #include <collector/kernel/cgroup_handler.h>
 #include <collector/kernel/kernel_collector.h>
+#include <collector/kernel/troubleshooting.h>
 #include <common/cloud_platform.h>
 #include <config/config_file.h>
 #include <platform/platform.h>
@@ -563,111 +564,128 @@ int main(int argc, char *argv[]) {
     configuration_data.labels()["host"] = override_agent_host;
   }
 
-  /* mount debugfs if it is not mounted */
-  mount_debugfs_if_required();
-
-  /* Read our BPF program*/
-  /* resolve includes */
-  std::string bpf_src((char *)agent_bpf_c, agent_bpf_c_len);
-#ifdef CONFIGURABLE_BPF
-  if (bpf_file.Matched()) {
-    bpf_src = *read_file_as_string(bpf_file.Get().c_str()).try_raise();
-  }
-#endif
-
-  u64 boot_time_adjustment = get_boot_time();
-  /* insert time onto the bpf program */
-  bpf_src = std::regex_replace(
-    bpf_src, std::regex("BOOT_TIME_ADJUSTMENT"),
-    fmt::format("{}uLL", boot_time_adjustment)
-  );
-  bpf_src = std::regex_replace(
-    bpf_src, std::regex("FILTER_NS"),
-    fmt::format("{}", args::get(filter_ns))
-  );
-  bpf_src = std::regex_replace(
-    bpf_src, std::regex("MAX_PID"),
-    *read_file_as_string(MAX_PID_PROC_PATH).try_raise()
-  );
-  bpf_src = std::regex_replace(
-    bpf_src, std::regex("CPU_MEM_IO_ENABLED"),
-    std::string(1, "01"[try_get_env_value<bool>(ENABLE_EBPF_CPU_MEM_IO_VAR)])
-  );
-  bpf_src = std::regex_replace(
-    bpf_src, std::regex("REPORT_DEBUG_EVENTS_PLACEHOLDER"),
-    std::string(1, "01"[*report_bpf_debug_events])
-  );
-
-  if (std::string const out{try_get_env_var(FLOWMILL_EXPORT_BPF_SRC_FILE_VAR)}; !out.empty()) {
-    if (auto const error = write_file(out.c_str(), bpf_src)) {
-      LOG::error("ERROR: unable to write BPF source to '{}': {}", out, error);
-    }
-  }
-
-  uv_timer_t refill_log_rate_limit_timer;
-  if (!disable_log_rate_limit) {
-    LOG::enable_rate_limit(5000);
-    res = uv_timer_init(&loop, &refill_log_rate_limit_timer);
-    if (res != 0) {
-      throw std::runtime_error("Cannot init rate limit timer.");
-    }
-
-    res = uv_timer_start(&refill_log_rate_limit_timer, refill_log_rate_limit_cb,
-                         /*1s*/ 1000, /*1s*/ 1000);
-    if (res != 0) {
-      throw std::runtime_error("Cannot start rate limit timer.");
-    }
-  }
-
-  /* initialize curl engine */
-  auto curl_engine = CurlEngine::create(&loop);
-
-
-  auto maybe_proxy_config = config::HttpProxyConfig::read_from_env();
-  auto proxy_config = maybe_proxy_config ? &*maybe_proxy_config : nullptr;
-  AuthzFetcher authz_fetcher{*curl_engine, *authz_server, agent_key, agent_id, proxy_config};
-
-  auto intake_config = intake_config_handler.read_config(authz_fetcher.token()->intake());
-
-  if (disable_intake_tls.given()) {
-    intake_config.disable_tls(*disable_intake_tls);
-  }
-
-  // Initialize our kernel telemetry collector
-  KernelCollector kernel_collector{
-    bpf_src, intake_config, boot_time_adjustment,
-    aws_metadata.try_value(), gcp_metadata.try_value(),
-    configuration_data.labels(), loop, *curl_engine,
-    authz_fetcher,
-    enable_http_metrics,
-    enable_userland_tcp,
-    CgroupHandler::CgroupSettings{
-      .force_docker_metadata = *force_docker_metadata,
-      .dump_docker_metadata = *dump_docker_metadata,
-    },
-    nullptr,
-    bpf_dump_file.Get(),
-    HostInfo{
+  HostInfo host_info{
       .os = OperatingSystem::Linux,
       .os_flavor = integer_value(*host_distro),
       .os_version = gcp_metadata ? gcp_metadata->image() : "unknown",
       .kernel_headers_source = *kernel_headers_source,
       .kernel_version = unamebuf.release,
-      .hostname = hostname
-    }, *entrypoint_error
-  };
+      .hostname = hostname};
 
-  authz_fetcher.auto_refresh(
+  try {
+    /* mount debugfs if it is not mounted */
+    mount_debugfs_if_required();
 
-    loop,
-    std::bind(&KernelCollector::update_authz_token, &kernel_collector, std::placeholders::_1)
-  );
+    /* Read our BPF program*/
+    /* resolve includes */
+    std::string bpf_src((char *)agent_bpf_c, agent_bpf_c_len);
+#ifdef CONFIGURABLE_BPF
+    if (bpf_file.Matched()) {
+      bpf_src = *read_file_as_string(bpf_file.Get().c_str()).try_raise();
+    }
+#endif
 
-  signal_manager.handle_signals(
-    {SIGINT, SIGTERM},
-    std::bind(&KernelCollector::on_close, &kernel_collector)
-  );
+    u64 boot_time_adjustment = get_boot_time();
+    /* insert time onto the bpf program */
+    bpf_src = std::regex_replace(
+      bpf_src, std::regex("BOOT_TIME_ADJUSTMENT"),
+      fmt::format("{}uLL", boot_time_adjustment)
+    );
+    bpf_src = std::regex_replace(
+      bpf_src, std::regex("FILTER_NS"),
+      fmt::format("{}", args::get(filter_ns))
+    );
+    bpf_src = std::regex_replace(
+      bpf_src, std::regex("MAX_PID"),
+      *read_file_as_string(MAX_PID_PROC_PATH).try_raise()
+    );
+    bpf_src = std::regex_replace(
+      bpf_src, std::regex("CPU_MEM_IO_ENABLED"),
+      std::string(1, "01"[try_get_env_value<bool>(ENABLE_EBPF_CPU_MEM_IO_VAR)])
+    );
+    bpf_src = std::regex_replace(
+      bpf_src, std::regex("REPORT_DEBUG_EVENTS_PLACEHOLDER"),
+      std::string(1, "01"[*report_bpf_debug_events])
+    );
 
-  LOG::debug("starting event loop...");
-  uv_run(&loop, UV_RUN_DEFAULT);
+    if (std::string const out{try_get_env_var(FLOWMILL_EXPORT_BPF_SRC_FILE_VAR)}; !out.empty()) {
+      if (auto const error = write_file(out.c_str(), bpf_src)) {
+        LOG::error("ERROR: unable to write BPF source to '{}': {}", out, error);
+      }
+    }
+
+    uv_timer_t refill_log_rate_limit_timer;
+    if (!disable_log_rate_limit) {
+      LOG::enable_rate_limit(5000);
+      res = uv_timer_init(&loop, &refill_log_rate_limit_timer);
+      if (res != 0) {
+        throw std::runtime_error("Cannot init rate limit timer.");
+      }
+
+      res = uv_timer_start(&refill_log_rate_limit_timer, refill_log_rate_limit_cb,
+                           /*1s*/ 1000, /*1s*/ 1000);
+      if (res != 0) {
+        throw std::runtime_error("Cannot start rate limit timer.");
+      }
+    }
+
+    /* initialize curl engine */
+    auto curl_engine = CurlEngine::create(&loop);
+
+
+    auto maybe_proxy_config = config::HttpProxyConfig::read_from_env();
+    auto proxy_config = maybe_proxy_config ? &*maybe_proxy_config : nullptr;
+    AuthzFetcher authz_fetcher{*curl_engine, *authz_server, agent_key, agent_id, proxy_config};
+
+    auto intake_config = intake_config_handler.read_config(authz_fetcher.token()->intake());
+
+    if (disable_intake_tls.given()) {
+      intake_config.disable_tls(*disable_intake_tls);
+    }
+
+    // Initialize our kernel telemetry collector
+    KernelCollector kernel_collector{
+        bpf_src,
+        intake_config,
+        boot_time_adjustment,
+        aws_metadata.try_value(),
+        gcp_metadata.try_value(),
+        configuration_data.labels(),
+        loop,
+        *curl_engine,
+        authz_fetcher,
+        enable_http_metrics,
+        enable_userland_tcp,
+        CgroupHandler::CgroupSettings{
+            .force_docker_metadata = *force_docker_metadata,
+            .dump_docker_metadata = *dump_docker_metadata,
+        },
+        nullptr,
+        bpf_dump_file.Get(),
+        host_info,
+        *entrypoint_error};
+
+    authz_fetcher.auto_refresh(
+      loop,
+      std::bind(&KernelCollector::update_authz_token, &kernel_collector, std::placeholders::_1)
+    );
+
+    signal_manager.handle_signals(
+      {SIGINT, SIGTERM},
+      std::bind(&KernelCollector::on_close, &kernel_collector)
+    );
+
+    LOG::debug("starting event loop...");
+    uv_run(&loop, UV_RUN_DEFAULT);
+  } catch (std::system_error &e) {
+    if (e.code().value() == EPERM) {
+      print_troubleshooting_message_and_exit(host_info, TroubleshootItem::operation_not_permitted, e);
+      return 1;
+    }
+    print_troubleshooting_message_and_exit(host_info, TroubleshootItem::unexpected_exception, e);
+    return 1;
+  } catch (std::exception &e) {
+    print_troubleshooting_message_and_exit(host_info, TroubleshootItem::unexpected_exception, e);
+    return 1;
+  }
 }

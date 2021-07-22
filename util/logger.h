@@ -32,6 +32,9 @@ public:
     writer_(writer)
   {}
 
+  Logger (const Logger&) = delete;
+  Logger& operator= (const Logger&) = delete;
+
   template <typename Format, typename... Args>
   inline void info(Format &&format, Args &&... args) {
     LOG::info(
