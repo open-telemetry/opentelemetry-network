@@ -92,7 +92,8 @@ KernelCollector::KernelCollector(
     u64 boot_time_adjustment,
     AwsMetadata const *aws_metadata, GcpInstanceMetadata const *gcp_metadata,
     std::map<std::string, std::string> configuration_data, uv_loop_t &loop,
-    CurlEngine &curl_engine, AuthzFetcher &authz_fetcher,
+    CurlEngine &curl_engine,
+    std::optional<AuthzFetcher> &authz_fetcher,
     bool enable_http_metrics, bool enable_userland_tcp,
     CgroupHandler::CgroupSettings cgroup_settings,
     ProcessHandler::CpuMemIoSettings const *cpu_mem_io_settings,
@@ -122,7 +123,6 @@ KernelCollector::KernelCollector(
       is_connected_(false),
       curl_engine_(curl_engine),
       authz_fetcher_(authz_fetcher),
-      authz_token_(*authz_fetcher.token()),
       heartbeat_sender_(loop_, [this] {
         send_heartbeat();
         return scheduling::JobFollowUp::ok;
@@ -134,6 +134,11 @@ KernelCollector::KernelCollector(
       log_(writer_),
       nic_poller_(writer_, log_)
 {
+  if (intake_config_.auth_method() == collector::AuthMethod::authz) {
+    assert(authz_fetcher_);
+    authz_token_ = authz_fetcher_->token().value();
+  }
+
   if (!bpf_dump_file.empty()) {
     auto const error = bpf_dump_file_.create(
       bpf_dump_file.c_str(),
@@ -354,18 +359,31 @@ void KernelCollector::send_connection_metadata()
   struct struct_name __##struct_name##__##buf_name2;                           \
   char buf_name2[sizeof(__##struct_name##__##buf_name2.field2)] = {};
 
-  auto const &token = authz_token_.payload();
-  LOG::info(
+  switch(intake_config_.auth_method()) {
+  case collector::AuthMethod::none:
+    if (intake_config_.encoder() == IntakeEncoder::binary) {
+      writer_.no_auth_connect(static_cast<u8>(ClientType::kernel), jb_blob{host_info_.hostname});
+      upstream_connection_.flush();
+    }
+    break;
+  case collector::AuthMethod::authz: {
+    assert(authz_token_);
+    auto const &token = authz_token_->payload();
+    LOG::info(
       "sending authz token with {}s left until expiration (iat={}s exp={}s)",
-      authz_token_
-          .time_left<std::chrono::seconds>(std::chrono::system_clock::now())
-          .count(),
-      authz_token_.issued_at<std::chrono::seconds>().count(),
-      authz_token_.expiration<std::chrono::seconds>().count());
-  writer_.authz_authenticate(jb_blob{token},
-                             static_cast<u8>(ClientType::kernel),
-                             jb_blob{host_info_.hostname});
-  upstream_connection_.flush();
+      authz_token_->time_left<std::chrono::seconds>(std::chrono::system_clock::now()).count(),
+      authz_token_->issued_at<std::chrono::seconds>().count(),
+      authz_token_->expiration<std::chrono::seconds>().count());
+    writer_.authz_authenticate(jb_blob{token},
+                               static_cast<u8>(ClientType::kernel),
+                               jb_blob{host_info_.hostname});
+    upstream_connection_.flush();
+  }
+    break;
+  default:
+    throw std::runtime_error("invalid auth_method");
+    break;
+  }
 
   writer_.os_info(
     integer_value(host_info_.os),
@@ -619,11 +637,14 @@ void KernelCollector::Callbacks::on_closed()
 {
   LOG::trace("closed upstream connection, will reconnect...");
   StopWatch<> refresh_time;
-  if (auto const &current = collector_.authz_fetcher_.token();
-    !current || current->has_expired(std::chrono::system_clock::now())
-  ) {
-    LOG::trace("refreshing invalid or expired authz token before reconnecting...");
-    collector_.authz_fetcher_.sync_refresh();
+  if (collector_.intake_config_.auth_method() == collector::AuthMethod::authz) {
+    assert(collector_.authz_fetcher_);
+    if (auto const &current = collector_.authz_fetcher_->token();
+        !current || current->has_expired(std::chrono::system_clock::now())
+    ) {
+      LOG::trace("refreshing invalid or expired authz token before reconnecting...");
+      collector_.authz_fetcher_->sync_refresh();
+    }
   }
   collector_.enter_try_connecting(refresh_time.elapsed<std::chrono::milliseconds>());
 }
@@ -726,8 +747,9 @@ void KernelCollector::stop_all_timers()
 std::chrono::milliseconds
 KernelCollector::update_authz_token(AuthzToken const &token)
 {
+  assert(authz_token_);
   auto const time_left = std::chrono::duration_cast<std::chrono::milliseconds>(
-      authz_token_.expiration() -
+      authz_token_->expiration() -
       std::chrono::system_clock::now().time_since_epoch());
   authz_token_ = token;
   return time_left;

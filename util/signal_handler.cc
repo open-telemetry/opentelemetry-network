@@ -386,6 +386,11 @@ SignalManager &SignalManager::add_auth(std::string_view key, std::string_view se
   return *this;
 }
 
+SignalManager &SignalManager::add_auth(collector::AuthMethod auth_method) {
+  headers_.emplace_back(fmt::format("Authorization: {}", auth_method));
+  return *this;
+}
+
 void SignalManager::handle_signals(
   std::initializer_list<int> signal_numbers,
   std::function<void()> on_signal

@@ -68,6 +68,7 @@ IntakeConfig IntakeConfig::read_from_env() {
     .record_output_path = std::string(try_get_env_var(INTAKE_RECORD_OUTPUT_PATH_VAR)),
     .disable_tls_ = try_get_env_value<bool>(INTAKE_DISABLE_TLS_VAR),
     .encoder_ = try_get_env_value<IntakeEncoder>(INTAKE_INTAKE_ENCODER_VAR),
+    .auth_method_ = try_get_env_value<collector::AuthMethod>(INTAKE_AUTH_METHOD_VAR, collector::AuthMethod::authz)
   };
 
   return intake;
@@ -83,6 +84,7 @@ IntakeConfig IntakeConfig::read_from_env_and_intake(std::string_view intake_name
     .record_output_path = std::string(try_get_env_var(INTAKE_RECORD_OUTPUT_PATH_VAR)),
     .disable_tls_ = try_get_env_value<bool>(INTAKE_DISABLE_TLS_VAR),
     .encoder_ = try_get_env_value<IntakeEncoder>(INTAKE_INTAKE_ENCODER_VAR),
+    .auth_method_ = try_get_env_value<collector::AuthMethod>(INTAKE_AUTH_METHOD_VAR, collector::AuthMethod::authz)
   };
 
   return intake;
@@ -102,6 +104,14 @@ IntakeConfig::ArgsHandler::ArgsHandler(cli::ArgsParser &parser):
 
 IntakeConfig IntakeConfig::ArgsHandler::read_config(std::string_view intake_name) {
   auto intake_config = config::IntakeConfig::read_from_env_and_intake(intake_name);
+
+  intake_config.encoder(*encoder_);
+
+  return intake_config;
+}
+
+IntakeConfig IntakeConfig::ArgsHandler::read_config() {
+  auto intake_config = config::IntakeConfig::read_from_env();
 
   intake_config.encoder(*encoder_);
 

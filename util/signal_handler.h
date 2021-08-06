@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <collector/auth_method.h>
 #include <scheduling/timer.h>
 #include <util/args_parser.h>
 
@@ -38,6 +39,7 @@ struct SignalManager: cli::ArgsParser::Handler {
   void handle() override;
 
   SignalManager &add_auth(std::string_view key, std::string_view secret = {});
+  SignalManager &add_auth(collector::AuthMethod auth_method);
 
   void handle_signals(
     std::initializer_list<int> signal_numbers,

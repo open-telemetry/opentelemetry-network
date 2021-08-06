@@ -50,7 +50,8 @@ public:
                   GcpInstanceMetadata const *gcp_metadata,
                   std::map<std::string, std::string> configuration_data,
                   uv_loop_t &loop, CurlEngine &curl_engine,
-                  AuthzFetcher &authz_fetcher, bool enable_http_metrics,
+                  std::optional<AuthzFetcher> &authz_fetcher,
+                  bool enable_http_metrics,
                   bool enable_userland_tcp,
                   CgroupHandler::CgroupSettings cgroup_settings,
                   ProcessHandler::CpuMemIoSettings const *cpu_mem_io_settings,
@@ -189,8 +190,8 @@ private:
   bool is_connected_;
 
   CurlEngine &curl_engine_;
-  AuthzFetcher &authz_fetcher_;
-  AuthzToken authz_token_;
+  std::optional<AuthzFetcher> &authz_fetcher_;
+  std::optional<AuthzToken> authz_token_;
 
   scheduling::IntervalScheduler heartbeat_sender_;
 

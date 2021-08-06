@@ -87,6 +87,7 @@ Environment variables:
 - `FLOWMILL_INTAKE_HOST`: this is the hostname or IP address of the Flowmill intake server
 - `FLOWMILL_INTAKE_PORT`: this is the port of the Flowmill intake server
 - `FLOWMILL_AUTHZ_SERVER`: this is the host:port of Flowmill auth server (default: app.flowmill.com)
+- `FLOWMILL_INTAKE_AUTH_METHOD`: this is the auth method to use when connecting to the intake, valid values are "authz" or "none", (default: "authz")
 
 Volumes:
 

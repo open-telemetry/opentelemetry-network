@@ -17,6 +17,7 @@
 #include <channel/component.h>
 #include <channel/tls_channel.h>
 #include <collector/agent_log.h>
+#include <collector/auth_method.h>
 #include <collector/component.h>
 #include <collector/constants.h>
 #include <collector/kernel/cgroup_handler.h>
@@ -71,6 +72,7 @@ extern unsigned int agent_bpf_c_len;
 
 static constexpr auto FLOWMILL_EXPORT_BPF_SRC_FILE_VAR = "FLOWMILL_EXPORT_BPF_SRC_FILE";
 
+static constexpr auto FLOWMILL_AUTH_METHOD_VAR = "FLOWMILL_INTAKE_AUTH_METHOD";
 static constexpr auto FLOWMILL_DISABLE_HTTP_METRICS_VAR = "FLOWMILL_DISABLE_HTTP_METRICS";
 
 static constexpr auto FLOWMILL_LABEL_CLUSTER_DEPRECATED_VAR = "FLOWMILL_AGENT_LABELS_ENVIRONMENT";
@@ -273,16 +275,6 @@ int main(int argc, char *argv[]) {
     throw std::runtime_error("uv_loop_init failed");
   }
 
-  // read settings from environment
-
-  auto const agent_key = AuthzFetcher::read_agent_key()
-    .on_error([](auto &error) {
-      LOG::critical("Authentication key error: {}", error);
-      exit(-1);
-    })
-    .value();
-
-
   // args parsing
 
   cli::ArgsParser parser("Flowmill agent.");
@@ -315,7 +307,19 @@ int main(int argc, char *argv[]) {
     nullptr,
     EntrypointError::none);
 
-  auto &authz_server = AuthzFetcher::register_args_parser(parser);
+  auto auth_method = parser.add_arg<collector::AuthMethod>(
+      "auth-method", "auth method to use when connecting to intake",
+      FLOWMILL_AUTH_METHOD_VAR, collector::AuthMethod::authz);
+
+  AuthzFetcher::AgentKey agent_key;
+  if (*auth_method == collector::AuthMethod::authz) {
+    agent_key = AuthzFetcher::read_agent_key()
+      .on_error([](auto &error) {
+                  LOG::critical("Authentication key error: {}", error);
+                  exit(-1);
+                })
+      .value();
+  }
 
   /* crash reporting */
   args::Flag disable_log_rate_limit(*parser, "disable_log_rate_limit",
@@ -326,8 +330,8 @@ int main(int argc, char *argv[]) {
       {"docker-ns-label"}, "");
 
   auto disable_http_metrics = parser.add_env_flag(
-      "disable-http-metrics", FLOWMILL_DISABLE_HTTP_METRICS_VAR,
-      "Disable collection of HTTP metrics", false);
+      "disable-http-metrics", "Disable collection of HTTP metrics",
+      FLOWMILL_DISABLE_HTTP_METRICS_VAR, false);
   // keeping "enable-http-metrics" around while we phase it out,
   // so that older deployments won't break
   // we're transitioning to opt-out (preferably always on)
@@ -386,8 +390,19 @@ int main(int argc, char *argv[]) {
 
   auto &intake_config_handler = parser.new_handler<config::IntakeConfig::ArgsHandler>();
 
-  SignalManager &signal_manager = parser.new_handler<SignalManager>(loop, "kernel-collector")
-    .add_auth(agent_key.key_id, agent_key.secret);
+  SignalManager &signal_manager = parser.new_handler<SignalManager>(loop, "kernel-collector");
+
+  switch(*auth_method) {
+  case collector::AuthMethod::none:
+    signal_manager.add_auth(*auth_method);
+    break;
+  case collector::AuthMethod::authz:
+    signal_manager.add_auth(agent_key.key_id, agent_key.secret);
+    break;
+  default:
+    throw std::runtime_error("invalid auth_method");
+    break;
+  }
 
   if (auto result = parser.process(argc, argv); !result.has_value()) {
     return result.error();
@@ -449,6 +464,9 @@ int main(int argc, char *argv[]) {
   /* CPU/Mem/IO */
   bool const enable_cpu_mem_io = enable_cpu_mem_io_flag.Matched();
   LOG::info("CPU/MEM/IO stat gathering: {}", enabled_disabled[enable_cpu_mem_io]);
+
+  /* Auth method */
+  LOG::info("Auth method for connecting to intake: {}", *auth_method);
 
   /* Initialize curl */
   curlpp::initialize();
@@ -632,15 +650,23 @@ int main(int argc, char *argv[]) {
     /* initialize curl engine */
     auto curl_engine = CurlEngine::create(&loop);
 
-
-    auto maybe_proxy_config = config::HttpProxyConfig::read_from_env();
-    auto proxy_config = maybe_proxy_config ? &*maybe_proxy_config : nullptr;
-    AuthzFetcher authz_fetcher{*curl_engine, *authz_server, agent_key, agent_id, proxy_config};
-
-    auto intake_config = intake_config_handler.read_config(authz_fetcher.token()->intake());
-
-    if (disable_intake_tls.given()) {
-      intake_config.disable_tls(*disable_intake_tls);
+    std::optional<AuthzFetcher> authz_fetcher;
+    config::IntakeConfig intake_config;
+    switch(*auth_method) {
+    case collector::AuthMethod::none:
+      intake_config = intake_config_handler.read_config();
+      break;
+    case collector::AuthMethod::authz: {
+      auto &authz_server = AuthzFetcher::register_args_parser(parser);
+      auto maybe_proxy_config = config::HttpProxyConfig::read_from_env();
+      auto proxy_config = maybe_proxy_config ? &*maybe_proxy_config : nullptr;
+      authz_fetcher.emplace(*curl_engine, *authz_server, agent_key, agent_id, proxy_config);
+      intake_config = intake_config_handler.read_config(authz_fetcher->token()->intake());
+    }
+      break;
+    default:
+      throw std::runtime_error("invalid auth_method");
+      break;
     }
 
     // Initialize our kernel telemetry collector
@@ -665,10 +691,13 @@ int main(int argc, char *argv[]) {
         host_info,
         *entrypoint_error};
 
-    authz_fetcher.auto_refresh(
-      loop,
-      std::bind(&KernelCollector::update_authz_token, &kernel_collector, std::placeholders::_1)
-    );
+    if (*auth_method == collector::AuthMethod::authz) {
+      assert(*authz_fetcher);
+      authz_fetcher->auto_refresh(
+        loop,
+        std::bind(&KernelCollector::update_authz_token, &kernel_collector, std::placeholders::_1)
+      );
+    }
 
     signal_manager.handle_signals(
       {SIGINT, SIGTERM},

@@ -102,8 +102,8 @@ public:
    */
   FlagProxy add_env_flag(
     std::string const &name,
-    char const *env_var,
     std::string const &description,
+    char const *env_var,
     bool default_value = false
   );
 
