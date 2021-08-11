@@ -1,0 +1,12 @@
+BasedOnStyle:  LLVM
+AlignAfterOpenBracket: AlwaysBreak
+AllowShortFunctionsOnASingleLine: Inline
+BinPackArguments: false
+BinPackParameters: false
+BraceWrapping:
+  AfterFunction:   true
+  SplitEmptyFunction: false
+BreakBeforeBraces: Custom
+BreakStringLiterals: false
+ColumnLimit: 128
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
