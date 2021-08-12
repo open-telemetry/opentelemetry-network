@@ -52,15 +52,15 @@ public:
   int retcode;
 };
 
-std::string_view AwsMetadataValue::value() const {
-  if (retcode_ != 0) { return {}; }
+std::string_view AwsMetadataValue::value() const
+{
+  if (retcode_ != 0) {
+    return {};
+  }
   return value_;
 }
 
-AwsNetworkInterface::AwsNetworkInterface(std::string interface_id)
-    : interface_id_(interface_id)
-{
-}
+AwsNetworkInterface::AwsNetworkInterface(std::string interface_id) : interface_id_(interface_id) {}
 
 void AwsNetworkInterface::set_info(FetchResult const &info)
 {
@@ -99,8 +99,7 @@ void AwsNetworkInterface::set_mapped_ipv4s(FetchResult const &info)
   }
 }
 
-void AwsNetworkInterface::set_multiline_info(AwsMetadataValue const &info,
-                                             std::vector<std::string> &dest)
+void AwsNetworkInterface::set_multiline_info(AwsMetadataValue const &info, std::vector<std::string> &dest)
 {
   if (info.valid()) {
     std::istringstream stream(std::string(info.value()));
@@ -132,17 +131,13 @@ void AwsNetworkInterface::print_interface() const
   }
 }
 
-AwsMetadata::AwsMetadata(std::chrono::microseconds timeout):
-  timeout_(timeout)
-{}
+AwsMetadata::AwsMetadata(std::chrono::microseconds timeout) : timeout_(timeout) {}
 
-AwsMetadata::FetchResult
-AwsMetadata::fetch(std::map<std::string, std::string> keys_to_endpoints)
+AwsMetadata::FetchResult AwsMetadata::fetch(std::map<std::string, std::string> keys_to_endpoints)
 {
   std::vector<Fetch *> fetches;
   for (auto key_to_endpoint : keys_to_endpoints) {
-    fetches.push_back(
-        new Fetch(key_to_endpoint.first, key_to_endpoint.second.c_str()));
+    fetches.push_back(new Fetch(key_to_endpoint.first, key_to_endpoint.second.c_str()));
   }
 
   /* add fetches to curlpp::Multi for parallel fetch */
@@ -178,8 +173,7 @@ AwsMetadata::fetch(std::map<std::string, std::string> keys_to_endpoints)
       if (remaining_usecs <= PAUSE_USEC_WHEN_NOT_READY) {
         /* just sleep the rest of the timeout */
         rc = select(1, NULL, NULL, NULL, &timeout);
-      }
-      else {
+      } else {
         /* we'll sleep for PAUSE_USEC_WHEN_NOT_READY */
         struct timeval pause;
         pause.tv_sec = PAUSE_USEC_WHEN_NOT_READY / 1000000;
@@ -195,8 +189,7 @@ AwsMetadata::fetch(std::map<std::string, std::string> keys_to_endpoints)
         timeout.tv_sec = remaining_usecs / 1000000;
         timeout.tv_usec = remaining_usecs % 1000000;
       }
-    }
-    else {
+    } else {
       rc = select(maxfd + 1, &fdread, &fdwrite, &fdexcep, &timeout);
     }
 
@@ -208,15 +201,18 @@ AwsMetadata::fetch(std::map<std::string, std::string> keys_to_endpoints)
       }
       std::stringstream ss;
       ss << "select returned -1\n"
-         << "id: " << id() << ",az: " << az() << ",iam_role: " << iam_role()
-         << ",type: " << type() << "\n";
+         << "id: " << id() << ",az: " << az() << ",iam_role: " << iam_role() << ",type: " << type() << "\n";
       throw std::runtime_error(ss.str());
     }
 
     while (!multi.perform(&still_running)) {
     }
-    LOG::debug_in(CloudPlatform::aws, "select {} still_running {} timeout {}", rc, still_running,
-               (timeout.tv_sec * 1000000 + timeout.tv_usec));
+    LOG::debug_in(
+        CloudPlatform::aws,
+        "select {} still_running {} timeout {}",
+        rc,
+        still_running,
+        (timeout.tv_sec * 1000000 + timeout.tv_usec));
 
     if (still_running == 0)
       break; /* finished all, can stop looping */
@@ -236,8 +232,8 @@ AwsMetadata::fetch(std::map<std::string, std::string> keys_to_endpoints)
   /* Create result map */
   std::map<std::string, AwsMetadataValue> ret;
   for (auto fetchp : fetches)
-    ret.emplace(std::piecewise_construct, std::forward_as_tuple(fetchp->key),
-                std::forward_as_tuple(fetchp->value, fetchp->retcode));
+    ret.emplace(
+        std::piecewise_construct, std::forward_as_tuple(fetchp->key), std::forward_as_tuple(fetchp->value, fetchp->retcode));
 
   /* cleanup */
   for (auto fetchp : fetches) {
@@ -248,7 +244,8 @@ AwsMetadata::fetch(std::map<std::string, std::string> keys_to_endpoints)
   return ret;
 }
 
-Expected<AwsMetadata, std::runtime_error> AwsMetadata::fetch(std::chrono::microseconds timeout) {
+Expected<AwsMetadata, std::runtime_error> AwsMetadata::fetch(std::chrono::microseconds timeout)
+{
   AwsMetadata metadata{timeout};
 
   try {
@@ -306,14 +303,10 @@ bool AwsMetadata::fetch_aws_instance_metadata()
   // get vpc_id, private/public ipv4, and ipv6 for each network interface
   fetches.clear();
   for (auto interface : network_interfaces_) {
-    std::string vpc_url =
-        METADATA_PREFIX "network/interfaces/macs/" + interface.id() + "/vpc-id";
-    std::string local_ipv4_url = METADATA_PREFIX "network/interfaces/macs/" +
-                                 interface.id() + "/local-ipv4s";
-    std::string public_ipv4_url = METADATA_PREFIX "network/interfaces/macs/" +
-                                  interface.id() + "/public-ipv4s";
-    std::string ipv6_url =
-        METADATA_PREFIX "network/interfaces/macs/" + interface.id() + "/ipv6s";
+    std::string vpc_url = METADATA_PREFIX "network/interfaces/macs/" + interface.id() + "/vpc-id";
+    std::string local_ipv4_url = METADATA_PREFIX "network/interfaces/macs/" + interface.id() + "/local-ipv4s";
+    std::string public_ipv4_url = METADATA_PREFIX "network/interfaces/macs/" + interface.id() + "/public-ipv4s";
+    std::string ipv6_url = METADATA_PREFIX "network/interfaces/macs/" + interface.id() + "/ipv6s";
     fetches[interface.id() + "_vpc_id"] = vpc_url;
     fetches[interface.id() + "_private_ipv4"] = local_ipv4_url;
     fetches[interface.id() + "_public_ipv4"] = public_ipv4_url;
@@ -329,8 +322,7 @@ bool AwsMetadata::fetch_aws_instance_metadata()
   fetches.clear();
   for (auto &interface : network_interfaces_) {
     for (auto public_ip : interface.public_ipv4s()) {
-      std::string url = METADATA_PREFIX "network/interfaces/macs/" +
-                        interface.id() + "/ipv4-associations/" + public_ip;
+      std::string url = METADATA_PREFIX "network/interfaces/macs/" + interface.id() + "/ipv4-associations/" + public_ip;
       fetches[interface.id() + "_" + public_ip] = url;
     }
   }
@@ -366,8 +358,7 @@ Fetch::Fetch(const std::string &name, const char *url) : key(name), retcode(-1)
 
   /* set the write callback */
   using namespace std::placeholders;
-  curlpp::types::WriteFunctionFunctor functor =
-      std::bind(&Fetch::write, this, _1, _2, _3);
+  curlpp::types::WriteFunctionFunctor functor = std::bind(&Fetch::write, this, _1, _2, _3);
   easy.setOpt(curlpp::options::WriteFunction(functor));
 
   /* We want to get a failure on failed HTTP retcode (404, etc) */

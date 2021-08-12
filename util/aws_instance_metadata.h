@@ -29,12 +29,12 @@
 struct AwsMetadataValue {
   AwsMetadataValue() : retcode_(-1) {}
   AwsMetadataValue(std::string v, int rc) : value_(std::move(v)), retcode_(rc) {}
-  friend std::ostream &operator<<(std::ostream &os,
-                                  const AwsMetadataValue &val);
+  friend std::ostream &operator<<(std::ostream &os, const AwsMetadataValue &val);
 
   std::string_view value() const;
 
-  void set(std::string_view value, int retcode = 0) {
+  void set(std::string_view value, int retcode = 0)
+  {
     value_ = value;
     retcode_ = 0;
   }
@@ -42,7 +42,7 @@ struct AwsMetadataValue {
   bool valid() const { return retcode_ == 0; }
 
   explicit operator bool() const { return valid(); }
-  bool operator !() const { return !valid(); }
+  bool operator!() const { return !valid(); }
 
 private:
   std::string value_;
@@ -92,8 +92,7 @@ private:
    *
    * This is used specifically to fill {public/private}_ipv4s_ and ipv6s_.
    */
-  void set_multiline_info(AwsMetadataValue const &info,
-                          std::vector<std::string> &dest);
+  void set_multiline_info(AwsMetadataValue const &info, std::vector<std::string> &dest);
 
   std::string interface_id_;
   std::string vpc_id_;
@@ -124,10 +123,7 @@ public:
   AwsMetadataValue const &type() const { return type_; };
   AwsMetadataValue const &account_id() const { return account_id_; };
 
-  const std::vector<AwsNetworkInterface> &network_interfaces() const
-  {
-    return network_interfaces_;
-  };
+  const std::vector<AwsNetworkInterface> &network_interfaces() const { return network_interfaces_; };
 
   static Expected<AwsMetadata, std::runtime_error> fetch(std::chrono::microseconds timeout);
 

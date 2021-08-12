@@ -25,18 +25,14 @@
 #include <limits>
 #include <optional>
 
-template <class Metric, std::size_t SIZE, std::size_t N_EPOCHS,
-          class Allocator = std::allocator<Metric>>
-class MetricStore {
+template <class Metric, std::size_t SIZE, std::size_t N_EPOCHS, class Allocator = std::allocator<Metric>> class MetricStore {
 public:
   using metric_type = Metric;
   static constexpr std::size_t size = SIZE;
   static constexpr std::size_t n_epochs = N_EPOCHS;
-  using index_type =
-      typename std::conditional<(SIZE >= (1 << 16) - 2), u32, u16>::type;
+  using index_type = typename std::conditional<(SIZE >= (1 << 16) - 2), u32, u16>::type;
   static constexpr index_type invalid = std::numeric_limits<index_type>::max();
-  static constexpr index_type list_end =
-      std::numeric_limits<index_type>::max() - 1;
+  static constexpr index_type list_end = std::numeric_limits<index_type>::max() - 1;
   using epoch_type = u32;
 
   class queue_type {
@@ -70,11 +66,9 @@ public:
     index_type head_;
   };
 
-  MetricStore(const fast_div &t_to_timeslot)
-    : t_to_timeslot_(t_to_timeslot)
+  MetricStore(const fast_div &t_to_timeslot) : t_to_timeslot_(t_to_timeslot)
   {
-    static_assert((((N_EPOCHS) & ((N_EPOCHS)-1)) == 0),
-                  "N_EPOCHS must be a power of 2");
+    static_assert((((N_EPOCHS) & ((N_EPOCHS)-1)) == 0), "N_EPOCHS must be a power of 2");
 
     for (u32 i = 0; i < n_epochs; i++) {
       auto &queue = queue_[i];
@@ -104,8 +98,7 @@ public:
    *
    * @assumes timeslot < N_EPOCHS.
    */
-  std::pair<bool, metric_type &> lookup_relative(u32 index, epoch_type bin,
-                                                 bool enqueue)
+  std::pair<bool, metric_type &> lookup_relative(u32 index, epoch_type bin, bool enqueue)
   {
     assert(index < size);
     assert(bin < n_epochs);
@@ -154,10 +147,7 @@ public:
   /**
    * returns the number of time units that one slot takes up
    */
-  double slot_duration() const
-  {
-    return slot_duration_;
-  }
+  double slot_duration() const { return slot_duration_; }
 
 private:
   friend class queue_type;
@@ -172,8 +162,7 @@ private:
     std::array<index_type, n_epochs> next;
   };
 
-  using element_allocator_type = typename std::allocator_traits<
-      Allocator>::template rebind_alloc<element_type>;
+  using element_allocator_type = typename std::allocator_traits<Allocator>::template rebind_alloc<element_type>;
 
   /* array of statistics */
   LazyArray<element_type, size, element_allocator_type> arr_;

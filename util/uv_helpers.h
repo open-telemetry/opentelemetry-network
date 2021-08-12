@@ -38,13 +38,13 @@
 struct uv_error_t {
   inline uv_error_t(int error) : error_(error) {}
 
-  int operator *() const { return error_; }
+  int operator*() const { return error_; }
 
-  bool operator !() const { return !error_; }
+  bool operator!() const { return !error_; }
   explicit operator bool() const { return !!error_; }
 
-  template <typename Out>
-  friend Out &&operator <<(Out &&out, uv_error_t const &what) {
+  template <typename Out> friend Out &&operator<<(Out &&out, uv_error_t const &what)
+  {
     char buffer[ERROR_BUFFER_SIZE];
 
     ::uv_err_name_r(*what, buffer, ERROR_BUFFER_SIZE);
@@ -65,7 +65,7 @@ private:
 };
 
 // Runs `fn` in a thread-safe manner within the `loop`'s thread and waits for
-// its execution to finish before returning. 
+// its execution to finish before returning.
 // NOTE: this is not optimized for speed - it's a blocking operation. Use only
 // in test scenarios or application startup / shutdown where speed is not
 // critical.
@@ -73,14 +73,13 @@ void sync_uv_run(::uv_loop_t &loop, std::function<void()> fn);
 
 // Evaluates the libuv-error-returning expression. If an error occurs, will
 // panic and log the error message.
-#define CHECK_UV(...)                                                          \
-  {                                                                            \
-    const auto result = (__VA_ARGS__);                                         \
-    if (result != 0 /* success */) {                                           \
-      LOG::critical("libuv failure in {}:{} - {}", __FILE__, __LINE__,         \
-                    uv_strerror(result));                                      \
-      std::exit(1);                                                            \
-    }                                                                          \
+#define CHECK_UV(...)                                                                                                          \
+  {                                                                                                                            \
+    const auto result = (__VA_ARGS__);                                                                                         \
+    if (result != 0 /* success */) {                                                                                           \
+      LOG::critical("libuv failure in {}:{} - {}", __FILE__, __LINE__, uv_strerror(result));                                   \
+      std::exit(1);                                                                                                            \
+    }                                                                                                                          \
   }
 
 // Closes the loop and its associated handles. The caller is still responsible

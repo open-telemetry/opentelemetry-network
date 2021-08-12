@@ -21,10 +21,10 @@
 #ifndef INCLUDE_FASTPASS_PLATFORM_NO_DPDK_H_
 #define INCLUDE_FASTPASS_PLATFORM_NO_DPDK_H_
 
-#define FASTPASS_PR_DEBUG(enable, fmt, a...)                                   \
-  do {                                                                         \
-    if (enable)                                                                \
-      printf("%s: " fmt, __func__, ##a);                                       \
+#define FASTPASS_PR_DEBUG(enable, fmt, a...)                                                                                   \
+  do {                                                                                                                         \
+    if (enable)                                                                                                                \
+      printf("%s: " fmt, __func__, ##a);                                                                                       \
   } while (0)
 
 #ifndef likely

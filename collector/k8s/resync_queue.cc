@@ -20,18 +20,17 @@
 #include <unistd.h>
 #include <vector>
 
-#include "util/log.h"
 #include "resync_channel.h"
+#include "util/log.h"
 
 namespace collector {
 
 ResyncQueue::ResyncQueue()
-    : element_queue_storage_(
-          new MemElementQueueStorage(queue_num_elements_, queue_buffer_size_)),
-      read_queue_(element_queue_storage_), write_queue_(element_queue_storage_),
+    : element_queue_storage_(new MemElementQueueStorage(queue_num_elements_, queue_buffer_size_)),
+      read_queue_(element_queue_storage_),
+      write_queue_(element_queue_storage_),
       last_resync_(0)
-{
-}
+{}
 
 ResyncQueue::~ResyncQueue() {}
 
@@ -64,8 +63,7 @@ void ResyncQueue::consumer_reset()
   }
 }
 
-std::unique_ptr<ResyncChannel>
-ResyncQueue::new_channel(std::function<void(void)> &reset_callback)
+std::unique_ptr<ResyncChannel> ResyncQueue::new_channel(std::function<void(void)> &reset_callback)
 {
   std::lock_guard<std::recursive_mutex> lock(mutex_);
   last_resync_ += 1;

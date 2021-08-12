@@ -59,8 +59,7 @@ public:
 
   explicit operator bool() const;
 
-  template <typename Out>
-  friend Out &&operator <<(Out &&out, K8sMetadata const &what);
+  template <typename Out> friend Out &&operator<<(Out &&out, K8sMetadata const &what);
 
 private:
   std::string container_name_;

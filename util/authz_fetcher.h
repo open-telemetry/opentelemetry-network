@@ -53,12 +53,11 @@ public:
    * Constructs the authz token fetcher and automatically fetches the first authz token.
    */
   AuthzFetcher(
-    CurlEngine &curl,
-    std::string authz_server,
-    AgentKey const &agent_key,
-    std::string const &agent_id,
-    config::HttpProxyConfig const *proxy = nullptr
-  );
+      CurlEngine &curl,
+      std::string authz_server,
+      AgentKey const &agent_key,
+      std::string const &agent_id,
+      config::HttpProxyConfig const *proxy = nullptr);
 
   /**
    * Destructor will automatically stop auto-refresh if it has been previously initiated.
@@ -68,15 +67,14 @@ public:
   class ScheduledFetch {
   public:
     ScheduledFetch(
-      uv_loop_t &loop,
-      std::string const &url,
-      std::string const &secret_header,
-      std::string const &agent_id_header,
-      CurlEngine &curl,
-      std::function<void(std::string_view)> on_success,
-      std::function<void()> on_network_error,
-      config::HttpProxyConfig const *proxy = nullptr
-    );
+        uv_loop_t &loop,
+        std::string const &url,
+        std::string const &secret_header,
+        std::string const &agent_id_header,
+        CurlEngine &curl,
+        std::function<void(std::string_view)> on_success,
+        std::function<void()> on_network_error,
+        config::HttpProxyConfig const *proxy = nullptr);
 
     void schedule(scheduling::Timer::TimerPeriod timeout);
     void schedule_backoff();

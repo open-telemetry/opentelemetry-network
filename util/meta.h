@@ -32,8 +32,7 @@ namespace meta {
  *
  * For a real-world example of usage, check `meta::foreach`.
  */
-template <typename T>
-struct tag {
+template <typename T> struct tag {
   using type = T;
 };
 
@@ -44,14 +43,12 @@ struct tag {
  *
  * For a real-world example of usage, check `meta::foreach`.
  */
-template <typename T>
-typename T::type tag_type(T);
+template <typename T> typename T::type tag_type(T);
 
 /**
  * A minimalistic type-list used to represent a list of types at compile time.
  */
-template <typename... T>
-struct list {
+template <typename... T> struct list {
   /**
    * The size of the list.
    */
@@ -87,7 +84,6 @@ namespace meta {
  *    std::cout << "\nvalue given: " << value << std::endl;
  *  });
  */
-template <typename List, typename Fn, typename... Args>
-void foreach(Fn &&fn, Args &&...args);
+template <typename List, typename Fn, typename... Args> void foreach (Fn &&fn, Args && ... args);
 
 } // namespace meta

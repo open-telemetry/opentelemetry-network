@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-#pragma once 
+#pragma once
 
 #ifdef STANDALONE_TCP_PROCESSOR
 
@@ -39,12 +39,12 @@ struct tcp_events_t {
       u8 __pad0[5]; // 64 bit align
       u64 latency;  // request/response latency in ns
     } http_response;
-    struct {        // TCP Data events data
-      u32 length;   // Length of chunk
-      u8 streamtype;// STREAM_TYPE
-      u8 is_server; // CLIENT_SERVER_TYPE
-      u16 __pad0;   // 64 bit align
-      u64 offset;   // Position in the stream
+    struct {         // TCP Data events data
+      u32 length;    // Length of chunk
+      u8 streamtype; // STREAM_TYPE
+      u8 is_server;  // CLIENT_SERVER_TYPE
+      u16 __pad0;    // 64 bit align
+      u64 offset;    // Position in the stream
     } tcp_data;
     struct {
       u64 __pad0; // Padding to ensure length is multiple of 8 bytes
@@ -58,24 +58,18 @@ BPF_PERF_OUTPUT(tcp_events);
 
 #endif
 
-
 // Utility functions
 
-static void tcp_events_submit_http_response(struct pt_regs *ctx,
-                                            struct sock *sk, u16 code,
-                                            u64 latency, enum CLIENT_SERVER_TYPE dir)
+static void
+tcp_events_submit_http_response(struct pt_regs *ctx, struct sock *sk, u16 code, u64 latency, enum CLIENT_SERVER_TYPE dir)
 {
   GET_PID_TGID
   u64 now = get_timestamp();
 
 #ifdef STANDALONE_TCP_PROCESSOR
 
-  struct tcp_events_t event = {.type = TCP_EVENT_TYPE_HTTP_RESPONSE,
-                               .pid = _tgid,
-                               .ts = now,
-                               .sk = (u64)sk,
-                               .__align.__pad0 = 0,
-                               .__align.__pad1 = 0};
+  struct tcp_events_t event = {
+      .type = TCP_EVENT_TYPE_HTTP_RESPONSE, .pid = _tgid, .ts = now, .sk = (u64)sk, .__align.__pad0 = 0, .__align.__pad1 = 0};
   event.http_response.code = code;
   event.http_response.dir = (u8)dir;
   event.http_response.latency = latency;
@@ -84,14 +78,17 @@ static void tcp_events_submit_http_response(struct pt_regs *ctx,
 
 #else
 
-  perf_submit_agent_internal__http_response(ctx, now, (u64)sk, _tgid, code,
-                                            latency, dir);
+  perf_submit_agent_internal__http_response(ctx, now, (u64)sk, _tgid, code, latency, dir);
 #endif
 }
 
-static void tcp_events_submit_tcp_data(struct pt_regs *ctx, struct tcp_connection_t *pconn,
-                            enum STREAM_TYPE streamtype, enum CLIENT_SERVER_TYPE is_server,
-                            const void *data, size_t data_len)
+static void tcp_events_submit_tcp_data(
+    struct pt_regs *ctx,
+    struct tcp_connection_t *pconn,
+    enum STREAM_TYPE streamtype,
+    enum CLIENT_SERVER_TYPE is_server,
+    const void *data,
+    size_t data_len)
 {
 
   // submit data to data channel
@@ -102,22 +99,16 @@ static void tcp_events_submit_tcp_data(struct pt_regs *ctx, struct tcp_connectio
   u64 now = get_timestamp();
 
 #if DEBUG_TCP_DATA
-  bpf_trace_printk("tcp_events_submit_tcp_data: tstamp=%u sk=%llx streamtype=%d\n",
-    now, pconn->sk, streamtype);
-  bpf_trace_printk("                  is_server=%d, data_len=%u\n",
-    is_server, data_len);
+  bpf_trace_printk("tcp_events_submit_tcp_data: tstamp=%u sk=%llx streamtype=%d\n", now, pconn->sk, streamtype);
+  bpf_trace_printk("                  is_server=%d, data_len=%u\n", is_server, data_len);
 #endif
 
   GET_PID_TGID;
 
-#ifdef STANDALONE_TCP_PROCESSOR  
+#ifdef STANDALONE_TCP_PROCESSOR
 
-  struct tcp_events_t event = {.type = TCP_EVENT_TYPE_TCP_DATA,
-                               .pid = _tgid,
-                               .ts = now,
-                               .sk = (u64)pconn->sk,
-                               .__align.__pad0 = 0,
-                               .__align.__pad1 = 0};
+  struct tcp_events_t event = {
+      .type = TCP_EVENT_TYPE_TCP_DATA, .pid = _tgid, .ts = now, .sk = (u64)pconn->sk, .__align.__pad0 = 0, .__align.__pad1 = 0};
   event.tcp_data.length = actual_len;
   event.tcp_data.streamtype = (u8)streamtype;
   event.tcp_data.is_server = (u8)is_server;
@@ -128,8 +119,8 @@ static void tcp_events_submit_tcp_data(struct pt_regs *ctx, struct tcp_connectio
 #else
 
   // Submit the control perf ring tcp data message
-  perf_submit_agent_internal__tcp_data(ctx, now, (u64)pconn->sk, _tgid, actual_len, pconn->streams[streamtype].total, streamtype, is_server);
+  perf_submit_agent_internal__tcp_data(
+      ctx, now, (u64)pconn->sk, _tgid, actual_len, pconn->streams[streamtype].total, streamtype, is_server);
 
 #endif
 }
-

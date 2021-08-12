@@ -21,16 +21,14 @@
 #include <util/pool_allocator.h>
 
 #include <cstddef>
+#include <functional>
 #include <limits>
 #include <memory>
 #include <type_traits>
-#include <functional>
 
-template <class T, std::size_t SIZE, class Allocator = std::allocator<T>>
-class Pool {
+template <class T, std::size_t SIZE, class Allocator = std::allocator<T>> class Pool {
 public:
-  using index_type =
-      typename std::conditional<(SIZE >= (1 << 16) - 1), u32, u16>::type;
+  using index_type = typename std::conditional<(SIZE >= (1 << 16) - 1), u32, u16>::type;
   using element_type = T;
   using size_type = std::size_t;
   using bitmap_type = IterableBitmap<SIZE>;
@@ -46,13 +44,10 @@ private:
   };
 
   /* POD type suitable for use as uninitialized storage */
-  using storage_type =
-      typename std::aligned_storage<sizeof(poolable_type),
-                                    alignof(poolable_type)>::type;
+  using storage_type = typename std::aligned_storage<sizeof(poolable_type), alignof(poolable_type)>::type;
 
   /* allocator traits rebound to the storage type */
-  using allocator_traits = typename std::allocator_traits<
-      Allocator>::template rebind_traits<storage_type>;
+  using allocator_traits = typename std::allocator_traits<Allocator>::template rebind_traits<storage_type>;
 
 public:
   using allocator_type = typename allocator_traits::allocator_type;
@@ -74,8 +69,7 @@ public:
     elements_ = allocator_traits::allocate(allocator_, pool_size);
 
     /* initialize the pool allocator (does not throw) */
-    pool_allocator_init(&pool_alloc_, &elements_[0], sizeof(poolable_type),
-                        pool_size);
+    pool_allocator_init(&pool_alloc_, &elements_[0], sizeof(poolable_type), pool_size);
   }
 
   ~Pool()
@@ -140,12 +134,10 @@ public:
     u32 index = pool_allocator_alloc(&pool_alloc_);
     assert(index != ~0u);
     bool disarm = false;
-    DisarmGuard pool_guard(
-        disarm, [index, this] { pool_allocator_free(&pool_alloc_, index); });
+    DisarmGuard pool_guard(disarm, [index, this] { pool_allocator_free(&pool_alloc_, index); });
 
     /* construct the object, might throw! */
-    allocator_traits::construct(allocator_, (element_type *)&elements_[index],
-                                std::forward<Args>(args)...);
+    allocator_traits::construct(allocator_, (element_type *)&elements_[index], std::forward<Args>(args)...);
 
     /* okay, we're good! */
     elem_count_++;
@@ -177,9 +169,7 @@ public:
 
 private:
   struct DisarmGuard {
-    template <typename F>
-    DisarmGuard(bool &disarm_b, F fn) : fn_(fn), disarm_(disarm_b)
-    {}
+    template <typename F> DisarmGuard(bool &disarm_b, F fn) : fn_(fn), disarm_(disarm_b) {}
     ~DisarmGuard()
     {
       if (!disarm_)
@@ -205,8 +195,5 @@ private:
   /**
    * Destroys the element at @index.
    */
-  void destroy(index_type index)
-  {
-    allocator_traits::destroy(allocator_, (T *)&elements_[(u32)index]);
-  }
+  void destroy(index_type index) { allocator_traits::destroy(allocator_, (T *)&elements_[(u32)index]); }
 };

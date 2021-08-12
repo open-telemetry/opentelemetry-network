@@ -44,19 +44,23 @@ public:
   /**
    * c'tor
    */
-  KernelCollector(const std::string &full_program,
-                  config::IntakeConfig const &intake_config,
-                  u64 boot_time_adjustment, AwsMetadata const *aws_metadata,
-                  GcpInstanceMetadata const *gcp_metadata,
-                  std::map<std::string, std::string> configuration_data,
-                  uv_loop_t &loop, CurlEngine &curl_engine,
-                  std::optional<AuthzFetcher> &authz_fetcher,
-                  bool enable_http_metrics,
-                  bool enable_userland_tcp,
-                  CgroupHandler::CgroupSettings cgroup_settings,
-                  ProcessHandler::CpuMemIoSettings const *cpu_mem_io_settings,
-                  std::string const &bpf_dump_file, HostInfo host_info,
-                  EntrypointError error);
+  KernelCollector(
+      const std::string &full_program,
+      config::IntakeConfig const &intake_config,
+      u64 boot_time_adjustment,
+      AwsMetadata const *aws_metadata,
+      GcpInstanceMetadata const *gcp_metadata,
+      std::map<std::string, std::string> configuration_data,
+      uv_loop_t &loop,
+      CurlEngine &curl_engine,
+      std::optional<AuthzFetcher> &authz_fetcher,
+      bool enable_http_metrics,
+      bool enable_userland_tcp,
+      CgroupHandler::CgroupSettings cgroup_settings,
+      ProcessHandler::CpuMemIoSettings const *cpu_mem_io_settings,
+      std::string const &bpf_dump_file,
+      HostInfo host_info,
+      EntrypointError error);
 
   /**
    * d'tor

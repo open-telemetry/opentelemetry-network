@@ -29,7 +29,6 @@ inline int char_to_number(char x)
   return (int)(x - '0');
 }
 
-#define U32IDX(X,N) (absl::little_endian::FromHost32(((u32 *)(X))[(N)]))
-#define _U32CH(X,N) (((u32)((X)[(N)]))<<(8*(N)))
-#define U32CC(X) \
-  ( _U32CH(X,0) | _U32CH(X,1) | _U32CH(X,2) | _U32CH(X,3) )
+#define U32IDX(X, N) (absl::little_endian::FromHost32(((u32 *)(X))[(N)]))
+#define _U32CH(X, N) (((u32)((X)[(N)])) << (8 * (N)))
+#define U32CC(X) (_U32CH(X, 0) | _U32CH(X, 1) | _U32CH(X, 2) | _U32CH(X, 3))

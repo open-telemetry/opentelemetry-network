@@ -29,8 +29,7 @@ namespace collector {
 // ResyncChannel handles the resync counting and resource clean-up.
 class ResyncChannel : public ::channel::Channel {
 public:
-  ResyncChannel(const u64 resync, ResyncQueueProducerInterface *resync_queue,
-                std::function<void(void)> &reset_callback);
+  ResyncChannel(const u64 resync, ResyncQueueProducerInterface *resync_queue, std::function<void(void)> &reset_callback);
   ~ResyncChannel();
 
   void reset();

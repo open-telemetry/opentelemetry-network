@@ -14,9 +14,9 @@
 // limitations under the License.
 //
 
+#include <collector/kernel/proc_reader.h>
 #include <cstdio>
 #include <stdexcept>
-#include <collector/kernel/proc_reader.h>
 
 ProcReader::ProcReader() : pid_(0)
 {

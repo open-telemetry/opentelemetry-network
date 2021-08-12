@@ -80,8 +80,7 @@ public:
    * @param from: the descriptor of the source message
    * @param to: the descriptor of the destination message
    */
-  std::shared_ptr<TransformRecord> get_xform_to(const Descriptor &from,
-                                                const Descriptor &to);
+  std::shared_ptr<TransformRecord> get_xform_to(const Descriptor &from, const Descriptor &to);
 
 private:
   Transformer xformer_;

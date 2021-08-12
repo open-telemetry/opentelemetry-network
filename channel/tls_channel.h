@@ -112,9 +112,7 @@ public:
    */
   const std::string &peer_hostname();
 
-  bool is_open() const override {
-    return tls_shim_ && transport_.is_open();
-  }
+  bool is_open() const override { return tls_shim_ && transport_.is_open(); }
 
 private:
   /**

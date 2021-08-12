@@ -23,15 +23,13 @@
 
 #include <platform/types.h>
 
-#define fp_fprintf_nonz_prefix(f, var, description, prefix)                    \
-  {                                                                            \
-    if (var)                                                                   \
-      fp_fprintf(f, prefix "%12llu  " description "\n",                        \
-                 (unsigned long long)(var));                                   \
+#define fp_fprintf_nonz_prefix(f, var, description, prefix)                                                                    \
+  {                                                                                                                            \
+    if (var)                                                                                                                   \
+      fp_fprintf(f, prefix "%12llu  " description "\n", (unsigned long long)(var));                                            \
   }
 
-#define fp_fprintf_nonz(f, var, description)                                   \
-  fp_fprintf_nonz_prefix(f, var, description, "  ")
+#define fp_fprintf_nonz(f, var, description) fp_fprintf_nonz_prefix(f, var, description, "  ")
 
 #ifdef __KERNEL__
 
@@ -55,8 +53,7 @@
 #include <net/ip.h>
 
 #ifndef time_in_range64
-#define time_in_range64(a, b, c)                                               \
-  (time_after_eq64(a, b) && time_before_eq64(a, c))
+#define time_in_range64(a, b, c) (time_after_eq64(a, b) && time_before_eq64(a, c))
 #endif
 
 typedef struct seq_file fp_outfile;
@@ -84,8 +81,8 @@ typedef FILE fp_outfile;
 #define mb() asm volatile("mfence" : : : "memory")
 #define rmb() asm volatile("lfence" : : : "memory")
 #define wmb() asm volatile("sfence" : : : "memory")
-#define read_barrier_depends()                                                 \
-  do {                                                                         \
+#define read_barrier_depends()                                                                                                 \
+  do {                                                                                                                         \
   } while (0)
 
 #define ACCESS_ONCE(x) (*(volatile typeof(x) *)&(x))
@@ -161,33 +158,30 @@ static inline int test_bit(int nr, const volatile unsigned long *addr)
 }
 
 /* kernel.h */
-#define max_t(type, x, y)                                                      \
-  ({                                                                           \
-    type __max1 = (x);                                                         \
-    type __max2 = (y);                                                         \
-    __max1 > __max2 ? __max1 : __max2;                                         \
+#define max_t(type, x, y)                                                                                                      \
+  ({                                                                                                                           \
+    type __max1 = (x);                                                                                                         \
+    type __max2 = (y);                                                                                                         \
+    __max1 > __max2 ? __max1 : __max2;                                                                                         \
   })
 
 /* typecheck.h */
-#define typecheck(type, x)                                                     \
-  ({                                                                           \
-    type __dummy;                                                              \
-    typeof(x) __dummy2;                                                        \
-    (void)(&__dummy == &__dummy2);                                             \
-    1;                                                                         \
+#define typecheck(type, x)                                                                                                     \
+  ({                                                                                                                           \
+    type __dummy;                                                                                                              \
+    typeof(x) __dummy2;                                                                                                        \
+    (void)(&__dummy == &__dummy2);                                                                                             \
+    1;                                                                                                                         \
   })
 
 /* jiffies.h */
-#define time_after64(a, b)                                                     \
-  (typecheck(u64, a) && typecheck(u64, b) && ((s64)((b) - (a)) < 0))
+#define time_after64(a, b) (typecheck(u64, a) && typecheck(u64, b) && ((s64)((b) - (a)) < 0))
 #define time_before64(a, b) time_after64(b, a)
 
-#define time_after_eq64(a, b)                                                  \
-  (typecheck(u64, a) && typecheck(u64, b) && ((s64)((a) - (b)) >= 0))
+#define time_after_eq64(a, b) (typecheck(u64, a) && typecheck(u64, b) && ((s64)((a) - (b)) >= 0))
 #define time_before_eq64(a, b) time_after_eq64(b, a)
 
-#define time_in_range64(a, b, c)                                               \
-  (time_after_eq64(a, b) && time_before_eq64(a, c))
+#define time_in_range64(a, b, c) (time_after_eq64(a, b) && time_before_eq64(a, c))
 
 /* need __fls */
 #define __fls(x) (BITS_PER_LONG - 1 - __builtin_clzl(x))
@@ -197,8 +191,7 @@ static inline int test_bit(int nr, const volatile unsigned long *addr)
 #define csum_tcpudp_magic fp_csum_tcpudp_magic
 
 /* based on rte_hash_crc from DPDK's rte_hash_crc.h, but does checksum */
-static inline uint32_t fp_csum_partial(const void *data, uint32_t data_len,
-                                       uint32_t init_val)
+static inline uint32_t fp_csum_partial(const void *data, uint32_t data_len, uint32_t init_val)
 {
   unsigned i;
   u64 sum = init_val;
@@ -257,9 +250,7 @@ static inline uint16_t fp_fold(uint64_t sum64)
   return ~((u16)sum32 + (u16)(sum32 >> 16)); /* add the overflow */
 }
 
-static inline uint16_t fp_csum_tcpudp_magic(uint32_t saddr, uint32_t daddr,
-                                            uint16_t len, uint16_t proto,
-                                            uint32_t sum32)
+static inline uint16_t fp_csum_tcpudp_magic(uint32_t saddr, uint32_t daddr, uint16_t len, uint16_t proto, uint32_t sum32)
 {
   uint64_t sum64 = sum32;
   sum64 += saddr + daddr + ((len + proto) << 8);
@@ -288,22 +279,22 @@ static inline void __clear_bit64(int nr, u64 *addr)
 #define jhash_1word fp_jhash_1word
 
 #define fp_rot(x, k) (((x) << (k)) | ((x) >> (32 - (k))))
-#define fp_jhash_final(a, b, c)                                                \
-  {                                                                            \
-    c ^= b;                                                                    \
-    c -= fp_rot(b, 14);                                                        \
-    a ^= c;                                                                    \
-    a -= fp_rot(c, 11);                                                        \
-    b ^= a;                                                                    \
-    b -= fp_rot(a, 25);                                                        \
-    c ^= b;                                                                    \
-    c -= fp_rot(b, 16);                                                        \
-    a ^= c;                                                                    \
-    a -= fp_rot(c, 4);                                                         \
-    b ^= a;                                                                    \
-    b -= fp_rot(a, 14);                                                        \
-    c ^= b;                                                                    \
-    c -= fp_rot(b, 24);                                                        \
+#define fp_jhash_final(a, b, c)                                                                                                \
+  {                                                                                                                            \
+    c ^= b;                                                                                                                    \
+    c -= fp_rot(b, 14);                                                                                                        \
+    a ^= c;                                                                                                                    \
+    a -= fp_rot(c, 11);                                                                                                        \
+    b ^= a;                                                                                                                    \
+    b -= fp_rot(a, 25);                                                                                                        \
+    c ^= b;                                                                                                                    \
+    c -= fp_rot(b, 16);                                                                                                        \
+    a ^= c;                                                                                                                    \
+    a -= fp_rot(c, 4);                                                                                                         \
+    b ^= a;                                                                                                                    \
+    b -= fp_rot(a, 14);                                                                                                        \
+    c ^= b;                                                                                                                    \
+    c -= fp_rot(b, 24);                                                                                                        \
   }
 
 /* compatibility with the kernel's jhash -- note this is only compatible

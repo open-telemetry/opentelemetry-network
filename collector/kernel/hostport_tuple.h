@@ -33,15 +33,11 @@ struct hostport_tuple {
 
   bool operator==(const hostport_tuple &rhs) const
   {
-    return (this->src_ip == rhs.src_ip) && (this->dst_ip == rhs.dst_ip) &&
-           (this->src_port == rhs.src_port) &&
+    return (this->src_ip == rhs.src_ip) && (this->dst_ip == rhs.dst_ip) && (this->src_port == rhs.src_port) &&
            (this->dst_port == rhs.dst_port) && (this->proto == rhs.proto);
   }
 
-  hostport_tuple reversed() const
-  {
-    return {dst_ip, src_ip, dst_port, src_port, proto};
-  }
+  hostport_tuple reversed() const { return {dst_ip, src_ip, dst_port, src_port, proto}; }
 };
 
 namespace std {

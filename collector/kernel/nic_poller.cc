@@ -25,12 +25,12 @@ constexpr std::string_view LOCAL_LOOPBACK_INTERFACE_NAME = "lo";
 constexpr std::string_view LOCAL_CALI_INTERFACE_NAME = "cali";
 constexpr double NIC_POLL_INTERVAL_SEC = 5;
 
-NicPoller::NicPoller(::flowmill::ingest::Writer &writer, logging::Logger &log) :
-    writer_(writer), log_(log),
-    last_timestamp_(std::chrono::high_resolution_clock::now()) {
-}
+NicPoller::NicPoller(::flowmill::ingest::Writer &writer, logging::Logger &log)
+    : writer_(writer), log_(log), last_timestamp_(std::chrono::high_resolution_clock::now())
+{}
 
-void NicPoller::poll() {
+void NicPoller::poll()
+{
   auto timestamp = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> dur = timestamp - last_timestamp_;
   if (dur.count() < NIC_POLL_INTERVAL_SEC)
@@ -46,8 +46,7 @@ void NicPoller::poll() {
       continue;
     if (if_name.substr(0, 4) == LOCAL_CALI_INTERFACE_NAME) // skip virtual calico interfaces
       continue;
-    if (!fs::exists(p.path() / "statistics/tx_bytes") &&
-        !fs::exists(p.path() / "statistics/rx_bytes"))
+    if (!fs::exists(p.path() / "statistics/tx_bytes") && !fs::exists(p.path() / "statistics/rx_bytes"))
       continue;
 
     u64 tx_bytes_total = 0;
@@ -92,23 +91,32 @@ void NicPoller::poll() {
     it->second.time_busy_ns = 0;
 
 #if DEBUG_NIC_STATS
-    log_.info("if_name {}, tx_total {}, rx_total {}, tx_rate {}, rx_rate {}, busy_ns {}, free_ns {}", if_name,
-        tx_bytes_total, rx_bytes_total, tx_bytes_rate, rx_bytes_rate, time_busy_ns, time_free_ns);
+    log_.info(
+        "if_name {}, tx_total {}, rx_total {}, tx_rate {}, rx_rate {}, busy_ns {}, free_ns {}",
+        if_name,
+        tx_bytes_total,
+        rx_bytes_total,
+        tx_bytes_rate,
+        rx_bytes_rate,
+        time_busy_ns,
+        time_free_ns);
 #endif
-    writer_.nic_stats(jb_blob{if_name}, tx_bytes_total,
-                                        rx_bytes_total,
-                                        tx_bytes_rate,
-                                        rx_bytes_rate,
-                                        tx_errors,
-                                        rx_errors,
-                                        time_busy_ns,
-                                        time_free_ns);
+    writer_.nic_stats(
+        jb_blob{if_name},
+        tx_bytes_total,
+        rx_bytes_total,
+        tx_bytes_rate,
+        rx_bytes_rate,
+        tx_errors,
+        rx_errors,
+        time_busy_ns,
+        time_free_ns);
   }
 }
 
-void NicPoller::handle_nic_queue_state(u64 timestamp, jb_agent_internal__nic_queue_state *msg) {
-  std::string if_name{(char const *)msg->if_name,
-      strnlen((char const *)msg->if_name, sizeof(msg->if_name))};
+void NicPoller::handle_nic_queue_state(u64 timestamp, jb_agent_internal__nic_queue_state *msg)
+{
+  std::string if_name{(char const *)msg->if_name, strnlen((char const *)msg->if_name, sizeof(msg->if_name))};
 
   if (if_name.empty() || if_name == LOCAL_LOOPBACK_INTERFACE_NAME) // skip loopback interface
     return;

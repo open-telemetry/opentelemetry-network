@@ -18,8 +18,8 @@
 
 #include <memory>
 
-#include <platform/platform.h>
 #include <collector/kernel/perf_reader.h>
+#include <platform/platform.h>
 
 class PerfPoller {
 public:

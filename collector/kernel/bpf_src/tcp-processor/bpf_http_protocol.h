@@ -18,22 +18,26 @@
 // bpf_http_request.h - BPF HTTP Request Parsing
 //
 
-#pragma once 
+#pragma once
 
 struct http_protocol_state_data_t {
   u64 request_timestamp;
   u64 __unused; // Keep this to TCP_SOCKET_PROTOCOL_STATE_SIZE
 };
 
-static enum TCP_PROTOCOL_DETECT_RESULT
-http_detect(struct pt_regs *ctx, struct tcp_connection_t *pconn,
-            struct tcp_control_value_t *pctrl, enum STREAM_TYPE streamtype,
-            const u8 *data, size_t data_len)
+static enum TCP_PROTOCOL_DETECT_RESULT http_detect(
+    struct pt_regs *ctx,
+    struct tcp_connection_t *pconn,
+    struct tcp_control_value_t *pctrl,
+    enum STREAM_TYPE streamtype,
+    const u8 *data,
+    size_t data_len)
 {
 #if TRACE_HTTP_PROTOCOL
-  DEBUG_PRINTK("http_detect: start=%llu, total=%llu\n",
-               (u32)pctrl->streams[(int)streamtype].start,
-               pconn->streams[(int)streamtype].total);
+  DEBUG_PRINTK(
+      "http_detect: start=%llu, total=%llu\n",
+      (u32)pctrl->streams[(int)streamtype].start,
+      pconn->streams[(int)streamtype].total);
   DEBUG_PRINTK("             data=%s, data_len=%d\n", data, (int)data_len);
 #endif
 
@@ -46,39 +50,31 @@ http_detect(struct pt_regs *ctx, struct tcp_connection_t *pconn,
     bpf_probe_read(&c, 1, data);
     switch (c) {
     case 'G':
-      res = string_starts_with(data + 1, data_len - 1, "ET") ? TPD_SUCCESS
-                                                             : TPD_FAILED;
+      res = string_starts_with(data + 1, data_len - 1, "ET") ? TPD_SUCCESS : TPD_FAILED;
       break;
     case 'H':
       if (data_len >= 4) {
-        res = string_starts_with(data + 1, data_len - 1, "EAD") ? TPD_SUCCESS
-                                                                : TPD_FAILED;
+        res = string_starts_with(data + 1, data_len - 1, "EAD") ? TPD_SUCCESS : TPD_FAILED;
       }
       break;
     case 'D':
       if (data_len >= 6) {
-        res = string_starts_with(data + 1, data_len - 1, "ELETE") ? TPD_SUCCESS
-                                                                  : TPD_FAILED;
+        res = string_starts_with(data + 1, data_len - 1, "ELETE") ? TPD_SUCCESS : TPD_FAILED;
       }
       break;
     case 'C':
       if (data_len >= 7) {
-        res = string_starts_with(data + 1, data_len - 1, "ONNECT")
-                  ? TPD_SUCCESS
-                  : TPD_FAILED;
+        res = string_starts_with(data + 1, data_len - 1, "ONNECT") ? TPD_SUCCESS : TPD_FAILED;
       }
       break;
     case 'O':
       if (data_len >= 7) {
-        res = string_starts_with(data + 1, data_len - 1, "PTIONS")
-                  ? TPD_SUCCESS
-                  : TPD_FAILED;
+        res = string_starts_with(data + 1, data_len - 1, "PTIONS") ? TPD_SUCCESS : TPD_FAILED;
       }
       break;
     case 'T':
       if (data_len >= 5) {
-        res = string_starts_with(data + 1, data_len - 1, "RACE") ? TPD_SUCCESS
-                                                                 : TPD_FAILED;
+        res = string_starts_with(data + 1, data_len - 1, "RACE") ? TPD_SUCCESS : TPD_FAILED;
       }
       break;
 
@@ -86,17 +82,14 @@ http_detect(struct pt_regs *ctx, struct tcp_connection_t *pconn,
       bpf_probe_read(&c, 1, data + 1);
       switch (c) {
       case 'U':
-        res = string_starts_with(data + 2, data_len - 2, "T") ? TPD_SUCCESS
-                                                              : TPD_FAILED;
+        res = string_starts_with(data + 2, data_len - 2, "T") ? TPD_SUCCESS : TPD_FAILED;
         break;
       case 'O':
-        res = string_starts_with(data + 2, data_len - 2, "ST") ? TPD_SUCCESS
-                                                               : TPD_FAILED;
+        res = string_starts_with(data + 2, data_len - 2, "ST") ? TPD_SUCCESS : TPD_FAILED;
         break;
       case 'A':
         if (data_len >= 5) {
-          res = string_starts_with(data + 2, data_len - 2, "TCH") ? TPD_SUCCESS
-                                                                  : TPD_FAILED;
+          res = string_starts_with(data + 2, data_len - 2, "TCH") ? TPD_SUCCESS : TPD_FAILED;
         }
         break;
       default:
@@ -114,22 +107,24 @@ http_detect(struct pt_regs *ctx, struct tcp_connection_t *pconn,
   return res;
 }
 
-static void http_process_request(struct pt_regs *ctx,
-                                 struct tcp_connection_t *pconn,
-                                 struct tcp_control_value_t *pctrl,
-                                 enum STREAM_TYPE streamtype, const u8 *data,
-                                 size_t data_len)
+static void http_process_request(
+    struct pt_regs *ctx,
+    struct tcp_connection_t *pconn,
+    struct tcp_control_value_t *pctrl,
+    enum STREAM_TYPE streamtype,
+    const u8 *data,
+    size_t data_len)
 {
 #if TRACE_HTTP_PROTOCOL
-  DEBUG_PRINTK("http_process_request: start=%llu, total=%llu\n",
-               (u32)pctrl->streams[(int)streamtype].start,
-               pconn->streams[(int)streamtype].total);
+  DEBUG_PRINTK(
+      "http_process_request: start=%llu, total=%llu\n",
+      (u32)pctrl->streams[(int)streamtype].start,
+      pconn->streams[(int)streamtype].total);
   DEBUG_PRINTK("             data=%s, data_len=%d\n", data, (int)data_len);
 #endif
 
   // Keep the request timestamp for latency calculation
-  struct http_protocol_state_data_t *state_data =
-      (struct http_protocol_state_data_t *)(pconn->protocol_state.data);
+  struct http_protocol_state_data_t *state_data = (struct http_protocol_state_data_t *)(pconn->protocol_state.data);
   state_data->request_timestamp = get_timestamp();
 
   // Enable getting the response, and turn off the request side until we get it
@@ -140,16 +135,19 @@ static void http_process_request(struct pt_regs *ctx,
   }
 }
 
-static void http_process_response(struct pt_regs *ctx,
-                                  struct tcp_connection_t *pconn,
-                                  struct tcp_control_value_t *pctrl,
-                                  enum STREAM_TYPE streamtype, const u8 *data,
-                                  size_t data_len)
+static void http_process_response(
+    struct pt_regs *ctx,
+    struct tcp_connection_t *pconn,
+    struct tcp_control_value_t *pctrl,
+    enum STREAM_TYPE streamtype,
+    const u8 *data,
+    size_t data_len)
 {
 #if TRACE_HTTP_PROTOCOL
-  DEBUG_PRINTK("http_process_response: start=%llu, total=%llu\n",
-               (u32)pctrl->streams[(int)streamtype].start,
-               pconn->streams[(int)streamtype].total);
+  DEBUG_PRINTK(
+      "http_process_response: start=%llu, total=%llu\n",
+      (u32)pctrl->streams[(int)streamtype].start,
+      pconn->streams[(int)streamtype].total);
   DEBUG_PRINTK("             data=%s, data_len=%d\n", data, (int)data_len);
 #endif
 
@@ -163,8 +161,7 @@ static void http_process_response(struct pt_regs *ctx,
   bpf_probe_read(localdata, 12, data);
 
   // Pattern match against HTTP/x.y
-  if (!string_starts_with(localdata, 12, "HTTP/") || localdata[6] != '.' ||
-      localdata[8] != ' ') {
+  if (!string_starts_with(localdata, 12, "HTTP/") || localdata[6] != '.' || localdata[8] != ' ') {
     goto finished_response;
   }
   int http_version_major = char_to_number(localdata[5]);
@@ -184,8 +181,7 @@ static void http_process_response(struct pt_regs *ctx,
   int http_code_0 = char_to_number(localdata[11]);
 
 #if TRACE_HTTP_PROTOCOL
-  DEBUG_PRINTK("HTTP response code: %d%d%d\n", http_code_2, http_code_1,
-               http_code_0);
+  DEBUG_PRINTK("HTTP response code: %d%d%d\n", http_code_2, http_code_1, http_code_0);
 #endif
 
   // Ensure each digit of HTTP response code is valid
@@ -196,8 +192,7 @@ static void http_process_response(struct pt_regs *ctx,
   u16 code = (u16)(http_code_2 * 100 + http_code_1 * 10 + http_code_0);
 
   // Submit the http response code, and latency
-  struct http_protocol_state_data_t *state_data =
-      (struct http_protocol_state_data_t *)(pconn->protocol_state.data);
+  struct http_protocol_state_data_t *state_data = (struct http_protocol_state_data_t *)(pconn->protocol_state.data);
   u64 latency = get_timestamp() - state_data->request_timestamp;
   u8 client_server = (streamtype == ST_SEND) ? SC_SERVER : SC_CLIENT;
   tcp_events_submit_http_response(ctx, pconn->sk, code, latency, client_server);

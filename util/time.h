@@ -33,12 +33,9 @@
  *    std::cout << "Unix time: " << integer_time<std::chrono::seconds>(timestamp);
  *  }
  */
-template <
-  typename OutputDuration,
-  typename Output = typename OutputDuration::rep,
-  typename R, typename P
->
-constexpr Output integer_time(std::chrono::duration<R, P> duration) {
+template <typename OutputDuration, typename Output = typename OutputDuration::rep, typename R, typename P>
+constexpr Output integer_time(std::chrono::duration<R, P> duration)
+{
   return std::chrono::duration_cast<OutputDuration>(duration).count();
 }
 
@@ -50,12 +47,9 @@ constexpr Output integer_time(std::chrono::duration<R, P> duration) {
  *  auto const timestamp = std::chrono::system_clock::now();
  *  std::cout << "Unix time: " << integer_time<std::chrono::seconds>(timestamp);
  */
-template <
-  typename OutputDuration,
-  typename Output = typename OutputDuration::rep,
-  typename C, typename D
->
-constexpr Output integer_time(std::chrono::time_point<C, D> time_point) {
+template <typename OutputDuration, typename Output = typename OutputDuration::rep, typename C, typename D>
+constexpr Output integer_time(std::chrono::time_point<C, D> time_point)
+{
   return integer_time<OutputDuration>(time_point.time_since_epoch());
 }
 
@@ -76,19 +70,16 @@ extern std::uint64_t const clock_ticks_per_second;
  *  }
  */
 template <typename OutputDuration, typename T>
-constexpr OutputDuration from_clock_ticks(T clock_ticks, std::uint64_t clock_ticks_per_second) {
+constexpr OutputDuration from_clock_ticks(T clock_ticks, std::uint64_t clock_ticks_per_second)
+{
   static_assert(
-    std::ratio_less_equal_v<typename OutputDuration::period, std::chrono::seconds::period>,
-    "can't convert clock ticks to a unit less precise than seconds"
-  );
-  return OutputDuration{
-    integer_time<OutputDuration>(std::chrono::seconds{clock_ticks})
-      / clock_ticks_per_second
-  };
+      std::ratio_less_equal_v<typename OutputDuration::period, std::chrono::seconds::period>,
+      "can't convert clock ticks to a unit less precise than seconds");
+  return OutputDuration{integer_time<OutputDuration>(std::chrono::seconds{clock_ticks}) / clock_ticks_per_second};
 }
 
-template <typename OutputDuration, typename T>
-OutputDuration from_clock_ticks(T clock_ticks) {
+template <typename OutputDuration, typename T> OutputDuration from_clock_ticks(T clock_ticks)
+{
   return from_clock_ticks<OutputDuration>(clock_ticks, clock_ticks_per_second);
 }
 
@@ -105,16 +96,15 @@ struct realtime_clock {
   using duration = std::chrono::duration<rep, period>;
   using time_point = std::chrono::time_point<realtime_clock>;
 
-  static inline __attribute__((always_inline)) time_point now() {
+  static inline __attribute__((always_inline)) time_point now()
+  {
     struct timespec time;
     int const result = clock_gettime(CLOCK_REALTIME, &time);
     if (unlikely(result)) {
       return time_point{duration::zero()};
     }
 
-    return time_point{
-      duration{static_cast<u64>((time.tv_sec * (1000 * 1000 * 1000)) + time.tv_nsec)}
-    };
+    return time_point{duration{static_cast<u64>((time.tv_sec * (1000 * 1000 * 1000)) + time.tv_nsec)}};
   }
 };
 
@@ -131,16 +121,15 @@ struct monotonic_clock {
   using duration = std::chrono::duration<rep, period>;
   using time_point = std::chrono::time_point<monotonic_clock>;
 
-  static inline __attribute__((always_inline)) time_point now() {
+  static inline __attribute__((always_inline)) time_point now()
+  {
     struct timespec time;
     int const result = clock_gettime(CLOCK_MONOTONIC, &time);
     if (unlikely(result)) {
       return time_point{duration::zero()};
     }
 
-    return time_point{
-      duration{static_cast<u64>((time.tv_sec * (1000 * 1000 * 1000)) + time.tv_nsec)}
-    };
+    return time_point{duration{static_cast<u64>((time.tv_sec * (1000 * 1000 * 1000)) + time.tv_nsec)}};
   }
 };
 
@@ -156,7 +145,5 @@ struct rdtsc_clock {
   using duration = std::chrono::duration<rep, period>;
   using time_point = std::chrono::time_point<monotonic_clock>;
 
-  static inline __attribute__((always_inline)) time_point now() {
-    return time_point{duration{__rdtsc()}};
-  }
+  static inline __attribute__((always_inline)) time_point now() { return time_point{duration{__rdtsc()}}; }
 };

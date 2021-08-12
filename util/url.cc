@@ -16,8 +16,11 @@
 
 #include <util/url.h>
 
-std::string format_url(std::string host, std::string_view path, std::string_view default_scheme) {
-  if (host.empty()) { return host; }
+std::string format_url(std::string host, std::string_view path, std::string_view default_scheme)
+{
+  if (host.empty()) {
+    return host;
+  }
 
   if (host.find("://") == std::string::npos) {
     host.insert(0, "://");

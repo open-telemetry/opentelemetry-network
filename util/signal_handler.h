@@ -29,22 +29,15 @@
 #include <string_view>
 #include <vector>
 
-struct SignalManager: cli::ArgsParser::Handler {
-  explicit SignalManager(
-    cli::ArgsParser &parser,
-    ::uv_loop_t &loop,
-    std::string_view product
-  );
+struct SignalManager : cli::ArgsParser::Handler {
+  explicit SignalManager(cli::ArgsParser &parser, ::uv_loop_t &loop, std::string_view product);
 
   void handle() override;
 
   SignalManager &add_auth(std::string_view key, std::string_view secret = {});
   SignalManager &add_auth(collector::AuthMethod auth_method);
 
-  void handle_signals(
-    std::initializer_list<int> signal_numbers,
-    std::function<void()> on_signal = {}
-  );
+  void handle_signals(std::initializer_list<int> signal_numbers, std::function<void()> on_signal = {});
 
   void clear();
 
@@ -71,11 +64,7 @@ private:
   std::list<std::string> headers_;
 
   struct SignalHandler {
-    SignalHandler(
-      SignalManager &manager,
-      std::function<void()> on_signal,
-      int signal_number
-    );
+    SignalHandler(SignalManager &manager, std::function<void()> on_signal, int signal_number);
 
     ~SignalHandler();
 

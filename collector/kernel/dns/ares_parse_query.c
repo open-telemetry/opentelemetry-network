@@ -40,11 +40,16 @@
  * DNS_NAME_MAX_LENGTH characters long.
  */
 
-int dns_parse_query(const unsigned char *abuf, int alen, int *is_response,
-                    uint16_t *type_out, uint16_t *qid_out, char *question_out,
-                    int *question_len)
+int dns_parse_query(
+    const unsigned char *abuf,
+    int alen,
+    int *is_response,
+    uint16_t *type_out,
+    uint16_t *qid_out,
+    char *question_out,
+    int *question_len)
 {
-  unsigned int qdcount, ancount, nscount;//, arcount;
+  unsigned int qdcount, ancount, nscount; //, arcount;
   int qr, status, q_type, q_class;
   long len;
   uint16_t qid;
@@ -64,12 +69,11 @@ int dns_parse_query(const unsigned char *abuf, int alen, int *is_response,
   qdcount = DNS_HEADER_QDCOUNT(abuf);
   ancount = DNS_HEADER_ANCOUNT(abuf);
   nscount = DNS_HEADER_NSCOUNT(abuf);
-  //arcount = DNS_HEADER_ARCOUNT(abuf);
+  // arcount = DNS_HEADER_ARCOUNT(abuf);
 
 #if DEBUG_DNS_PARSE_QUERY
-  fprintf(stderr,
-          "qr: %d qid: %d qdcount:%u ancount:%u nscount:%u arcount:%u\n", qr,
-          (int)qid, qdcount, ancount, nscount, arcount);
+  fprintf(
+      stderr, "qr: %d qid: %d qdcount:%u ancount:%u nscount:%u arcount:%u\n", qr, (int)qid, qdcount, ancount, nscount, arcount);
 #endif
 
   /* Determine if this is a request */
@@ -78,9 +82,7 @@ int dns_parse_query(const unsigned char *abuf, int alen, int *is_response,
      * nothing else */
     if (qdcount != 1 || ancount != 0 || nscount != 0) {
 #if DEBUG_DNS_PARSE_QUERY
-      fprintf(
-          stderr,
-          "EBADQUERY: request with more than one question or other records\n");
+      fprintf(stderr, "EBADQUERY: request with more than one question or other records\n");
 #endif
       return ARES_EBADQUERY;
     }
@@ -105,8 +107,7 @@ int dns_parse_query(const unsigned char *abuf, int alen, int *is_response,
 
   /* Expand the name from the question */
   aptr = abuf + HFIXEDSZ;
-  status = dns_expand_name_maxlen(aptr, abuf, alen, question_out, &len,
-                                  question_len);
+  status = dns_expand_name_maxlen(aptr, abuf, alen, question_out, &len, question_len);
   if (status != ARES_SUCCESS) {
 #if DEBUG_DNS_PARSE_QUERY
     fprintf(stderr, "EBADQUERY: couldn't expand name\n");

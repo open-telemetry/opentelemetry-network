@@ -38,13 +38,9 @@ public:
    */
   virtual std::error_code send(const u8 *data, int data_len) = 0;
 
-  inline std::error_code send(std::basic_string_view<u8> data) {
-    return send(data.data(), data.size());
-  }
+  inline std::error_code send(std::basic_string_view<u8> data) { return send(data.data(), data.size()); }
 
-  inline std::error_code send(std::string_view data) {
-    return send(reinterpret_cast<u8 const *>(data.data()), data.size());
-  }
+  inline std::error_code send(std::string_view data) { return send(reinterpret_cast<u8 const *>(data.data()), data.size()); }
 
   /**
    * Flushes any internal buffers.

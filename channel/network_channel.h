@@ -25,7 +25,7 @@ namespace channel {
 /**
  * An interface that allows reading and writing data to a pipe/socket/etc
  */
-class NetworkChannel: public Channel {
+class NetworkChannel : public Channel {
 public:
   /**
    * Connects to an endpoint and starts negotiating

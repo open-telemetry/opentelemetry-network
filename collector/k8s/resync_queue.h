@@ -20,13 +20,11 @@
 #include <mutex>
 #include <unordered_set>
 
-#include "util/element_queue_cpp.h"
 #include "resync_queue_interface.h"
+#include "util/element_queue_cpp.h"
 
 namespace collector {
-class ResyncQueue : public ResyncQueueProducerInterface,
-                    public ResyncQueueConsumerInterface,
-                    public ResyncChannelFactory {
+class ResyncQueue : public ResyncQueueProducerInterface, public ResyncQueueConsumerInterface, public ResyncChannelFactory {
 public:
   ResyncQueue();
   ~ResyncQueue() override;
@@ -41,8 +39,7 @@ public:
   void producer_unregister(ResyncChannel *channel) override;
 
   // ResyncChannelFactoryInterface
-  std::unique_ptr<ResyncChannel>
-  new_channel(std::function<void(void)> &reset_callback) override;
+  std::unique_ptr<ResyncChannel> new_channel(std::function<void(void)> &reset_callback) override;
 
 private:
   static constexpr u32 queue_num_elements_ = 16 * 1024;

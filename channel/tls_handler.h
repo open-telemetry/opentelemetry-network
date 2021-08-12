@@ -23,7 +23,7 @@
 
 namespace channel {
 
-class TLSHandler: public NetworkChannel {
+class TLSHandler : public NetworkChannel {
 public:
   /**
    * c'tor
@@ -33,14 +33,13 @@ public:
    *
    */
   TLSHandler(
-    uv_loop_t &loop,
-    std::string addr,
-    std::string port,
-    std::string agent_key = "",
-    std::string agent_crt = "",
-    std::string server_hostname = "",
-    std::optional<config::HttpProxyConfig> proxy = {}
-  );
+      uv_loop_t &loop,
+      std::string addr,
+      std::string port,
+      std::string agent_key = "",
+      std::string agent_crt = "",
+      std::string server_hostname = "",
+      std::optional<config::HttpProxyConfig> proxy = {});
 
   /**
    * Connects to an endpoint and starts negotiating

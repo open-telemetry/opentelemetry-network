@@ -33,25 +33,19 @@ public:
   NatHandler(::flowmill::ingest::Writer &writer, logging::Logger &log);
 
   // end
-  void handle_nf_nat_cleanup_conntrack(
-      u64 timestamp, struct jb_agent_internal__nf_nat_cleanup_conntrack *msg);
+  void handle_nf_nat_cleanup_conntrack(u64 timestamp, struct jb_agent_internal__nf_nat_cleanup_conntrack *msg);
   // start
-  void handle_nf_conntrack_alter_reply(
-      u64 timestamp, struct jb_agent_internal__nf_conntrack_alter_reply *msg);
+  void handle_nf_conntrack_alter_reply(u64 timestamp, struct jb_agent_internal__nf_conntrack_alter_reply *msg);
   // existing
-  void handle_existing_conntrack_tuple(
-      u64 timestamp, struct jb_agent_internal__existing_conntrack_tuple *msg);
+  void handle_existing_conntrack_tuple(u64 timestamp, struct jb_agent_internal__existing_conntrack_tuple *msg);
 
-  void handle_set_state_ipv4(u64 timestamp,
-                             jb_agent_internal__set_state_ipv4 *msg);
+  void handle_set_state_ipv4(u64 timestamp, jb_agent_internal__set_state_ipv4 *msg);
 
-  void handle_close_socket(u64 timestamp,
-                           jb_agent_internal__close_sock_info *msg);
+  void handle_close_socket(u64 timestamp, jb_agent_internal__close_sock_info *msg);
 
   // Returns a pointer to the corresponding val for a key we lookup
   // in the nat_table_. If there is no corresponding val, return nullptr.
-  hostport_tuple *get_nat_mapping(u32 src, u32 dst, u16 sport, u16 dport,
-                                  u32 proto);
+  hostport_tuple *get_nat_mapping(u32 src, u32 dst, u16 sport, u16 dport, u32 proto);
 
 private:
   // Maps the IP_CT_DIR_ORIGINAL 4-tuple of a conntrack entry to the

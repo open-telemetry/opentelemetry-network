@@ -51,8 +51,8 @@ private:
   int code_;
 };
 
-template <typename Out>
-Out &operator <<(Out &&out, TLSError const &error) {
+template <typename Out> Out &operator<<(Out &&out, TLSError const &error)
+{
   out << "[TLS " << error.name() << ':' << error.code() << ": '" << error.reason() << "']";
   return out;
 }

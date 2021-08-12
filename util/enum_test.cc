@@ -23,161 +23,128 @@
 
 #define ENUM_NAME DenseEnum
 #define ENUM_TYPE std::uint8_t
-#define ENUM_ELEMENTS(X)  \
-  X(a,0) \
-  X(b,1) \
-  X(c,2) \
-  X(d,3) \
-  X(e,4)
+#define ENUM_ELEMENTS(X)                                                                                                       \
+  X(a, 0)                                                                                                                      \
+  X(b, 1)                                                                                                                      \
+  X(c, 2)                                                                                                                      \
+  X(d, 3)                                                                                                                      \
+  X(e, 4)
 #define ENUM_DEFAULT a
 #include <util/enum_operators.inl>
 
 #define ENUM_NAME DenseEnum1Base
 #define ENUM_TYPE std::uint8_t
-#define ENUM_ELEMENTS(X)  \
-  X(a,1) \
-  X(b,2) \
-  X(c,3) \
-  X(d,4) \
-  X(e,5)
+#define ENUM_ELEMENTS(X)                                                                                                       \
+  X(a, 1)                                                                                                                      \
+  X(b, 2)                                                                                                                      \
+  X(c, 3)                                                                                                                      \
+  X(d, 4)                                                                                                                      \
+  X(e, 5)
 #define ENUM_DEFAULT a
 #include <util/enum_operators.inl>
 
 #define ENUM_NAME SparseEnum
 #define ENUM_TYPE std::int8_t
-#define ENUM_ELEMENTS(X)  \
-  X(a,-20) \
-  X(b,-17) \
-  X(c,0) \
-  X(d,1) \
-  X(e,18) \
-  X(f,90)
+#define ENUM_ELEMENTS(X)                                                                                                       \
+  X(a, -20)                                                                                                                    \
+  X(b, -17)                                                                                                                    \
+  X(c, 0)                                                                                                                      \
+  X(d, 1)                                                                                                                      \
+  X(e, 18)                                                                                                                     \
+  X(f, 90)
 #define ENUM_DEFAULT a
 #include <util/enum_operators.inl>
 
-TEST(enum_traits_test, min) {
-  EXPECT_EQ(
-    static_cast<int>(DenseEnum::a),
-    static_cast<int>(enum_traits<DenseEnum>::min())
-  );
-  EXPECT_EQ(
-    static_cast<int>(DenseEnum1Base::a),
-    static_cast<int>(enum_traits<DenseEnum1Base>::min())
-  );
-  EXPECT_EQ(
-    static_cast<int>(SparseEnum::a),
-    static_cast<int>(enum_traits<SparseEnum>::min())
-  );
+TEST(enum_traits_test, min)
+{
+  EXPECT_EQ(static_cast<int>(DenseEnum::a), static_cast<int>(enum_traits<DenseEnum>::min()));
+  EXPECT_EQ(static_cast<int>(DenseEnum1Base::a), static_cast<int>(enum_traits<DenseEnum1Base>::min()));
+  EXPECT_EQ(static_cast<int>(SparseEnum::a), static_cast<int>(enum_traits<SparseEnum>::min()));
 }
 
-TEST(enum_traits_test, constexpr_min) {
-  EXPECT_TRUE((
-    std::is_same_v<
-      std::integral_constant<DenseEnum, DenseEnum::a>,
-      std::integral_constant<DenseEnum, enum_traits<DenseEnum>::min()>
-    >
-  ));
-  EXPECT_TRUE((
-    std::is_same_v<
-      std::integral_constant<DenseEnum1Base, DenseEnum1Base::a>,
-      std::integral_constant<DenseEnum1Base, enum_traits<DenseEnum1Base>::min()>
-    >
-  ));
-  EXPECT_TRUE((
-    std::is_same_v<
-      std::integral_constant<SparseEnum, SparseEnum::a>,
-      std::integral_constant<SparseEnum, enum_traits<SparseEnum>::min()>
-    >
-  ));
+TEST(enum_traits_test, constexpr_min)
+{
+  EXPECT_TRUE((std::is_same_v<
+               std::integral_constant<DenseEnum, DenseEnum::a>,
+               std::integral_constant<DenseEnum, enum_traits<DenseEnum>::min()>>));
+  EXPECT_TRUE((std::is_same_v<
+               std::integral_constant<DenseEnum1Base, DenseEnum1Base::a>,
+               std::integral_constant<DenseEnum1Base, enum_traits<DenseEnum1Base>::min()>>));
+  EXPECT_TRUE((std::is_same_v<
+               std::integral_constant<SparseEnum, SparseEnum::a>,
+               std::integral_constant<SparseEnum, enum_traits<SparseEnum>::min()>>));
 }
 
-TEST(enum_traits_test, max) {
+TEST(enum_traits_test, max)
+{
   EXPECT_EQ(
-    static_cast<enum_traits<DenseEnum>::int_type>(DenseEnum::e),
-    static_cast<enum_traits<DenseEnum>::int_type>(enum_traits<DenseEnum>::max())
-  );
-   EXPECT_EQ(
-    static_cast<enum_traits<DenseEnum1Base>::int_type>(DenseEnum1Base::e),
-    static_cast<enum_traits<DenseEnum1Base>::int_type>(enum_traits<DenseEnum1Base>::max())
-  );
+      static_cast<enum_traits<DenseEnum>::int_type>(DenseEnum::e),
+      static_cast<enum_traits<DenseEnum>::int_type>(enum_traits<DenseEnum>::max()));
   EXPECT_EQ(
-    static_cast<enum_traits<SparseEnum>::int_type>(SparseEnum::f),
-    static_cast<enum_traits<SparseEnum>::int_type>(enum_traits<SparseEnum>::max())
-  );
+      static_cast<enum_traits<DenseEnum1Base>::int_type>(DenseEnum1Base::e),
+      static_cast<enum_traits<DenseEnum1Base>::int_type>(enum_traits<DenseEnum1Base>::max()));
+  EXPECT_EQ(
+      static_cast<enum_traits<SparseEnum>::int_type>(SparseEnum::f),
+      static_cast<enum_traits<SparseEnum>::int_type>(enum_traits<SparseEnum>::max()));
 }
 
-TEST(enum_traits_test, constexpr_max) {
-  EXPECT_TRUE((
-    std::is_same_v<
-      std::integral_constant<DenseEnum, DenseEnum::e>,
-      std::integral_constant<DenseEnum, enum_traits<DenseEnum>::max()>
-    >
-  ));
-  EXPECT_TRUE((
-    std::is_same_v<
-      std::integral_constant<DenseEnum1Base, DenseEnum1Base::e>,
-      std::integral_constant<DenseEnum1Base, enum_traits<DenseEnum1Base>::max()>
-    >
-  ));
-  EXPECT_TRUE((
-    std::is_same_v<
-      std::integral_constant<SparseEnum, SparseEnum::f>,
-      std::integral_constant<SparseEnum, enum_traits<SparseEnum>::max()>
-    >
-  ));
+TEST(enum_traits_test, constexpr_max)
+{
+  EXPECT_TRUE((std::is_same_v<
+               std::integral_constant<DenseEnum, DenseEnum::e>,
+               std::integral_constant<DenseEnum, enum_traits<DenseEnum>::max()>>));
+  EXPECT_TRUE((std::is_same_v<
+               std::integral_constant<DenseEnum1Base, DenseEnum1Base::e>,
+               std::integral_constant<DenseEnum1Base, enum_traits<DenseEnum1Base>::max()>>));
+  EXPECT_TRUE((std::is_same_v<
+               std::integral_constant<SparseEnum, SparseEnum::f>,
+               std::integral_constant<SparseEnum, enum_traits<SparseEnum>::max()>>));
 }
 
-TEST(enum_traits_test, count) {
+TEST(enum_traits_test, count)
+{
   EXPECT_EQ(5, enum_traits<DenseEnum>::count);
   EXPECT_EQ(5, enum_traits<DenseEnum1Base>::count);
   EXPECT_EQ(6, enum_traits<SparseEnum>::count);
 }
 
-TEST(enum_traits_test, constexpr_count) {
-  EXPECT_TRUE((
-    std::is_same_v<
-      std::integral_constant<std::size_t, 5>,
-      std::integral_constant<std::size_t, enum_traits<DenseEnum>::count>
-    >
-  ));
-  EXPECT_TRUE((
-    std::is_same_v<
-      std::integral_constant<std::size_t, 5>,
-      std::integral_constant<std::size_t, enum_traits<DenseEnum1Base>::count>
-    >
-  ));
-  EXPECT_TRUE((
-    std::is_same_v<
-      std::integral_constant<std::size_t, 6>,
-      std::integral_constant<std::size_t, enum_traits<SparseEnum>::count>
-    >
-  ));
+TEST(enum_traits_test, constexpr_count)
+{
+  EXPECT_TRUE((std::is_same_v<
+               std::integral_constant<std::size_t, 5>,
+               std::integral_constant<std::size_t, enum_traits<DenseEnum>::count>>));
+  EXPECT_TRUE((std::is_same_v<
+               std::integral_constant<std::size_t, 5>,
+               std::integral_constant<std::size_t, enum_traits<DenseEnum1Base>::count>>));
+  EXPECT_TRUE((std::is_same_v<
+               std::integral_constant<std::size_t, 6>,
+               std::integral_constant<std::size_t, enum_traits<SparseEnum>::count>>));
 }
 
-TEST(enum_traits_test, values) {
+TEST(enum_traits_test, values)
+{
   constexpr std::array<DenseEnum, enum_traits<DenseEnum>::count> dense_values = {
-    DenseEnum::a, DenseEnum::b, DenseEnum::c, DenseEnum::d, DenseEnum::e
-  };
+      DenseEnum::a, DenseEnum::b, DenseEnum::c, DenseEnum::d, DenseEnum::e};
   EXPECT_TRUE(dense_values == enum_traits<DenseEnum>::values);
 
   constexpr std::array<DenseEnum1Base, enum_traits<DenseEnum1Base>::count> dense1base_values = {
-    DenseEnum1Base::a, DenseEnum1Base::b, DenseEnum1Base::c, DenseEnum1Base::d, DenseEnum1Base::e
-  };
+      DenseEnum1Base::a, DenseEnum1Base::b, DenseEnum1Base::c, DenseEnum1Base::d, DenseEnum1Base::e};
   EXPECT_TRUE(dense1base_values == enum_traits<DenseEnum1Base>::values);
 
   constexpr std::array<SparseEnum, enum_traits<SparseEnum>::count> sparse_values = {
-    SparseEnum::a, SparseEnum::b, SparseEnum::c, SparseEnum::d, SparseEnum::e, SparseEnum::f
-  };
+      SparseEnum::a, SparseEnum::b, SparseEnum::c, SparseEnum::d, SparseEnum::e, SparseEnum::f};
   EXPECT_TRUE(sparse_values == enum_traits<SparseEnum>::values);
 }
 
-TEST(enum_traits_test, is_contiguous) {
+TEST(enum_traits_test, is_contiguous)
+{
   EXPECT_TRUE(enum_traits<DenseEnum>::is_contiguous);
   EXPECT_TRUE(enum_traits<DenseEnum1Base>::is_contiguous);
   EXPECT_FALSE(enum_traits<SparseEnum>::is_contiguous);
 }
 
-TEST(enum_traits_test, index_of) {
+TEST(enum_traits_test, index_of)
+{
   EXPECT_EQ(0u, enum_index_of(DenseEnum::a));
   EXPECT_EQ(1u, enum_index_of(DenseEnum::b));
   EXPECT_EQ(2u, enum_index_of(DenseEnum::c));
@@ -197,28 +164,17 @@ TEST(enum_traits_test, index_of) {
   EXPECT_EQ(4u, enum_index_of(SparseEnum::e));
 }
 
+TEST(enum_traits_test, array_map)
+{
+  EXPECT_TRUE((std::is_same_v<enum_traits<DenseEnum>::array_map<int>, std::array<int, 5>>));
+  EXPECT_TRUE((std::is_same_v<enum_traits<DenseEnum>::array_map<std::string>, std::array<std::string, 5>>));
 
-TEST(enum_traits_test, array_map) {
-  EXPECT_TRUE((std::is_same_v<
-    enum_traits<DenseEnum>::array_map<int>,
-    std::array<int, 5>
-  >));
-  EXPECT_TRUE((std::is_same_v<
-    enum_traits<DenseEnum>::array_map<std::string>,
-    std::array<std::string, 5>
-  >));
-
-  EXPECT_TRUE((std::is_same_v<
-    enum_traits<DenseEnum1Base>::array_map<int>,
-    std::array<int, 5>
-  >));
-  EXPECT_TRUE((std::is_same_v<
-    enum_traits<DenseEnum1Base>::array_map<std::string>,
-    std::array<std::string, 5>
-  >));
+  EXPECT_TRUE((std::is_same_v<enum_traits<DenseEnum1Base>::array_map<int>, std::array<int, 5>>));
+  EXPECT_TRUE((std::is_same_v<enum_traits<DenseEnum1Base>::array_map<std::string>, std::array<std::string, 5>>));
 }
 
-TEST(enum_test, to_string) {
+TEST(enum_test, to_string)
+{
   EXPECT_EQ("a", to_string(DenseEnum::a));
   EXPECT_EQ("b", to_string(DenseEnum::b));
   EXPECT_EQ("c", to_string(DenseEnum::c));
@@ -245,7 +201,8 @@ TEST(enum_test, to_string) {
   EXPECT_EQ("invalid", to_string(static_cast<SparseEnum>(9999), "invalid"));
 }
 
-TEST(enum_traits_test, is_valid) {
+TEST(enum_traits_test, is_valid)
+{
   EXPECT_TRUE(enum_traits<DenseEnum>::is_valid(DenseEnum::a));
   EXPECT_TRUE(enum_traits<DenseEnum>::is_valid(DenseEnum::b));
   EXPECT_TRUE(enum_traits<DenseEnum>::is_valid(DenseEnum::c));
@@ -269,7 +226,8 @@ TEST(enum_traits_test, is_valid) {
   EXPECT_FALSE(enum_traits<SparseEnum>::is_valid(static_cast<SparseEnum>(9999)));
 }
 
-TEST(enum_test, sanitize_enum) {
+TEST(enum_test, sanitize_enum)
+{
   EXPECT_TRUE(DenseEnum::a == sanitize_enum(DenseEnum::a));
   EXPECT_TRUE(DenseEnum::b == sanitize_enum(DenseEnum::b));
   EXPECT_TRUE(DenseEnum::c == sanitize_enum(DenseEnum::c));
@@ -293,8 +251,8 @@ TEST(enum_test, sanitize_enum) {
   EXPECT_TRUE(SparseEnum::a == sanitize_enum(static_cast<SparseEnum>(9999)));
 }
 
-template <typename Enum>
-void test_enum_set_ostream_operator(EnumSet<Enum> const &set, std::string_view expected) {
+template <typename Enum> void test_enum_set_ostream_operator(EnumSet<Enum> const &set, std::string_view expected)
+{
   std::ostringstream actual;
 
   actual << set;
@@ -302,8 +260,8 @@ void test_enum_set_ostream_operator(EnumSet<Enum> const &set, std::string_view e
   EXPECT_EQ(expected, actual.str());
 }
 
-template <typename Enum>
-void test_enum_set_iterator(EnumSet<Enum> const &set, std::vector<Enum> expected) {
+template <typename Enum> void test_enum_set_iterator(EnumSet<Enum> const &set, std::vector<Enum> expected)
+{
   EXPECT_EQ(set.begin() == set.end(), expected.empty());
   EXPECT_EQ(set.begin() != set.end(), !expected.empty());
 
@@ -311,7 +269,7 @@ void test_enum_set_iterator(EnumSet<Enum> const &set, std::vector<Enum> expected
     auto i = set.begin();
 
     std::size_t count = 0;
-    for (auto const e: expected) {
+    for (auto const e : expected) {
       ASSERT_NE(set.end(), i);
       EXPECT_TRUE(e == *i);
       ++i;
@@ -325,7 +283,7 @@ void test_enum_set_iterator(EnumSet<Enum> const &set, std::vector<Enum> expected
   {
     auto i = set.begin();
 
-    for (auto const e: expected) {
+    for (auto const e : expected) {
       ASSERT_NE(set.end(), i);
       EXPECT_TRUE(e == *i);
       EXPECT_NE(set.end(), i++);
@@ -335,8 +293,8 @@ void test_enum_set_iterator(EnumSet<Enum> const &set, std::vector<Enum> expected
   }
 }
 
-template <typename Enum>
-void test_enum_set() {
+template <typename Enum> void test_enum_set()
+{
   EnumSet<Enum> set;
   EXPECT_TRUE(set.empty());
   EXPECT_EQ(0u, set.size());
@@ -439,14 +397,17 @@ void test_enum_set() {
   test_enum_set_ostream_operator(set, "a,b,e");
 }
 
-TEST(enum_set_test, DenseEnum) {
+TEST(enum_set_test, DenseEnum)
+{
   test_enum_set<DenseEnum>();
 }
 
-TEST(enum_set_test, DenseEnum1Base) {
+TEST(enum_set_test, DenseEnum1Base)
+{
   test_enum_set<DenseEnum1Base>();
 }
 
-TEST(enum_set_test, SparseEnum) {
+TEST(enum_set_test, SparseEnum)
+{
   test_enum_set<SparseEnum>();
 }

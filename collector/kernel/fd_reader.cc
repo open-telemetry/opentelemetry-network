@@ -14,18 +14,16 @@
 // limitations under the License.
 //
 
+#include <collector/kernel/fd_reader.h>
 #include <cstdio>
 #include <cstring>
 #include <iostream>
 #include <string>
-#include <collector/kernel/fd_reader.h>
 #include <unistd.h>
 
 FDReader::FDReader(int pid)
-    : pid_(pid), task_tid_(-1), fd_dir_(NULL), task_dir_(NULL),
-      task_fd_dir_(NULL), fd_dir_ent_(NULL), task_dir_ent_(NULL)
-{
-}
+    : pid_(pid), task_tid_(-1), fd_dir_(NULL), task_dir_(NULL), task_fd_dir_(NULL), fd_dir_ent_(NULL), task_dir_ent_(NULL)
+{}
 
 FDReader::~FDReader()
 {
@@ -134,8 +132,7 @@ int FDReader::open_task_comm()
 {
   // create the link to the task comm
   char link[64];
-  if (snprintf(link, sizeof(link), "/proc/%d/task/%d/comm", pid_, task_tid_) <
-      0)
+  if (snprintf(link, sizeof(link), "/proc/%d/task/%d/comm", pid_, task_tid_) < 0)
     return -1;
 
   // read the link

@@ -35,8 +35,8 @@ public:
   ~Defer() { cb_(); }
 
   // Move-only.
-  Defer(const Defer&) = delete;
-  Defer(Defer&&) = default;
+  Defer(const Defer &) = delete;
+  Defer(Defer &&) = default;
 
 private:
   std::function<void()> cb_;

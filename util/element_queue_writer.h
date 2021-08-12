@@ -27,7 +27,7 @@ class ElementQueueWriter : public IBufferedWriter {
 public:
   ElementQueueWriter(ElementQueue &queue);
   virtual ~ElementQueueWriter();
-  
+
   // Starts a write operation of size \p length.
   //
   // Will block until there is enough space in the queue for the write.

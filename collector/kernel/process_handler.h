@@ -43,9 +43,9 @@
 
 #define ENUM_NAME ProcPath
 #define ENUM_TYPE std::uint8_t
-#define ENUM_ELEMENTS(X)                                                       \
-  X(stat, 0)                                                                   \
-  X(io, 1)                                                                     \
+#define ENUM_ELEMENTS(X)                                                                                                       \
+  X(stat, 0)                                                                                                                   \
+  X(io, 1)                                                                                                                     \
   X(status, 2)
 #include <util/enum_operators.inl>
 
@@ -61,36 +61,31 @@ public:
     std::size_t batch_poll_count_cooldown;
   };
 
-  ProcessHandler(::flowmill::ingest::Writer &writer,
-                 ::flowmill::kernel_collector::Index &collector_index,
-                 ProbeHandler &probe_handler, ebpf::BPFModule &bpf_module,
-                 logging::Logger &log,
-                 // if null, disables cpu/mem/io collection
-                 CpuMemIoSettings const *cpu_mem_io_settings);
+  ProcessHandler(
+      ::flowmill::ingest::Writer &writer,
+      ::flowmill::kernel_collector::Index &collector_index,
+      ProbeHandler &probe_handler,
+      ebpf::BPFModule &bpf_module,
+      logging::Logger &log,
+      // if null, disables cpu/mem/io collection
+      CpuMemIoSettings const *cpu_mem_io_settings);
 
   ~ProcessHandler();
 
   void poll();
   void slow_poll(u64 timestamp);
 
-  void on_new_process(std::chrono::nanoseconds timestamp,
-                      struct jb_agent_internal__pid_info const &msg);
+  void on_new_process(std::chrono::nanoseconds timestamp, struct jb_agent_internal__pid_info const &msg);
 
-  void on_process_end(std::chrono::nanoseconds timestamp,
-                      struct jb_agent_internal__pid_close const &msg);
+  void on_process_end(std::chrono::nanoseconds timestamp, struct jb_agent_internal__pid_close const &msg);
 
-  void on_cgroup_move(std::chrono::nanoseconds timestamp,
-                      struct jb_agent_internal__cgroup_attach_task const &msg);
+  void on_cgroup_move(std::chrono::nanoseconds timestamp, struct jb_agent_internal__cgroup_attach_task const &msg);
 
-  void set_process_command(std::chrono::nanoseconds timestamp,
-                           struct jb_agent_internal__pid_set_comm const &msg);
+  void set_process_command(std::chrono::nanoseconds timestamp, struct jb_agent_internal__pid_set_comm const &msg);
 
-  void pid_exit(std::chrono::nanoseconds timestamp,
-                struct jb_agent_internal__pid_exit const &msg);
+  void pid_exit(std::chrono::nanoseconds timestamp, struct jb_agent_internal__pid_exit const &msg);
 
-  void
-  report_task_status(std::chrono::nanoseconds timestamp,
-                     struct jb_agent_internal__report_task_status const &msg);
+  void report_task_status(std::chrono::nanoseconds timestamp, struct jb_agent_internal__report_task_status const &msg);
 
 #ifdef DEBUG_TGID
   void debug_tgid_dump();
@@ -98,49 +93,51 @@ public:
 
 private:
   struct PerPidData {
-#   define CPU_MEM_IO_DATA_IMPL(Name, Type, Aggregation, ...) Aggregation<Type> Name = {};
+#define CPU_MEM_IO_DATA_IMPL(Name, Type, Aggregation, ...) Aggregation<Type> Name = {};
     PROCESS_HANDLER_CPU_MEM_IO_FIELDS(CPU_MEM_IO_DATA_IMPL)
-#   undef CPU_MEM_IO_DATA_IMPL
+#undef CPU_MEM_IO_DATA_IMPL
 
-    template <typename RHS>
-    PerPidData &operator +=(RHS &&rhs) {
-#     define CPU_MEM_IO_DATA_IMPL(Name, ...) Name += rhs.Name;
+    template <typename RHS> PerPidData &operator+=(RHS &&rhs)
+    {
+#define CPU_MEM_IO_DATA_IMPL(Name, ...) Name += rhs.Name;
       PROCESS_HANDLER_CPU_MEM_IO_FIELDS(CPU_MEM_IO_DATA_IMPL)
-#     undef CPU_MEM_IO_DATA_IMPL
+#undef CPU_MEM_IO_DATA_IMPL
       return *this;
     }
   };
 
   struct PerTgidData {
-#   define CPU_MEM_IO_DATA_IMPL(Name, Type, ...) Type Name = {};
+#define CPU_MEM_IO_DATA_IMPL(Name, Type, ...) Type Name = {};
     PROCESS_HANDLER_CPU_MEM_IO_FIELDS(CPU_MEM_IO_DATA_IMPL)
-#   undef CPU_MEM_IO_DATA_IMPL
+#undef CPU_MEM_IO_DATA_IMPL
 
     std::chrono::nanoseconds timestamp = {};
     bool pending() const { return static_cast<bool>(timestamp.count()); }
 
-    void reset() {
-#     define CPU_MEM_IO_DATA_IMPL(Name, Type, ...) Name = Type{0};
+    void reset()
+    {
+#define CPU_MEM_IO_DATA_IMPL(Name, Type, ...) Name = Type{0};
       PROCESS_HANDLER_CPU_MEM_IO_FIELDS(CPU_MEM_IO_DATA_IMPL)
-#     undef CPU_MEM_IO_DATA_IMPL
+#undef CPU_MEM_IO_DATA_IMPL
 
       timestamp = std::chrono::nanoseconds::zero();
     }
 
-    void update(std::chrono::nanoseconds t, PerPidData &rhs, bool on_exit) {
-#     define CPU_MEM_IO_DATA_IMPL(Name, ...) update_field(Name, rhs.Name, on_exit);
+    void update(std::chrono::nanoseconds t, PerPidData &rhs, bool on_exit)
+    {
+#define CPU_MEM_IO_DATA_IMPL(Name, ...) update_field(Name, rhs.Name, on_exit);
       PROCESS_HANDLER_CPU_MEM_IO_FIELDS(CPU_MEM_IO_DATA_IMPL)
-#     undef CPU_MEM_IO_DATA_IMPL
+#undef CPU_MEM_IO_DATA_IMPL
       timestamp = t;
     }
 
-    template <typename T>
-    static void update_field(T &field, data::CounterToRate<T> &rhs, bool on_exit) {
+    template <typename T> static void update_field(T &field, data::CounterToRate<T> &rhs, bool on_exit)
+    {
       field += rhs.commit_rate(!on_exit);
     }
 
-    template <typename T>
-    static void update_field(T &field, data::Gauge<T> &rhs, bool) {
+    template <typename T> static void update_field(T &field, data::Gauge<T> &rhs, bool)
+    {
       if (rhs.max() > field) {
         field = rhs.max();
       }
@@ -160,7 +157,8 @@ private:
     std::string command;
 #endif // DEBUG_TGID
 
-    monotonic_clock::duration check_interval() {
+    monotonic_clock::duration check_interval()
+    {
       auto const now = monotonic_clock::now();
       auto const interval = now - last_check;
       last_check = now;
@@ -231,8 +229,7 @@ private:
   void poll_cpu_mem_io();
   void submit_metrics(u64 timestamp);
 
-  template <typename View, ProcPath Which>
-  View parse_file(u32 tgid, ThreadGroupData &process);
+  template <typename View, ProcPath Which> View parse_file(u32 tgid, ThreadGroupData &process);
 
   // rpc components
   ::flowmill::ingest::Writer &writer_;

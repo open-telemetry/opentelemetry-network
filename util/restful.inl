@@ -22,28 +22,28 @@
 #include <curlpp/Options.hpp>
 #include <curlpp/cURLpp.hpp>
 
-template <typename T>
-Expected<T, std::runtime_error> RestfulFetcher::CtorDecoder<T>::operator ()(std::string body) const {
+template <typename T> Expected<T, std::runtime_error> RestfulFetcher::CtorDecoder<T>::operator()(std::string body) const
+{
   try {
     return T{std::move(body)};
   } catch (std::runtime_error const &e) {
-    return {unexpected, e };
+    return {unexpected, e};
   } catch (std::exception const &e) {
-    return {unexpected, std::runtime_error{e.what()} };
+    return {unexpected, std::runtime_error{e.what()}};
   }
 }
 
 template <typename T, typename Decoder>
 Expected<T, std::runtime_error> RestfulFetcher::sync_fetch(
-  std::string_view description,
-  std::string url,
-  Decoder &&decoder,
-  std::chrono::milliseconds const timeout,
-  std::size_t const retries,
-  std::chrono::milliseconds const initial_backoff,
-  std::chrono::milliseconds const maximum_backoff,
-  unsigned const backoff_geometric_ratio
-) {
+    std::string_view description,
+    std::string url,
+    Decoder &&decoder,
+    std::chrono::milliseconds const timeout,
+    std::size_t const retries,
+    std::chrono::milliseconds const initial_backoff,
+    std::chrono::milliseconds const maximum_backoff,
+    unsigned const backoff_geometric_ratio)
+{
   curlpp::Easy request;
 
   request.setOpt<curlpp::options::Url>(std::move(url));
@@ -72,10 +72,7 @@ Expected<T, std::runtime_error> RestfulFetcher::sync_fetch(
         return false;
       }
 
-      LOG::warn(
-        "backing-off for {} before trying again after failing to fetch {}: {}",
-        backoff_interval, description, error
-      );
+      LOG::warn("backing-off for {} before trying again after failing to fetch {}: {}", backoff_interval, description, error);
 
       std::this_thread::sleep_for(backoff_interval);
 
@@ -116,8 +113,5 @@ Expected<T, std::runtime_error> RestfulFetcher::sync_fetch(
     }
   }
 
-  return {
-    unexpected,
-    fmt::format("unable to fetch {} after {} tries", description, retries + 1)
-  };
+  return {unexpected, fmt::format("unable to fetch {} after {} tries", description, retries + 1)};
 }

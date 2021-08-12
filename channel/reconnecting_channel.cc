@@ -14,8 +14,8 @@
 // limitations under the License.
 //
 
-#include <channel/reconnecting_channel.h>
 #include <channel/component.h>
+#include <channel/reconnecting_channel.h>
 
 #include <util/log.h>
 
@@ -39,9 +39,7 @@ void start_timer_cb(uv_timer_t *timer)
   channel->to_connecting_state();
 }
 
-ReconnectingChannel::ReconnectingChannel(config::IntakeConfig intake_config,
-                                         uv_loop_t &loop,
-                                         std::size_t buffer_size)
+ReconnectingChannel::ReconnectingChannel(config::IntakeConfig intake_config, uv_loop_t &loop, std::size_t buffer_size)
     : loop_(loop),
       intake_config_(std::move(intake_config)),
       network_channel_(intake_config_.make_channel(loop)),
@@ -68,11 +66,13 @@ ReconnectingChannel::~ReconnectingChannel()
   uv_close((uv_handle_t *)&start_timer_, NULL);
 }
 
-void ReconnectingChannel::register_pipeline_observer(Callbacks *observer) {
+void ReconnectingChannel::register_pipeline_observer(Callbacks *observer)
+{
   pipeline_observers_.insert(observer);
 }
 
-void ReconnectingChannel::unregister_pipeline_observer(Callbacks *observer) {
+void ReconnectingChannel::unregister_pipeline_observer(Callbacks *observer)
+{
   pipeline_observers_.erase(observer);
 }
 
@@ -85,8 +85,7 @@ u32 ReconnectingChannel::received_data(const u8 *data, int data_len)
 
 void ReconnectingChannel::on_error(int err)
 {
-  LOG::trace_in(Component::reconnecting_channel,
-                "ReconnectingChannel: on_error(). prev_state: {}", state_string());
+  LOG::trace_in(Component::reconnecting_channel, "ReconnectingChannel: on_error(). prev_state: {}", state_string());
   LOG::warn("ReconnectingChannel: Connection error: {}", uv_err_name(err));
   for (auto *observer : pipeline_observers_) {
     observer->on_error(err);
@@ -97,8 +96,7 @@ void ReconnectingChannel::on_error(int err)
 
 void ReconnectingChannel::on_closed()
 {
-  LOG::trace_in(Component::reconnecting_channel,
-                "ReconnectingChannel: on_closed(). State: {}", state_string());
+  LOG::trace_in(Component::reconnecting_channel, "ReconnectingChannel: on_closed(). State: {}", state_string());
 
   for (auto *observer : pipeline_observers_) {
     observer->on_closed();
@@ -109,8 +107,7 @@ void ReconnectingChannel::on_closed()
 
 void ReconnectingChannel::on_connect()
 {
-  LOG::trace_in(Component::reconnecting_channel,
-                "ReconnectingChannel: on_connect(). State: {}", state_string());
+  LOG::trace_in(Component::reconnecting_channel, "ReconnectingChannel: on_connect(). State: {}", state_string());
   LOG::info("ReconnectingChannel: Remote connection established.");
 
   num_bytes_sent_ = 0;
@@ -125,7 +122,8 @@ void ReconnectingChannel::on_connect()
   }
 }
 
-void ReconnectingChannel::set_compression(bool enabled) {
+void ReconnectingChannel::set_compression(bool enabled)
+{
   upstream_connection_.set_compression(enabled);
 }
 
@@ -133,17 +131,18 @@ void ReconnectingChannel::set_compression(bool enabled) {
 std::error_code ReconnectingChannel::send(const u8 *data, int data_len)
 {
   if (state_ != State::CONNECTED) {
-    LOG::trace_in(Component::reconnecting_channel,
-                  "ReconnectingChannel: Attempt to send when the channel is NOT connected.");
+    LOG::trace_in(Component::reconnecting_channel, "ReconnectingChannel: Attempt to send when the channel is NOT connected.");
     return std::make_error_code(std::errc::not_connected);
   }
 
   auto &buffered_writer = upstream_connection_.buffered_writer();
 
   num_bytes_sent_ += data_len;
-  LOG::trace_in(Component::reconnecting_channel,
-                "Sending ReconnectingChannel: {} bytes. {} bytes sent in total",
-                data_len, num_bytes_sent_);
+  LOG::trace_in(
+      Component::reconnecting_channel,
+      "Sending ReconnectingChannel: {} bytes. {} bytes sent in total",
+      data_len,
+      num_bytes_sent_);
 
   auto buffer = buffered_writer.start_write(data_len);
   if (!buffer) {
@@ -155,7 +154,8 @@ std::error_code ReconnectingChannel::send(const u8 *data, int data_len)
   return {};
 }
 
-BufferedWriter &ReconnectingChannel::buffered_writer() {
+BufferedWriter &ReconnectingChannel::buffered_writer()
+{
   return upstream_connection_.buffered_writer();
 }
 
@@ -179,50 +179,44 @@ u64 ReconnectingChannel::get_start_wait_time() const
 
 void ReconnectingChannel::to_connecting_state()
 {
-  LOG::trace_in(Component::reconnecting_channel,
-                "ReconnectingChannel: to_connecting_state(). State: {}", state_string());
+  LOG::trace_in(Component::reconnecting_channel, "ReconnectingChannel: to_connecting_state(). State: {}", state_string());
 
   state_ = State::CONNECTING;
 
   try {
     upstream_connection_.connect(*this);
   } catch (std::exception &e) {
-    LOG::warn("ReconnectingChannel: Connection attempt failed; will backoff "
-              "and retry. Error: {}",
-              e.what());
+    LOG::warn(
+        "ReconnectingChannel: Connection attempt failed; will backoff "
+        "and retry. Error: {}",
+        e.what());
     to_backoff_state();
     return;
   }
   stop_all_timers();
-  int res = uv_timer_start(&connection_timer_, connection_timer_cb,
-                           connection_timeout_ms_, 0);
+  int res = uv_timer_start(&connection_timer_, connection_timer_cb, connection_timeout_ms_, 0);
 
   if (res != 0) {
-    LOG::error("ReconnectingChannel: Cannot start connection_timer {}",
-               uv_err_name(res));
+    LOG::error("ReconnectingChannel: Cannot start connection_timer {}", uv_err_name(res));
   }
 }
 
 void ReconnectingChannel::to_backoff_state()
 {
-  LOG::trace_in(Component::reconnecting_channel,
-                "ReconnectingChannel: start_timer(). State: {}", state_string());
+  LOG::trace_in(Component::reconnecting_channel, "ReconnectingChannel: start_timer(). State: {}", state_string());
   state_ = State::BACKOFF;
 
   stop_all_timers();
-  int res =
-      uv_timer_start(&start_timer_, start_timer_cb, get_start_wait_time(), 0);
+  int res = uv_timer_start(&start_timer_, start_timer_cb, get_start_wait_time(), 0);
 
   if (res != 0) {
-    LOG::error("ReconnectingChannel: Cannot start start_timer {}",
-               uv_err_name(res));
+    LOG::error("ReconnectingChannel: Cannot start start_timer {}", uv_err_name(res));
   }
 }
 
 void ReconnectingChannel::start_connect()
 {
-  LOG::trace_in(Component::reconnecting_channel,
-                "ReconnectingChannel: start_connect(). State: {}", state_string());
+  LOG::trace_in(Component::reconnecting_channel, "ReconnectingChannel: start_connect(). State: {}", state_string());
 
   assert(state_ == State::INACTIVE);
 

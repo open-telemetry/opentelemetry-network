@@ -18,13 +18,11 @@
 
 #include <cstddef>
 #include <platform/platform.h>
-#include <util/iterable_bitmap.h>
 #include <tuple>
 #include <type_traits>
+#include <util/iterable_bitmap.h>
 
-template <class T, std::size_t HASH_SIZE, typename HASH_FN,
-          class Allocator = std::allocator<T>>
-class PerfectHash {
+template <class T, std::size_t HASH_SIZE, typename HASH_FN, class Allocator = std::allocator<T>> class PerfectHash {
 public:
   using key_type = u32;
   using index_type = u32;
@@ -61,10 +59,12 @@ public:
       return nullptr;
 
     /* construct the object, might throw! */
-    traits_::construct(allocator_, (value_type *)&values_[index],
-                       std::piecewise_construct,
-                       std::forward_as_tuple(std::forward<key_type>(k)),
-                       std::forward_as_tuple(std::forward<Args>(args)...));
+    traits_::construct(
+        allocator_,
+        (value_type *)&values_[index],
+        std::piecewise_construct,
+        std::forward_as_tuple(std::forward<key_type>(k)),
+        std::forward_as_tuple(std::forward<Args>(args)...));
 
     /* okay, we're good! */
     elem_count_++;
@@ -93,26 +93,19 @@ public:
   }
 
 private:
-  using traits_ = typename std::allocator_traits<
-      Allocator>::template rebind_traits<value_type>;
+  using traits_ = typename std::allocator_traits<Allocator>::template rebind_traits<value_type>;
   using allocator_type = typename traits_::allocator_type;
 
   /**
    * Destroys the element at @index.
    */
-  void destroy(index_type index)
-  {
-    traits_::destroy(allocator_, &values_[index]);
-  }
+  void destroy(index_type index) { traits_::destroy(allocator_, &values_[index]); }
 
   HASH_FN hash_fn;
 
   allocator_type allocator_;
 
-  std::array<typename std::aligned_storage<sizeof(value_type),
-                                           alignof(value_type)>::type,
-             HASH_SIZE>
-      values_;
+  std::array<typename std::aligned_storage<sizeof(value_type), alignof(value_type)>::type, HASH_SIZE> values_;
 
   IterableBitmap<HASH_SIZE> allocated_;
 

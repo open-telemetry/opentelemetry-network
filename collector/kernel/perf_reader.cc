@@ -17,24 +17,20 @@
 #include <collector/kernel/perf_reader.h>
 
 #include <algorithm>
-#include <util/perf_ring.h>
-#include <spdlog/fmt/fmt.h>
 #include <linux/perf_event.h>
 #include <linux/unistd.h>
+#include <spdlog/fmt/fmt.h>
 #include <sstream>
 #include <stdexcept>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <unistd.h>
+#include <util/perf_ring.h>
 
 #define __STRINGIZE(X) #X
 #define _STRINGIZE(X) __STRINGIZE(X)
 
-PerfContainer::PerfContainer() : 
-  n_entries_(0), 
-  readers_in_entries_(0)
-{
-}
+PerfContainer::PerfContainer() : n_entries_(0), readers_in_entries_(0) {}
 
 void PerfContainer::add_ring(PerfRing &pr)
 {
@@ -46,7 +42,7 @@ void PerfContainer::add_ring(PerfRing &pr)
 
 void PerfContainer::add_data_ring(PerfRing &pr)
 {
-  
+
   if (data_readers_.size() >= BPF_MAX_CPUS)
     throw std::runtime_error("Only up to " _STRINGIZE(BPF_MAX_CPUS) " cpus are currently supported");
 
@@ -55,10 +51,10 @@ void PerfContainer::add_data_ring(PerfRing &pr)
 
 void PerfContainer::set_callback(uv_loop_t &loop, void *ctx, CALLBACK cb)
 {
-  for(auto &reader: readers_) {
+  for (auto &reader : readers_) {
     reader.set_callback(loop, ctx, cb);
   }
-  for(auto &data_reader: data_readers_) {
+  for (auto &data_reader : data_readers_) {
     data_reader.set_callback(loop, ctx, cb);
   }
 }
@@ -69,23 +65,21 @@ std::string PerfContainer::inspect(void)
 
   size_t num_readers = readers_.size();
   out += fmt::format("readers_: size={}\n", num_readers);
-  for(size_t n=0; n<readers_.size(); n++) {
+  for (size_t n = 0; n < readers_.size(); n++) {
     u32 total_bytes;
     u32 bytes = readers_[n].bytes_remaining(&total_bytes);
-    out += fmt::format("  readers_[{}]: size={} ({}% full)\n", n, bytes, (((double)bytes)/(double)total_bytes)*100.0);
+    out += fmt::format("  readers_[{}]: size={} ({}% full)\n", n, bytes, (((double)bytes) / (double)total_bytes) * 100.0);
   }
   out += fmt::format("entries_: n_entries_={}. readers_in_entries_={}\n", n_entries_, readers_in_entries_.to_string());
-  for(u32 n=0; n<n_entries_;n++) {
-    out += fmt::format("  entries_[{}]={{timestamp {}, reader_index {}}}",n, entries_[n].timestamp, entries_[n].reader_index);
+  for (u32 n = 0; n < n_entries_; n++) {
+    out += fmt::format("  entries_[{}]={{timestamp {}, reader_index {}}}", n, entries_[n].timestamp, entries_[n].reader_index);
     n++;
   }
   return out;
 }
 
-
 PerfReader::PerfReader(PerfContainer &container, u64 max_timestamp)
-    : container_(container), max_timestamp_(max_timestamp),
-      active_(true)
+    : container_(container), max_timestamp_(max_timestamp), active_(true)
 {
   for (size_t i = 0; i < container.readers_.size(); i++) {
     auto &reader = container.readers_[i];
@@ -153,7 +147,7 @@ void PerfReader::stop()
     reader.finish_read_batch();
   for (auto &data_reader : container_.data_readers_)
     data_reader.finish_read_batch();
-    
+
   active_ = false;
 }
 
@@ -161,8 +155,7 @@ void PerfReader::update_after_pop()
 {
   /* pop the entry in container_.entries_ */
   size_t idx = container_.entries_[0].reader_index;
-  std::pop_heap(&container_.entries_[0],
-                &container_.entries_[container_.n_entries_]);
+  std::pop_heap(&container_.entries_[0], &container_.entries_[container_.n_entries_]);
   container_.n_entries_--;
   container_.readers_in_entries_.reset(idx);
 
@@ -186,9 +179,8 @@ void PerfReader::update_when_not_in_entries(size_t idx)
   }
 
   /* add the timestamp */
-  container_.entries_[container_.n_entries_] = { .timestamp = timestamp, .reader_index = idx };
+  container_.entries_[container_.n_entries_] = {.timestamp = timestamp, .reader_index = idx};
   container_.n_entries_++;
-  std::push_heap(&container_.entries_[0],
-                 &container_.entries_[container_.n_entries_]);
+  std::push_heap(&container_.entries_[0], &container_.entries_[container_.n_entries_]);
   container_.readers_in_entries_.set(idx);
 }

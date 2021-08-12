@@ -14,48 +14,42 @@
 // limitations under the License.
 //
 
+#include <collector/kernel/nat_prober.h>
+#include <collector/kernel/probe_handler.h>
 #include <ctime>
-#include <util/log.h>
 #include <iostream>
 #include <linux/netfilter/nfnetlink.h>
 #include <linux/netfilter/nfnetlink_conntrack.h>
 #include <linux/netlink.h>
 #include <sys/socket.h>
 #include <sys/types.h>
-#include <collector/kernel/nat_prober.h>
-#include <collector/kernel/probe_handler.h>
+#include <util/log.h>
 
-#define RCV_BUFFSIZE                                                           \
-  8192 // see libnfnetlink/include/libnfnetlink.h for NFNL_BUFFSIZE
+#define RCV_BUFFSIZE 8192 // see libnfnetlink/include/libnfnetlink.h for NFNL_BUFFSIZE
 
-NatProber::NatProber(ProbeHandler &probe_handler, ebpf::BPFModule &bpf_module,
-                     std::function<void(void)> periodic_cb) :
-  periodic_cb_(periodic_cb)
+NatProber::NatProber(ProbeHandler &probe_handler, ebpf::BPFModule &bpf_module, std::function<void(void)> periodic_cb)
+    : periodic_cb_(periodic_cb)
 {
   // END
-  probe_handler.start_probe(bpf_module, "on_nf_nat_cleanup_conntrack",
-                            "nf_nat_cleanup_conntrack");
+  probe_handler.start_probe(bpf_module, "on_nf_nat_cleanup_conntrack", "nf_nat_cleanup_conntrack");
   periodic_cb();
 
   // START
-  probe_handler.start_probe(bpf_module, "on_nf_conntrack_alter_reply",
-                            "nf_conntrack_alter_reply");
+  probe_handler.start_probe(bpf_module, "on_nf_conntrack_alter_reply", "nf_conntrack_alter_reply");
   periodic_cb();
 
   // EXISTING
-  probe_handler.start_probe(bpf_module, "on_ctnetlink_dump_tuples",
-                            "ctnetlink_dump_tuples");
+  probe_handler.start_probe(bpf_module, "on_ctnetlink_dump_tuples", "ctnetlink_dump_tuples");
   periodic_cb();
   int res = query_kernel();
   if (res != 0) {
     if (res == EAGAIN || res == EWOULDBLOCK) {
-      LOG::warn("While probing NAT, netfilter socket finished before seeing "
-                "NLMSG_DONE. {}",
-                std::strerror(res));
-    }
-    else {
-      LOG::error("NatProber::NatProber() - Error calling query_kernel(): {}",
-                 std::strerror(res));
+      LOG::warn(
+          "While probing NAT, netfilter socket finished before seeing "
+          "NLMSG_DONE. {}",
+          std::strerror(res));
+    } else {
+      LOG::error("NatProber::NatProber() - Error calling query_kernel(): {}", std::strerror(res));
     }
   }
   periodic_cb();
@@ -75,8 +69,7 @@ int NatProber::query_kernel()
   // NETLINK_NETFILTER
   int sock_fd = socket(AF_NETLINK, SOCK_RAW | SOCK_NONBLOCK, NETLINK_NETFILTER);
   if (sock_fd == -1) {
-    LOG::debug("NatProber::query_kernel() - Error opening netlink socket: {}",
-               std::strerror(errno));
+    LOG::debug("NatProber::query_kernel() - Error opening netlink socket: {}", std::strerror(errno));
     return errno;
   }
 
@@ -89,8 +82,7 @@ int NatProber::query_kernel()
   int err = bind(sock_fd, (struct sockaddr *)&src_addr, sizeof(src_addr));
   if (err == -1) {
     int saved_errno = errno;
-    LOG::debug("NatProber::query_kernel() - Error binding netlink socket: {}",
-               std::strerror(saved_errno));
+    LOG::debug("NatProber::query_kernel() - Error binding netlink socket: {}", std::strerror(saved_errno));
     close(sock_fd);
     return saved_errno;
   }
@@ -137,13 +129,10 @@ int NatProber::query_kernel()
   msg.nfattr_data2 = 0; // empty
 
   // Send msg
-  err = sendto(sock_fd, (void *)&msg, sizeof(msg), 0,
-               (struct sockaddr *)&dst_addr, sizeof(dst_addr));
+  err = sendto(sock_fd, (void *)&msg, sizeof(msg), 0, (struct sockaddr *)&dst_addr, sizeof(dst_addr));
   if (err == -1) {
     int saved_errno = errno;
-    LOG::debug(
-        "NatProber::query_kernel() - Error sending on netlink socket: {}",
-        std::strerror(saved_errno));
+    LOG::debug("NatProber::query_kernel() - Error sending on netlink socket: {}", std::strerror(saved_errno));
     close(sock_fd);
     return saved_errno;
   }
@@ -152,13 +141,10 @@ int NatProber::query_kernel()
   while (1) {
     socklen_t addrlen = sizeof(dst_addr);
     unsigned char buf[RCV_BUFFSIZE];
-    err = recvfrom(sock_fd, buf, sizeof(buf), 0, (struct sockaddr *)&dst_addr,
-                   &addrlen);
+    err = recvfrom(sock_fd, buf, sizeof(buf), 0, (struct sockaddr *)&dst_addr, &addrlen);
     if (err == -1) {
       int saved_errno = errno;
-      LOG::debug(
-          "NatProber::query_kernel() - Error receiving on netlink socket: {}",
-          std::strerror(saved_errno));
+      LOG::debug("NatProber::query_kernel() - Error receiving on netlink socket: {}", std::strerror(saved_errno));
       close(sock_fd);
       return saved_errno;
     }
@@ -178,7 +164,7 @@ int NatProber::query_kernel()
       break;
     }
 
-    // Ensure we handle perf events in a timely fashion 
+    // Ensure we handle perf events in a timely fashion
     // else we run the risk of overflowing the event buffer
     periodic_cb_();
   }

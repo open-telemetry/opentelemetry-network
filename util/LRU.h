@@ -18,27 +18,29 @@
 
 #include <ccan/list/list.h>
 #include <cstddef>
+#include <memory>
 #include <platform/platform.h>
 #include <util/fixed_hash.h>
-#include <memory>
 
-template <class Key, class T, std::size_t ELEM_POOL_SZ,
-          class Hash = std::hash<Key>, class KeyEqual = std::equal_to<Key>,
-          class Allocator = std::allocator<T>>
+template <
+    class Key,
+    class T,
+    std::size_t ELEM_POOL_SZ,
+    class Hash = std::hash<Key>,
+    class KeyEqual = std::equal_to<Key>,
+    class Allocator = std::allocator<T>>
 class LRU {
 public:
   using key_type = Key;
   struct value_type {
     template <typename K, typename... Args>
-    value_type(K &&k, Args &&... args)
-        : key(std::forward<K>(k)), node{}, value(std::forward<Args>(args)...)
+    value_type(K &&k, Args &&... args) : key(std::forward<K>(k)), node{}, value(std::forward<Args>(args)...)
     {}
     key_type key;
     struct list_node node;
     T value;
   };
-  using map_type = FixedHash<key_type, value_type, ELEM_POOL_SZ,
-                             Hash, KeyEqual, Allocator>;
+  using map_type = FixedHash<key_type, value_type, ELEM_POOL_SZ, Hash, KeyEqual, Allocator>;
   using size_type = typename map_type::size_type;
 
   static constexpr typename map_type::index_type invalid = map_type::invalid;
@@ -61,10 +63,7 @@ public:
 
   size_type capacity() const { return map_.capacity(); }
 
-  template <typename K> bool contains(const K &key) const
-  {
-    return map_.contains(key);
-  }
+  template <typename K> bool contains(const K &key) const { return map_.contains(key); }
 
   /**
    * Finds the given element.

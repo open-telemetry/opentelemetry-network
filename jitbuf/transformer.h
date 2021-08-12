@@ -34,22 +34,13 @@ class Transform {
 public:
   Transform() : xform_(NULL) {}
 
-  Transform(transform xform, std::shared_ptr<llvm::ExecutionEngine> engine)
-      : xform_(xform), engine_(engine)
-  {
-  }
+  Transform(transform xform, std::shared_ptr<llvm::ExecutionEngine> engine) : xform_(xform), engine_(engine) {}
 
   inline bool empty() { return (xform_ == NULL); }
 
-  inline uint16_t operator()(const char *src, char *dst)
-  {
-    return xform_(src, dst);
-  }
+  inline uint16_t operator()(const char *src, char *dst) { return xform_(src, dst); }
 
-  inline bool operator==(const Transform &other)
-  {
-    return xform_ == other.xform_;
-  }
+  inline bool operator==(const Transform &other) { return xform_ == other.xform_; }
 
   /**
    * gets the function pointer. note its lifetime can only be trusted as a
@@ -101,9 +92,8 @@ public:
    *   len_pos < src_size or there is a length_is_remainder==true blob, it
    *   returns *(u16*)&src_msg[len_pos]. Otherwise, it returns src_size.
    */
-  Transform get_xform(u32 *src_pos, u32 *dst_pos, u32 *sizes, u32 n_elem,
-                      u32 len_pos, u32 src_size,
-                      std::vector<BlobDetails> &blobs);
+  Transform
+  get_xform(u32 *src_pos, u32 *dst_pos, u32 *sizes, u32 n_elem, u32 len_pos, u32 src_size, std::vector<BlobDetails> &blobs);
 
 private:
   /**

@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-#pragma once 
+#pragma once
 
 //
 // bpf_tcp_connection.h - TCP socket tracking
@@ -58,28 +58,26 @@ struct tcp_stream_info_t {
 };
 
 struct tcp_protocol_state_t {
-  TCP_PROTOCOL_TYPE protocol; // detected protocol
-  u32 candidates; // bit mask of candidate protocols (0 bit = disqualified
-                  // candidate, 1 bit=possible candidate)
+  TCP_PROTOCOL_TYPE protocol;              // detected protocol
+  u32 candidates;                          // bit mask of candidate protocols (0 bit = disqualified
+                                           // candidate, 1 bit=possible candidate)
   u8 data[TCP_SOCKET_PROTOCOL_STATE_SIZE]; // internal data used by protocol
 };
- 
+
 // TCP Connection Data
 struct tcp_connection_t {
-  struct sock *sk;        // the socket we're keyed to
-  struct sock *parent_sk; // parent listen socket if this an accepted socket
-  TGID upid;              // userland PID of this connection
+  struct sock *sk;                     // the socket we're keyed to
+  struct sock *parent_sk;              // parent listen socket if this an accepted socket
+  TGID upid;                           // userland PID of this connection
   struct tcp_stream_info_t streams[2]; // state tracking for send and receive streams
 #ifndef ENABLE_TCP_DATA_STREAM
   struct tcp_protocol_state_t protocol_state; // protocol detection state
 #endif
 };
 
-BPF_HASH(_tcp_connections, struct sock *, struct tcp_connection_t,
-         TCP_CONNECTION_HASH_SIZE);
+BPF_HASH(_tcp_connections, struct sock *, struct tcp_connection_t, TCP_CONNECTION_HASH_SIZE);
 
-BPF_HASH(_tcp_control, struct tcp_control_key_t, struct tcp_control_value_t,
-         TCP_CONNECTION_HASH_SIZE);
+BPF_HASH(_tcp_control, struct tcp_control_key_t, struct tcp_control_value_t, TCP_CONNECTION_HASH_SIZE);
 
 //
 // TCP Connection Lifecycle Management
@@ -87,9 +85,9 @@ BPF_HASH(_tcp_control, struct tcp_control_key_t, struct tcp_control_value_t,
 
 static struct tcp_connection_t *lookup_tcp_connection(struct sock *sk)
 {
-//#if TRACE_TCP_CONNECTION
-//  DEBUG_PRINTK("tcp_connections.lookup(%llx)\n", sk);
-//#endif
+  //#if TRACE_TCP_CONNECTION
+  //  DEBUG_PRINTK("tcp_connections.lookup(%llx)\n", sk);
+  //#endif
 
   struct tcp_connection_t *pconn = _tcp_connections.lookup(&sk);
   return pconn;
@@ -104,7 +102,7 @@ static struct tcp_connection_t *create_tcp_connection(struct pt_regs *ctx, struc
     DEBUG_PRINTK("create_tcp_connection: tcp_lifetime_hack\n");
 #endif
     // xxx: disable this for now because we know it happens all the time and it's too chatty
-    //bpf_log(ctx, BPF_LOG_LIFETIME_HACK, BPF_TABLE_TCP_CONNECTIONS, (u64)sk, 0);
+    // bpf_log(ctx, BPF_LOG_LIFETIME_HACK, BPF_TABLE_TCP_CONNECTIONS, (u64)sk, 0);
     _tcp_connections.delete(&sk);
 #else
     DEBUG_PRINTK("create_tcp_connection: socket already exists sk=%llx\n", sk);
@@ -128,11 +126,9 @@ static struct tcp_connection_t *create_tcp_connection(struct pt_regs *ctx, struc
   zero.streams[1].protocol_count = TCP_PROTOCOL_COUNT;
 #endif
 
-  struct tcp_control_key_t key = {.sk = (u64)sk };
-  struct tcp_control_value_t value = {.streams[ST_SEND].enable = 1,
-                                      .streams[ST_SEND].start = 0,
-                                      .streams[ST_RECV].enable = 1,
-                                      .streams[ST_RECV].start = 0};
+  struct tcp_control_key_t key = {.sk = (u64)sk};
+  struct tcp_control_value_t value = {
+      .streams[ST_SEND].enable = 1, .streams[ST_SEND].start = 0, .streams[ST_RECV].enable = 1, .streams[ST_RECV].start = 0};
 
   pconn = _tcp_connections.lookup_or_init(&sk, &zero);
   _tcp_control.insert(&key, &value);
@@ -140,10 +136,9 @@ static struct tcp_connection_t *create_tcp_connection(struct pt_regs *ctx, struc
   return pconn;
 }
 
-static struct tcp_control_value_t *
-get_tcp_control(struct tcp_connection_t *pconn)
+static struct tcp_control_value_t *get_tcp_control(struct tcp_connection_t *pconn)
 {
-  struct tcp_control_key_t key = {.sk = (u64)pconn->sk };
+  struct tcp_control_key_t key = {.sk = (u64)pconn->sk};
   struct tcp_control_value_t *pvalue = _tcp_control.lookup(&key);
   return pvalue;
 }
@@ -151,8 +146,7 @@ get_tcp_control(struct tcp_connection_t *pconn)
 // Call this when we don't want to bother processing a tcp
 // connection any longer to minimize overhead
 // recv/send = -1 (ignore), 0 (unchanged), 1 (don't ignore)
-static void enable_tcp_connection(struct tcp_control_value_t *pctrl, int recv,
-                                  int send)
+static void enable_tcp_connection(struct tcp_control_value_t *pctrl, int recv, int send)
 {
   // DEBUG_PRINTK("enable_tcp_connection: recv=%d, send=%d\n", recv, send);
   if (send != 0) {
@@ -172,27 +166,27 @@ static void delete_tcp_connection(struct pt_regs *ctx, struct tcp_connection_t *
 #endif
 
   // remove from kernel data structures
-  struct tcp_control_key_t key = {.sk = (u64)pconn->sk };
+  struct tcp_control_key_t key = {.sk = (u64)pconn->sk};
 
   _tcp_control.delete(&key);
-  
-  int ret =_tcp_connections.delete(&sk);
-  if(ret!=0) {
+
+  int ret = _tcp_connections.delete(&sk);
+  if (ret != 0) {
 #if DEBUG_TCP_CONNECTION
-    DEBUG_PRINTK("delete_tcp_connection: delete on non-existent socket sk=%llx\n",
-                 sk);
+    DEBUG_PRINTK("delete_tcp_connection: delete on non-existent socket sk=%llx\n", sk);
 #endif
     bpf_log(ctx, BPF_LOG_TABLE_BAD_REMOVE, BPF_TABLE_TCP_CONNECTIONS, (u64)sk, 0);
   }
-
 }
 
 static void write_to_tcp_stream(
-    struct pt_regs *ctx, struct tcp_connection_t *pconn,
-    enum STREAM_TYPE streamtype, const void *src_data, size_t src_bytes,
-    void (*tcp_stream_handler)(struct pt_regs *ctx, struct tcp_connection_t *,
-                               struct tcp_control_value_t *, enum STREAM_TYPE,
-                               const void *, size_t))
+    struct pt_regs *ctx,
+    struct tcp_connection_t *pconn,
+    enum STREAM_TYPE streamtype,
+    const void *src_data,
+    size_t src_bytes,
+    void (*tcp_stream_handler)(
+        struct pt_regs *ctx, struct tcp_connection_t *, struct tcp_control_value_t *, enum STREAM_TYPE, const void *, size_t))
 {
   struct tcp_stream_info_t *strm = pconn->streams + (int)streamtype;
   struct tcp_control_value_t *pctrl = get_tcp_control(pconn);

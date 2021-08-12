@@ -21,8 +21,7 @@
  * @returns the bin the item should go into, if the histogram has n_bins
  * @important: n_bins must be a power of 2
  */
-static inline __attribute__((always_inline)) unsigned int
-histogram_bin(unsigned int n_bins, int item)
+static inline __attribute__((always_inline)) unsigned int histogram_bin(unsigned int n_bins, int item)
 {
   unsigned int mask = n_bins - 1;
   /* if item is above h->mask, overflow mask will be ~0, otherwise 0 */

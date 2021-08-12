@@ -16,8 +16,8 @@
 
 #include <util/file_ops.h>
 
-#include <util/log.h>
 #include <util/defer.h>
+#include <util/log.h>
 
 #include <dirent.h>
 #include <fcntl.h>
@@ -45,15 +45,17 @@ struct DirectoryCloser {
 
 } // namespace
 
-bool file_exists(char const *path, std::initializer_list<FileAccess> modes) {
+bool file_exists(char const *path, std::initializer_list<FileAccess> modes)
+{
   int mode = F_OK;
-  for (auto i: modes) {
+  for (auto i : modes) {
     mode |= static_cast<int>(i);
   }
   return access(path, mode) == 0;
 }
 
-Expected<char const *, std::error_code> create_directory(char const *directory) {
+Expected<char const *, std::error_code> create_directory(char const *directory)
+{
   if (auto const error = ::mkdir(directory, S_IRWXU); !error || errno == EEXIST) {
     return directory;
   } else {
@@ -66,8 +68,7 @@ FileMeta FileMeta::from_stat(std::string path, const struct stat &statbuf)
   FileMeta info;
   info.path = std::move(path);
   info.size_bytes = statbuf.st_size;
-  info.modify_nanotimestamp =
-      statbuf.st_mtim.tv_sec * 1000000000LL + statbuf.st_mtim.tv_nsec;
+  info.modify_nanotimestamp = statbuf.st_mtim.tv_sec * 1000000000LL + statbuf.st_mtim.tv_nsec;
   return info;
 }
 
@@ -108,17 +109,13 @@ std::vector<FileMeta> list_directory_contents(char const *directory)
   return result;
 }
 
-void cleanup_directory(
-  char const *directory,
-  const int64_t max_file_count,
-  const int64_t max_total_size_bytes
-) {
+void cleanup_directory(char const *directory, const int64_t max_file_count, const int64_t max_total_size_bytes)
+{
   // Get the contents of dir in reverse chronological order.
   std::vector<FileMeta> files = list_directory_contents(directory);
-  std::sort(files.begin(), files.end(),
-            [](const FileMeta &lhs, const FileMeta &rhs) {
-              return lhs.modify_nanotimestamp > rhs.modify_nanotimestamp;
-            });
+  std::sort(files.begin(), files.end(), [](const FileMeta &lhs, const FileMeta &rhs) {
+    return lhs.modify_nanotimestamp > rhs.modify_nanotimestamp;
+  });
 
   // Find the list of files to delete.
   std::vector<const FileMeta *> files_to_delete;
@@ -128,8 +125,7 @@ void cleanup_directory(
     file_count += 1;
     total_size_bytes += file.size_bytes;
 
-    if (file_count > max_file_count ||
-        total_size_bytes > max_total_size_bytes) {
+    if (file_count > max_file_count || total_size_bytes > max_total_size_bytes) {
       files_to_delete.push_back(&file);
     }
   }
@@ -145,7 +141,8 @@ void cleanup_directory(
   }
 }
 
-Expected<std::vector<std::uint8_t>, std::error_code> read_file(char const *path) {
+Expected<std::vector<std::uint8_t>, std::error_code> read_file(char const *path)
+{
   std::vector<std::uint8_t> buffer;
 
   if (auto result = read_file(path, buffer); !result) {
@@ -156,7 +153,8 @@ Expected<std::vector<std::uint8_t>, std::error_code> read_file(char const *path)
   return std::move(buffer);
 }
 
-Expected<std::string, std::error_code> read_file_as_string(char const *path) {
+Expected<std::string, std::error_code> read_file_as_string(char const *path)
+{
   auto result = read_file(path);
   if (!result) {
     return {unexpected, result.error()};
@@ -164,17 +162,11 @@ Expected<std::string, std::error_code> read_file_as_string(char const *path) {
   return std::string(reinterpret_cast<char const *>(result->data()), result->size());
 }
 
-Expected<std::size_t, std::error_code> read_file(
-  char const *path,
-  std::vector<std::uint8_t> &buffer
-) {
+Expected<std::size_t, std::error_code> read_file(char const *path, std::vector<std::uint8_t> &buffer)
+{
   FileDescriptor fd;
 
-  if (auto error = fd.open(
-    path,
-    FileDescriptor::Access::read_only,
-    FileDescriptor::Positioning::beginning
-  )) {
+  if (auto error = fd.open(path, FileDescriptor::Access::read_only, FileDescriptor::Positioning::beginning)) {
     return {unexpected, std::move(error)};
   }
 
@@ -185,7 +177,8 @@ Expected<std::size_t, std::error_code> read_file(
   }
 }
 
-std::error_code write_file(char const *path, std::string_view data) {
+std::error_code write_file(char const *path, std::string_view data)
+{
   FileDescriptor fd;
 
   if (auto error = fd.create(path, FileDescriptor::Access::write_only)) {
@@ -195,13 +188,15 @@ std::error_code write_file(char const *path, std::string_view data) {
   return fd.write_all(data);
 }
 
-FileDescriptor::~FileDescriptor() {
+FileDescriptor::~FileDescriptor()
+{
   if (valid()) {
     close();
   }
 }
 
-Expected<std::size_t, std::error_code> FileDescriptor::read(void *buffer, std::size_t size) {
+Expected<std::size_t, std::error_code> FileDescriptor::read(void *buffer, std::size_t size)
+{
   std::size_t const result = ::read(fd_, buffer, size);
 
   if (result < 0) {
@@ -211,7 +206,8 @@ Expected<std::size_t, std::error_code> FileDescriptor::read(void *buffer, std::s
   return result;
 }
 
-Expected<std::size_t, std::error_code> FileDescriptor::read_all(char *buffer, std::size_t size) {
+Expected<std::size_t, std::error_code> FileDescriptor::read_all(char *buffer, std::size_t size)
+{
   auto const begin = buffer;
 
   for (auto const end = buffer + size;;) {
@@ -229,7 +225,8 @@ Expected<std::size_t, std::error_code> FileDescriptor::read_all(char *buffer, st
   return buffer - begin;
 }
 
-Expected<std::size_t, std::error_code> FileDescriptor::read_all(std::vector<std::uint8_t> &out) {
+Expected<std::size_t, std::error_code> FileDescriptor::read_all(std::vector<std::uint8_t> &out)
+{
   std::size_t const offset = out.size();
 
   // failure to stat doesn't prevent attempting to read the file
@@ -264,7 +261,8 @@ Expected<std::size_t, std::error_code> FileDescriptor::read_all(std::vector<std:
   return total - offset;
 }
 
-std::error_code FileDescriptor::write_all(std::string_view buffer) {
+std::error_code FileDescriptor::write_all(std::string_view buffer)
+{
   auto begin = buffer.data();
   auto const end = begin + buffer.size();
 
@@ -283,15 +281,18 @@ std::error_code FileDescriptor::write_all(std::string_view buffer) {
   return {};
 }
 
-std::error_code FileDescriptor::flush_data() {
+std::error_code FileDescriptor::flush_data()
+{
   return std::error_code{::fdatasync(fd_) ? errno : 0, std::generic_category()};
 }
 
-std::error_code FileDescriptor::flush() {
+std::error_code FileDescriptor::flush()
+{
   return std::error_code{::fsync(fd_) ? errno : 0, std::generic_category()};
 }
 
-std::error_code FileDescriptor::close() {
+std::error_code FileDescriptor::close()
+{
   auto const error = ::close(fd_) ? errno : 0;
   fd_ = INVALID_FD;
   return {error, std::generic_category()};
@@ -300,48 +301,21 @@ std::error_code FileDescriptor::close() {
 namespace {
 
 static constexpr int USER_PERMISSIONS_SELECTOR[] = {
-  0,
-  (S_IRUSR),
-  (S_IWUSR),
-  (S_IRUSR | S_IWUSR),
-  (S_IXUSR),
-  (S_IRUSR | S_IXUSR),
-  (S_IWUSR | S_IXUSR),
-  (S_IRWXU)
-};
+    0, (S_IRUSR), (S_IWUSR), (S_IRUSR | S_IWUSR), (S_IXUSR), (S_IRUSR | S_IXUSR), (S_IWUSR | S_IXUSR), (S_IRWXU)};
 
 static constexpr int GROUP_PERMISSIONS_SELECTOR[] = {
-  0,
-  (S_IRGRP),
-  (S_IWGRP),
-  (S_IRGRP | S_IWGRP),
-  (S_IXGRP),
-  (S_IRGRP | S_IXGRP),
-  (S_IWGRP | S_IXGRP),
-  (S_IRWXG)
-};
+    0, (S_IRGRP), (S_IWGRP), (S_IRGRP | S_IWGRP), (S_IXGRP), (S_IRGRP | S_IXGRP), (S_IWGRP | S_IXGRP), (S_IRWXG)};
 
 static constexpr int OTHERS_PERMISSIONS_SELECTOR[] = {
-  0,
-  (S_IROTH),
-  (S_IWOTH),
-  (S_IROTH | S_IWOTH),
-  (S_IXOTH),
-  (S_IROTH | S_IXOTH),
-  (S_IWOTH | S_IXOTH),
-  (S_IRWXO)
-};
+    0, (S_IROTH), (S_IWOTH), (S_IROTH | S_IWOTH), (S_IXOTH), (S_IROTH | S_IXOTH), (S_IWOTH | S_IXOTH), (S_IRWXO)};
 
 } // namespace
 
-std::error_code FileDescriptor::open(
-    char const *path, Access access, Positioning position, Mode mode)
+std::error_code FileDescriptor::open(char const *path, Access access, Positioning position, Mode mode)
 {
   assert(!valid());
 
-  int const flags = static_cast<int>(access)
-    | static_cast<int>(position)
-    | static_cast<int>(mode);
+  int const flags = static_cast<int>(access) | static_cast<int>(position) | static_cast<int>(mode);
 
   fd_ = ::open(path, flags);
 
@@ -349,19 +323,21 @@ std::error_code FileDescriptor::open(
 }
 
 std::error_code FileDescriptor::create(
-    char const *path, Access access, Positioning position,
-    Permission user_permission, Permission group_permission,
-    Permission others_permission, Mode mode)
+    char const *path,
+    Access access,
+    Positioning position,
+    Permission user_permission,
+    Permission group_permission,
+    Permission others_permission,
+    Mode mode)
 {
   assert(!valid());
 
-  int const flags = static_cast<int>(access)
-    | static_cast<int>(position)
-    | static_cast<int>(mode) | (O_CREAT);
+  int const flags = static_cast<int>(access) | static_cast<int>(position) | static_cast<int>(mode) | (O_CREAT);
 
-  int const permissions = USER_PERMISSIONS_SELECTOR[static_cast<int>(user_permission)]
-    | GROUP_PERMISSIONS_SELECTOR[static_cast<int>(group_permission)]
-    | OTHERS_PERMISSIONS_SELECTOR[static_cast<int>(others_permission)];
+  int const permissions = USER_PERMISSIONS_SELECTOR[static_cast<int>(user_permission)] |
+                          GROUP_PERMISSIONS_SELECTOR[static_cast<int>(group_permission)] |
+                          OTHERS_PERMISSIONS_SELECTOR[static_cast<int>(others_permission)];
 
   fd_ = ::open(path, flags, permissions);
 

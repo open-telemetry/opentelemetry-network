@@ -53,10 +53,7 @@ private:
   uint32_t shift_;
 };
 
-inline fast_div::fast_div(uint32_t _mul, uint32_t _shift)
-    : mul_(_mul), shift_(_shift)
-{
-}
+inline fast_div::fast_div(uint32_t _mul, uint32_t _shift) : mul_(_mul), shift_(_shift) {}
 
 inline fast_div::fast_div(double amt, uint32_t required_bits)
 {

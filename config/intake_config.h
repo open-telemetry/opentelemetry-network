@@ -47,8 +47,7 @@ class IntakeConfig {
   static constexpr auto INTAKE_AUTH_METHOD_VAR = "FLOWMILL_INTAKE_AUTH_METHOD";
 
 public:
-  IntakeConfig()
-  {}
+  IntakeConfig() {}
 
   /**
    * Constructs an intake config object.
@@ -59,23 +58,22 @@ public:
    * secondary_output: when given, path to a file into which to record all traffic sent upstream
    */
   IntakeConfig(
-    std::string name,
-    std::string host,
-    std::string port,
-    std::optional<config::HttpProxyConfig> proxy = {},
-    std::string record_output_path = {},
-    bool disable_tls = false,
-    IntakeEncoder encoder = IntakeEncoder::binary,
-    collector::AuthMethod auth_method = collector::AuthMethod::authz
-  ):
-    name_(std::move(name)),
-    host_(std::move(host)),
-    port_(std::move(port)),
-    proxy_(std::move(proxy)),
-    record_path_(std::move(record_output_path)),
-    disable_tls_(disable_tls),
-    encoder_(encoder),
-    auth_method_(auth_method)
+      std::string name,
+      std::string host,
+      std::string port,
+      std::optional<config::HttpProxyConfig> proxy = {},
+      std::string record_output_path = {},
+      bool disable_tls = false,
+      IntakeEncoder encoder = IntakeEncoder::binary,
+      collector::AuthMethod auth_method = collector::AuthMethod::authz)
+      : name_(std::move(name)),
+        host_(std::move(host)),
+        port_(std::move(port)),
+        proxy_(std::move(proxy)),
+        record_path_(std::move(record_output_path)),
+        disable_tls_(disable_tls),
+        encoder_(encoder),
+        auth_method_(auth_method)
   {}
 
   std::string const &name() const { return name_; }
@@ -102,19 +100,17 @@ public:
 
   bool allow_compression() const { return encoder_ == IntakeEncoder::binary; }
 
-  std::unique_ptr<channel::NetworkChannel> make_channel(
-    uv_loop_t &loop,
-    std::string_view private_key = {},
-    std::string_view certificate = {}
-  ) const;
+  std::unique_ptr<channel::NetworkChannel>
+  make_channel(uv_loop_t &loop, std::string_view private_key = {}, std::string_view certificate = {}) const;
 
-  std::unique_ptr<::flowmill::ingest::Encoder> make_encoder() const {
+  std::unique_ptr<::flowmill::ingest::Encoder> make_encoder() const
+  {
     switch (encoder_) {
-      case IntakeEncoder::otlp_log:
-        return std::make_unique<::flowmill::ingest::OtlpLogEncoder>(host_, port_);
+    case IntakeEncoder::otlp_log:
+      return std::make_unique<::flowmill::ingest::OtlpLogEncoder>(host_, port_);
 
-      default:
-        return nullptr;
+    default:
+      return nullptr;
     }
   }
 
@@ -138,12 +134,12 @@ public:
    */
   static IntakeConfig read_from_env_and_intake(std::string_view intake_name);
 
-  template <typename Out>
-  friend Out &&operator <<(Out &&out, IntakeConfig const &config) {
+  template <typename Out> friend Out &&operator<<(Out &&out, IntakeConfig const &config)
+  {
     constexpr char const *tls_label[2] = {"tls", "tcp"};
 
-    out << config.name_ << " @ " << config.host_ << ':' << config.port_
-      << " (" << tls_label[config.disable_tls_] << ' ' << config.encoder_;
+    out << config.name_ << " @ " << config.host_ << ':' << config.port_ << " (" << tls_label[config.disable_tls_] << ' '
+        << config.encoder_;
     if (config.proxy_) {
       out << " / proxy @ " << config.proxy_->host() << ':' << config.proxy_->port();
     }
@@ -163,10 +159,9 @@ private:
   bool disable_tls_ = false;
   IntakeEncoder encoder_ = IntakeEncoder::binary;
   collector::AuthMethod auth_method_ = collector::AuthMethod::authz;
-
 };
 
-struct IntakeConfig::ArgsHandler: cli::ArgsParser::Handler {
+struct IntakeConfig::ArgsHandler : cli::ArgsParser::Handler {
   ArgsHandler(cli::ArgsParser &parser);
 
   IntakeConfig read_config(std::string_view intake_name);
@@ -176,4 +171,4 @@ private:
   cli::ArgsParser::ArgProxy<IntakeEncoder> encoder_;
 };
 
-} // namespace config {
+} // namespace config

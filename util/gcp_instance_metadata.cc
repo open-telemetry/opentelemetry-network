@@ -32,26 +32,20 @@ namespace {
 
 // metadata fetching described in TODO
 static constexpr std::string_view METADATA_FLAVOR_HEADER = "Metadata-Flavor: Google";
-static constexpr std::string_view METADATA_URL =
-  "http://metadata.google.internal/"
-  "computeMetadata/v1/instance/"
-  "?recursive=true";
+static constexpr std::string_view METADATA_URL = "http://metadata.google.internal/"
+                                                 "computeMetadata/v1/instance/"
+                                                 "?recursive=true";
 
 static constexpr auto METADATA_QUERY_TIMEOUT = 1s;
 
 } // namespace
 
-GcpServiceAccount::GcpServiceAccount(
-  std::string name,
-  std::string email,
-  std::vector<std::string> scopes
-):
-  name_(std::move(name)),
-  email_(std::move(email)),
-  scopes_(std::move(scopes))
+GcpServiceAccount::GcpServiceAccount(std::string name, std::string email, std::vector<std::string> scopes)
+    : name_(std::move(name)), email_(std::move(email)), scopes_(std::move(scopes))
 {}
 
-void GcpServiceAccount::print() const {
+void GcpServiceAccount::print() const
+{
   LOG::debug_in(CloudPlatform::gcp, "    name: {}", name_);
   LOG::debug_in(CloudPlatform::gcp, "    email: {}", email_);
   LOG::debug_in(CloudPlatform::gcp, "    scopes: {}", scopes_.size());
@@ -61,18 +55,12 @@ void GcpServiceAccount::print() const {
 }
 
 GcpNetworkInterface::GcpNetworkInterface(
-  std::string vpc_id,
-  std::string mac,
-  ip_address_t ip,
-  std::vector<IPv4Address> public_ips
-):
-  vpc_id_(std::move(vpc_id)),
-  mac_(std::move(mac)),
-  ip_(std::move(ip)),
-  public_ips_(std::move(public_ips))
+    std::string vpc_id, std::string mac, ip_address_t ip, std::vector<IPv4Address> public_ips)
+    : vpc_id_(std::move(vpc_id)), mac_(std::move(mac)), ip_(std::move(ip)), public_ips_(std::move(public_ips))
 {}
 
-void GcpNetworkInterface::print() const {
+void GcpNetworkInterface::print() const
+{
   LOG::debug_in(CloudPlatform::gcp, "    vpc id: {}", vpc_id_);
   LOG::debug_in(CloudPlatform::gcp, "    mac: {}", mac_);
   LOG::debug_in(CloudPlatform::gcp, "    ip: {}", ip_);
@@ -83,32 +71,32 @@ void GcpNetworkInterface::print() const {
 }
 
 GcpInstanceMetadata::GcpInstanceMetadata(
-  std::string cluster_name,
-  std::string cluster_location,
-  std::string image,
-  std::string hostname,
-  std::string name,
-  std::int64_t id,
-  std::string az,
-  std::string role,
-  std::string type,
-  std::vector<GcpNetworkInterface> network_interfaces,
-  std::vector<GcpServiceAccount> service_accounts
-):
-  cluster_name_(std::move(cluster_name)),
-  cluster_location_(std::move(cluster_location)),
-  image_(std::move(image)),
-  hostname_(std::move(hostname)),
-  name_(std::move(name)),
-  id_(id),
-  az_(std::move(az)),
-  role_(std::move(role)),
-  type_(std::move(type)),
-  network_interfaces_(std::move(network_interfaces)),
-  service_accounts_(std::move(service_accounts))
+    std::string cluster_name,
+    std::string cluster_location,
+    std::string image,
+    std::string hostname,
+    std::string name,
+    std::int64_t id,
+    std::string az,
+    std::string role,
+    std::string type,
+    std::vector<GcpNetworkInterface> network_interfaces,
+    std::vector<GcpServiceAccount> service_accounts)
+    : cluster_name_(std::move(cluster_name)),
+      cluster_location_(std::move(cluster_location)),
+      image_(std::move(image)),
+      hostname_(std::move(hostname)),
+      name_(std::move(name)),
+      id_(id),
+      az_(std::move(az)),
+      role_(std::move(role)),
+      type_(std::move(type)),
+      network_interfaces_(std::move(network_interfaces)),
+      service_accounts_(std::move(service_accounts))
 {}
 
-void GcpInstanceMetadata::print() const {
+void GcpInstanceMetadata::print() const
+{
   LOG::debug_in(CloudPlatform::gcp, "GCP metadata:");
   LOG::debug_in(CloudPlatform::gcp, "  cluster name: {}", cluster_name_);
   LOG::debug_in(CloudPlatform::gcp, "  cluster location: {}", cluster_location_);
@@ -133,38 +121,32 @@ void GcpInstanceMetadata::print() const {
   }
 }
 
-Expected<GcpInstanceMetadata, std::runtime_error> GcpInstanceMetadata::fetch(
-  std::chrono::microseconds timeout
-) {
+Expected<GcpInstanceMetadata, std::runtime_error> GcpInstanceMetadata::fetch(std::chrono::microseconds timeout)
+{
   RestfulFetcher fetcher({METADATA_FLAVOR_HEADER});
 
   auto const metadata = fetcher.sync_fetch<nlohmann::json>(
-    "Google Cloud Platform instance metadata",
-    std::string(METADATA_URL),
-    [](std::string_view json) -> Expected<nlohmann::json, std::runtime_error> {
-      try {
-        return nlohmann::json::parse(json);
-      } catch (std::exception const &e) {
-        return {unexpected, e.what()};
-      }
-    },
-    METADATA_QUERY_TIMEOUT
-  );
+      "Google Cloud Platform instance metadata",
+      std::string(METADATA_URL),
+      [](std::string_view json) -> Expected<nlohmann::json, std::runtime_error> {
+        try {
+          return nlohmann::json::parse(json);
+        } catch (std::exception const &e) {
+          return {unexpected, e.what()};
+        }
+      },
+      METADATA_QUERY_TIMEOUT);
 
   if (!metadata) {
     return {unexpected, std::move(metadata.error())};
   }
 
   std::vector<GcpNetworkInterface> network_interfaces;
-  if (auto const interfaces = follow_path(*metadata, "networkInterfaces");
-    interfaces && interfaces->is_array()
-  ) {
-    for (auto const &interface: *interfaces) {
+  if (auto const interfaces = follow_path(*metadata, "networkInterfaces"); interfaces && interfaces->is_array()) {
+    for (auto const &interface : *interfaces) {
       std::vector<IPv4Address> public_ips;
-      if (auto const access_configs = follow_path(interface, "accessConfigs");
-        access_configs && access_configs->is_array()
-      ) {
-        for (auto const &access_config: *access_configs) {
+      if (auto const access_configs = follow_path(interface, "accessConfigs"); access_configs && access_configs->is_array()) {
+        for (auto const &access_config : *access_configs) {
           if (auto public_ip = IPv4Address::parse(get_zstring_view(access_config, "externalIp").data())) {
             public_ips.push_back(std::move(*public_ip));
           }
@@ -186,36 +168,28 @@ Expected<GcpInstanceMetadata, std::runtime_error> GcpInstanceMetadata::fetch(
       }
 
       network_interfaces.emplace_back(
-        std::string(last_token(get_string_view(interface, "network"), '/')),
-        std::string(get_string_view(interface, "mac")),
-        std::move(*ip_address),
-        std::move(public_ips)
-      );
+          std::string(last_token(get_string_view(interface, "network"), '/')),
+          std::string(get_string_view(interface, "mac")),
+          std::move(*ip_address),
+          std::move(public_ips));
     }
   }
 
   std::vector<GcpServiceAccount> service_accounts;
-  if (auto const accounts = follow_path(*metadata, "serviceAccounts");
-    accounts && accounts->is_object()
-  ) {
-    for (auto const &account_item: accounts->items()) {
+  if (auto const accounts = follow_path(*metadata, "serviceAccounts"); accounts && accounts->is_object()) {
+    for (auto const &account_item : accounts->items()) {
       std::vector<std::string> scopes;
       auto const &account = account_item.value();
-      if (auto const account_scopes = follow_path(account, "scopes");
-        account_scopes && account_scopes->is_array()
-      ) {
-        for (auto const &scope: *account_scopes) {
+      if (auto const account_scopes = follow_path(account, "scopes"); account_scopes && account_scopes->is_array()) {
+        for (auto const &scope : *account_scopes) {
           if (auto const scope_string = try_get_string(scope)) {
             scopes.push_back(*scope_string);
           }
         }
       }
-      
+
       service_accounts.emplace_back(
-        std::string(get_string_view(account_item.key())),
-        std::string(get_string_view(account, "email")),
-        std::move(scopes)
-      );
+          std::string(get_string_view(account_item.key())), std::string(get_string_view(account, "email")), std::move(scopes));
     }
   }
 
@@ -223,20 +197,18 @@ Expected<GcpInstanceMetadata, std::runtime_error> GcpInstanceMetadata::fetch(
   auto const id = try_get_int(*metadata, "id");
 
   return GcpInstanceMetadata{
-    std::string(get_string_view(*metadata, "attributes", "cluster-name")),
-    std::string(get_string_view(*metadata, "attributes", "cluster-location")),
-    std::string(get_string_view(*metadata, "image")),
-    std::string(get_string_view(*metadata, "hostname")),
-    std::string(name),
-    id.value_or(0),
-    std::string(last_token(get_string_view(*metadata, "zone"), '/')),
-    // is this the best attribute to use as role?
-    service_accounts.empty()
-      ? std::string(name)
-      : service_accounts.front().name(),
-    std::string(last_token(get_string_view(*metadata, "machineType"), '/')),
-    std::move(network_interfaces),
-    std::move(service_accounts)
+      std::string(get_string_view(*metadata, "attributes", "cluster-name")),
+      std::string(get_string_view(*metadata, "attributes", "cluster-location")),
+      std::string(get_string_view(*metadata, "image")),
+      std::string(get_string_view(*metadata, "hostname")),
+      std::string(name),
+      id.value_or(0),
+      std::string(last_token(get_string_view(*metadata, "zone"), '/')),
+      // is this the best attribute to use as role?
+      service_accounts.empty() ? std::string(name) : service_accounts.front().name(),
+      std::string(last_token(get_string_view(*metadata, "machineType"), '/')),
+      std::move(network_interfaces),
+      std::move(service_accounts)
 
   };
 }

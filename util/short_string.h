@@ -26,9 +26,11 @@
 #include <string_view>
 
 struct short_string_behavior {
-  struct truncate_t {};
+  struct truncate_t {
+  };
   static constexpr truncate_t truncate = {};
-  struct dont_truncate_t {};
+  struct dont_truncate_t {
+  };
   static constexpr dont_truncate_t no_truncate = {};
 };
 
@@ -50,25 +52,18 @@ template <std::size_t N> struct short_string {
   /**
    * Initializer from buffer
    */
-  short_string(const char *other, std::size_t other_len)
-  {
-    set(other, other_len);
-  }
+  short_string(const char *other, std::size_t other_len) { set(other, other_len); }
 
   /**
    * Initializer from char array
    */
-  template <std::size_t Size>
-  short_string(char const (&data)[Size])
+  template <std::size_t Size> short_string(char const (&data)[Size])
   {
     // exclude null terminator if present
     set(data, strnlen(data, Size / sizeof(*data)));
   }
 
-  short_string(short_string_behavior::truncate_t, std::string_view view)
-  {
-    set(view.data(), std::min(view.size(), max_len));
-  }
+  short_string(short_string_behavior::truncate_t, std::string_view view) { set(view.data(), std::min(view.size(), max_len)); }
 
   short_string(short_string_behavior::dont_truncate_t, std::string_view view)
   {
@@ -103,20 +98,21 @@ template <std::size_t N> struct short_string {
     return *this;
   }
 
-  template <std::size_t Size, typename = std::enable_if_t<(Size <= max_len)>>
-  short_string &operator=(char const (&data)[Size])
+  template <std::size_t Size, typename = std::enable_if_t<(Size <= max_len)>> short_string &operator=(char const (&data)[Size])
   {
     // exclude null terminator if present
     set(data, Size - static_cast<bool>(Size && !data[Size - 1]));
     return *this;
   }
 
-  short_string &operator=(std::string_view view) {
+  short_string &operator=(std::string_view view)
+  {
     set(view.data(), view.size());
     return *this;
   }
 
-  short_string &operator=(jb_blob view) {
+  short_string &operator=(jb_blob view)
+  {
     set(view.data(), view.size());
     return *this;
   }
@@ -128,35 +124,30 @@ template <std::size_t N> struct short_string {
     return (std::memcmp(buf, rhs.buf, len) == 0);
   }
 
-  bool operator!=(const short_string<N> &rhs) const
-  {
-    return !operator==(rhs);
-  }
+  bool operator!=(const short_string<N> &rhs) const { return !operator==(rhs); }
 
-  operator std::array<char, max_len>() const {
+  operator std::array<char, max_len>() const
+  {
     std::array<char, max_len> result = {};
     std::copy(buf, buf + len, result.data());
     return result;
   }
 
-  operator std::array<unsigned char, max_len>() const {
+  operator std::array<unsigned char, max_len>() const
+  {
     std::array<unsigned char, max_len> result = {};
     std::copy(buf, buf + len, result.data());
     return result;
   }
 
-  static constexpr short_string truncate(std::string_view value) {
-    return short_string{
-      value.data(),
-      std::min(value.size(), max_len)
-    };
+  static constexpr short_string truncate(std::string_view value)
+  {
+    return short_string{value.data(), std::min(value.size(), max_len)};
   }
 
-  static constexpr short_string truncate(jb_blob const &value) {
-    return short_string{
-      value.buf,
-      std::min(static_cast<std::size_t>(value.len), max_len)
-    };
+  static constexpr short_string truncate(jb_blob const &value)
+  {
+    return short_string{value.buf, std::min(static_cast<std::size_t>(value.len), max_len)};
   }
 
   /* convert to string */
@@ -179,42 +170,41 @@ template <std::size_t N> struct short_string {
   char const *begin() const { return buf; }
   char const *end() const { return buf + len; }
 
-  char operator [](std::size_t i) const {
+  char operator[](std::size_t i) const
+  {
     assert(i < len);
     return buf[i];
   }
 
-  char &operator [](std::size_t i) {
+  char &operator[](std::size_t i)
+  {
     assert(i < len);
     return buf[i];
   }
 
-  template <typename Out>
-  friend Out &operator <<(Out &&out, short_string const &s) {
+  template <typename Out> friend Out &operator<<(Out &&out, short_string const &s)
+  {
     out.write(s.data(), s.size());
     return out;
   }
 };
 
-template <
-  typename Array,
-  typename = std::enable_if_t<std::is_array_v<Array>>,
-  std::size_t Size = std::extent_v<Array>
->
-short_string<Size> to_short_string(std::string_view s) {
+template <typename Array, typename = std::enable_if_t<std::is_array_v<Array>>, std::size_t Size = std::extent_v<Array>>
+short_string<Size> to_short_string(std::string_view s)
+{
   static_assert(Size > 0);
   return {s};
 }
 
-template <typename Char, std::size_t Size>
-short_string<Size> to_short_string(Char const (&data)[Size]) {
+template <typename Char, std::size_t Size> short_string<Size> to_short_string(Char const (&data)[Size])
+{
   static_assert(Size > 0);
   static_assert(sizeof(Char) == sizeof(char));
   return {data, Size};
 }
 
-template <typename... Char>
-auto as_short_string(Char const ...c) {
+template <typename... Char> auto as_short_string(Char const... c)
+{
   constexpr std::size_t size = sizeof...(Char);
   static_assert(size > 0);
   char buffer[size] = {static_cast<char>(c)...};

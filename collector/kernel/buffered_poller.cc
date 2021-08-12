@@ -49,10 +49,16 @@ static BufferedPoller *singleton_ = nullptr;
 static constexpr u64 DNS_TIMEOUT_TIME_NS = 10'000'000'000ull;
 
 BufferedPoller::BufferedPoller(
-    uv_loop_t &loop, PerfContainer &container, IBufferedWriter &writer,
-    u64 time_adjustment, CurlEngine &curl_engine, FileDescriptor &bpf_dump_file,
-    logging::Logger &log, ProbeHandler &probe_handler,
-    ebpf::BPFModule &bpf_module, NicPoller &nic_poller,
+    uv_loop_t &loop,
+    PerfContainer &container,
+    IBufferedWriter &writer,
+    u64 time_adjustment,
+    CurlEngine &curl_engine,
+    FileDescriptor &bpf_dump_file,
+    logging::Logger &log,
+    ProbeHandler &probe_handler,
+    ebpf::BPFModule &bpf_module,
+    NicPoller &nic_poller,
     CgroupHandler::CgroupSettings const &cgroup_settings,
     ProcessHandler::CpuMemIoSettings const *cpu_mem_io_settings,
     ::flowmill::ingest::Encoder *encoder)
@@ -66,8 +72,7 @@ BufferedPoller::BufferedPoller(
       bpf_module_(bpf_module),
       writer_(buffered_writer_, monotonic, time_adjustment, encoder),
       collector_index_({writer_}),
-      process_handler_(writer_, collector_index_, probe_handler_, bpf_module_,
-                       log_, cpu_mem_io_settings),
+      process_handler_(writer_, collector_index_, probe_handler_, bpf_module_, log_, cpu_mem_io_settings),
       cgroup_handler_(writer_, curl_engine, std::move(cgroup_settings), log),
       nat_handler_(writer_, log),
       nic_poller_(nic_poller),
@@ -86,68 +91,42 @@ BufferedPoller::BufferedPoller(
     using namespace flowmill::agent_internal;
 
     memset(handlers_, 0, sizeof(handlers_));
-    add_handler<dns_packet_message_metadata,
-                &BufferedPoller::handle_dns_message, DNS_MAX_PACKET_LEN + 16>();
-    add_handler<new_sock_created_message_metadata,
-                &BufferedPoller::handle_new_socket>();
-    add_handler<set_state_ipv4_message_metadata,
-                &BufferedPoller::handle_set_state_ipv4>();
-    add_handler<set_state_ipv6_message_metadata,
-                &BufferedPoller::handle_set_state_ipv6>();
-    add_handler<close_sock_info_message_metadata,
-                &BufferedPoller::handle_close_socket>();
-    add_handler<rtt_estimator_message_metadata,
-                &BufferedPoller::handle_rtt_estimator>();
-    add_handler<reset_tcp_counters_message_metadata,
-                &BufferedPoller::handle_reset_tcp_counters>();
-    add_handler<tcp_syn_timeout_message_metadata,
-                &BufferedPoller::handle_tcp_syn_timeout>();
-    add_handler<tcp_reset_message_metadata,
-                &BufferedPoller::handle_tcp_reset>();
-    add_handler<http_response_message_metadata,
-                &BufferedPoller::handle_http_response>();
-    add_handler<udp_new_socket_message_metadata,
-                &BufferedPoller::handle_udp_new_socket>();
-    add_handler<udp_destroy_socket_message_metadata,
-                &BufferedPoller::handle_udp_destroy_socket>();
-    add_handler<udp_stats_message_metadata,
-                &BufferedPoller::handle_udp_stats>();
+    add_handler<dns_packet_message_metadata, &BufferedPoller::handle_dns_message, DNS_MAX_PACKET_LEN + 16>();
+    add_handler<new_sock_created_message_metadata, &BufferedPoller::handle_new_socket>();
+    add_handler<set_state_ipv4_message_metadata, &BufferedPoller::handle_set_state_ipv4>();
+    add_handler<set_state_ipv6_message_metadata, &BufferedPoller::handle_set_state_ipv6>();
+    add_handler<close_sock_info_message_metadata, &BufferedPoller::handle_close_socket>();
+    add_handler<rtt_estimator_message_metadata, &BufferedPoller::handle_rtt_estimator>();
+    add_handler<reset_tcp_counters_message_metadata, &BufferedPoller::handle_reset_tcp_counters>();
+    add_handler<tcp_syn_timeout_message_metadata, &BufferedPoller::handle_tcp_syn_timeout>();
+    add_handler<tcp_reset_message_metadata, &BufferedPoller::handle_tcp_reset>();
+    add_handler<http_response_message_metadata, &BufferedPoller::handle_http_response>();
+    add_handler<udp_new_socket_message_metadata, &BufferedPoller::handle_udp_new_socket>();
+    add_handler<udp_destroy_socket_message_metadata, &BufferedPoller::handle_udp_destroy_socket>();
+    add_handler<udp_stats_message_metadata, &BufferedPoller::handle_udp_stats>();
     add_handler<pid_info_message_metadata, &BufferedPoller::handle_pid_info>();
-    add_handler<pid_close_message_metadata,
-                &BufferedPoller::handle_pid_close>();
-    add_handler<pid_set_comm_message_metadata,
-                &BufferedPoller::handle_pid_set_comm>();
-    add_handler<report_task_status_message_metadata,
-                &BufferedPoller::handle_report_task_status>();
+    add_handler<pid_close_message_metadata, &BufferedPoller::handle_pid_close>();
+    add_handler<pid_set_comm_message_metadata, &BufferedPoller::handle_pid_set_comm>();
+    add_handler<report_task_status_message_metadata, &BufferedPoller::handle_report_task_status>();
     add_handler<pid_exit_message_metadata, &BufferedPoller::handle_pid_exit>();
     add_handler<kill_css_message_metadata, &BufferedPoller::handle_kill_css>();
-    add_handler<css_populate_dir_message_metadata,
-                &BufferedPoller::handle_css_populate_dir>();
-    add_handler<cgroup_clone_children_read_message_metadata,
-                &BufferedPoller::handle_cgroup_clone_children_read>();
-    add_handler<cgroup_attach_task_message_metadata,
-                &BufferedPoller::handle_cgroup_attach_task>();
-    add_handler<nf_nat_cleanup_conntrack_message_metadata,
-                &BufferedPoller::handle_nf_nat_cleanup_conntrack>();
-    add_handler<nf_conntrack_alter_reply_message_metadata,
-                &BufferedPoller::handle_nf_conntrack_alter_reply>();
-    add_handler<existing_conntrack_tuple_message_metadata,
-                &BufferedPoller::handle_existing_conntrack_tuple>();
+    add_handler<css_populate_dir_message_metadata, &BufferedPoller::handle_css_populate_dir>();
+    add_handler<cgroup_clone_children_read_message_metadata, &BufferedPoller::handle_cgroup_clone_children_read>();
+    add_handler<cgroup_attach_task_message_metadata, &BufferedPoller::handle_cgroup_attach_task>();
+    add_handler<nf_nat_cleanup_conntrack_message_metadata, &BufferedPoller::handle_nf_nat_cleanup_conntrack>();
+    add_handler<nf_conntrack_alter_reply_message_metadata, &BufferedPoller::handle_nf_conntrack_alter_reply>();
+    add_handler<existing_conntrack_tuple_message_metadata, &BufferedPoller::handle_existing_conntrack_tuple>();
     add_handler<bpf_log_message_metadata, &BufferedPoller::handle_bpf_log>();
-    add_handler<stack_trace_message_metadata,
-                &BufferedPoller::handle_stack_trace>();
+    add_handler<stack_trace_message_metadata, &BufferedPoller::handle_stack_trace>();
     add_handler<tcp_data_message_metadata, &BufferedPoller::handle_tcp_data>();
-    add_handler<nic_queue_state_message_metadata,
-                &BufferedPoller::handle_nic_queue_state>();
+    add_handler<nic_queue_state_message_metadata, &BufferedPoller::handle_nic_queue_state>();
   }
 
   // Create a tcp data handler for the tcp_data message
-  tcp_data_handler_ = std::make_unique<TCPDataHandler>(
-      loop_, bpf_module, writer_, container, log_);
+  tcp_data_handler_ = std::make_unique<TCPDataHandler>(loop_, bpf_module, writer_, container, log_);
 
   // Set perf container callback for events
-  container.set_callback(
-      loop, this, [](void *ctx) { ((BufferedPoller *)ctx)->handle_event(); });
+  container.set_callback(loop, this, [](void *ctx) { ((BufferedPoller *)ctx)->handle_event(); });
 
 #ifdef DEBUG_PID
   singleton_ = this;
@@ -175,8 +154,7 @@ void BufferedPoller::process_samples(bool is_event)
   // with understanding the profile of the perf buffers
   if (is_event && is_log_whitelisted(AgentLogKind::PERF)) {
     std::string cstr = container_.inspect();
-    LOG::debug_in(AgentLogKind::PERF,
-                  "* Perf event triggered *\ncontainer_ is:\n{}\n\n", cstr);
+    LOG::debug_in(AgentLogKind::PERF, "* Perf event triggered *\ncontainer_ is:\n{}\n\n", cstr);
   }
 
   // read the top contents of our container into our buffer
@@ -222,8 +200,7 @@ void BufferedPoller::process_samples(bool is_event)
   }
 
   // clear out buffer if there's still anything left
-  if (auto error = buffered_writer_.flush();
-      error && buffered_writer_.is_writable()) {
+  if (auto error = buffered_writer_.flush(); error && buffered_writer_.is_writable()) {
     throw std::runtime_error(fmt::format("flush failed at end: {}", error));
   }
 }
@@ -243,32 +220,35 @@ u64 BufferedPoller::serv_lost_count()
   return lost_count_;
 }
 
-template <typename MessageMetadata,
-          BufferedPoller::message_handler_fn<MessageMetadata> Handler,
-          std::size_t MaxPadding, typename Alignment>
+template <
+    typename MessageMetadata,
+    BufferedPoller::message_handler_fn<MessageMetadata> Handler,
+    std::size_t MaxPadding,
+    typename Alignment>
 void BufferedPoller::message_handler_entrypoint(PerfReader &reader, u16 length)
 {
   struct {
     u64 timestamp;
     typename MessageMetadata::wire_message msg;
-    Alignment
-        padding[(MaxPadding + (sizeof(Alignment) - 1)) / sizeof(Alignment)];
+    Alignment padding[(MaxPadding + (sizeof(Alignment) - 1)) / sizeof(Alignment)];
   } in;
 
   if constexpr (MaxPadding) {
     if (length < sizeof(u64) + MessageMetadata::wire_message_size) {
       throw std::runtime_error(fmt::format(
-          "message truncated (`{}`: {}/{})", MessageMetadata::name, length,
-          sizeof(u64) + MessageMetadata::wire_message_size));
-    } else if (length >
-               sizeof(u64) + MessageMetadata::wire_message_size + MaxPadding) {
+          "message truncated (`{}`: {}/{})", MessageMetadata::name, length, sizeof(u64) + MessageMetadata::wire_message_size));
+    } else if (length > sizeof(u64) + MessageMetadata::wire_message_size + MaxPadding) {
       throw std::runtime_error(fmt::format(
-          "message too long (`{}`: {}/{})", MessageMetadata::name, length,
+          "message too long (`{}`: {}/{})",
+          MessageMetadata::name,
+          length,
           sizeof(u64) + MessageMetadata::wire_message_size + MaxPadding));
     }
   } else if (length != sizeof(u64) + MessageMetadata::wire_message_size) {
     throw std::runtime_error(fmt::format(
-        "invalid message length (`{}`: {}/{})", MessageMetadata::name, length,
+        "invalid message length (`{}`: {}/{})",
+        MessageMetadata::name,
+        length,
         sizeof(u64) + MessageMetadata::wire_message_size));
   }
 
@@ -291,16 +271,16 @@ void BufferedPoller::message_handler_entrypoint(PerfReader &reader, u16 length)
           .timestamp = in.timestamp,
           .cpu_index = cpu_index,
           .payload = {reinterpret_cast<u8 const *>(&in), length},
-          .padding = {reinterpret_cast<u8 const *>(&in.msg) +
-                          MessageMetadata::wire_message_size,
-                      MaxPadding},
+          .padding = {reinterpret_cast<u8 const *>(&in.msg) + MessageMetadata::wire_message_size, MaxPadding},
       },
       in.msg);
 }
 
-template <typename MessageMetadata,
-          BufferedPoller::message_handler_fn<MessageMetadata> Handler,
-          std::size_t MaxPadding, typename Alignment>
+template <
+    typename MessageMetadata,
+    BufferedPoller::message_handler_fn<MessageMetadata> Handler,
+    std::size_t MaxPadding,
+    typename Alignment>
 void BufferedPoller::add_handler()
 {
   u32 idx = agent_internal_hash(MessageMetadata::rpc_id);
@@ -309,22 +289,22 @@ void BufferedPoller::add_handler()
     throw std::runtime_error("tried to add_handler to an occupied slot");
   }
 
-  handlers_[idx] =
-      &BufferedPoller::message_handler_entrypoint<MessageMetadata, Handler,
-                                                  MaxPadding, Alignment>;
+  handlers_[idx] = &BufferedPoller::message_handler_entrypoint<MessageMetadata, Handler, MaxPadding, Alignment>;
 }
 
-void BufferedPoller::handle_dns_message(message_metadata const &metadata,
-                                        jb_agent_internal__dns_packet &msg)
+void BufferedPoller::handle_dns_message(message_metadata const &metadata, jb_agent_internal__dns_packet &msg)
 {
   // we are assuming that struct id_addr is exactly 4 bytes and that struct
   // in6_addr is exactly 16 bytes
   //
-  static_assert(sizeof(in_addr) == 4, "serialization protocol assumes IPv4 "
-                                      "address structure is 4 bytes exactly");
-  static_assert(sizeof(in6_addr) == 16,
-                "serialization protocol assumes IPv6 address structure is 16 "
-                "bytes exactly");
+  static_assert(
+      sizeof(in_addr) == 4,
+      "serialization protocol assumes IPv4 "
+      "address structure is 4 bytes exactly");
+  static_assert(
+      sizeof(in6_addr) == 16,
+      "serialization protocol assumes IPv6 address structure is 16 "
+      "bytes exactly");
 
   LOG::debug_in(AgentLogKind::DNS, "handle_dns_message");
 
@@ -333,8 +313,7 @@ void BufferedPoller::handle_dns_message(message_metadata const &metadata,
   auto const &dns_packet = metadata.padding;
 
   /* sanity check the message */
-  if (dns_packet.data() + pkt_len >
-      metadata.payload.data() + metadata.payload.size()) {
+  if (dns_packet.data() + pkt_len > metadata.payload.data() + metadata.payload.size()) {
     throw std::runtime_error("dns: garbled message length");
   }
 
@@ -360,58 +339,58 @@ void BufferedPoller::handle_dns_message(message_metadata const &metadata,
   uint16_t type_out;
   uint16_t qid_out;
   int is_response;
-  int ret = dns_parse_query(dns_packet.data(), pkt_len, &is_response, &type_out,
-                            &qid_out, hostname_out, &hostname_len);
+  int ret = dns_parse_query(dns_packet.data(), pkt_len, &is_response, &type_out, &qid_out, hostname_out, &hostname_len);
   if (ret != ARES_SUCCESS) {
     LOG::debug_in(
         AgentLogKind::DNS,
         "dns_parse_query returned {}, total len {} valid len {} packet {:n}",
-        ret, msg.total_len, pkt_len,
+        ret,
+        msg.total_len,
+        pkt_len,
         spdlog::to_hex(dns_packet.data(), dns_packet.data() + pkt_len));
     return;
   }
-  LOG::debug_in(AgentLogKind::DNS,
-                "dns_parse_query successful, total len {} valid len "
-                "{}\nis_response {} type_out {} qid_out {} hostname {}",
-                msg.total_len, pkt_len, is_response, type_out, qid_out,
-                std::string_view(hostname_out, hostname_len));
+  LOG::debug_in(
+      AgentLogKind::DNS,
+      "dns_parse_query successful, total len {} valid len "
+      "{}\nis_response {} type_out {} qid_out {} hostname {}",
+      msg.total_len,
+      pkt_len,
+      is_response,
+      type_out,
+      qid_out,
+      std::string_view(hostname_out, hostname_len));
 
   if (!is_response) {
     DnsRequests::dns_request_key key{
-        .qid = qid_out,
-        .type = type_out,
-        .name = std::string(hostname_out, hostname_len),
-        .is_rx = msg.is_rx};
+        .qid = qid_out, .type = type_out, .name = std::string(hostname_out, hostname_len), .is_rx = msg.is_rx};
 
     // Add request to table, for later processing when response shows up
-    DnsRequests::dns_request_value value{.timestamp_ns = metadata.timestamp,
-                                         .sk = sk};
+    DnsRequests::dns_request_value value{.timestamp_ns = metadata.timestamp, .sk = sk};
     dns_requests_.add(key, value);
     return;
   }
 
   // looking for requests in the other direction
-  DnsRequests::dns_request_key key{.qid = qid_out,
-                                   .type = type_out,
-                                   .name =
-                                       std::string(hostname_out, hostname_len),
-                                   .is_rx = !msg.is_rx};
+  DnsRequests::dns_request_key key{
+      .qid = qid_out, .type = type_out, .name = std::string(hostname_out, hostname_len), .is_rx = !msg.is_rx};
 
   // parse the reply
   int send_a_aaaa_response = 0;
   u16 sent_hostname_len = 0;
   char *sent_hostname = NULL;
 
-  ret = dns_parse_a_aaaa_reply(dns_packet.data(), pkt_len, hostname_out,
-                               &hostname_len, ipv4_addrs, &num_ipv4_addrs,
-                               ipv6_addrs, &num_ipv6_addrs);
+  ret = dns_parse_a_aaaa_reply(
+      dns_packet.data(), pkt_len, hostname_out, &hostname_len, ipv4_addrs, &num_ipv4_addrs, ipv6_addrs, &num_ipv6_addrs);
 
   if (hostname_len == 0 || (num_ipv4_addrs + num_ipv6_addrs) == 0) {
     LOG::debug_in(
         AgentLogKind::DNS,
         "dns_parse_a_aaaa_reply returned {}, total len {} valid len {} "
         "packet {:n}",
-        ret, msg.total_len, pkt_len,
+        ret,
+        msg.total_len,
+        pkt_len,
         spdlog::to_hex(dns_packet.data(), dns_packet.data() + pkt_len));
     send_a_aaaa_response = 0;
   } else {
@@ -419,17 +398,20 @@ void BufferedPoller::handle_dns_message(message_metadata const &metadata,
      * we continue here even if packet was partial or corrupt, as long as we
      * successfully parsed some IP addresses and the host name
      */
-    LOG::debug_in(AgentLogKind::DNS,
-                  "dns_parse_a_aaaa_reply successful, total len {} valid len "
-                  "{}\nnum_ipv4_addrs {} num_ipv6_addrs {}",
-                  msg.total_len, pkt_len, is_response, type_out, qid_out,
-                  std::string_view(hostname_out, hostname_len));
+    LOG::debug_in(
+        AgentLogKind::DNS,
+        "dns_parse_a_aaaa_reply successful, total len {} valid len "
+        "{}\nnum_ipv4_addrs {} num_ipv6_addrs {}",
+        msg.total_len,
+        pkt_len,
+        is_response,
+        type_out,
+        qid_out,
+        std::string_view(hostname_out, hostname_len));
 
     send_a_aaaa_response = 1;
     // truncate hostname */
-    sent_hostname_len = (hostname_len < MAX_ENCODED_DOMAIN_NAME)
-                            ? (u16)hostname_len
-                            : MAX_ENCODED_DOMAIN_NAME;
+    sent_hostname_len = (hostname_len < MAX_ENCODED_DOMAIN_NAME) ? (u16)hostname_len : MAX_ENCODED_DOMAIN_NAME;
     sent_hostname = hostname_out + hostname_len - sent_hostname_len;
   }
 
@@ -447,11 +429,14 @@ void BufferedPoller::handle_dns_message(message_metadata const &metadata,
       u64 latency_ns = metadata.timestamp - request_timestamp;
 
       if (send_a_aaaa_response) {
-        LOG::debug_in(AgentLogKind::DNS,
-                      "sending DNS for hostname {} num_ipv4_addrs:{} "
-                      "num_ipv6_addrs:{} latency_ns:{}",
-                      sent_hostname, num_ipv4_addrs, num_ipv6_addrs,
-                      latency_ns);
+        LOG::debug_in(
+            AgentLogKind::DNS,
+            "sending DNS for hostname {} num_ipv4_addrs:{} "
+            "num_ipv6_addrs:{} latency_ns:{}",
+            sent_hostname,
+            num_ipv4_addrs,
+            num_ipv6_addrs,
+            latency_ns);
 
         // if the socket is exactly the same, then we match
         bool matching = sk == req->second.sk;
@@ -461,15 +446,13 @@ void BufferedPoller::handle_dns_message(message_metadata const &metadata,
           auto pos1 = udp_socket_table_.find(sk);
           if (pos1.index == udp_socket_table_.invalid) {
             if (!udp_socket_table_ever_full_ && all_probes_loaded_) {
-              log_.error("ERROR: handle_dns_message - sk not found. sk={:x}",
-                         sk);
+              log_.error("ERROR: handle_dns_message - sk not found. sk={:x}", sk);
             }
           }
           auto pos2 = udp_socket_table_.find(req->second.sk);
           if (pos2.index == udp_socket_table_.invalid) {
             if (!udp_socket_table_ever_full_ && all_probes_loaded_) {
-              log_.error("ERROR: handle_dns_message - sk2 not found. sk2={}",
-                         req->second.sk);
+              log_.error("ERROR: handle_dns_message - sk2 not found. sk2={}", req->second.sk);
             }
           }
 
@@ -486,10 +469,17 @@ void BufferedPoller::handle_dns_message(message_metadata const &metadata,
                 "dns socket mismatch {}@{}:{}(pid={}) != {}@{}:{}(pid={})\n"
                 "hostname: {}  num_ipv4_addrs:{}  num_ipv6_addrs:{}  latency: "
                 "{}",
-                sk, IPv6Address::from(pos1.entry->laddr), pos1.entry->lport,
-                pos1.entry->pid, req->second.sk,
-                IPv6Address::from(pos2.entry->laddr), pos2.entry->lport,
-                pos2.entry->pid, sent_hostname, num_ipv4_addrs, num_ipv6_addrs,
+                sk,
+                IPv6Address::from(pos1.entry->laddr),
+                pos1.entry->lport,
+                pos1.entry->pid,
+                req->second.sk,
+                IPv6Address::from(pos2.entry->laddr),
+                pos2.entry->lport,
+                pos2.entry->pid,
+                sent_hostname,
+                num_ipv4_addrs,
+                num_ipv6_addrs,
                 latency_ns);
           }
         }
@@ -498,14 +488,16 @@ void BufferedPoller::handle_dns_message(message_metadata const &metadata,
         // appropriate metric if sending a dns response, this is a server and
         // 'processing time' is the appropriate metric
         writer_.dns_response_tstamp(
-            metadata.timestamp, sk_id, hostname_len,
+            metadata.timestamp,
+            sk_id,
+            hostname_len,
             /* domain_name */ jb_blob{sent_hostname, sent_hostname_len},
             /* ipv4_addrs */
             jb_blob{(char *)ipv4_addrs, (u16)(sizeof(u32) * num_ipv4_addrs)},
             /* ipv6_addrs */
-            jb_blob{(char *)ipv6_addrs,
-                    (u16)(sizeof(struct in6_addr) * num_ipv6_addrs)},
-            latency_ns, msg.is_rx ? SC_CLIENT : SC_SERVER);
+            jb_blob{(char *)ipv6_addrs, (u16)(sizeof(struct in6_addr) * num_ipv6_addrs)},
+            latency_ns,
+            msg.is_rx ? SC_CLIENT : SC_SERVER);
       }
       // else {
       //  // someday add other dns responses, or dns resolution errors
@@ -517,8 +509,7 @@ void BufferedPoller::handle_dns_message(message_metadata const &metadata,
   }
 }
 
-void BufferedPoller::timeout_dns_request(u64 timestamp_ns,
-                                         const DnsRequests::Request &req)
+void BufferedPoller::timeout_dns_request(u64 timestamp_ns, const DnsRequests::Request &req)
 {
   u64 t_req = req->second.timestamp_ns;
   u64 sk = req->second.sk;
@@ -529,8 +520,7 @@ void BufferedPoller::timeout_dns_request(u64 timestamp_ns,
     if (!udp_socket_table_ever_full_ && all_probes_loaded_) {
       // Just a debug message here, it's possible for a udp socket lifetime to
       // race with the timeout
-      LOG::debug_in(AgentLogKind::DNS,
-                    "ERROR: timeout_dns_request - sk not found. sk={:x}", sk);
+      LOG::debug_in(AgentLogKind::DNS, "ERROR: timeout_dns_request - sk not found. sk={:x}", sk);
     }
   } else {
 
@@ -541,18 +531,16 @@ void BufferedPoller::timeout_dns_request(u64 timestamp_ns,
     const char *hostname_out = req->first.name.c_str();
     size_t hostname_len = req->first.name.size();
 
-    u16 sent_hostname_len = (hostname_len < MAX_ENCODED_DOMAIN_NAME)
-                                ? (u16)hostname_len
-                                : MAX_ENCODED_DOMAIN_NAME;
+    u16 sent_hostname_len = (hostname_len < MAX_ENCODED_DOMAIN_NAME) ? (u16)hostname_len : MAX_ENCODED_DOMAIN_NAME;
 
     const char *sent_hostname = hostname_out + hostname_len - sent_hostname_len;
 
-    LOG::debug_in(AgentLogKind::DNS,
-                  "sending DNS timeout for hostname {} duration_ns {}",
-                  sent_hostname, duration_ns);
+    LOG::debug_in(AgentLogKind::DNS, "sending DNS timeout for hostname {} duration_ns {}", sent_hostname, duration_ns);
 
     writer_.dns_timeout_tstamp(
-        timestamp_ns, sk_id, hostname_len,
+        timestamp_ns,
+        sk_id,
+        hostname_len,
         /* domain_name */ jb_blob{sent_hostname, sent_hostname_len},
         duration_ns);
   }
@@ -561,7 +549,8 @@ void BufferedPoller::timeout_dns_request(u64 timestamp_ns,
   dns_requests_.remove(req);
 }
 
-void BufferedPoller::slow_poll() {
+void BufferedPoller::slow_poll()
+{
   u64 const t = monotonic() + time_adjustment_;
   process_dns_timeouts(t);
   process_handler_.slow_poll(t);
@@ -576,16 +565,14 @@ void BufferedPoller::process_dns_timeouts(u64 t)
   }
 }
 
-void BufferedPoller::handle_new_socket(message_metadata const &metadata,
-                                       jb_agent_internal__new_sock_created &msg)
+void BufferedPoller::handle_new_socket(message_metadata const &metadata, jb_agent_internal__new_sock_created &msg)
 {
   /**
    * NOTE: this is not the only handling of new sockets (contrary to name).
    *   reset_tcp_counters also reports a new socket.
    */
 
-  LOG::debug_in(AgentLogKind::TCP, "handle_new_socket: sk={:x} pid={}", msg.sk,
-                msg.pid);
+  LOG::debug_in(AgentLogKind::TCP, "handle_new_socket: sk={:x} pid={}", msg.sk, msg.pid);
 
   if (tcp_socket_table_.full()) {
     log_.warn("handle_new_socket: tcp socket table is full! dropping socket");
@@ -597,21 +584,24 @@ void BufferedPoller::handle_new_socket(message_metadata const &metadata,
   if (pos.index != tcp_socket_table_.invalid) {
     tcp_index_to_sk_[pos.index] = msg.sk;
   } else {
-    log_.error("handle_new_socket: duplicate tcp socket sk={:x} pid={}", msg.sk,
-               msg.pid);
+    log_.error("handle_new_socket: duplicate tcp socket sk={:x} pid={}", msg.sk, msg.pid);
     return;
   }
 
   writer_.new_sock_info_tstamp(metadata.timestamp, msg.pid, msg.sk);
 }
 
-void BufferedPoller::handle_set_state_ipv4(
-    message_metadata const &metadata, jb_agent_internal__set_state_ipv4 &msg)
+void BufferedPoller::handle_set_state_ipv4(message_metadata const &metadata, jb_agent_internal__set_state_ipv4 &msg)
 {
-  LOG::trace_in(AgentLogKind::TCP,
-                "handle_set_state_ipv4: sk:{:x}, {}:{} -> {}:{} (tx_rx={})",
-                msg.sk, IPv4Address::from(msg.src), msg.sport,
-                IPv4Address::from(msg.dest), msg.dport, msg.tx_rx);
+  LOG::trace_in(
+      AgentLogKind::TCP,
+      "handle_set_state_ipv4: sk:{:x}, {}:{} -> {}:{} (tx_rx={})",
+      msg.sk,
+      IPv4Address::from(msg.src),
+      msg.sport,
+      IPv4Address::from(msg.dest),
+      msg.dport,
+      msg.tx_rx);
 
   // Ensure that if we get a state_set_ipv4 that the socket is something that
   // exists in our table already
@@ -623,19 +613,22 @@ void BufferedPoller::handle_set_state_ipv4(
     return;
   }
 
-  writer_.set_state_ipv4_tstamp(metadata.timestamp, msg.dest, msg.src,
-                                msg.dport, msg.sport, msg.sk, msg.tx_rx);
+  writer_.set_state_ipv4_tstamp(metadata.timestamp, msg.dest, msg.src, msg.dport, msg.sport, msg.sk, msg.tx_rx);
 
   nat_handler_.handle_set_state_ipv4(metadata.timestamp, &msg);
 }
 
-void BufferedPoller::handle_set_state_ipv6(
-    message_metadata const &metadata, jb_agent_internal__set_state_ipv6 &msg)
+void BufferedPoller::handle_set_state_ipv6(message_metadata const &metadata, jb_agent_internal__set_state_ipv6 &msg)
 {
-  LOG::trace_in(AgentLogKind::TCP,
-                "handle_set_state_ipv6: sk:{}, {}:{} -> {}:{} (tx_rx={})",
-                msg.sk, IPv6Address::from(msg.src), msg.sport,
-                IPv6Address::from(msg.dest), msg.dport, msg.tx_rx);
+  LOG::trace_in(
+      AgentLogKind::TCP,
+      "handle_set_state_ipv6: sk:{}, {}:{} -> {}:{} (tx_rx={})",
+      msg.sk,
+      IPv6Address::from(msg.src),
+      msg.sport,
+      IPv6Address::from(msg.dest),
+      msg.dport,
+      msg.tx_rx);
 
   // Ensure that if we get a state_set_ipv4 that the socket is something that
   // exists in our table already
@@ -647,12 +640,10 @@ void BufferedPoller::handle_set_state_ipv6(
     return;
   }
 
-  writer_.set_state_ipv6_tstamp(metadata.timestamp, msg.dest, msg.src,
-                                msg.dport, msg.sport, msg.sk, msg.tx_rx);
+  writer_.set_state_ipv6_tstamp(metadata.timestamp, msg.dest, msg.src, msg.dport, msg.sport, msg.sk, msg.tx_rx);
 }
 
-void BufferedPoller::handle_close_socket(
-    message_metadata const &metadata, jb_agent_internal__close_sock_info &msg)
+void BufferedPoller::handle_close_socket(message_metadata const &metadata, jb_agent_internal__close_sock_info &msg)
 {
   auto pos = tcp_socket_table_.find(msg.sk);
   if (pos.index == tcp_socket_table_.invalid) {
@@ -667,8 +658,7 @@ void BufferedPoller::handle_close_socket(
 
   // send out a statistics message if needed
   for (u32 epoch = 0; epoch < n_epochs; epoch++) {
-    auto &stats =
-        tcp_socket_stats_.lookup_relative(pos.index, epoch, false).second;
+    auto &stats = tcp_socket_stats_.lookup_relative(pos.index, epoch, false).second;
     if (stats.valid == true) {
       send_socket_stats(metadata.timestamp, msg.sk, stats);
     }
@@ -676,9 +666,7 @@ void BufferedPoller::handle_close_socket(
 
   bool success = tcp_socket_table_.erase(msg.sk);
   if (!success) {
-    throw std::runtime_error(fmt::format(
-        "handle_close_socket: removing socket from table failed sk={:x}",
-        msg.sk));
+    throw std::runtime_error(fmt::format("handle_close_socket: removing socket from table failed sk={:x}", msg.sk));
   }
 
   writer_.close_sock_info_tstamp(metadata.timestamp, msg.sk);
@@ -689,16 +677,12 @@ void BufferedPoller::handle_close_socket(
   tcp_data_handler_->handle_close_socket(msg.sk);
 }
 
-void BufferedPoller::handle_rtt_estimator(message_metadata const &metadata,
-                                          jb_agent_internal__rtt_estimator &msg)
+void BufferedPoller::handle_rtt_estimator(message_metadata const &metadata, jb_agent_internal__rtt_estimator &msg)
 {
   auto pos = tcp_socket_table_.find(msg.sk);
   if (pos.index == tcp_socket_table_.invalid) {
     if (!tcp_socket_table_ever_full_ && all_probes_loaded_) {
-      LOG::debug_in(
-          AgentLogKind::TCP,
-          "handle_rtt_estimator: rtt_estimator on unknown socket sk={:x}",
-          msg.sk);
+      LOG::debug_in(AgentLogKind::TCP, "handle_rtt_estimator: rtt_estimator on unknown socket sk={:x}", msg.sk);
     }
     return;
   }
@@ -746,8 +730,7 @@ void BufferedPoller::handle_rtt_estimator(message_metadata const &metadata,
   entry->rcv_delivered = msg.rcv_delivered;
 
   /* find the statistics, and ask it to enqueue */
-  auto &stats =
-      tcp_socket_stats_.lookup(pos.index, metadata.timestamp, true).second;
+  auto &stats = tcp_socket_stats_.lookup(pos.index, metadata.timestamp, true).second;
 
   /* if stats were invalid, reset the values */
   if (!stats.valid) {
@@ -774,20 +757,16 @@ void BufferedPoller::handle_rtt_estimator(message_metadata const &metadata,
   }
 }
 
-void BufferedPoller::handle_reset_tcp_counters(
-    message_metadata const &metadata,
-    jb_agent_internal__reset_tcp_counters &msg)
+void BufferedPoller::handle_reset_tcp_counters(message_metadata const &metadata, jb_agent_internal__reset_tcp_counters &msg)
 {
 
-  LOG::debug_in(AgentLogKind::TCP, "handle_reset_tcp_counters: sk={:x} pid={}",
-                msg.sk, msg.pid);
+  LOG::debug_in(AgentLogKind::TCP, "handle_reset_tcp_counters: sk={:x} pid={}", msg.sk, msg.pid);
 
   // first, write telemetry like handle_new_socket
   writer_.new_sock_info_tstamp(metadata.timestamp, msg.pid, msg.sk);
 
   if (tcp_socket_table_.full()) {
-    log_.warn(
-        "handle_reset_tcp_counters: tcp socket table is full! dropping socket");
+    log_.warn("handle_reset_tcp_counters: tcp socket table is full! dropping socket");
     tcp_socket_table_ever_full_ = true;
     return;
   }
@@ -796,8 +775,7 @@ void BufferedPoller::handle_reset_tcp_counters(
   if (pos.index != tcp_socket_table_.invalid) {
     tcp_index_to_sk_[pos.index] = msg.sk;
   } else {
-    log_.error("handle_reset_tcp_counters: duplicate tcp socket sk={:x} pid={}",
-               msg.sk, msg.pid);
+    log_.error("handle_reset_tcp_counters: duplicate tcp socket sk={:x} pid={}", msg.sk, msg.pid);
     return;
   }
   auto entry = pos.entry;
@@ -808,44 +786,41 @@ void BufferedPoller::handle_reset_tcp_counters(
   entry->bytes_received = msg.bytes_received;
 }
 
-void BufferedPoller::handle_tcp_syn_timeout(
-    message_metadata const &metadata, jb_agent_internal__tcp_syn_timeout &msg)
+void BufferedPoller::handle_tcp_syn_timeout(message_metadata const &metadata, jb_agent_internal__tcp_syn_timeout &msg)
 {
   writer_.syn_timeout_tstamp(metadata.timestamp, msg.sk);
 }
 
-void BufferedPoller::handle_tcp_reset(message_metadata const &metadata,
-                                      jb_agent_internal__tcp_reset &msg)
+void BufferedPoller::handle_tcp_reset(message_metadata const &metadata, jb_agent_internal__tcp_reset &msg)
 {
   writer_.tcp_reset_tstamp(metadata.timestamp, msg.sk, msg.is_rx);
 }
 
-void BufferedPoller::handle_http_response(message_metadata const &metadata,
-                                          jb_agent_internal__http_response &msg)
+void BufferedPoller::handle_http_response(message_metadata const &metadata, jb_agent_internal__http_response &msg)
 {
   LOG::debug_in(
       AgentLogKind::HTTP,
       "handle_http_response: timestamp={}, sk={:x}, pid={}, code={}, "
       "latency_ns={}, client_server={}",
-      metadata.timestamp, msg.sk, msg.pid, msg.code, msg.latency_ns,
+      metadata.timestamp,
+      msg.sk,
+      msg.pid,
+      msg.code,
+      msg.latency_ns,
       client_server_type_to_string((enum CLIENT_SERVER_TYPE)msg.client_server));
 
-  writer_.http_response_tstamp(metadata.timestamp, msg.sk, msg.pid, msg.code,
-                               msg.latency_ns, msg.client_server);
+  writer_.http_response_tstamp(metadata.timestamp, msg.sk, msg.pid, msg.code, msg.latency_ns, msg.client_server);
 }
 
 void BufferedPoller::send_socket_stats(u64 t, u64 sk, tcp_statistics &stats)
 {
   if ((stats.diff_bytes_acked > 0) || (stats.diff_retrans > 0)) {
-    writer_.socket_stats_tstamp(t, sk, stats.diff_bytes_acked,
-                                stats.diff_delivered, stats.diff_retrans,
-                                stats.max_srtt, 0);
+    writer_.socket_stats_tstamp(t, sk, stats.diff_bytes_acked, stats.diff_delivered, stats.diff_retrans, stats.max_srtt, 0);
   }
 
   if ((stats.diff_bytes_received > 0) || (stats.diff_rcv_holes > 0)) {
-    writer_.socket_stats_tstamp(t, sk, stats.diff_bytes_received,
-                                stats.diff_rcv_delivered, stats.diff_rcv_holes,
-                                stats.max_rcv_rtt, 1);
+    writer_.socket_stats_tstamp(
+        t, sk, stats.diff_bytes_received, stats.diff_rcv_delivered, stats.diff_rcv_holes, stats.max_rcv_rtt, 1);
   }
 
   stats.valid = false;
@@ -879,12 +854,15 @@ void BufferedPoller::send_stats_from_queue(u64 t)
   tcp_socket_stats_.advance();
 }
 
-void BufferedPoller::handle_udp_new_socket(
-    message_metadata const &metadata, jb_agent_internal__udp_new_socket &msg)
+void BufferedPoller::handle_udp_new_socket(message_metadata const &metadata, jb_agent_internal__udp_new_socket &msg)
 {
-  LOG::debug_in(AgentLogKind::UDP,
-                "handle_udp_new_socket: sk={:x} pid={} laddr={} lport={}",
-                msg.sk, msg.pid, IPv6Address::from(msg.laddr), msg.lport);
+  LOG::debug_in(
+      AgentLogKind::UDP,
+      "handle_udp_new_socket: sk={:x} pid={} laddr={} lport={}",
+      msg.sk,
+      msg.pid,
+      IPv6Address::from(msg.laddr),
+      msg.lport);
 
   /* first, insert into table */
   if (udp_socket_table_.full()) {
@@ -915,19 +893,14 @@ void BufferedPoller::handle_udp_new_socket(
   //			<< " laddr " << addr_s << std::endl;
 }
 
-void BufferedPoller::handle_udp_destroy_socket(
-    message_metadata const &metadata,
-    jb_agent_internal__udp_destroy_socket &msg)
+void BufferedPoller::handle_udp_destroy_socket(message_metadata const &metadata, jb_agent_internal__udp_destroy_socket &msg)
 {
-  LOG::debug_in(AgentLogKind::UDP, "handle_udp_destroy_socket: sk={:x}",
-                msg.sk);
+  LOG::debug_in(AgentLogKind::UDP, "handle_udp_destroy_socket: sk={:x}", msg.sk);
 
   auto pos = udp_socket_table_.find(msg.sk);
   if (pos.index == udp_socket_table_.invalid) {
     if (!udp_socket_table_ever_full_ && all_probes_loaded_) {
-      LOG::debug_in(AgentLogKind::UDP,
-                    "handle_udp_destroy_socket: socket not found sk={:x}",
-                    msg.sk);
+      LOG::debug_in(AgentLogKind::UDP, "handle_udp_destroy_socket: socket not found sk={:x}", msg.sk);
     }
     return;
   }
@@ -943,12 +916,9 @@ void BufferedPoller::handle_udp_destroy_socket(
   if (pos.entry->reported) {
     for (int is_rx = 0; is_rx < 2; is_rx++) {
       for (u32 epoch = 0; epoch < n_epochs; epoch++) {
-        auto &stats = udp_socket_stats_[is_rx]
-                          .lookup_relative(pos.index, epoch, false)
-                          .second;
+        auto &stats = udp_socket_stats_[is_rx].lookup_relative(pos.index, epoch, false).second;
         if (stats.valid == true)
-          udp_send_stats(metadata.timestamp, pos.index, is_rx, *pos.entry,
-                         stats);
+          udp_send_stats(metadata.timestamp, pos.index, is_rx, *pos.entry, stats);
       }
     }
     /* notify of the destruction */
@@ -957,14 +927,11 @@ void BufferedPoller::handle_udp_destroy_socket(
 
   bool success = udp_socket_table_.erase(msg.sk);
   if (!success) {
-    log_.error(
-        "handle_udp_destroy_socket: removing socket from table failed sk={:x}",
-        msg.sk);
+    log_.error("handle_udp_destroy_socket: removing socket from table failed sk={:x}", msg.sk);
   }
 }
 
-void BufferedPoller::handle_udp_stats(message_metadata const &metadata,
-                                      jb_agent_internal__udp_stats &msg)
+void BufferedPoller::handle_udp_stats(message_metadata const &metadata, jb_agent_internal__udp_stats &msg)
 {
   auto pos = udp_socket_table_.find(msg.sk);
   if (pos.index == udp_socket_table_.invalid) {
@@ -979,9 +946,7 @@ void BufferedPoller::handle_udp_stats(message_metadata const &metadata,
 
   /* find the statistics, and ask it to enqueue */
   u8 is_rx = msg.is_rx;
-  auto &stats = udp_socket_stats_[is_rx]
-                    .lookup(pos.index, metadata.timestamp, true)
-                    .second;
+  auto &stats = udp_socket_stats_[is_rx].lookup(pos.index, metadata.timestamp, true).second;
 
   /* if stats are valid and address changed, output the previous stat and update
    * address */
@@ -1000,8 +965,7 @@ void BufferedPoller::handle_udp_stats(message_metadata const &metadata,
       // table is initialized to 0:0.
       u32 laddr = ((u32 *)msg.laddr)[3];
       u32 raddr = ((u32 *)msg.raddr)[3];
-      ft = nat_handler_.get_nat_mapping(laddr, raddr, ntohs(msg.lport),
-                                        ntohs(msg.rport), IPPROTO_UDP);
+      ft = nat_handler_.get_nat_mapping(laddr, raddr, ntohs(msg.lport), ntohs(msg.rport), IPPROTO_UDP);
     }
 
     /* set the address */
@@ -1043,31 +1007,35 @@ void BufferedPoller::handle_udp_stats(message_metadata const &metadata,
   }
 
   char lipaddr6_buf[INET6_ADDRSTRLEN];
-  const char *laddr_s =
-      inet_ntop(AF_INET6, &msg.laddr, lipaddr6_buf, INET6_ADDRSTRLEN);
+  const char *laddr_s = inet_ntop(AF_INET6, &msg.laddr, lipaddr6_buf, INET6_ADDRSTRLEN);
   char ripaddr6_buf[INET6_ADDRSTRLEN];
-  const char *raddr_s =
-      inet_ntop(AF_INET6, &msg.raddr, ripaddr6_buf, INET6_ADDRSTRLEN);
+  const char *raddr_s = inet_ntop(AF_INET6, &msg.raddr, ripaddr6_buf, INET6_ADDRSTRLEN);
 
-  LOG::trace_in(AgentLogKind::UDP,
-                "UDP {} sk {:x} sk_id {} laddr {} lport {} raddr {} rport {} "
-                "packets {} bytes {} changed_af {} drops {}",
-                (msg.is_rx ? "RX" : "TX"), msg.sk, pos.index, laddr_s,
-                ntohs(msg.lport), raddr_s, ntohs(msg.rport), msg.packets,
-                msg.bytes, int(msg.changed_af), int(msg.drops));
+  LOG::trace_in(
+      AgentLogKind::UDP,
+      "UDP {} sk {:x} sk_id {} laddr {} lport {} raddr {} rport {} "
+      "packets {} bytes {} changed_af {} drops {}",
+      (msg.is_rx ? "RX" : "TX"),
+      msg.sk,
+      pos.index,
+      laddr_s,
+      ntohs(msg.lport),
+      raddr_s,
+      ntohs(msg.rport),
+      msg.packets,
+      msg.bytes,
+      int(msg.changed_af),
+      int(msg.drops));
 }
 
-void BufferedPoller::handle_pid_info(message_metadata const &metadata,
-                                     jb_agent_internal__pid_info &msg)
+void BufferedPoller::handle_pid_info(message_metadata const &metadata, jb_agent_internal__pid_info &msg)
 {
   pid_count_++;
 
-  LOG::debug_in(AgentLogKind::PID, "{}: msg={} pid_count_={}", __func__, msg,
-                pid_count_);
+  LOG::debug_in(AgentLogKind::PID, "{}: msg={} pid_count_={}", __func__, msg, pid_count_);
 
   cgroup_handler_.handle_pid_info(msg.pid, msg.cgroup, msg.comm);
-  process_handler_.on_new_process(std::chrono::nanoseconds{metadata.timestamp},
-                                  msg);
+  process_handler_.on_new_process(std::chrono::nanoseconds{metadata.timestamp}, msg);
 
   // Read the process command-line from /proc/PID/cmdline.
   // By this time the process could have exited, so reading this entry can fail.
@@ -1077,87 +1045,78 @@ void BufferedPoller::handle_pid_info(message_metadata const &metadata,
   if (auto r = try_read_proc_cmdline(msg.pid)) {
     cmdline = *r;
   } else {
-    log_.error("handle_pid_info: error reading cmdline for pid={}: {}",
-               msg.pid, r.error());
+    log_.error("handle_pid_info: error reading cmdline for pid={}: {}", msg.pid, r.error());
   }
 
-  writer_.pid_info_create_tstamp(metadata.timestamp, msg.pid, msg.comm,
-                                 msg.cgroup, msg.parent_pid, jb_blob(cmdline));
+  writer_.pid_info_create_tstamp(metadata.timestamp, msg.pid, msg.comm, msg.cgroup, msg.parent_pid, jb_blob(cmdline));
 }
 
-void BufferedPoller::handle_pid_close(message_metadata const &metadata,
-                                      jb_agent_internal__pid_close &msg)
+void BufferedPoller::handle_pid_close(message_metadata const &metadata, jb_agent_internal__pid_close &msg)
 {
   pid_count_--;
 
-  LOG::debug_in(AgentLogKind::PID, "{}: msg={} pid_count_={}", __func__, msg,
-                pid_count_);
+  LOG::debug_in(AgentLogKind::PID, "{}: msg={} pid_count_={}", __func__, msg, pid_count_);
 
-  process_handler_.on_process_end(std::chrono::nanoseconds{metadata.timestamp},
-                                  msg);
+  process_handler_.on_process_end(std::chrono::nanoseconds{metadata.timestamp}, msg);
   writer_.pid_close_info_tstamp(metadata.timestamp, msg.pid, msg.comm);
 }
 
-void BufferedPoller::handle_pid_set_comm(message_metadata const &metadata,
-                                         jb_agent_internal__pid_set_comm &msg)
+void BufferedPoller::handle_pid_set_comm(message_metadata const &metadata, jb_agent_internal__pid_set_comm &msg)
 {
   LOG::debug_in(AgentLogKind::PID, "{}: msg={}", __func__, msg);
 
-  process_handler_.set_process_command(
-      std::chrono::nanoseconds{metadata.timestamp}, msg);
+  process_handler_.set_process_command(std::chrono::nanoseconds{metadata.timestamp}, msg);
   writer_.pid_set_comm_tstamp(metadata.timestamp, msg.pid, msg.comm);
 }
 
-void BufferedPoller::handle_report_task_status(
-    message_metadata const &metadata,
-    jb_agent_internal__report_task_status &msg)
+void BufferedPoller::handle_report_task_status(message_metadata const &metadata, jb_agent_internal__report_task_status &msg)
 {
   LOG::debug_in(AgentLogKind::PID, "{}: msg={}", __func__, msg);
 
-  process_handler_.report_task_status(
-      std::chrono::nanoseconds{metadata.timestamp}, msg);
+  process_handler_.report_task_status(std::chrono::nanoseconds{metadata.timestamp}, msg);
 }
 
-void BufferedPoller::handle_pid_exit(message_metadata const &metadata,
-                                     jb_agent_internal__pid_exit &msg)
+void BufferedPoller::handle_pid_exit(message_metadata const &metadata, jb_agent_internal__pid_exit &msg)
 {
   LOG::debug_in(AgentLogKind::PID, "{}: msg={}", __func__, msg);
 
   process_handler_.pid_exit(std::chrono::nanoseconds{metadata.timestamp}, msg);
 }
 
-void trace_print_udp_socket_entry(const std::string_view &location,
-                                  udp_socket_entry *entry)
+void trace_print_udp_socket_entry(const std::string_view &location, udp_socket_entry *entry)
 {
-  LOG::trace_in(AgentLogKind::UDP,
-                "{}: udp_socket_entry\n"
-                "  laddr={}  lport={}\n"
-                "  reported={}  pid={}  sk={:x}\n"
-                "  addrs[TX]: addr={}  port={}  changed_af={}\n"
-                "  addrs[RX]: addr={}  port={}  changed_af={}",
-                location, IPv6Address::from(entry->laddr), entry->lport,
-                entry->reported, entry->pid, entry->sk,
-                IPv6Address::from(entry->addrs[0].addr), entry->addrs[0].port,
-                entry->addrs[0].changed_af,
-                IPv6Address::from(entry->addrs[1].addr), entry->addrs[1].port,
-                entry->addrs[1].changed_af);
+  LOG::trace_in(
+      AgentLogKind::UDP,
+      "{}: udp_socket_entry\n"
+      "  laddr={}  lport={}\n"
+      "  reported={}  pid={}  sk={:x}\n"
+      "  addrs[TX]: addr={}  port={}  changed_af={}\n"
+      "  addrs[RX]: addr={}  port={}  changed_af={}",
+      location,
+      IPv6Address::from(entry->laddr),
+      entry->lport,
+      entry->reported,
+      entry->pid,
+      entry->sk,
+      IPv6Address::from(entry->addrs[0].addr),
+      entry->addrs[0].port,
+      entry->addrs[0].changed_af,
+      IPv6Address::from(entry->addrs[1].addr),
+      entry->addrs[1].port,
+      entry->addrs[1].changed_af);
 }
 
-void BufferedPoller::udp_send_new_socket(u64 ts, udp_socket_entry *entry,
-                                         u64 index)
+void BufferedPoller::udp_send_new_socket(u64 ts, udp_socket_entry *entry, u64 index)
 {
   trace_print_udp_socket_entry("udp_send_new_socket", entry);
 
   if (entry->lport != 0) {
-    writer_.udp_new_socket_tstamp(
-        ts, entry->pid, index, (uint8_t *)(entry->laddr.data()), entry->lport);
+    writer_.udp_new_socket_tstamp(ts, entry->pid, index, (uint8_t *)(entry->laddr.data()), entry->lport);
     entry->reported = true;
   }
 }
 
-void BufferedPoller::udp_send_stats(u64 t, u32 sk_id, u8 is_rx,
-                                    udp_socket_entry &entry,
-                                    udp_statistics &stats)
+void BufferedPoller::udp_send_stats(u64 t, u32 sk_id, u8 is_rx, udp_socket_entry &entry, udp_statistics &stats)
 {
   trace_print_udp_socket_entry("udp_send_stats", &entry);
 
@@ -1169,17 +1128,14 @@ void BufferedPoller::udp_send_stats(u64 t, u32 sk_id, u8 is_rx,
 
   switch (addr.changed_af) {
   case AF_INET:
-    writer_.udp_stats_addr_changed_v4_tstamp(
-        t, sk_id, is_rx, stats.packets, stats.bytes, addr.addr[3], addr.port);
+    writer_.udp_stats_addr_changed_v4_tstamp(t, sk_id, is_rx, stats.packets, stats.bytes, addr.addr[3], addr.port);
     // TODO: Can uncomment this once we decide to support laddr info
     // writer_.udp_stats_addr_changed_v4_tstamp(
     //     t, sk_id, is_rx, stats.packets, stats.bytes, addr.addr[3], addr.port,
     //     entry.laddr[3], entry.lport);
     break;
   case AF_INET6:
-    writer_.udp_stats_addr_changed_v6_tstamp(t, sk_id, is_rx, stats.packets,
-                                             stats.bytes, (u8 *)&addr.addr,
-                                             addr.port);
+    writer_.udp_stats_addr_changed_v6_tstamp(t, sk_id, is_rx, stats.packets, stats.bytes, (u8 *)&addr.addr, addr.port);
     // TODO: Can uncomment this once we decide to support laddr info
     // writer_.udp_stats_addr_changed_v6_tstamp(t, sk_id, is_rx, stats.packets,
     //                                          stats.bytes, (u8 *)&addr.addr,
@@ -1187,8 +1143,7 @@ void BufferedPoller::udp_send_stats(u64 t, u32 sk_id, u8 is_rx,
     //                                          entry.lport);
     break;
   default:
-    writer_.udp_stats_addr_unchanged_tstamp(t, sk_id, is_rx, stats.packets,
-                                            stats.bytes);
+    writer_.udp_stats_addr_unchanged_tstamp(t, sk_id, is_rx, stats.packets, stats.bytes);
     break;
   }
 
@@ -1202,8 +1157,13 @@ void BufferedPoller::udp_send_stats(u64 t, u32 sk_id, u8 is_rx,
         AgentLogKind::UDP,
         "BufferedPoller::udp_send_stats - sk_id: {}, raddr: {}, rport: {}, "
         "packets: {}, bytes: {}, changed_af: {}, drops: {}",
-        sk_id, IPv6Address::from(addr.addr), addr.port, stats.packets,
-        stats.bytes, int(addr.changed_af), stats.drops);
+        sk_id,
+        IPv6Address::from(addr.addr),
+        addr.port,
+        stats.packets,
+        stats.bytes,
+        int(addr.changed_af),
+        stats.drops);
   }
 
   /* don't need to report the address next time if it doesn't change */
@@ -1251,68 +1211,56 @@ u32 BufferedPoller::u64_hasher::operator()(u64 const &s) const noexcept
   return lookup3_hashword((u32 *)&s, sizeof(u64) / 4, 0x7AFBAF00);
 }
 
-void BufferedPoller::handle_kill_css(message_metadata const &metadata,
-                                     jb_agent_internal__kill_css &msg)
+void BufferedPoller::handle_kill_css(message_metadata const &metadata, jb_agent_internal__kill_css &msg)
 {
   cgroup_handler_.kill_css(metadata.timestamp, &msg);
 
   writer_.cgroup_close_tstamp(metadata.timestamp, msg.cgroup);
 }
 
-void BufferedPoller::handle_css_populate_dir(
-    message_metadata const &metadata, jb_agent_internal__css_populate_dir &msg)
+void BufferedPoller::handle_css_populate_dir(message_metadata const &metadata, jb_agent_internal__css_populate_dir &msg)
 {
   cgroup_handler_.css_populate_dir(metadata.timestamp, &msg);
 
-  writer_.cgroup_create_tstamp(metadata.timestamp, msg.cgroup,
-                               msg.cgroup_parent, msg.name);
+  writer_.cgroup_create_tstamp(metadata.timestamp, msg.cgroup, msg.cgroup_parent, msg.name);
 }
 
 void BufferedPoller::handle_cgroup_clone_children_read(
-    message_metadata const &metadata,
-    jb_agent_internal__cgroup_clone_children_read &msg)
+    message_metadata const &metadata, jb_agent_internal__cgroup_clone_children_read &msg)
 {
   cgroup_handler_.cgroup_clone_children_read(metadata.timestamp, &msg);
 
-  writer_.cgroup_create_tstamp(metadata.timestamp, msg.cgroup,
-                               msg.cgroup_parent, msg.name);
+  writer_.cgroup_create_tstamp(metadata.timestamp, msg.cgroup, msg.cgroup_parent, msg.name);
 }
 
-void BufferedPoller::handle_cgroup_attach_task(
-    message_metadata const &metadata,
-    jb_agent_internal__cgroup_attach_task &msg)
+void BufferedPoller::handle_cgroup_attach_task(message_metadata const &metadata, jb_agent_internal__cgroup_attach_task &msg)
 {
   cgroup_handler_.cgroup_attach_task(metadata.timestamp, &msg);
 
-  process_handler_.on_cgroup_move(std::chrono::nanoseconds{metadata.timestamp},
-                                  msg);
+  process_handler_.on_cgroup_move(std::chrono::nanoseconds{metadata.timestamp}, msg);
 
   writer_.pid_cgroup_move_tstamp(metadata.timestamp, msg.pid, msg.cgroup);
 }
 
 void BufferedPoller::handle_nf_nat_cleanup_conntrack(
-    message_metadata const &metadata,
-    jb_agent_internal__nf_nat_cleanup_conntrack &msg)
+    message_metadata const &metadata, jb_agent_internal__nf_nat_cleanup_conntrack &msg)
 {
   nat_handler_.handle_nf_nat_cleanup_conntrack(metadata.timestamp, &msg);
 }
 
 void BufferedPoller::handle_nf_conntrack_alter_reply(
-    message_metadata const &metadata,
-    jb_agent_internal__nf_conntrack_alter_reply &msg)
+    message_metadata const &metadata, jb_agent_internal__nf_conntrack_alter_reply &msg)
 {
   nat_handler_.handle_nf_conntrack_alter_reply(metadata.timestamp, &msg);
 }
 
 void BufferedPoller::handle_existing_conntrack_tuple(
-    message_metadata const &metadata,
-    jb_agent_internal__existing_conntrack_tuple &msg)
+    message_metadata const &metadata, jb_agent_internal__existing_conntrack_tuple &msg)
 {
   nat_handler_.handle_existing_conntrack_tuple(metadata.timestamp, &msg);
 }
 
-void BufferedPoller::handle_bpf_log(message_metadata const &metadata,
-                                    jb_agent_internal__bpf_log &msg)
+void BufferedPoller::handle_bpf_log(message_metadata const &metadata, jb_agent_internal__bpf_log &msg)
 {
   // eventually, pass this to server using individual error messages
   // and turn this into LOG::debug_in(AgentLogKind::BPF,...)
@@ -1320,45 +1268,55 @@ void BufferedPoller::handle_bpf_log(message_metadata const &metadata,
   auto const linenumber = g_bpf_debug_line_info[filelineid];
   std::string_view const filename = g_bpf_debug_file_info[filelineid];
 
-  writer_.bpf_log(jb_blob{filename}, linenumber, msg.code, msg.arg0, msg.arg1,
-                  msg.arg2);
+  writer_.bpf_log(jb_blob{filename}, linenumber, msg.code, msg.arg0, msg.arg1, msg.arg2);
 }
 
-void BufferedPoller::handle_stack_trace(message_metadata const &metadata,
-                                        jb_agent_internal__stack_trace &msg)
+void BufferedPoller::handle_stack_trace(message_metadata const &metadata, jb_agent_internal__stack_trace &msg)
 {
 #if DEBUG_ENABLE_STACKTRACE
-  std::string stacktrace = probe_handler_.get_stack_trace(
-      bpf_module_, msg.kernel_stack_id, msg.user_stack_id, msg.tgid);
-  LOG::debug_in(AgentLogKind::BPF,
-                "stack_trace: timestamp={}, kernel_stack_id={}, "
-                "user_stack_id={}, tgid={}, comm={}\n{}\n",
-                metadata.timestamp, msg.kernel_stack_id, msg.user_stack_id,
-                msg.tgid, msg.comm, stacktrace);
+  std::string stacktrace = probe_handler_.get_stack_trace(bpf_module_, msg.kernel_stack_id, msg.user_stack_id, msg.tgid);
+  LOG::debug_in(
+      AgentLogKind::BPF,
+      "stack_trace: timestamp={}, kernel_stack_id={}, "
+      "user_stack_id={}, tgid={}, comm={}\n{}\n",
+      metadata.timestamp,
+      msg.kernel_stack_id,
+      msg.user_stack_id,
+      msg.tgid,
+      msg.comm,
+      stacktrace);
 #endif
 }
 
-void BufferedPoller::handle_tcp_data(message_metadata const &metadata,
-                                     jb_agent_internal__tcp_data &msg)
+void BufferedPoller::handle_tcp_data(message_metadata const &metadata, jb_agent_internal__tcp_data &msg)
 {
   LOG::debug_in(
       AgentLogKind::PROTOCOL,
       "tcp_data: idx={}, timestamp={}, sk={:x}, pid={}, length={}, offset={}, "
       "stream_type={}({}), client_server={}({})\n",
-      metadata.cpu_index, metadata.timestamp, msg.sk, msg.pid, msg.length,
-      msg.offset, msg.stream_type,
+      metadata.cpu_index,
+      metadata.timestamp,
+      msg.sk,
+      msg.pid,
+      msg.length,
+      msg.offset,
+      msg.stream_type,
       stream_type_to_string((enum STREAM_TYPE)msg.stream_type),
       msg.client_server,
       client_server_type_to_string((enum CLIENT_SERVER_TYPE)msg.client_server));
 
-  tcp_data_handler_->process(metadata.cpu_index, metadata.timestamp, msg.sk,
-                             msg.pid, msg.length, msg.offset,
-                             (STREAM_TYPE)msg.stream_type,
-                             (CLIENT_SERVER_TYPE)msg.client_server);
+  tcp_data_handler_->process(
+      metadata.cpu_index,
+      metadata.timestamp,
+      msg.sk,
+      msg.pid,
+      msg.length,
+      msg.offset,
+      (STREAM_TYPE)msg.stream_type,
+      (CLIENT_SERVER_TYPE)msg.client_server);
 }
 
-void BufferedPoller::handle_nic_queue_state(
-    message_metadata const &metadata, jb_agent_internal__nic_queue_state &msg)
+void BufferedPoller::handle_nic_queue_state(message_metadata const &metadata, jb_agent_internal__nic_queue_state &msg)
 {
   nic_poller_.handle_nic_queue_state(metadata.timestamp, &msg);
 }

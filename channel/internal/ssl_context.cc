@@ -23,24 +23,23 @@
 
 static const char *CIPHER_LIST = "ECDHE-RSA-AES256-GCM-SHA384";
 
-channel::internal::SSLContext::SSLContext(const std::string &key,
-                                          const std::string &cert)
+channel::internal::SSLContext::SSLContext(const std::string &key, const std::string &cert)
 {
-  if (!key.empty()) { private_key_.emplace(key); }
-  if (!cert.empty()) { client_cert_.emplace(cert); }
+  if (!key.empty()) {
+    private_key_.emplace(key);
+  }
+  if (!cert.empty()) {
+    client_cert_.emplace(cert);
+  }
 
   const SSL_METHOD *method = TLS_client_method();
   if (method == NULL) {
-    throw std::runtime_error(
-      fmt::format("could not initialize TLS method: {}", TLSError())
-    );
+    throw std::runtime_error(fmt::format("could not initialize TLS method: {}", TLSError()));
   }
 
   ctx_ = SSL_CTX_new(method);
   if (ctx_ == nullptr) {
-    throw std::runtime_error(
-      fmt::format("could not make new TLS context: {}", TLSError())
-    );
+    throw std::runtime_error(fmt::format("could not make new TLS context: {}", TLSError()));
   }
 
   try {
@@ -50,23 +49,18 @@ channel::internal::SSLContext::SSLContext(const std::string &key,
      *   buffer space is required (and not because multiple round trips
      *   are required to renegotiate. this simlplifies state machine
      */
-    long old_opts = SSL_CTX_set_options(ctx_, SSL_OP_NO_COMPRESSION |
-                                                  SSL_OP_NO_RENEGOTIATION);
+    long old_opts = SSL_CTX_set_options(ctx_, SSL_OP_NO_COMPRESSION | SSL_OP_NO_RENEGOTIATION);
     (void)(old_opts); /* unused */
 
     /* we only support TLS1.2 and above */
     int res = SSL_CTX_set_min_proto_version(ctx_, TLS1_2_VERSION);
     if (res != 1) {
-      throw std::runtime_error(
-        fmt::format("could not set minimum TLS version: {}", TLSError())
-      );
+      throw std::runtime_error(fmt::format("could not set minimum TLS version: {}", TLSError()));
     }
 
     res = SSL_CTX_set_cipher_list(ctx_, CIPHER_LIST);
     if (res != 1) {
-      throw std::runtime_error(
-        fmt::format("Could not select TLS cipher: {}", TLSError())
-      );
+      throw std::runtime_error(fmt::format("Could not select TLS cipher: {}", TLSError()));
     }
 
     /**
@@ -81,9 +75,7 @@ channel::internal::SSLContext::SSLContext(const std::string &key,
      */
     res = SSL_CTX_set_default_verify_paths(ctx_);
     if (res != 1) {
-      throw std::runtime_error(
-        fmt::format("Could not set host certificate authorities", TLSError())
-      );
+      throw std::runtime_error(fmt::format("Could not set host certificate authorities", TLSError()));
     }
 
     /**
@@ -93,9 +85,7 @@ channel::internal::SSLContext::SSLContext(const std::string &key,
       LOG::debug("using a client certificate");
       res = SSL_CTX_use_certificate(ctx_, client_cert_->get());
       if (res != 1) {
-        throw std::runtime_error(
-          fmt::format("Could not configure TLS client cert: {}", TLSError())
-        );
+        throw std::runtime_error(fmt::format("Could not configure TLS client cert: {}", TLSError()));
       }
     }
 
@@ -103,25 +93,18 @@ channel::internal::SSLContext::SSLContext(const std::string &key,
       LOG::debug("using a client private key");
       res = SSL_CTX_use_PrivateKey(ctx_, private_key_->get());
       if (res != 1) {
-        throw std::runtime_error(
-          fmt::format("Could not configure TLS private key: {}", TLSError())
-        );
+        throw std::runtime_error(fmt::format("Could not configure TLS private key: {}", TLSError()));
       }
 
       res = SSL_CTX_check_private_key(ctx_);
       if (res != 1) {
-        throw std::runtime_error(
-          fmt::format("TLS private key check failed: {}", TLSError())
-        );
+        throw std::runtime_error(fmt::format("TLS private key check failed: {}", TLSError()));
       }
     }
 
-    long old_mode =
-        SSL_CTX_set_mode(ctx_, SSL_MODE_ENABLE_PARTIAL_WRITE |
-                                   SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
+    long old_mode = SSL_CTX_set_mode(ctx_, SSL_MODE_ENABLE_PARTIAL_WRITE | SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
     (void)old_mode; /* unused */
-  }
-  catch (std::exception &e) {
+  } catch (std::exception &e) {
     SSL_CTX_free(ctx_);
     throw;
   }

@@ -20,8 +20,8 @@
 #include <string>
 #include <type_traits>
 
-#include "platform/platform.h"
 #include "lookup3.h"
+#include "platform/platform.h"
 
 // Hasher functor that is compatible with std::hash, but uses lookup3 hashing
 // function instead.
@@ -30,17 +30,12 @@ namespace util {
 
 template <class T, class T2 = void> struct Lookup3Hasher {
   // Default implementation, fall-back to std::hash
-  std::size_t operator()(T const &t) const noexcept
-  {
-    return std::hash<T>{}(t);
-  }
+  std::size_t operator()(T const &t) const noexcept { return std::hash<T>{}(t); }
 };
 
 // Integer cases
 // TODO: use "if constexpr" to simplify the code once switch to C++17.
-template <class T>
-struct Lookup3Hasher<
-    T, typename std::enable_if<std::is_integral<T>::value>::type> {
+template <class T> struct Lookup3Hasher<T, typename std::enable_if<std::is_integral<T>::value>::type> {
   std::size_t operator()(T const &t) const noexcept
   {
     u64 val = static_cast<u64>(t);

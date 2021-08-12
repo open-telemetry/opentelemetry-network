@@ -22,10 +22,12 @@
 // { sysname, nodename, release, version, machine }
 
 // minikube 4.15.0
-{"Linux", "minikube", R"(^4\.15\.0.*)", NULL, NULL },
+{"Linux", "minikube", R"(^4\.15\.0.*)", NULL, NULL},
 
-// Linux 4.19.17 from Ubuntu mainline repo
-{"Linux", NULL, R"(^4\.19\.57.*)", NULL, NULL },
+    // Linux 4.19.17 from Ubuntu mainline repo
+    {"Linux", NULL, R"(^4\.19\.57.*)", NULL, NULL},
 
 // Linux 5.1.16 from Ubuntu mainline repo
-{"Linux", NULL, R"(^5\.1\.16.*)", NULL, NULL }
+{
+  "Linux", NULL, R"(^5\.1\.16.*)", NULL, NULL
+}

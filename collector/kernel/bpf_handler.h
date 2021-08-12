@@ -36,10 +36,14 @@ public:
    * 1. PerfContainer cannot be allocated
    * 2. ProbeHandler can't load BPFModule
    */
-  BPFHandler(uv_loop_t &loop, std::string full_program,
-             bool enable_http_metrics, bool enable_userland_tcp,
-             FileDescriptor &bpf_dump_file, logging::Logger &log,
-             ::flowmill::ingest::Encoder *encoder);
+  BPFHandler(
+      uv_loop_t &loop,
+      std::string full_program,
+      bool enable_http_metrics,
+      bool enable_userland_tcp,
+      FileDescriptor &bpf_dump_file,
+      logging::Logger &log,
+      ::flowmill::ingest::Encoder *encoder);
 
   /**
    * d'tor
@@ -50,8 +54,10 @@ public:
    * Loads the buffered poller
    */
   void load_buffered_poller(
-      IBufferedWriter &buffered_writer, u64 boot_time_adjustment,
-      CurlEngine &curl_engine, NicPoller &nic_poller,
+      IBufferedWriter &buffered_writer,
+      u64 boot_time_adjustment,
+      CurlEngine &curl_engine,
+      NicPoller &nic_poller,
       CgroupHandler::CgroupSettings const &cgroup_settings,
       ProcessHandler::CpuMemIoSettings const *cpu_mem_io_settings);
 

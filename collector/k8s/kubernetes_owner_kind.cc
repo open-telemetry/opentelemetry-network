@@ -49,7 +49,7 @@ const char *KubernetesOwnerKindToString(const KubernetesOwnerKind kind)
     return REPLICA_SET_KIND;
   case KubernetesOwnerKind::Deployment:
     return DEPLOYMENT_KIND;
-  case KubernetesOwnerKind::NoOwner: 
+  case KubernetesOwnerKind::NoOwner:
     return NO_OWNER_KIND;
 
   default:

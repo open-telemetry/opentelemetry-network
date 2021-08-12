@@ -28,9 +28,13 @@
 #include <string.h>
 #include <type_traits>
 
-template <class Key, class T, std::size_t ELEM_POOL_SZ,
-          class Hash, class KeyEqual = std::equal_to<Key>,
-          class Allocator = std::allocator<T>>
+template <
+    class Key,
+    class T,
+    std::size_t ELEM_POOL_SZ,
+    class Hash,
+    class KeyEqual = std::equal_to<Key>,
+    class Allocator = std::allocator<T>>
 class FixedHash {
 public:
   using key_type = Key;
@@ -38,8 +42,7 @@ public:
   using pool_type = Pool<value_type, ELEM_POOL_SZ, Allocator>;
   using index_type = typename pool_type::index_type;
   using size_type = std::size_t;
-  using map_type =
-      absl::flat_hash_map<key_type, index_type, Hash, KeyEqual, Allocator>;
+  using map_type = absl::flat_hash_map<key_type, index_type, Hash, KeyEqual, Allocator>;
   using bitmap_type = typename pool_type::bitmap_type;
   using position = typename pool_type::position;
   static constexpr index_type invalid = pool_type::invalid;
@@ -58,10 +61,7 @@ public:
   value_type &operator[](index_type index) { return pool_[index]; }
   bitmap_type allocated() const { return pool_.allocated(); }
 
-  template <typename K> bool contains(const K &key) const
-  {
-    return map_.count(key) == 1;
-  }
+  template <typename K> bool contains(const K &key) const { return map_.count(key) == 1; }
 
   /**
    * Finds the given element.
@@ -83,8 +83,7 @@ public:
    * @returns position of the new value, or {invalid,nullptr} if key exists or
    *  the container is full.
    */
-  template <typename K, typename... Args>
-  position insert(K &&key, Args &&... args)
+  template <typename K, typename... Args> position insert(K &&key, Args &&... args)
   {
     if (full())
       return {invalid, nullptr};
@@ -132,27 +131,29 @@ public:
   typename map_type::const_iterator end() const { return map_.end(); }
 
   struct value_iterator {
-    value_iterator(typename map_type::const_iterator i, pool_type &pool): i_(i), pool_(pool) {}
+    value_iterator(typename map_type::const_iterator i, pool_type &pool) : i_(i), pool_(pool) {}
 
-    value_iterator &operator ++() {
+    value_iterator &operator++()
+    {
       ++i_;
       return *this;
     }
 
-    value_iterator operator ++(int) {
+    value_iterator operator++(int)
+    {
       auto copy = *this;
       ++*this;
       return copy;
     }
 
-    value_type const *operator ->() const { return &pool_[i_->second]; }
-    value_type *operator ->() { return &pool_[i_->second]; }
+    value_type const *operator->() const { return &pool_[i_->second]; }
+    value_type *operator->() { return &pool_[i_->second]; }
 
-    value_type const &operator *() const { return pool_[i_->second]; }
-    value_type &operator *() { return pool_[i_->second]; }
+    value_type const &operator*() const { return pool_[i_->second]; }
+    value_type &operator*() { return pool_[i_->second]; }
 
-    bool operator ==(value_iterator const &rhs) const { return i_ == rhs.i_; }
-    bool operator !=(value_iterator const &rhs) const { return i_ != rhs.i_; }
+    bool operator==(value_iterator const &rhs) const { return i_ == rhs.i_; }
+    bool operator!=(value_iterator const &rhs) const { return i_ != rhs.i_; }
 
   private:
     typename map_type::const_iterator i_;
@@ -160,14 +161,8 @@ public:
   };
 
   struct values_iterable {
-    values_iterable(
-      typename map_type::const_iterator begin,
-      typename map_type::const_iterator end,
-      pool_type &pool
-    ):
-      begin_(begin),
-      end_(end),
-      pool_(pool)
+    values_iterable(typename map_type::const_iterator begin, typename map_type::const_iterator end, pool_type &pool)
+        : begin_(begin), end_(end), pool_(pool)
     {}
 
     value_iterator begin() { return {begin_, pool_}; }
@@ -183,9 +178,7 @@ public:
 
 private:
   struct DisarmGuard {
-    template <typename F>
-    DisarmGuard(bool &disarm_b, F fn) : fn_(fn), disarm_(disarm_b)
-    {}
+    template <typename F> DisarmGuard(bool &disarm_b, F fn) : fn_(fn), disarm_(disarm_b) {}
     ~DisarmGuard()
     {
       if (!disarm_)

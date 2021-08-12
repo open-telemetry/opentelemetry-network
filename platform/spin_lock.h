@@ -22,19 +22,19 @@
 #include <linux/spinlock.h>
 
 #define fp_spinlock_t spinlock_t
-#define fp_spin_init(lock)                                                     \
-  ({                                                                           \
-    spin_lock_init(lock);                                                      \
-    0;                                                                         \
+#define fp_spin_init(lock)                                                                                                     \
+  ({                                                                                                                           \
+    spin_lock_init(lock);                                                                                                      \
+    0;                                                                                                                         \
   })
-#define fp_spin_lock(lock)                                                     \
-  ({                                                                           \
-    spin_lock_bh(lock);                                                        \
-    0;                                                                         \
+#define fp_spin_lock(lock)                                                                                                     \
+  ({                                                                                                                           \
+    spin_lock_bh(lock);                                                                                                        \
+    0;                                                                                                                         \
   })
 #define fp_spin_unlock(lock) spin_unlock_bh(lock)
-#define fp_spin_destroy(lock)                                                  \
-  do {                                                                         \
+#define fp_spin_destroy(lock)                                                                                                  \
+  do {                                                                                                                         \
   } while (0)
 
 #else

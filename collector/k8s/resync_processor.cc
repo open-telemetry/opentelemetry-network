@@ -42,31 +42,35 @@ u64 extract_u64(const char *buf)
 
 } // namespace
 
-ResyncProcessor::ResyncProcessor(uv_loop_t &loop,
-                                 ResyncQueueConsumerInterface *resync_queue,
-                                 channel::ReconnectingChannel &reconnecting_channel,
-                                 config::ConfigFile const &configuration_data,
-                                 std::string_view hostname, 
-                                 AuthzFetcher &authz_fetcher,
-                                 std::chrono::milliseconds aws_metadata_timeout,
-                                 std::chrono::seconds heartbeat_interval,
-                                 std::size_t write_buffer_size)
-    : loop_(loop), resync_queue_(resync_queue),
+ResyncProcessor::ResyncProcessor(
+    uv_loop_t &loop,
+    ResyncQueueConsumerInterface *resync_queue,
+    channel::ReconnectingChannel &reconnecting_channel,
+    config::ConfigFile const &configuration_data,
+    std::string_view hostname,
+    AuthzFetcher &authz_fetcher,
+    std::chrono::milliseconds aws_metadata_timeout,
+    std::chrono::seconds heartbeat_interval,
+    std::size_t write_buffer_size)
+    : loop_(loop),
+      resync_queue_(resync_queue),
       reconnecting_channel_(reconnecting_channel),
       encoder_(reconnecting_channel_.intake_config().make_encoder()),
       writer_(reconnecting_channel_.buffered_writer(), monotonic, get_boot_time(), encoder_.get()),
       caretaker_(
-        hostname, ClientType::k8s, 
-        authz_fetcher,
-        configuration_data.labels(),
-        &loop, writer_,
-        aws_metadata_timeout, heartbeat_interval,
-        std::bind(&channel::ReconnectingChannel::flush, &reconnecting_channel_),
-        std::bind(&channel::ReconnectingChannel::set_compression,
-                  &reconnecting_channel_, std::placeholders::_1),
-        std::bind(&ResyncProcessor::on_authenticated, this)
-      ),
-      active_resync_(0), dirty_(false)
+          hostname,
+          ClientType::k8s,
+          authz_fetcher,
+          configuration_data.labels(),
+          &loop,
+          writer_,
+          aws_metadata_timeout,
+          heartbeat_interval,
+          std::bind(&channel::ReconnectingChannel::flush, &reconnecting_channel_),
+          std::bind(&channel::ReconnectingChannel::set_compression, &reconnecting_channel_, std::placeholders::_1),
+          std::bind(&ResyncProcessor::on_authenticated, this)),
+      active_resync_(0),
+      dirty_(false)
 {
   int res = uv_timer_init(&loop_, &poll_timer_);
   if (res != 0) {
@@ -105,8 +109,11 @@ void ResyncProcessor::poll()
   poll_count_++;
   // One heart beat per every 5 miniutes
   if ((poll_count_ % (5 * 60 * 1000 / poll_interval_ms_) == 0)) {
-    LOG::info("Poll loop, connected: {},  resync: {}, message_count: {}",
-              reconnecting_channel_.is_open(), active_resync_, message_count_);
+    LOG::info(
+        "Poll loop, connected: {},  resync: {}, message_count: {}",
+        reconnecting_channel_.is_open(),
+        active_resync_,
+        message_count_);
   }
 
   for (int i = 0; i < num_iterations_per_poll_; i++) {
@@ -149,14 +156,12 @@ void ResyncProcessor::poll()
 
       u64 element_resync = extract_u64(read_buf);
       if (element_resync < active_resync_) {
-        LOG::trace("Ignorning older element {} vs. active {}", element_resync,
-                   active_resync_);
+        LOG::trace("Ignorning older element {} vs. active {}", element_resync, active_resync_);
         continue;
       }
 
       if (element_resync > active_resync_) {
-        u64 resync_queue_last_resync =
-            resync_queue_->consumer_get_last_resync();
+        u64 resync_queue_last_resync = resync_queue_->consumer_get_last_resync();
         active_resync_ = resync_queue_last_resync;
         if (dirty_) {
           dirty_ = false;
@@ -170,8 +175,7 @@ void ResyncProcessor::poll()
       dirty_ = true;
       message_count_++;
       if (reconnecting_channel_.is_open()) {
-        reconnecting_channel_.send((const u8 *)(read_buf + 8),
-                                    element_length - 8);
+        reconnecting_channel_.send((const u8 *)(read_buf + 8), element_length - 8);
       }
     }
     queue->finish_read_batch();
@@ -184,7 +188,8 @@ void ResyncProcessor::poll()
   reconnecting_channel_.flush();
 }
 
-void ResyncProcessor::on_error(int err) {
+void ResyncProcessor::on_error(int err)
+{
   caretaker_.set_disconnected();
 }
 

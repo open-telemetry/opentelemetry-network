@@ -17,8 +17,8 @@
 #include <platform/types.h>
 
 // from proc(5) - /proc/[pid]/status
-#define PROC_STATUS_VIEW_IMPL(X) \
-  X(views::NumberView<u64>, voluntary_ctxt_switches, "voluntary_ctxt_switches") \
+#define PROC_STATUS_VIEW_IMPL(X)                                                                                               \
+  X(views::NumberView<u64>, voluntary_ctxt_switches, "voluntary_ctxt_switches")                                                \
   X(views::NumberView<u64>, nonvoluntary_ctxt_switches, "nonvoluntary_ctxt_switches")
 
 /* Excluding these fields from the view since we don't care about those

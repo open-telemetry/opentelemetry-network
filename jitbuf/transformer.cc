@@ -23,9 +23,9 @@
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/IR/Verifier.h"
 #include "llvm/Support/TargetSelect.h"
+#include "llvm/Transforms/InstCombine/InstCombine.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Scalar/GVN.h"
-#include "llvm/Transforms/InstCombine/InstCombine.h"
 #include <cctype>
 #include <cstdio>
 #include <map>
@@ -54,14 +54,10 @@ void initialize_llvm()
     throw std::runtime_error("llvm::InitializeNativeTargetAsmParser() failed");
 }
 
-Transformer::Transformer(llvm::LLVMContext &context)
-    : unique_counter_(0), context_(context), builder_(context)
-{
-}
+Transformer::Transformer(llvm::LLVMContext &context) : unique_counter_(0), context_(context), builder_(context) {}
 
-Transform Transformer::get_xform(u32 *src_pos, u32 *dst_pos, u32 *sizes,
-                                 u32 n_elem, u32 len_pos, u32 src_size,
-                                 std::vector<BlobDetails> &blobs)
+Transform Transformer::get_xform(
+    u32 *src_pos, u32 *dst_pos, u32 *sizes, u32 n_elem, u32 len_pos, u32 src_size, std::vector<BlobDetails> &blobs)
 {
   llvm::IntegerType *U16T = llvm::Type::getInt16Ty(context_);
   llvm::IntegerType *U32T = llvm::Type::getInt32Ty(context_);
@@ -81,8 +77,7 @@ Transform Transformer::get_xform(u32 *src_pos, u32 *dst_pos, u32 *sizes,
 
   /* create prototype */
   std::string func_name = generate_unique_name("xform_");
-  llvm::Function *F = llvm::Function::Create(
-      func_type, llvm::Function::ExternalLinkage, func_name, module);
+  llvm::Function *F = llvm::Function::Create(func_type, llvm::Function::ExternalLinkage, func_name, module);
 
   /* set names and get Value* for function parameters */
   llvm::Function::arg_iterator AI = F->arg_begin();
@@ -103,11 +98,9 @@ Transform Transformer::get_xform(u32 *src_pos, u32 *dst_pos, u32 *sizes,
     llvm::Value *dst_pos_val = llvm::ConstantInt::get(U32T, dst_pos[i], false);
 
     /* Pointer to source variable */
-    llvm::Value *src_char_ptr =
-        builder_.CreateGEP(src_buf_ptr, src_pos_val, "src_charp");
+    llvm::Value *src_char_ptr = builder_.CreateGEP(src_buf_ptr, src_pos_val, "src_charp");
     /* Pointer to dst variable */
-    llvm::Value *dst_char_ptr =
-        builder_.CreateGEP(dst_buf_ptr, dst_pos_val, "dst_charp");
+    llvm::Value *dst_char_ptr = builder_.CreateGEP(dst_buf_ptr, dst_pos_val, "dst_charp");
 
     /* decide which type the value is */
     llvm::Type *copied_type;
@@ -136,18 +129,15 @@ Transform Transformer::get_xform(u32 *src_pos, u32 *dst_pos, u32 *sizes,
 
     if ((copied_type != NULL) && (is_unaligned == 0)) {
       /* cast pointers to correct type */
-      llvm::Value *src_ptr = builder_.CreatePointerCast(
-          src_char_ptr, copied_type->getPointerTo(), "src_ptr");
-      llvm::Value *dst_ptr = builder_.CreatePointerCast(
-          dst_char_ptr, copied_type->getPointerTo(), "dst_ptr");
+      llvm::Value *src_ptr = builder_.CreatePointerCast(src_char_ptr, copied_type->getPointerTo(), "src_ptr");
+      llvm::Value *dst_ptr = builder_.CreatePointerCast(dst_char_ptr, copied_type->getPointerTo(), "dst_ptr");
 
       /* Load the source */
       llvm::LoadInst *loaded = builder_.CreateLoad(copied_type, src_ptr, "ld");
       /* Save to destination */
       llvm::StoreInst *stored = builder_.CreateStore(loaded, dst_ptr);
       (void)stored; /* unused, only need the side effect */
-    }
-    else {
+    } else {
       /* pointers are unaligned or don't have a suitable register size */
       /* get memcpy */
 
@@ -174,20 +164,16 @@ Transform Transformer::get_xform(u32 *src_pos, u32 *dst_pos, u32 *sizes,
     for (auto &blob : blobs) {
       if (blob.should_write) {
         /* get constant for destination position */
-        llvm::Value *dst_pos_val =
-            llvm::ConstantInt::get(U32T, blob.dst_pos, false);
+        llvm::Value *dst_pos_val = llvm::ConstantInt::get(U32T, blob.dst_pos, false);
 
         /* Char pointer to dst variable */
-        llvm::Value *dst_char_ptr =
-            builder_.CreateGEP(dst_buf_ptr, dst_pos_val, "offset_charp");
+        llvm::Value *dst_char_ptr = builder_.CreateGEP(dst_buf_ptr, dst_pos_val, "offset_charp");
 
         /* cast pointer to correct type */
-        llvm::Value *dst_ptr = builder_.CreatePointerCast(
-            dst_char_ptr, S8PT->getPointerTo(), "buf_ptr");
+        llvm::Value *dst_ptr = builder_.CreatePointerCast(dst_char_ptr, S8PT->getPointerTo(), "buf_ptr");
 
         /* compute &src[offset] */
-        llvm::Value *src_blob_ptr =
-            builder_.CreateGEP(src_buf_ptr, offset, "src_blob_ptr");
+        llvm::Value *src_blob_ptr = builder_.CreateGEP(src_buf_ptr, offset, "src_blob_ptr");
 
         /* Save to destination */
         llvm::StoreInst *stored = builder_.CreateStore(src_blob_ptr, dst_ptr);
@@ -200,35 +186,28 @@ Transform Transformer::get_xform(u32 *src_pos, u32 *dst_pos, u32 *sizes,
         llvm::Value *src_pos_val = llvm::ConstantInt::get(U32T, len_pos, false);
 
         /* Pointer to source variable */
-        llvm::Value *src_char_ptr =
-            builder_.CreateGEP(src_buf_ptr, src_pos_val, "total_len_charp");
+        llvm::Value *src_char_ptr = builder_.CreateGEP(src_buf_ptr, src_pos_val, "total_len_charp");
 
         /* cast pointers to correct type */
-        llvm::Value *src_ptr = builder_.CreatePointerCast(
-            src_char_ptr, U16T->getPointerTo(), "total_len_ptr");
+        llvm::Value *src_ptr = builder_.CreatePointerCast(src_char_ptr, U16T->getPointerTo(), "total_len_ptr");
 
         /* load */
-        llvm::LoadInst *loaded =
-            builder_.CreateLoad(U16T, src_ptr, "loaded_total");
+        llvm::LoadInst *loaded = builder_.CreateLoad(U16T, src_ptr, "loaded_total");
 
         /* save this for return from the generated function */
         ret_value = loaded;
 
         /* get constant for destination position */
-        llvm::Value *dst_pos_val = llvm::ConstantInt::get(
-            U32T, blob.dst_pos + sizeof(uint16_t), false);
+        llvm::Value *dst_pos_val = llvm::ConstantInt::get(U32T, blob.dst_pos + sizeof(uint16_t), false);
 
         /* Char pointer to dst variable */
-        llvm::Value *dst_char_ptr =
-            builder_.CreateGEP(dst_buf_ptr, dst_pos_val, "last_len_charp");
+        llvm::Value *dst_char_ptr = builder_.CreateGEP(dst_buf_ptr, dst_pos_val, "last_len_charp");
 
         /* cast pointer to correct type */
-        llvm::Value *dst_ptr = builder_.CreatePointerCast(
-            dst_char_ptr, U16T->getPointerTo(), "last_len_ptr");
+        llvm::Value *dst_ptr = builder_.CreatePointerCast(dst_char_ptr, U16T->getPointerTo(), "last_len_ptr");
 
         /* compute total - offset */
-        llvm::Value *remaining_val =
-            builder_.CreateSub(loaded, offset, "remaining_len");
+        llvm::Value *remaining_val = builder_.CreateSub(loaded, offset, "remaining_len");
 
         /* Save to destination */
         llvm::StoreInst *stored = builder_.CreateStore(remaining_val, dst_ptr);
@@ -238,20 +217,16 @@ Transform Transformer::get_xform(u32 *src_pos, u32 *dst_pos, u32 *sizes,
       /* update the offset */
       if (!blob.length_is_remainder) {
         /* get constant for source position */
-        llvm::Value *src_pos_val =
-            llvm::ConstantInt::get(U32T, blob.src_pos, false);
+        llvm::Value *src_pos_val = llvm::ConstantInt::get(U32T, blob.src_pos, false);
 
         /* Pointer to source variable */
-        llvm::Value *src_char_ptr =
-            builder_.CreateGEP(src_buf_ptr, src_pos_val, "field_len_charp");
+        llvm::Value *src_char_ptr = builder_.CreateGEP(src_buf_ptr, src_pos_val, "field_len_charp");
 
         /* cast pointers to correct type */
-        llvm::Value *src_ptr = builder_.CreatePointerCast(
-            src_char_ptr, U16T->getPointerTo(), "field_len_ptr");
+        llvm::Value *src_ptr = builder_.CreatePointerCast(src_char_ptr, U16T->getPointerTo(), "field_len_ptr");
 
         /* load */
-        llvm::LoadInst *loaded =
-            builder_.CreateLoad(U16T, src_ptr, "field_len");
+        llvm::LoadInst *loaded = builder_.CreateLoad(U16T, src_ptr, "field_len");
 
         /* update offset */
         offset = builder_.CreateAdd(offset, loaded, "cur_offset");
@@ -267,21 +242,17 @@ Transform Transformer::get_xform(u32 *src_pos, u32 *dst_pos, u32 *sizes,
       llvm::Value *src_pos_val = llvm::ConstantInt::get(U32T, len_pos, false);
 
       /* Pointer to source variable */
-      llvm::Value *src_char_ptr =
-          builder_.CreateGEP(src_buf_ptr, src_pos_val, "total_len_charp");
+      llvm::Value *src_char_ptr = builder_.CreateGEP(src_buf_ptr, src_pos_val, "total_len_charp");
 
       /* cast pointers to correct type */
-      llvm::Value *src_ptr = builder_.CreatePointerCast(
-          src_char_ptr, U16T->getPointerTo(), "total_len_ptr");
+      llvm::Value *src_ptr = builder_.CreatePointerCast(src_char_ptr, U16T->getPointerTo(), "total_len_ptr");
 
       /* load */
-      llvm::LoadInst *loaded =
-          builder_.CreateLoad(U16T, src_ptr, "loaded_total");
+      llvm::LoadInst *loaded = builder_.CreateLoad(U16T, src_ptr, "loaded_total");
 
       /* we'll return that loaded variable */
       ret_value = loaded;
-    }
-    else {
+    } else {
       /* our initial offset is the message size */
       ret_value = llvm::ConstantInt::get(U16T, src_size, false);
     }
@@ -325,12 +296,10 @@ llvm::Function *Transformer::get_memcpy(llvm::Module *module)
   llvm::Type *return_type = llvm::Type::getInt8PtrTy(context_, 0);
 
   /* function type */
-  llvm::FunctionType *func_type =
-      llvm::FunctionType::get(return_type, args, false);
+  llvm::FunctionType *func_type = llvm::FunctionType::get(return_type, args, false);
 
   /* function */
-  llvm::Function *memcpy_func = llvm::Function::Create(
-      func_type, llvm::Function::ExternalLinkage, "memcpy", module);
+  llvm::Function *memcpy_func = llvm::Function::Create(func_type, llvm::Function::ExternalLinkage, "memcpy", module);
 
   if (memcpy_func == NULL)
     throw std::runtime_error("could not create memcpy func");
@@ -338,16 +307,14 @@ llvm::Function *Transformer::get_memcpy(llvm::Module *module)
   return memcpy_func;
 }
 
-Transform Transformer::jit_function(llvm::Module *module,
-                                    llvm::Function *function)
+Transform Transformer::jit_function(llvm::Module *module, llvm::Function *function)
 {
   /* Make a new ExecutionEngine */
   std::string error_str;
-  std::shared_ptr<llvm::ExecutionEngine> engine(
-      llvm::EngineBuilder(std::unique_ptr<llvm::Module>(module))
-          .setErrorStr(&error_str)
-          .setEngineKind(llvm::EngineKind::JIT)
-          .create());
+  std::shared_ptr<llvm::ExecutionEngine> engine(llvm::EngineBuilder(std::unique_ptr<llvm::Module>(module))
+                                                    .setErrorStr(&error_str)
+                                                    .setEngineKind(llvm::EngineKind::JIT)
+                                                    .create());
   if (!engine) {
     std::stringstream st;
     st << "Could not create ExecutionEngine: " << error_str;

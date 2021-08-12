@@ -37,8 +37,7 @@ struct jlog_output_factory {
    *
    * @returns: 0 on success, negative value on error
    */
-  int (*create)(struct jlog_output_factory *factory,
-                struct element_queue **eq_ptr, fp_spinlock_t **write_lock_ptr);
+  int (*create)(struct jlog_output_factory *factory, struct element_queue **eq_ptr, fp_spinlock_t **write_lock_ptr);
 
   /**
    * Frees the jlog output associated with the given context

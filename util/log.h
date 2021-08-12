@@ -56,8 +56,7 @@ public:
   // Bumps up the max number of messages allowed by |amount|.
   static void refill_rate_limit_budget(int64_t amount);
 
-  template <typename Format, typename... Args>
-  static void inline trace(Format &&format, Args &&... args)
+  template <typename Format, typename... Args> static void inline trace(Format &&format, Args &&... args)
   {
     logger::check_logging_overhead<Args &&...>();
     if constexpr (DEBUG_LOG) {
@@ -76,10 +75,8 @@ public:
    *
    * LOG::trace_in(client_type_, "my log string");
    */
-  template <typename Whitelist, typename Format, typename... Args,
-            typename = std::enable_if_t<std::is_enum_v<Whitelist>>>
-  static void inline trace_in(Whitelist filter, Format &&format,
-                              Args &&... args)
+  template <typename Whitelist, typename Format, typename... Args, typename = std::enable_if_t<std::is_enum_v<Whitelist>>>
+  static void inline trace_in(Whitelist filter, Format &&format, Args &&... args)
   {
     if constexpr (DEBUG_LOG) {
       if (!is_log_whitelisted(filter)) {
@@ -98,8 +95,7 @@ public:
    * LOG::trace_in(client_type_, NodeResolutionType::AWS, "my log string");
    */
   template <typename Format, typename... Whitelist, typename... Args>
-  static void inline trace_in(std::tuple<Whitelist...> const &filter,
-                              Format &&format, Args &&... args)
+  static void inline trace_in(std::tuple<Whitelist...> const &filter, Format &&format, Args &&... args)
   {
     if constexpr (DEBUG_LOG) {
       if (!is_log_whitelisted(filter)) {
@@ -109,8 +105,7 @@ public:
     }
   }
 
-  template <typename Format, typename... Args>
-  static void inline debug(Format &&format, Args &&... args)
+  template <typename Format, typename... Args> static void inline debug(Format &&format, Args &&... args)
   {
     logger::check_logging_overhead<Args &&...>();
     if constexpr (DEBUG_LOG) {
@@ -131,10 +126,8 @@ public:
    *
    * LOG::debug_in(client_type_, NodeResolutionType::AWS, "my log string");
    */
-  template <typename Whitelist, typename Format, typename... Args,
-            typename = std::enable_if_t<std::is_enum_v<Whitelist>>>
-  static void inline debug_in(Whitelist filter, Format &&format,
-                              Args &&... args)
+  template <typename Whitelist, typename Format, typename... Args, typename = std::enable_if_t<std::is_enum_v<Whitelist>>>
+  static void inline debug_in(Whitelist filter, Format &&format, Args &&... args)
   {
     if constexpr (DEBUG_LOG) {
       if (!is_log_whitelisted(filter)) {
@@ -153,8 +146,7 @@ public:
    * LOG::debug_in(client_type_, NodeResolutionType::AWS, "my log string");
    */
   template <typename Format, typename... Whitelist, typename... Args>
-  static void inline debug_in(std::tuple<Whitelist...> const &filter,
-                              Format &&format, Args &&... args)
+  static void inline debug_in(std::tuple<Whitelist...> const &filter, Format &&format, Args &&... args)
   {
     if constexpr (DEBUG_LOG) {
       if (!is_log_whitelisted(filter)) {
@@ -164,8 +156,7 @@ public:
     }
   }
 
-  template <typename Format, typename... Args>
-  static void inline info(Format &&format, Args &&... args)
+  template <typename Format, typename... Args> static void inline info(Format &&format, Args &&... args)
   {
     logger::check_logging_overhead<Args &&...>();
     if (rate_limited()) {
@@ -174,8 +165,7 @@ public:
     spdlog::info(format, args...);
   }
 
-  template <typename Format, typename... Args>
-  static void inline warn(Format &&format, Args &&... args)
+  template <typename Format, typename... Args> static void inline warn(Format &&format, Args &&... args)
   {
     logger::check_logging_overhead<Args &&...>();
     if (rate_limited()) {
@@ -184,8 +174,7 @@ public:
     spdlog::warn(format, args...);
   }
 
-  template <typename Format, typename... Args>
-  static void inline error(Format &&format, Args &&... args)
+  template <typename Format, typename... Args> static void inline error(Format &&format, Args &&... args)
   {
     logger::check_logging_overhead<Args &&...>();
     if (rate_limited()) {
@@ -194,8 +183,7 @@ public:
     spdlog::error(format, args...);
   }
 
-  template <typename Format, typename... Args>
-  static void inline critical(Format &&format, Args &&... args)
+  template <typename Format, typename... Args> static void inline critical(Format &&format, Args &&... args)
   {
     logger::check_logging_overhead<Args &&...>();
     if (rate_limited()) {

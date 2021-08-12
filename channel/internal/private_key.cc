@@ -27,9 +27,7 @@ channel::internal::PrivateKey::PrivateKey(const std::string &key)
 {
   BIO *bio = BIO_new_mem_buf(key.c_str(), key.length());
   if (bio == nullptr) {
-    throw std::runtime_error(
-      fmt::format("could not allocate BIO for TLS private key: {}", TLSError())
-    );
+    throw std::runtime_error(fmt::format("could not allocate BIO for TLS private key: {}", TLSError()));
   }
 
   pkey_ = PEM_read_bio_PrivateKey(bio, nullptr, nullptr, nullptr);
@@ -41,9 +39,7 @@ channel::internal::PrivateKey::PrivateKey(const std::string &key)
 
   /* now check success. */
   if (pkey_ == nullptr) {
-    throw std::runtime_error(
-      fmt::format("could not read TLS private key: {}", TLSError(err))
-    );
+    throw std::runtime_error(fmt::format("could not read TLS private key: {}", TLSError(err)));
   }
 }
 

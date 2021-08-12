@@ -40,9 +40,12 @@ static constexpr std::string_view CONNECT_SUFFIX = " HTTP/1.1\r\n";
 static constexpr std::string_view AUTH_PREFIX = "Proxy-Authorization: ";
 static constexpr std::string_view AUTH_SUFFIX = LINE_FEED;
 
-std::optional<HttpProxyConfig> HttpProxyConfig::read_from_env() {
+std::optional<HttpProxyConfig> HttpProxyConfig::read_from_env()
+{
   auto const host = try_get_env_var(PROXY_HOST_VAR);
-  if (host.empty()) { return std::nullopt; }
+  if (host.empty()) {
+    return std::nullopt;
+  }
 
   auto const port = try_get_env_var(PROXY_PORT_VAR, DEFAULT_PROXY_PORT);
 
@@ -54,11 +57,8 @@ std::optional<HttpProxyConfig> HttpProxyConfig::read_from_env() {
 }
 
 std::unique_ptr<channel::Callbacks> HttpProxyConfig::make_callback(
-  std::string_view host,
-  std::string_view port,
-  channel::Channel &channel,
-  channel::Callbacks &callback
-) const {
+    std::string_view host, std::string_view port, channel::Channel &channel, channel::Callbacks &callback) const
+{
   return std::make_unique<CallbackWrapper>(host, port, credentials_, channel, callback);
 }
 
@@ -66,8 +66,11 @@ std::unique_ptr<channel::Callbacks> HttpProxyConfig::make_callback(
 // basic authorization //
 /////////////////////////
 
-HttpProxyConfig::BasicAuth::BasicAuth(std::string_view credentials) {
-  if (credentials.empty()) { return; }
+HttpProxyConfig::BasicAuth::BasicAuth(std::string_view credentials)
+{
+  if (credentials.empty()) {
+    return;
+  }
 
   payload_ = fmt::format("Basic {}", base64_encode(credentials));
   std::abort();
@@ -79,7 +82,8 @@ HttpProxyConfig::BasicAuth::BasicAuth(std::string_view credentials) {
 
 static constexpr std::string_view HTTP_RESPONSE_PREFIX = "HTTP/";
 
-u32 HttpProxyConfig::CallbackWrapper::received_data(const u8 *data, int length) {
+u32 HttpProxyConfig::CallbackWrapper::received_data(const u8 *data, int length)
+{
   assert(length >= 0);
   if (stage_ == stage_t::connected) {
     return callback_->received_data(data, length);
@@ -117,9 +121,7 @@ u32 HttpProxyConfig::CallbackWrapper::received_data(const u8 *data, int length) 
     return size - view.size();
   }
 
-  if (auto const code = views::NumberView<HttpStatusCode>{status}.value();
-    !is_success_class(code)
-  ) {
+  if (auto const code = views::NumberView<HttpStatusCode>{status}.value(); !is_success_class(code)) {
     LOG::error("unsuccessful HTTP status code `{}` while connecting to proxy: `{}`", code, status);
     on_error(-EPROTO);
     assert(view.size() <= size);
@@ -162,14 +164,14 @@ u32 HttpProxyConfig::CallbackWrapper::received_data(const u8 *data, int length) 
 
   assert(view.empty());
   LOG::error(
-    "incomplete header in proxy response to HTTP CONNECT: `{}`", 
-    std::string_view{reinterpret_cast<char const *>(data), size}
-  );
+      "incomplete header in proxy response to HTTP CONNECT: `{}`",
+      std::string_view{reinterpret_cast<char const *>(data), size});
   on_error(-EPROTO);
   return size;
 }
 
-void HttpProxyConfig::CallbackWrapper::on_connect() {
+void HttpProxyConfig::CallbackWrapper::on_connect()
+{
   assert(stage_ == stage_t::disconnected);
 
   channel_.send(CONNECT_PREFIX);

@@ -52,15 +52,18 @@ public:
   // |channel|: Underline channel connecting agent and server.
   // |heartbeat_interval|: How often a heartbeat signal is sent back to server.
   // |flush_cb|: Callback to flush any downstream buffer.
-  ConnectionCaretaker(std::string_view hostname, ClientType client_type,
-                      AuthzFetcher &authz_fetcher,
-                      config::ConfigFile::LabelsMap const &config_data,
-                      uv_loop_t *loop, flowmill::ingest::Writer &writer,
-                      std::chrono::milliseconds metadata_timeout,
-                      std::chrono::milliseconds heartbeat_interval,
-                      std::function<void()> flush_cb,
-                      std::function<void(bool)> set_compression_cb,
-                      std::function<void()> on_authenticated_cb);
+  ConnectionCaretaker(
+      std::string_view hostname,
+      ClientType client_type,
+      AuthzFetcher &authz_fetcher,
+      config::ConfigFile::LabelsMap const &config_data,
+      uv_loop_t *loop,
+      flowmill::ingest::Writer &writer,
+      std::chrono::milliseconds metadata_timeout,
+      std::chrono::milliseconds heartbeat_interval,
+      std::function<void()> flush_cb,
+      std::function<void(bool)> set_compression_cb,
+      std::function<void()> on_authenticated_cb);
 
   ~ConnectionCaretaker();
 

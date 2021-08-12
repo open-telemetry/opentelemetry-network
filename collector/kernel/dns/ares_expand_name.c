@@ -67,8 +67,7 @@ long aresx_uztosl(size_t uznum)
  * Since the expanded name uses '.' as a label separator, we use
  * backslashes to escape periods or backslashes in the expanded name.
  */
-void dns_expand_name(const unsigned char *encoded, const unsigned char *abuf,
-                     int alen, char *expanded_name, long *enclen)
+void dns_expand_name(const unsigned char *encoded, const unsigned char *abuf, int alen, char *expanded_name, long *enclen)
 {
   int len, indir = 0;
   const unsigned char *p;
@@ -108,8 +107,7 @@ void dns_expand_name(const unsigned char *encoded, const unsigned char *abuf,
 /* Return the length of the expansion of an encoded domain name, or
  * -1 if the encoding is invalid.
  */
-int dns_name_length(const unsigned char *encoded, const unsigned char *abuf,
-                    int alen)
+int dns_name_length(const unsigned char *encoded, const unsigned char *abuf, int alen)
 {
   int n = 0, offset, indir = 0, top;
 
@@ -163,9 +161,8 @@ int dns_name_length(const unsigned char *encoded, const unsigned char *abuf,
  * fails if the expanded name exceeds that. If @expanded_len is not NULL, the
  *   expanded length is written there.
  */
-int dns_expand_name_maxlen(const unsigned char *encoded,
-                           const unsigned char *abuf, int alen,
-                           char *expanded_name, long *enclen, int *expanded_len)
+int dns_expand_name_maxlen(
+    const unsigned char *encoded, const unsigned char *abuf, int alen, char *expanded_name, long *enclen, int *expanded_len)
 {
   int len = dns_name_length(encoded, abuf, alen);
   if (len < 0)

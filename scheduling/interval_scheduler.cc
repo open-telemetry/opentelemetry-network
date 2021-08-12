@@ -24,16 +24,17 @@
 
 namespace scheduling {
 
-IntervalScheduler::IntervalScheduler(uv_loop_t &loop, JobType job):
-  job_(std::move(job)),
-  timer_(loop, std::bind(&IntervalScheduler::callback, this))
+IntervalScheduler::IntervalScheduler(uv_loop_t &loop, JobType job)
+    : job_(std::move(job)), timer_(loop, std::bind(&IntervalScheduler::callback, this))
 {}
 
-bool IntervalScheduler::defer(TimerPeriod timeout) {
+bool IntervalScheduler::defer(TimerPeriod timeout)
+{
   return start(timeout, TimerPeriod::zero());
 }
 
-bool IntervalScheduler::start(TimerPeriod timeout, TimerPeriod interval) {
+bool IntervalScheduler::start(TimerPeriod timeout, TimerPeriod interval)
+{
   reset_backoff();
   interval_ = interval;
 
@@ -45,11 +46,13 @@ bool IntervalScheduler::start(TimerPeriod timeout, TimerPeriod interval) {
   return started_ = true;
 }
 
-bool IntervalScheduler::start(TimerPeriod timeout) {
+bool IntervalScheduler::start(TimerPeriod timeout)
+{
   return start(timeout, timeout);
 }
 
-bool IntervalScheduler::restart() {
+bool IntervalScheduler::restart()
+{
   if (auto result = timer_.restart(); !result) {
     LOG::error("unable to restart interval scheduler: {}", result.error());
     return false;
@@ -58,8 +61,11 @@ bool IntervalScheduler::restart() {
   return started_ = true;
 }
 
-bool IntervalScheduler::stop() {
-  if (!started_) { return true; }
+bool IntervalScheduler::stop()
+{
+  if (!started_) {
+    return true;
+  }
 
   if (auto result = timer_.stop(); !result) {
     LOG::error("unable to stop interval scheduler: {}", result.error());
@@ -71,38 +77,42 @@ bool IntervalScheduler::stop() {
   return true;
 }
 
-void IntervalScheduler::callback() {
+void IntervalScheduler::callback()
+{
   switch (job_()) {
-    case JobFollowUp::ok: {
-      if (backoff_count_) {
-        reset_backoff();
-      }
-
-      if (interval_ != TimerPeriod::zero()) {
-        timer_.defer(interval_);
-      }
-      break;
+  case JobFollowUp::ok: {
+    if (backoff_count_) {
+      reset_backoff();
     }
 
-    case JobFollowUp::stop: {
-      stop();
-      break;
+    if (interval_ != TimerPeriod::zero()) {
+      timer_.defer(interval_);
     }
+    break;
+  }
 
-    case JobFollowUp::backoff: {
-      ++backoff_count_;
-      backoff_ratio_ *= BACKOFF_RATIO;
+  case JobFollowUp::stop: {
+    stop();
+    break;
+  }
 
-      auto const interval = interval_ * backoff_ratio_;
-      timer_.defer(interval);
-      break;
-    }
+  case JobFollowUp::backoff: {
+    ++backoff_count_;
+    backoff_ratio_ *= BACKOFF_RATIO;
 
-    default: assert(false); break;
+    auto const interval = interval_ * backoff_ratio_;
+    timer_.defer(interval);
+    break;
+  }
+
+  default:
+    assert(false);
+    break;
   }
 }
 
-void IntervalScheduler::reset_backoff() {
+void IntervalScheduler::reset_backoff()
+{
   backoff_count_ = 0;
   backoff_ratio_ = 1;
 }

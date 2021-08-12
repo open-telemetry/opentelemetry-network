@@ -21,8 +21,11 @@
 
 namespace config {
 
-ConfigFile::ConfigFile(YamlFormat, std::string const &path, FailMode fail) {
-  if (path.empty()) { return; }
+ConfigFile::ConfigFile(YamlFormat, std::string const &path, FailMode fail)
+{
+  if (path.empty()) {
+    return;
+  }
 
   try {
     YAML::Node yaml = YAML::LoadFile(path);
@@ -31,16 +34,16 @@ ConfigFile::ConfigFile(YamlFormat, std::string const &path, FailMode fail) {
       if (!labels.IsMap() && !labels.IsNull()) {
         LOG::warn("Ignoring 'labels' in config file: 'labels' should be a map.");
       } else {
-        for (auto const &i: labels) {
+        for (auto const &i : labels) {
           auto key = i.first.as<std::string>();
           auto value = i.second.as<std::string>();
 
           if ((key.length() > 20) || (value.length() > 40)) {
             LOG::warn(
-              "Ignoring label '{}': '{}'. "
-              "key and value lengths must be max 20, 40 chars.",
-              key, value
-            );
+                "Ignoring label '{}': '{}'. "
+                "key and value lengths must be max 20, 40 chars.",
+                key,
+                value);
             continue;
           }
 
@@ -60,4 +63,4 @@ ConfigFile::ConfigFile(YamlFormat, std::string const &path, FailMode fail) {
   }
 }
 
-} // namespace config {
+} // namespace config

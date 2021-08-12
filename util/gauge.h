@@ -22,29 +22,20 @@
 
 namespace data {
 
-template <typename T>
-struct Gauge {
+template <typename T> struct Gauge {
   Gauge() = default;
 
-  Gauge(T data):
-    value_(data),
-    min_(data),
-    max_(data),
-    sum_(std::move(data)),
-    count_(1),
-    changed_(true)
-  {}
+  Gauge(T data) : value_(data), min_(data), max_(data), sum_(std::move(data)), count_(1), changed_(true) {}
 
-  template <typename Out = double>
-  Out average() const;
+  template <typename Out = double> Out average() const;
 
   T const &value() const { return value_; }
   T const &min() const { return min_; }
   T const &max() const { return max_; }
   T const &sum() const { return sum_; }
 
-  Gauge &operator +=(T const &value);
-  Gauge &operator +=(Gauge const &value);
+  Gauge &operator+=(T const &value);
+  Gauge &operator+=(Gauge const &value);
 
   bool changed() const { return changed_; }
 

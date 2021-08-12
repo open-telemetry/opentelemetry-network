@@ -38,13 +38,12 @@ public:
    * @param server_hostname: hostname for server certificate authentication
    */
   TlsOverTcpChannel(
-    uv_loop_t &loop,
-    std::string addr,
-    std::string port,
-    TLSChannel::Credentials &creds,
-    std::string server_hostname,
-    std::optional<config::HttpProxyConfig> proxy = {}
-  );
+      uv_loop_t &loop,
+      std::string addr,
+      std::string port,
+      TLSChannel::Credentials &creds,
+      std::string server_hostname,
+      std::optional<config::HttpProxyConfig> proxy = {});
 
   /**
    * d'tor

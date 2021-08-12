@@ -26,14 +26,11 @@ static constexpr size_t RETRY_BACKOFF_RATIO = 2;
 static constexpr size_t RETRY_BACKOFF_LIMIT = 512;
 static constexpr useconds_t RETRY_INTERVAL = 1000; // in microseconds
 
-}
+} // namespace
 
-ElementQueueWriter::ElementQueueWriter(ElementQueue &queue)
-    : queue_(queue)
-{}
+ElementQueueWriter::ElementQueueWriter(ElementQueue &queue) : queue_(queue) {}
 
-ElementQueueWriter::~ElementQueueWriter()
-{}
+ElementQueueWriter::~ElementQueueWriter() {}
 
 Expected<u8 *, std::error_code> ElementQueueWriter::start_write(u32 length)
 {
@@ -68,7 +65,7 @@ Expected<u8 *, std::error_code> ElementQueueWriter::start_write(u32 length)
     return {unexpected, -offset, std::generic_category()};
   }
 
-  return reinterpret_cast<u8*>(queue_.data + offset);
+  return reinterpret_cast<u8 *>(queue_.data + offset);
 }
 
 void ElementQueueWriter::finish_write()

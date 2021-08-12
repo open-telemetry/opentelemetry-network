@@ -43,8 +43,7 @@ struct circular_queue {
  * @returns: 0 on success,
  *           -EINVAL if num_elems is not a power of two
  */
-static inline int cq_init(struct circular_queue *q, void *elems,
-                          uint32_t num_elems)
+static inline int cq_init(struct circular_queue *q, void *elems, uint32_t num_elems)
 {
   assert(q != NULL);
 
@@ -63,47 +62,47 @@ static inline int cq_init(struct circular_queue *q, void *elems,
  * Enqueues @x at the end of @q.
  * @assumes there is enough space in q. (user can check with cq_full())
  */
-#define cq_enqueue(name, type)                                                 \
-  static inline void cq_##name##_enqueue(struct circular_queue *q, type x)     \
-  {                                                                            \
-    uint32_t tail;                                                             \
-                                                                               \
-    assert(q != NULL);                                                         \
-                                                                               \
-    tail = q->tail;                                                            \
-    ((type *)q->elems)[tail & q->mask] = x;                                    \
-    barrier();                                                                 \
-    ACCESS_ONCE(q->tail) = tail + 1;                                           \
+#define cq_enqueue(name, type)                                                                                                 \
+  static inline void cq_##name##_enqueue(struct circular_queue *q, type x)                                                     \
+  {                                                                                                                            \
+    uint32_t tail;                                                                                                             \
+                                                                                                                               \
+    assert(q != NULL);                                                                                                         \
+                                                                                                                               \
+    tail = q->tail;                                                                                                            \
+    ((type *)q->elems)[tail & q->mask] = x;                                                                                    \
+    barrier();                                                                                                                 \
+    ACCESS_ONCE(q->tail) = tail + 1;                                                                                           \
   }
 
 /**
  * Dequeues an element from @q.
  * @assumes q is non-empty (user can check with cq_empty())
  */
-#define cq_dequeue(name, type)                                                 \
-  static inline type cq_##name##_dequeue(struct circular_queue *q)             \
-  {                                                                            \
-    uint32_t head;                                                             \
-    type retval;                                                               \
-                                                                               \
-    assert(q != NULL);                                                         \
-                                                                               \
-    head = q->head;                                                            \
-    retval = ((type *)q->elems)[head & q->mask];                               \
-    barrier();                                                                 \
-    ACCESS_ONCE(q->head) = head + 1;                                           \
-    return retval;                                                             \
+#define cq_dequeue(name, type)                                                                                                 \
+  static inline type cq_##name##_dequeue(struct circular_queue *q)                                                             \
+  {                                                                                                                            \
+    uint32_t head;                                                                                                             \
+    type retval;                                                                                                               \
+                                                                                                                               \
+    assert(q != NULL);                                                                                                         \
+                                                                                                                               \
+    head = q->head;                                                                                                            \
+    retval = ((type *)q->elems)[head & q->mask];                                                                               \
+    barrier();                                                                                                                 \
+    ACCESS_ONCE(q->head) = head + 1;                                                                                           \
+    return retval;                                                                                                             \
   }
 
 /**
  * Returns the head element from @q without dequeuing it.
  * @assumes q is non-empty (user can check with cq_empty())
  */
-#define cq_peek(name, type)                                                    \
-  static inline type cq_##name##_peek(struct circular_queue *q)                \
-  {                                                                            \
-    assert(q != NULL);                                                         \
-    return ((type *)q->elems)[q->head & q->mask];                              \
+#define cq_peek(name, type)                                                                                                    \
+  static inline type cq_##name##_peek(struct circular_queue *q)                                                                \
+  {                                                                                                                            \
+    assert(q != NULL);                                                                                                         \
+    return ((type *)q->elems)[q->head & q->mask];                                                                              \
   }
 
 /**
@@ -163,9 +162,9 @@ static inline void cq_discard(struct circular_queue *q, uint32_t n_elems)
  *      uint32_t cq_u32_dequeue(struct circular_queue *q);
  *   etc.
  */
-#define using_circular_queue(name, type)                                       \
-  cq_enqueue(name, type);                                                      \
-  cq_dequeue(name, type);                                                      \
+#define using_circular_queue(name, type)                                                                                       \
+  cq_enqueue(name, type);                                                                                                      \
+  cq_dequeue(name, type);                                                                                                      \
   cq_peek(name, type);
 
 using_circular_queue(u16, u16);

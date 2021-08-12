@@ -30,19 +30,18 @@
 
 namespace collector::aws {
 
-class IngestConnection: channel::Callbacks {
+class IngestConnection : channel::Callbacks {
 public:
   IngestConnection(
-    std::string_view hostname,
-    ::uv_loop_t &loop,
-    std::chrono::milliseconds aws_metadata_timeout,
-    std::chrono::milliseconds heartbeat_interval,
-    config::IntakeConfig intake_config,
-    AuthzFetcher &authz_fetcher,
-    std::size_t buffer_size,
-    channel::Callbacks &connection_callback,
-    std::function<void()> on_authenticated_cb
-  );
+      std::string_view hostname,
+      ::uv_loop_t &loop,
+      std::chrono::milliseconds aws_metadata_timeout,
+      std::chrono::milliseconds heartbeat_interval,
+      config::IntakeConfig intake_config,
+      AuthzFetcher &authz_fetcher,
+      std::size_t buffer_size,
+      channel::Callbacks &connection_callback,
+      std::function<void()> on_authenticated_cb);
 
   void connect();
   void flush();
@@ -67,4 +66,4 @@ private:
   flowmill::aws_collector::Index index_;
 };
 
-} // namespace collector::aws {
+} // namespace collector::aws

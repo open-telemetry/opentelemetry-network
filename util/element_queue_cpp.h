@@ -17,11 +17,11 @@
 #ifndef INCLUDE_FASTPASS_UTIL_ELEMENT_QUEUE_CPP_H_
 #define INCLUDE_FASTPASS_UTIL_ELEMENT_QUEUE_CPP_H_
 
-#include <util/element_queue.h>
 #include <memory>
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <util/element_queue.h>
 
 class ElementQueue;
 
@@ -37,10 +37,7 @@ public:
    * @param buf_len: the number of bytes that can hold element data. Must be
    *   a power of 2.
    */
-  ElementQueueStorage(u32 n_elems, u32 buf_len)
-      : n_elems_(n_elems), buf_len_(buf_len), data_(NULL)
-  {
-  }
+  ElementQueueStorage(u32 n_elems, u32 buf_len) : n_elems_(n_elems), buf_len_(buf_len), data_(NULL) {}
 
   virtual ~ElementQueueStorage() {}
 
@@ -114,8 +111,7 @@ public:
    *   -ENOENT if no element exists;
    *   -EINVAL if there is not enough data for that type
    */
-  template <typename T>
-  int peek_value(T &output);
+  template <typename T> int peek_value(T &output);
 
   /**
    * Reads an element from the element queue.
@@ -175,8 +171,7 @@ protected:
  * IMPLEMENTATION
  *****************/
 
-inline MemElementQueueStorage::MemElementQueueStorage(u32 n_elems, u32 buf_len)
-    : ElementQueueStorage(n_elems, buf_len)
+inline MemElementQueueStorage::MemElementQueueStorage(u32 n_elems, u32 buf_len) : ElementQueueStorage(n_elems, buf_len)
 {
   u32 size = eq_contig_size(n_elems, buf_len);
 
@@ -198,11 +193,9 @@ inline MemElementQueueStorage::~MemElementQueueStorage()
     free(data_);
 }
 
-inline ElementQueue::ElementQueue(const ElementQueueStoragePtr &storage)
-    : storage_(storage)
+inline ElementQueue::ElementQueue(const ElementQueueStoragePtr &storage) : storage_(storage)
 {
-  int res = eq_init_contig(this, storage->n_elems(), storage->buf_len(),
-                           storage->data());
+  int res = eq_init_contig(this, storage->n_elems(), storage->buf_len(), storage->data());
   if (res != 0)
     throw std::runtime_error("eq_init_contig failed");
 }
@@ -263,8 +256,7 @@ inline int ElementQueue::peek(char *&output)
   return len;
 }
 
-template <typename T>
-int ElementQueue::peek_value(T &output)
+template <typename T> int ElementQueue::peek_value(T &output)
 {
   u32 len;
   int offset = eq_peek_offset(this, &len);

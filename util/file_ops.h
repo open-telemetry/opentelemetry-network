@@ -35,11 +35,7 @@
 
 constexpr auto MAX_PID_PROC_PATH = "/proc/sys/kernel/pid_max";
 
-enum class FileAccess: int {
-  read = R_OK,
-  write = W_OK,
-  execute = X_OK
-};
+enum class FileAccess : int { read = R_OK, write = W_OK, execute = X_OK };
 
 // Tells whether the file specified by `path` exists
 bool file_exists(char const *path, std::initializer_list<FileAccess> modes = {});
@@ -68,11 +64,7 @@ std::vector<FileMeta> list_directory_contents(char const *directory);
 // Cleans up the contents of `dir` such that it contains no more than
 // `max_file_count` files and a total size less than `max_total_size_bytes`.
 // Removes older files first.
-void cleanup_directory(
-  char const *directory,
-  int64_t max_file_count,
-  int64_t max_total_size_bytes
-);
+void cleanup_directory(char const *directory, int64_t max_file_count, int64_t max_total_size_bytes);
 
 // reads the contents of given file - no decoding is performed
 // returns the file contents on success, or the error information otherwise
@@ -86,10 +78,7 @@ Expected<std::string, std::error_code> read_file_as_string(char const *path);
 // no decoding is performed, the string's characters represent the file's bytes
 // returns the amount of bytes read on success, or the error information otherwise
 // note: the buffer won't be cleared beforehand, the file's contents will be appended
-Expected<std::size_t, std::error_code> read_file(
-  char const *path,
-  std::vector<std::uint8_t> &buffer
-);
+Expected<std::size_t, std::error_code> read_file(char const *path, std::vector<std::uint8_t> &buffer);
 
 std::error_code write_file(char const *path, std::string_view data);
 
@@ -97,33 +86,22 @@ class FileDescriptor {
 public:
   static constexpr int INVALID_FD = -1;
 
-  FileDescriptor(): fd_(INVALID_FD) {}
+  FileDescriptor() : fd_(INVALID_FD) {}
 
-  explicit FileDescriptor(int fd): fd_(fd) {}
+  explicit FileDescriptor(int fd) : fd_(fd) {}
 
   FileDescriptor(FileDescriptor const &) = delete;
-  FileDescriptor(FileDescriptor &&other): fd_(other.fd_) { other.fd_ = INVALID_FD; }
+  FileDescriptor(FileDescriptor &&other) : fd_(other.fd_) { other.fd_ = INVALID_FD; }
 
   ~FileDescriptor();
 
-  enum class Access: int {
-    read_only = (O_RDONLY),
-    write_only = (O_WRONLY),
-    read_write = (O_RDWR)
-  };
+  enum class Access : int { read_only = (O_RDONLY), write_only = (O_WRONLY), read_write = (O_RDWR) };
 
-  enum class Positioning: int {
-    beginning = 0,
-    append = (O_APPEND),
-    truncate = (O_TRUNC)
-  };
+  enum class Positioning : int { beginning = 0, append = (O_APPEND), truncate = (O_TRUNC) };
 
-  enum class Mode: int {
-    none = 0,
-    close_on_exec = (O_CLOEXEC)
-  };
+  enum class Mode : int { none = 0, close_on_exec = (O_CLOEXEC) };
 
-  enum class Permission: int {
+  enum class Permission : int {
     none = 0,
     read = 1,
     write = 2,
@@ -161,11 +139,12 @@ public:
   // the return value evaluates to false on success or represents the error otherwise
   std::error_code flush();
 
-  int operator *() const { return fd(); }
+  int operator*() const { return fd(); }
   explicit operator bool() const { return valid(); }
-  bool operator !() const { return !valid(); }
+  bool operator!() const { return !valid(); }
 
-  FileDescriptor &operator =(FileDescriptor &&other) {
+  FileDescriptor &operator=(FileDescriptor &&other)
+  {
     if (valid()) {
       close();
     }
@@ -174,17 +153,16 @@ public:
     return *this;
   }
 
-  std::error_code open(char const *path,
-                       Access access,
-                       Positioning position = Positioning::beginning,
-                       Mode mode = Mode::close_on_exec);
-  std::error_code create(char const *path,
-                         Access access,
-                         Positioning position = Positioning::truncate,
-                         Permission user_permission = Permission::read_write,
-                         Permission group_permission = Permission::read_write,
-                         Permission others_permission = Permission::none,
-                         Mode mode = Mode::close_on_exec);
+  std::error_code
+  open(char const *path, Access access, Positioning position = Positioning::beginning, Mode mode = Mode::close_on_exec);
+  std::error_code create(
+      char const *path,
+      Access access,
+      Positioning position = Positioning::truncate,
+      Permission user_permission = Permission::read_write,
+      Permission group_permission = Permission::read_write,
+      Permission others_permission = Permission::none,
+      Mode mode = Mode::close_on_exec);
 
   std::error_code close();
 

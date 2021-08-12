@@ -28,10 +28,7 @@
  * and `UpperBound`.
  */
 template <typename LowerBound, typename UpperBound>
-std::common_type_t<LowerBound, UpperBound> compute_jitter(
-  LowerBound jitter_lower_bound,
-  UpperBound jitter_upper_bound
-);
+std::common_type_t<LowerBound, UpperBound> compute_jitter(LowerBound jitter_lower_bound, UpperBound jitter_upper_bound);
 
 /**
  * Adjusts the given time point with a random jitter amount in the range
@@ -51,19 +48,13 @@ std::common_type_t<LowerBound, UpperBound> compute_jitter(
  *  });
  */
 template <typename TimePointRep, typename TimePointPeriod, typename LowerBound, typename UpperBound>
-std::common_type_t<std::chrono::duration<TimePointRep, TimePointPeriod>, LowerBound, UpperBound>
-add_jitter(
-  std::chrono::duration<TimePointRep, TimePointPeriod> timepoint,
-  LowerBound jitter_lower_bound,
-  UpperBound jitter_upper_bound
-);
+std::common_type_t<std::chrono::duration<TimePointRep, TimePointPeriod>, LowerBound, UpperBound> add_jitter(
+    std::chrono::duration<TimePointRep, TimePointPeriod> timepoint,
+    LowerBound jitter_lower_bound,
+    UpperBound jitter_upper_bound);
 
 template <typename Clock, typename TimePointDuration, typename LowerBound, typename UpperBound>
-std::chrono::time_point<Clock, std::common_type_t<TimePointDuration, LowerBound, UpperBound>>
-add_jitter(
-  std::chrono::time_point<Clock, TimePointDuration> timepoint,
-  LowerBound jitter_lower_bound,
-  UpperBound jitter_upper_bound
-);
+std::chrono::time_point<Clock, std::common_type_t<TimePointDuration, LowerBound, UpperBound>> add_jitter(
+    std::chrono::time_point<Clock, TimePointDuration> timepoint, LowerBound jitter_lower_bound, UpperBound jitter_upper_bound);
 
 #include <util/jitter.inl>

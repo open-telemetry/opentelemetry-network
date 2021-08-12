@@ -31,13 +31,10 @@ namespace collector {
 class KubernetesRpcServer : public Collector::Service {
 public:
   // Does not take ownership of |chanel_factory|
-  explicit KubernetesRpcServer(ResyncChannelFactory *channel_factory,
-                               std::size_t collect_buffer_size);
+  explicit KubernetesRpcServer(ResyncChannelFactory *channel_factory, std::size_t collect_buffer_size);
   ~KubernetesRpcServer() override;
 
-  ::grpc::Status
-  Collect(::grpc::ServerContext *context,
-          ::grpc::ServerReaderWriter<Response, Info> *reader_writer) override;
+  ::grpc::Status Collect(::grpc::ServerContext *context, ::grpc::ServerReaderWriter<Response, Info> *reader_writer) override;
 
 private:
   ResyncChannelFactory *channel_factory_; // not owned

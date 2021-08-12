@@ -36,13 +36,9 @@ public:
    */
   virtual u32 received_data(u8 const *data, int length) { return length; }
 
-  u32 received_data(std::basic_string_view<u8> data) {
-    return received_data(data.data(), data.size());
-  }
+  u32 received_data(std::basic_string_view<u8> data) { return received_data(data.data(), data.size()); }
 
-  u32 received_data(std::string_view data) {
-    return received_data(reinterpret_cast<u8 const *>(data.data()), data.size());
-  }
+  u32 received_data(std::string_view data) { return received_data(reinterpret_cast<u8 const *>(data.data()), data.size()); }
 
   /**
    * An error occurred on the channel, or -ENOLINK on EOF

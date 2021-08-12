@@ -33,8 +33,7 @@ public:
   virtual ~ResyncQueueProducerInterface() = default;
 
   // Sends |data| of |data_len|, returns false if error occurs.
-  virtual std::error_code producer_send(const u8 *data, int data_len,
-                                        const u64 resync) = 0;
+  virtual std::error_code producer_send(const u8 *data, int data_len, const u64 resync) = 0;
   virtual void producer_unregister(ResyncChannel *channel) = 0;
 };
 
@@ -55,8 +54,7 @@ public:
   ResyncChannelFactory() = default;
   virtual ~ResyncChannelFactory() = default;
 
-  virtual std::unique_ptr<ResyncChannel>
-  new_channel(std::function<void(void)> &reset_callback) = 0;
+  virtual std::unique_ptr<ResyncChannel> new_channel(std::function<void(void)> &reset_callback) = 0;
 };
 
 } // namespace collector

@@ -17,7 +17,7 @@
 #pragma once
 
 namespace scheduling {
-  
+
 enum class JobFollowUp {
   // proceed with follow up jobs as normal
   ok,
@@ -27,4 +27,4 @@ enum class JobFollowUp {
   stop
 };
 
-} // namespace job
+} // namespace scheduling

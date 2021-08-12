@@ -18,15 +18,13 @@
 
 namespace channel {
 
-DoubleWriteChannel::DoubleWriteChannel(Channel &first, Channel &second):
-  first_(first),
-  second_(second)
-{}
+DoubleWriteChannel::DoubleWriteChannel(Channel &first, Channel &second) : first_(first), second_(second) {}
 
-std::error_code DoubleWriteChannel::send(const u8 *data, int size) {
-	if (auto error = first_.send(data, size)) {
+std::error_code DoubleWriteChannel::send(const u8 *data, int size)
+{
+  if (auto error = first_.send(data, size)) {
     return error;
-	}
+  }
 
   if (second_.is_open()) {
     if (auto error = second_.send(data, size)) {
@@ -37,12 +35,14 @@ std::error_code DoubleWriteChannel::send(const u8 *data, int size) {
   return {};
 }
 
-void DoubleWriteChannel::close() {
+void DoubleWriteChannel::close()
+{
   first_.close();
   second_.close();
 }
 
-std::error_code DoubleWriteChannel::flush() {
+std::error_code DoubleWriteChannel::flush()
+{
   if (auto error = first_.flush()) {
     return error;
   }

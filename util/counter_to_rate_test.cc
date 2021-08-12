@@ -24,7 +24,8 @@
 
 namespace data {
 
-TEST(counter_to_rate_int, default_ctor) {
+TEST(counter_to_rate_int, default_ctor)
+{
   CounterToRate<int> counter_to_rate;
   EXPECT_TRUE(counter_to_rate.empty());
   EXPECT_EQ(0ul, counter_to_rate.count());
@@ -35,7 +36,8 @@ TEST(counter_to_rate_int, default_ctor) {
   EXPECT_EQ(0, counter_to_rate.peek_rate());
 }
 
-TEST(counter_to_rate_int, cast_constructor) {
+TEST(counter_to_rate_int, cast_constructor)
+{
   CounterToRate<int> counter_to_rate(10);
   EXPECT_FALSE(counter_to_rate.empty());
   EXPECT_EQ(1ul, counter_to_rate.count());
@@ -46,7 +48,8 @@ TEST(counter_to_rate_int, cast_constructor) {
   EXPECT_EQ(0, counter_to_rate.peek_rate());
 }
 
-TEST(counter_to_rate_int, default_ctor_add_4_values) {
+TEST(counter_to_rate_int, default_ctor_add_4_values)
+{
   CounterToRate<int> counter_to_rate;
   EXPECT_TRUE(counter_to_rate.empty());
 
@@ -74,7 +77,8 @@ TEST(counter_to_rate_int, default_ctor_add_4_values) {
   EXPECT_EQ(0, counter_to_rate.peek_rate());
 }
 
-TEST(counter_to_rate_int, cast_ctor_add_4_values) {
+TEST(counter_to_rate_int, cast_ctor_add_4_values)
+{
   CounterToRate<int> counter_to_rate{19};
   EXPECT_FALSE(counter_to_rate.empty());
 
@@ -102,7 +106,8 @@ TEST(counter_to_rate_int, cast_ctor_add_4_values) {
   EXPECT_EQ(0, counter_to_rate.peek_rate());
 }
 
-TEST(counter_to_rate_int, reset) {
+TEST(counter_to_rate_int, reset)
+{
   CounterToRate<int> counter_to_rate(60);
   counter_to_rate += 90;
   counter_to_rate += 70;
@@ -116,7 +121,8 @@ TEST(counter_to_rate_int, reset) {
   EXPECT_EQ(0, counter_to_rate.peek_rate());
 }
 
-TEST(counter_to_rate_chrono, default_ctor) {
+TEST(counter_to_rate_chrono, default_ctor)
+{
   CounterToRate<std::chrono::seconds> counter_to_rate;
   EXPECT_TRUE(counter_to_rate.empty());
   EXPECT_EQ(0ul, counter_to_rate.count());
@@ -124,7 +130,8 @@ TEST(counter_to_rate_chrono, default_ctor) {
   EXPECT_EQ(0s, counter_to_rate.peek_rate());
 }
 
-TEST(counter_to_rate_chrono, cast_constructor) {
+TEST(counter_to_rate_chrono, cast_constructor)
+{
   CounterToRate<std::chrono::seconds> counter_to_rate(10s);
   EXPECT_FALSE(counter_to_rate.empty());
   EXPECT_EQ(1ul, counter_to_rate.count());
@@ -135,7 +142,8 @@ TEST(counter_to_rate_chrono, cast_constructor) {
   EXPECT_EQ(0s, counter_to_rate.peek_rate());
 }
 
-TEST(counter_to_rate_chrono, default_ctor_add_4_values) {
+TEST(counter_to_rate_chrono, default_ctor_add_4_values)
+{
   CounterToRate<std::chrono::seconds> counter_to_rate;
   EXPECT_TRUE(counter_to_rate.empty());
 
@@ -163,7 +171,8 @@ TEST(counter_to_rate_chrono, default_ctor_add_4_values) {
   EXPECT_EQ(0s, counter_to_rate.peek_rate());
 }
 
-TEST(counter_to_rate_chrono, cast_ctor_add_4_values) {
+TEST(counter_to_rate_chrono, cast_ctor_add_4_values)
+{
   CounterToRate<std::chrono::seconds> counter_to_rate(60s);
   EXPECT_FALSE(counter_to_rate.empty());
 
@@ -191,7 +200,8 @@ TEST(counter_to_rate_chrono, cast_ctor_add_4_values) {
   EXPECT_EQ(0s, counter_to_rate.peek_rate());
 }
 
-TEST(counter_to_rate_chrono, reset) {
+TEST(counter_to_rate_chrono, reset)
+{
   CounterToRate<std::chrono::seconds> counter_to_rate(60s);
   counter_to_rate += 90s;
   counter_to_rate += 70s;
@@ -205,7 +215,8 @@ TEST(counter_to_rate_chrono, reset) {
   EXPECT_EQ(0s, counter_to_rate.peek_rate());
 }
 
-TEST(counter_to_rate_int, commit_rate__value_if_unitary__default_ctor) {
+TEST(counter_to_rate_int, commit_rate__value_if_unitary__default_ctor)
+{
   CounterToRate<int> counter_to_rate;
   EXPECT_EQ(0, counter_to_rate.commit_rate(false));
 
@@ -216,7 +227,8 @@ TEST(counter_to_rate_int, commit_rate__value_if_unitary__default_ctor) {
   EXPECT_EQ(40, counter_to_rate.commit_rate(false));
 }
 
-TEST(counter_to_rate_int, commit_rate__empty_if_unitary__default_ctor) {
+TEST(counter_to_rate_int, commit_rate__empty_if_unitary__default_ctor)
+{
   CounterToRate<int> counter_to_rate;
   EXPECT_EQ(0, counter_to_rate.commit_rate(true));
 
@@ -227,7 +239,8 @@ TEST(counter_to_rate_int, commit_rate__empty_if_unitary__default_ctor) {
   EXPECT_EQ(40, counter_to_rate.commit_rate(true));
 }
 
-TEST(counter_to_rate_int, commit_rate__value_if_unitary__cast_ctor) {
+TEST(counter_to_rate_int, commit_rate__value_if_unitary__cast_ctor)
+{
   CounterToRate<int> counter_to_rate{50};
   EXPECT_EQ(50, counter_to_rate.commit_rate(false));
 
@@ -235,7 +248,8 @@ TEST(counter_to_rate_int, commit_rate__value_if_unitary__cast_ctor) {
   EXPECT_EQ(40, counter_to_rate.commit_rate(false));
 }
 
-TEST(counter_to_rate_int, commit_rate__empty_if_unitary__cast_ctor) {
+TEST(counter_to_rate_int, commit_rate__empty_if_unitary__cast_ctor)
+{
   CounterToRate<int> counter_to_rate{50};
   EXPECT_EQ(0, counter_to_rate.commit_rate(true));
 

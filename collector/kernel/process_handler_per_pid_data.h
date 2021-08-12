@@ -14,41 +14,41 @@
 // limitations under the License.
 //
 
-#define PROCESS_HANDLER_CPU_MEM_IO_FIELDS(Fn) \
-  Fn(user_time_ns, u64, data::CounterToRate) \
-  Fn(system_time_ns, u64, data::CounterToRate) \
-  \
-  Fn(thread_count, u32, data::Gauge) \
-  \
-  Fn(resident_pages_file_mapping, u64, data::Gauge) \
-  Fn(resident_pages_anonymous, u64, data::Gauge) \
-  Fn(resident_pages_shared_memory, u64, data::Gauge) \
-  \
-  Fn(minor_page_faults, u64, data::CounterToRate) \
-  Fn(major_page_faults, u64, data::CounterToRate) \
-  \
-  Fn(block_io_delay_ns, u64, data::CounterToRate) \
-  Fn(block_io_delay_count, u32, data::CounterToRate) \
-  \
-  Fn(swap_in_delay_ns, u64, data::CounterToRate) \
-  Fn(swap_in_delay_count, u32, data::CounterToRate) \
-  \
-  Fn(free_pages_delay_ns, u64, data::CounterToRate) \
-  Fn(free_pages_delay_count, u32, data::CounterToRate) \
-  \
-  Fn(thrashing_page_delay_ns, u64, data::CounterToRate) \
-  Fn(thrashing_page_delay_count, u32, data::CounterToRate) \
-  \
-  Fn(read_syscalls, u64, data::CounterToRate) \
-  Fn(write_syscalls, u64, data::CounterToRate) \
-  \
-  Fn(bytes_logically_read, u64, data::CounterToRate) \
-  Fn(bytes_logically_written, u64, data::CounterToRate) \
-  \
-  Fn(bytes_physically_read, u64, data::CounterToRate) \
-  Fn(bytes_physically_written, u64, data::CounterToRate) \
-  \
-  Fn(cancelled_write_bytes, u64, data::CounterToRate) \
-  \
-  Fn(voluntary_context_switches, u64, data::CounterToRate) \
-  Fn(involuntary_context_switches, u64, data::CounterToRate)
+#define PROCESS_HANDLER_CPU_MEM_IO_FIELDS(FN)                                                                                  \
+  FN(user_time_ns, u64, data::CounterToRate)                                                                                   \
+  FN(system_time_ns, u64, data::CounterToRate)                                                                                 \
+                                                                                                                               \
+  FN(thread_count, u32, data::Gauge)                                                                                           \
+                                                                                                                               \
+  FN(resident_pages_file_mapping, u64, data::Gauge)                                                                            \
+  FN(resident_pages_anonymous, u64, data::Gauge)                                                                               \
+  FN(resident_pages_shared_memory, u64, data::Gauge)                                                                           \
+                                                                                                                               \
+  FN(minor_page_faults, u64, data::CounterToRate)                                                                              \
+  FN(major_page_faults, u64, data::CounterToRate)                                                                              \
+                                                                                                                               \
+  FN(block_io_delay_ns, u64, data::CounterToRate)                                                                              \
+  FN(block_io_delay_count, u32, data::CounterToRate)                                                                           \
+                                                                                                                               \
+  FN(swap_in_delay_ns, u64, data::CounterToRate)                                                                               \
+  FN(swap_in_delay_count, u32, data::CounterToRate)                                                                            \
+                                                                                                                               \
+  FN(free_pages_delay_ns, u64, data::CounterToRate)                                                                            \
+  FN(free_pages_delay_count, u32, data::CounterToRate)                                                                         \
+                                                                                                                               \
+  FN(thrashing_page_delay_ns, u64, data::CounterToRate)                                                                        \
+  FN(thrashing_page_delay_count, u32, data::CounterToRate)                                                                     \
+                                                                                                                               \
+  FN(read_syscalls, u64, data::CounterToRate)                                                                                  \
+  FN(write_syscalls, u64, data::CounterToRate)                                                                                 \
+                                                                                                                               \
+  FN(bytes_logically_read, u64, data::CounterToRate)                                                                           \
+  FN(bytes_logically_written, u64, data::CounterToRate)                                                                        \
+                                                                                                                               \
+  FN(bytes_physically_read, u64, data::CounterToRate)                                                                          \
+  FN(bytes_physically_written, u64, data::CounterToRate)                                                                       \
+                                                                                                                               \
+  FN(cancelled_write_bytes, u64, data::CounterToRate)                                                                          \
+                                                                                                                               \
+  FN(voluntary_context_switches, u64, data::CounterToRate)                                                                     \
+  FN(involuntary_context_switches, u64, data::CounterToRate)

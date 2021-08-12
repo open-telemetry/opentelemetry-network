@@ -20,8 +20,7 @@
 #include <cstring>
 #include <stdexcept>
 
-Lz4Decompressor::Lz4Decompressor(size_t capacity)
-    : output_buf_capacity_(capacity), tail_loc_(0)
+Lz4Decompressor::Lz4Decompressor(size_t capacity) : output_buf_capacity_(capacity), tail_loc_(0)
 {
   output_buf_ = (u8 *)malloc(capacity * sizeof(u8));
   if (output_buf_ == NULL) {
@@ -40,8 +39,7 @@ Lz4Decompressor::~Lz4Decompressor()
   LZ4F_freeDecompressionContext(ctx_);
 }
 
-size_t Lz4Decompressor::process(const u8 *data, size_t data_len,
-                              size_t *consumed_len)
+size_t Lz4Decompressor::process(const u8 *data, size_t data_len, size_t *consumed_len)
 {
   size_t res = 0;
   size_t src_size = 0;
@@ -51,8 +49,7 @@ size_t Lz4Decompressor::process(const u8 *data, size_t data_len,
     src_size = data_len;
     size_t dst_size = output_buf_capacity_ - tail_loc_;
 
-    res = LZ4F_decompress(ctx_, (void *)(output_buf_ + tail_loc_),
-                                &dst_size, (void *)data, &src_size, NULL);
+    res = LZ4F_decompress(ctx_, (void *)(output_buf_ + tail_loc_), &dst_size, (void *)data, &src_size, NULL);
 
     *consumed_len += src_size;
     tail_loc_ += dst_size;
@@ -61,7 +58,7 @@ size_t Lz4Decompressor::process(const u8 *data, size_t data_len,
 
     // continue to decompress while LZ4 is making progress
   } while ((!LZ4F_isError(res)) && (src_size > 0));
- 
+
   return LZ4F_isError(res) ? res : 0;
 }
 
@@ -84,7 +81,6 @@ void Lz4Decompressor::discard(size_t len)
     return;
   }
 
-  memmove((void *)output_buf_, (const void *)(output_buf_ + len),
-          tail_loc_ - len);
+  memmove((void *)output_buf_, (const void *)(output_buf_ + len), tail_loc_ - len);
   tail_loc_ -= len;
 }

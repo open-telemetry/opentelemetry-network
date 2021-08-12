@@ -21,14 +21,11 @@
 #include <string>
 
 jitbuf::Handler::Handler(bool fail_unadded, bool fail_unknown)
-    : fail_unadded_(fail_unadded), fail_unknown_(fail_unknown),
-      remote_timestamp_(0)
-{
-}
+    : fail_unadded_(fail_unadded), fail_unknown_(fail_unknown), remote_timestamp_(0)
+{}
 
-void jitbuf::Handler::add(std::shared_ptr<jitbuf::TransformRecord> &transform,
-                          handler_func_t handler_func,
-                          std::shared_ptr<Service> service)
+void jitbuf::Handler::add(
+    std::shared_ptr<jitbuf::TransformRecord> &transform, handler_func_t handler_func, std::shared_ptr<Service> service)
 {
   struct HandlerRecord record;
   record.transform = *transform;
@@ -42,8 +39,7 @@ void jitbuf::Handler::add(std::shared_ptr<jitbuf::TransformRecord> &transform,
     throw std::runtime_error("rpc_id already exists");
 }
 
-void jitbuf::Handler::add(std::shared_ptr<jitbuf::TransformRecord> &transform,
-                          handler_func_t handler_func, void *priv)
+void jitbuf::Handler::add(std::shared_ptr<jitbuf::TransformRecord> &transform, handler_func_t handler_func, void *priv)
 {
   struct HandlerRecord record;
   record.transform = *transform;
@@ -56,8 +52,7 @@ void jitbuf::Handler::add(std::shared_ptr<jitbuf::TransformRecord> &transform,
     throw std::runtime_error("rpc_id already exists");
 }
 
-void jitbuf::Handler::add_identity(TransformBuilder &builder,
-                                   std::shared_ptr<jitbuf::Service> service)
+void jitbuf::Handler::add_identity(TransformBuilder &builder, std::shared_ptr<jitbuf::Service> service)
 {
   const handler_package &package(service->get_package());
   for (int i = 0; i < package.size; i++) {
@@ -73,8 +68,7 @@ void jitbuf::Handler::add_identity(TransformBuilder &builder,
   }
 }
 
-void jitbuf::Handler::add_identity(TransformBuilder &builder,
-                                   jitbuf::Service *service)
+void jitbuf::Handler::add_identity(TransformBuilder &builder, jitbuf::Service *service)
 {
   const handler_package &package(service->get_package());
   for (int i = 0; i < package.size; i++) {
@@ -118,8 +112,7 @@ int jitbuf::Handler::handle(const char *msg, uint32_t len, u64 flags)
       std::ostringstream oss;
       oss << "message rpc_id=" << rpc_id << " not in handler hash";
       throw std::runtime_error(oss.str());
-    }
-    else {
+    } else {
       return -EINVAL;
     }
   }
@@ -156,8 +149,7 @@ int jitbuf::Handler::handle_multiple(const char *msg, u64 len, u64 flags)
   int ret = 0;
 
   while (len > processed) {
-    int ret = handle(msg + processed,
-                     (remaining > ((u32)-1) ? ((u32)-1) : remaining), flags);
+    int ret = handle(msg + processed, (remaining > ((u32)-1) ? ((u32)-1) : remaining), flags);
     if (ret < 0)
       break;
 

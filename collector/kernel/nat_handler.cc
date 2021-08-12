@@ -25,23 +25,22 @@
 
 constexpr auto SIZEOF_STRUCT_NF_CONNTRACK_TUPLE_HASH = 56;
 
-NatHandler::NatHandler(::flowmill::ingest::Writer &writer, logging::Logger &log)
-    : writer_(writer),
-    log_(log)
-{}
+NatHandler::NatHandler(::flowmill::ingest::Writer &writer, logging::Logger &log) : writer_(writer), log_(log) {}
 
 /* END */
-void NatHandler::handle_nf_nat_cleanup_conntrack(
-    u64 timestamp, struct jb_agent_internal__nf_nat_cleanup_conntrack *msg)
+void NatHandler::handle_nf_nat_cleanup_conntrack(u64 timestamp, struct jb_agent_internal__nf_nat_cleanup_conntrack *msg)
 {
   if (is_log_whitelisted(AgentLogKind::NAT)) {
-    LOG::trace_in(AgentLogKind::NAT,
-                  "NatHandler::handle_nf_nat_cleanup_conntrack: ct={}, "
-                  "src={}:{}, dst={}:{}, proto={}",
-                  msg->ct,
-                  IPv4Address::from(msg->src_ip), ntohs(msg->src_port),
-                  IPv4Address::from(msg->dst_ip), ntohs(msg->dst_port),
-                  msg->proto);
+    LOG::trace_in(
+        AgentLogKind::NAT,
+        "NatHandler::handle_nf_nat_cleanup_conntrack: ct={}, "
+        "src={}:{}, dst={}:{}, proto={}",
+        msg->ct,
+        IPv4Address::from(msg->src_ip),
+        ntohs(msg->src_port),
+        IPv4Address::from(msg->dst_ip),
+        ntohs(msg->dst_port),
+        msg->proto);
   }
 
   const hostport_tuple ft = {
@@ -56,21 +55,25 @@ void NatHandler::handle_nf_nat_cleanup_conntrack(
 }
 
 /* START */
-void NatHandler::handle_nf_conntrack_alter_reply(
-    u64 timestamp, struct jb_agent_internal__nf_conntrack_alter_reply *msg)
+void NatHandler::handle_nf_conntrack_alter_reply(u64 timestamp, struct jb_agent_internal__nf_conntrack_alter_reply *msg)
 {
   if (is_log_whitelisted(AgentLogKind::NAT)) {
-    LOG::trace_in(AgentLogKind::NAT,
-                  "NatHandler::handle_nf_conntrack_alter_reply: ct={}, "
-                  "src={}:{}, dst={}:{}, proto={}, "
-                  "nat_src={}:{}, nat_dst={}:{}, nat_proto={}",
-                  msg->ct,
-                  IPv4Address::from(msg->src_ip), ntohs(msg->src_port),
-                  IPv4Address::from(msg->dst_ip), ntohs(msg->dst_port),
-                  msg->proto,
-                  IPv4Address::from(msg->nat_src_ip), ntohs(msg->nat_src_port),
-                  IPv4Address::from(msg->nat_dst_ip), ntohs(msg->nat_dst_port),
-                  msg->nat_proto);
+    LOG::trace_in(
+        AgentLogKind::NAT,
+        "NatHandler::handle_nf_conntrack_alter_reply: ct={}, "
+        "src={}:{}, dst={}:{}, proto={}, "
+        "nat_src={}:{}, nat_dst={}:{}, nat_proto={}",
+        msg->ct,
+        IPv4Address::from(msg->src_ip),
+        ntohs(msg->src_port),
+        IPv4Address::from(msg->dst_ip),
+        ntohs(msg->dst_port),
+        msg->proto,
+        IPv4Address::from(msg->nat_src_ip),
+        ntohs(msg->nat_src_port),
+        IPv4Address::from(msg->nat_dst_ip),
+        ntohs(msg->nat_dst_port),
+        msg->nat_proto);
   }
 
   const hostport_tuple map_from = {
@@ -93,8 +96,7 @@ void NatHandler::handle_nf_conntrack_alter_reply(
 
   // If we've seen an sk for this four-tuple already, we can report to the
   // server
-  if (auto sk_pos = existing_sk_table_.find(map_from);
-      sk_pos != existing_sk_table_.end()) {
+  if (auto sk_pos = existing_sk_table_.find(map_from); sk_pos != existing_sk_table_.end()) {
     u64 sk = sk_pos->second;
     send_nat_remapping(timestamp, sk, map_to);
   } else {
@@ -103,17 +105,20 @@ void NatHandler::handle_nf_conntrack_alter_reply(
 }
 
 /* EXISTING */
-void NatHandler::handle_existing_conntrack_tuple(
-    u64 timestamp, struct jb_agent_internal__existing_conntrack_tuple *msg)
+void NatHandler::handle_existing_conntrack_tuple(u64 timestamp, struct jb_agent_internal__existing_conntrack_tuple *msg)
 {
   if (is_log_whitelisted(AgentLogKind::NAT)) {
-    LOG::trace_in(AgentLogKind::NAT,
-                  "NatHandler::handle_existing_conntrack_tuple: ct={}, dir={}, "
-                  "src={}:{}, dst={}:{}, proto={}",
-                  msg->ct, msg->dir,
-                  IPv4Address::from(msg->src_ip), ntohs(msg->src_port),
-                  IPv4Address::from(msg->dst_ip), ntohs(msg->dst_port),
-                  msg->proto);
+    LOG::trace_in(
+        AgentLogKind::NAT,
+        "NatHandler::handle_existing_conntrack_tuple: ct={}, dir={}, "
+        "src={}:{}, dst={}:{}, proto={}",
+        msg->ct,
+        msg->dir,
+        IPv4Address::from(msg->src_ip),
+        ntohs(msg->src_port),
+        IPv4Address::from(msg->dst_ip),
+        ntohs(msg->dst_port),
+        msg->proto);
   }
 
   const u64 ct = msg->ct;
@@ -158,11 +163,14 @@ void NatHandler::handle_existing_conntrack_tuple(
   }
 
   if (is_log_whitelisted(AgentLogKind::NAT)) {
-    LOG::trace_in(AgentLogKind::NAT,
-                  "connection is NAT-ed from: src={}:{}, dst={}:{}, proto={}",
-                  IPv4Address::from(map_from.src_ip), ntohs(map_from.src_port),
-                  IPv4Address::from(map_from.dst_ip), ntohs(map_from.dst_port),
-                  map_from.proto);
+    LOG::trace_in(
+        AgentLogKind::NAT,
+        "connection is NAT-ed from: src={}:{}, dst={}:{}, proto={}",
+        IPv4Address::from(map_from.src_ip),
+        ntohs(map_from.src_port),
+        IPv4Address::from(map_from.dst_ip),
+        ntohs(map_from.dst_port),
+        map_from.proto);
   }
 
   record_nat(map_from, map_to);
@@ -176,15 +184,19 @@ void NatHandler::handle_existing_conntrack_tuple(
   }
 }
 
-void NatHandler::handle_set_state_ipv4(u64 timestamp,
-                                       jb_agent_internal__set_state_ipv4 *msg)
+void NatHandler::handle_set_state_ipv4(u64 timestamp, jb_agent_internal__set_state_ipv4 *msg)
 {
   if (is_log_whitelisted(AgentLogKind::NAT)) {
-    LOG::trace_in(AgentLogKind::NAT,
-                  "NatHandler::handle_set_state_ipv4: "
-                  "sk={}, src={}:{}, dest={}:{}, tx_rx={}",
-                  msg->sk, IPv4Address::from(msg->src), msg->sport,
-                  IPv4Address::from(msg->dest), msg->dport, msg->tx_rx);
+    LOG::trace_in(
+        AgentLogKind::NAT,
+        "NatHandler::handle_set_state_ipv4: "
+        "sk={}, src={}:{}, dest={}:{}, tx_rx={}",
+        msg->sk,
+        IPv4Address::from(msg->src),
+        msg->sport,
+        IPv4Address::from(msg->dest),
+        msg->dport,
+        msg->tx_rx);
   }
 
   const u64 sk = msg->sk;
@@ -200,19 +212,16 @@ void NatHandler::handle_set_state_ipv4(u64 timestamp,
   record_sk(sk, ft);
 
   // We had a NAT table entry before getting the socket info.
-  if (auto mapping = nat_table_.find(ft);
-      mapping != nat_table_.end()) {
+  if (auto mapping = nat_table_.find(ft); mapping != nat_table_.end()) {
     send_nat_remapping(timestamp, sk, mapping->second);
   }
 
-  if (auto rev_mapping = nat_table_rev_.find(ft.reversed());
-      rev_mapping != nat_table_rev_.end()) {
+  if (auto rev_mapping = nat_table_rev_.find(ft.reversed()); rev_mapping != nat_table_rev_.end()) {
     send_nat_remapping(timestamp, sk, rev_mapping->second.reversed());
   }
 }
 
-void NatHandler::handle_close_socket(u64 timestamp,
-                                     jb_agent_internal__close_sock_info *msg)
+void NatHandler::handle_close_socket(u64 timestamp, jb_agent_internal__close_sock_info *msg)
 {
   remove_sk(msg->sk);
 }
@@ -221,32 +230,39 @@ void NatHandler::record_sk(u64 sk, hostport_tuple const &ft)
 {
   // We were hitting the assert in remove_sk(), which happens if two sk's use
   // the same four-tuple without a call to remove_sk() in-between.
-  if (auto search = existing_sk_table_.find(ft);
-      search != existing_sk_table_.end()) {
+  if (auto search = existing_sk_table_.find(ft); search != existing_sk_table_.end()) {
     const auto &existing_sk = search->second;
-    LOG::debug_in(AgentLogKind::NAT,
-                  "NatHandler::record_sk: rewriting existing ft->sk mapping: "
-                  "sk={}, existing_sk={}, ft=({}:{},{}:{})",
-                  sk, existing_sk,
-                  IPv4Address::from(ft.src_ip), ntohs(ft.src_port),
-                  IPv4Address::from(ft.dst_ip), ntohs(ft.dst_port));
+    LOG::debug_in(
+        AgentLogKind::NAT,
+        "NatHandler::record_sk: rewriting existing ft->sk mapping: "
+        "sk={}, existing_sk={}, ft=({}:{},{}:{})",
+        sk,
+        existing_sk,
+        IPv4Address::from(ft.src_ip),
+        ntohs(ft.src_port),
+        IPv4Address::from(ft.dst_ip),
+        ntohs(ft.dst_port));
     remove_sk(existing_sk);
   }
 
   // There was also an edge-case where we'd have a memory leak of the same sk
   // gets used for two-dfferent four-tuples without a call to remove_sk()
   // in-between.
-  if (auto rev_search = existing_sk_table_rev_.find(sk);
-      rev_search != existing_sk_table_rev_.end()) {
+  if (auto rev_search = existing_sk_table_rev_.find(sk); rev_search != existing_sk_table_rev_.end()) {
     const auto &existing_ft = rev_search->second;
-    LOG::debug_in(AgentLogKind::NAT,
-                  "NatHandler::record_sk: rewriting existing sk->ft mapping: "
-                  "sk={}, existing_ft={{}:{},{}:{}), ft=({}:{},{}:{})",
-                  sk,
-                  IPv4Address::from(existing_ft.src_ip), ntohs(existing_ft.src_port),
-                  IPv4Address::from(existing_ft.dst_ip), ntohs(existing_ft.dst_port),
-                  IPv4Address::from(ft.src_ip), ntohs(ft.src_port),
-                  IPv4Address::from(ft.dst_ip), ntohs(ft.dst_port));
+    LOG::debug_in(
+        AgentLogKind::NAT,
+        "NatHandler::record_sk: rewriting existing sk->ft mapping: "
+        "sk={}, existing_ft={{}:{},{}:{}), ft=({}:{},{}:{})",
+        sk,
+        IPv4Address::from(existing_ft.src_ip),
+        ntohs(existing_ft.src_port),
+        IPv4Address::from(existing_ft.dst_ip),
+        ntohs(existing_ft.dst_port),
+        IPv4Address::from(ft.src_ip),
+        ntohs(ft.src_port),
+        IPv4Address::from(ft.dst_ip),
+        ntohs(ft.dst_port));
     remove_sk(sk);
   }
 
@@ -270,42 +286,58 @@ void NatHandler::remove_sk(u64 sk)
   existing_sk_table_.erase(search);
 }
 
-void NatHandler::record_nat(hostport_tuple const &map_from,
-                            hostport_tuple const &map_to)
+void NatHandler::record_nat(hostport_tuple const &map_from, hostport_tuple const &map_to)
 {
   // Clean up possible previous records.
   //
   if (auto it = nat_table_.find(map_from); it != nat_table_.end()) {
     // map_from->some_to exist, remove some_to->map_from
-    LOG::debug_in(AgentLogKind::NAT,
-                  "NatHandler::record_nat: rewriting existing mapping: "
-                  "({}:{},{}:{})->({}:{},{}:{}) with "
-                  "({}:{},{}:{})->({}:{},{}:{})",
-                  IPv4Address::from(map_from.src_ip), ntohs(map_from.src_port),
-                  IPv4Address::from(map_from.dst_ip), ntohs(map_from.dst_port),
-                  IPv4Address::from(it->second.src_ip), ntohs(it->second.src_port),
-                  IPv4Address::from(it->second.dst_ip), ntohs(it->second.dst_port),
-                  IPv4Address::from(map_from.src_ip), ntohs(map_from.src_port),
-                  IPv4Address::from(map_from.dst_ip), ntohs(map_from.dst_port),
-                  IPv4Address::from(map_to.src_ip), ntohs(map_to.src_port),
-                  IPv4Address::from(map_to.dst_ip), ntohs(map_to.dst_port));
+    LOG::debug_in(
+        AgentLogKind::NAT,
+        "NatHandler::record_nat: rewriting existing mapping: "
+        "({}:{},{}:{})->({}:{},{}:{}) with "
+        "({}:{},{}:{})->({}:{},{}:{})",
+        IPv4Address::from(map_from.src_ip),
+        ntohs(map_from.src_port),
+        IPv4Address::from(map_from.dst_ip),
+        ntohs(map_from.dst_port),
+        IPv4Address::from(it->second.src_ip),
+        ntohs(it->second.src_port),
+        IPv4Address::from(it->second.dst_ip),
+        ntohs(it->second.dst_port),
+        IPv4Address::from(map_from.src_ip),
+        ntohs(map_from.src_port),
+        IPv4Address::from(map_from.dst_ip),
+        ntohs(map_from.dst_port),
+        IPv4Address::from(map_to.src_ip),
+        ntohs(map_to.src_port),
+        IPv4Address::from(map_to.dst_ip),
+        ntohs(map_to.dst_port));
     nat_table_rev_.erase(it->second);
   }
-  if (auto rev_it = nat_table_rev_.find(map_to);
-      rev_it != nat_table_rev_.end()) {
+  if (auto rev_it = nat_table_rev_.find(map_to); rev_it != nat_table_rev_.end()) {
     // map_to->some_from exists, remove some_from->map_to
-    LOG::debug_in(AgentLogKind::NAT,
-                  "NatHandler::record_nat: rewriting existing reverse mapping: "
-                  "({}:{},{}:{})<-({}:{},{}:{}) with "
-                  "({}:{},{}:{})<-({}:{},{}:{})",
-                  IPv4Address::from(rev_it->second.src_ip), ntohs(rev_it->second.src_port),
-                  IPv4Address::from(rev_it->second.dst_ip), ntohs(rev_it->second.dst_port),
-                  IPv4Address::from(map_to.src_ip), ntohs(map_to.src_port),
-                  IPv4Address::from(map_to.dst_ip), ntohs(map_to.dst_port),
-                  IPv4Address::from(map_from.src_ip), ntohs(map_from.src_port),
-                  IPv4Address::from(map_from.dst_ip), ntohs(map_from.dst_port),
-                  IPv4Address::from(map_to.src_ip), ntohs(map_to.src_port),
-                  IPv4Address::from(map_to.dst_ip), ntohs(map_to.dst_port));
+    LOG::debug_in(
+        AgentLogKind::NAT,
+        "NatHandler::record_nat: rewriting existing reverse mapping: "
+        "({}:{},{}:{})<-({}:{},{}:{}) with "
+        "({}:{},{}:{})<-({}:{},{}:{})",
+        IPv4Address::from(rev_it->second.src_ip),
+        ntohs(rev_it->second.src_port),
+        IPv4Address::from(rev_it->second.dst_ip),
+        ntohs(rev_it->second.dst_port),
+        IPv4Address::from(map_to.src_ip),
+        ntohs(map_to.src_port),
+        IPv4Address::from(map_to.dst_ip),
+        ntohs(map_to.dst_port),
+        IPv4Address::from(map_from.src_ip),
+        ntohs(map_from.src_port),
+        IPv4Address::from(map_from.dst_ip),
+        ntohs(map_from.dst_port),
+        IPv4Address::from(map_to.src_ip),
+        ntohs(map_to.src_port),
+        IPv4Address::from(map_to.dst_ip),
+        ntohs(map_to.dst_port));
     nat_table_.erase(rev_it->second);
   }
 
@@ -322,14 +354,17 @@ void NatHandler::remove_nat(hostport_tuple const &map_from)
   }
 }
 
-hostport_tuple *NatHandler::get_nat_mapping(u32 src, u32 dst, u16 sport,
-                                            u16 dport, u32 proto)
+hostport_tuple *NatHandler::get_nat_mapping(u32 src, u32 dst, u16 sport, u16 dport, u32 proto)
 {
   if (is_log_whitelisted(AgentLogKind::NAT)) {
-    LOG::trace_in(AgentLogKind::NAT,
-                  "NatHandler::get_nat_mapping: src={}:{}, dst={}:{}, proto={}",
-                  IPv4Address::from(src), sport, IPv4Address::from(dst), dport,
-                  proto);
+    LOG::trace_in(
+        AgentLogKind::NAT,
+        "NatHandler::get_nat_mapping: src={}:{}, dst={}:{}, proto={}",
+        IPv4Address::from(src),
+        sport,
+        IPv4Address::from(dst),
+        dport,
+        proto);
   }
 
   const hostport_tuple ft = {
@@ -349,17 +384,18 @@ hostport_tuple *NatHandler::get_nat_mapping(u32 src, u32 dst, u16 sport,
   }
 }
 
-void NatHandler::send_nat_remapping(u64 timestamp, u64 sk,
-                                    hostport_tuple const &ft)
+void NatHandler::send_nat_remapping(u64 timestamp, u64 sk, hostport_tuple const &ft)
 {
   if (is_log_whitelisted(AgentLogKind::NAT)) {
-    LOG::trace_in(AgentLogKind::NAT,
-                  "NatHandler::send_nat_remapping: sk={}, src={}:{}, dst={}:{}",
-                  sk,
-                  IPv4Address::from(ft.src_ip), ntohs(ft.src_port),
-                  IPv4Address::from(ft.dst_ip), ntohs(ft.dst_port));
+    LOG::trace_in(
+        AgentLogKind::NAT,
+        "NatHandler::send_nat_remapping: sk={}, src={}:{}, dst={}:{}",
+        sk,
+        IPv4Address::from(ft.src_ip),
+        ntohs(ft.src_port),
+        IPv4Address::from(ft.dst_ip),
+        ntohs(ft.dst_port));
   }
 
-  writer_.nat_remapping_tstamp(timestamp, sk, ft.src_ip, ft.dst_ip, ft.src_port,
-                               ft.dst_port);
+  writer_.nat_remapping_tstamp(timestamp, sk, ft.src_ip, ft.dst_ip, ft.src_port, ft.dst_port);
 }

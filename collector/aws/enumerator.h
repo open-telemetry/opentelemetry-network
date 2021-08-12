@@ -30,11 +30,7 @@ namespace collector::aws {
 
 struct NetworkInterfacesEnumerator {
 
-  NetworkInterfacesEnumerator(
-    logging::Logger &log,
-    flowmill::aws_collector::Index &index,
-    flowmill::ingest::Writer &writer
-  );
+  NetworkInterfacesEnumerator(logging::Logger &log, flowmill::aws_collector::Index &index, flowmill::ingest::Writer &writer);
   ~NetworkInterfacesEnumerator();
 
   scheduling::JobFollowUp enumerate();
@@ -44,10 +40,7 @@ struct NetworkInterfacesEnumerator {
 private:
   void set_handles(std::vector<flowmill::aws_collector::handles::aws_network_interface> handles);
 
-  void handle_ec2_error(
-    CollectorStatus status,
-    Aws::Client::AWSError<Aws::EC2::EC2Errors> const &error
-  );
+  void handle_ec2_error(CollectorStatus status, Aws::Client::AWSError<Aws::EC2::EC2Errors> const &error);
 
   Aws::EC2::EC2Client ec2_;
   flowmill::aws_collector::Index &index_;
@@ -56,4 +49,4 @@ private:
   std::vector<flowmill::aws_collector::handles::aws_network_interface> handles_;
 };
 
-} // namespace collector::aws {
+} // namespace collector::aws

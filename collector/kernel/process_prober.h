@@ -26,9 +26,11 @@ class BPFModule;
 
 class ProcessProber {
 public:
-  ProcessProber(ProbeHandler &probe_handler, ebpf::BPFModule &bpf_module,
-                std::function<void(void)> periodic_cb,
-                std::function<void(std::string)> check_cb);
+  ProcessProber(
+      ProbeHandler &probe_handler,
+      ebpf::BPFModule &bpf_module,
+      std::function<void(void)> periodic_cb,
+      std::function<void(std::string)> check_cb);
 
 private:
   /**

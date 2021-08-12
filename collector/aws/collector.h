@@ -29,17 +29,16 @@
 
 namespace collector::aws {
 
-struct AwsCollector: channel::Callbacks {
+struct AwsCollector : channel::Callbacks {
   AwsCollector(
-    ::uv_loop_t &loop,
-    std::string_view hostname,
-    AuthzFetcher &authz_fetcher,
-    std::chrono::milliseconds aws_metadata_timeout,
-    std::chrono::milliseconds heartbeat_interval,
-    std::size_t buffer_size,
-    config::IntakeConfig intake_config,
-    std::chrono::milliseconds poll_interval
-  );
+      ::uv_loop_t &loop,
+      std::string_view hostname,
+      AuthzFetcher &authz_fetcher,
+      std::chrono::milliseconds aws_metadata_timeout,
+      std::chrono::milliseconds heartbeat_interval,
+      std::size_t buffer_size,
+      config::IntakeConfig intake_config,
+      std::chrono::milliseconds poll_interval);
 
   ~AwsCollector();
 
@@ -61,4 +60,4 @@ private:
   std::chrono::milliseconds const poll_interval_;
 };
 
-} // namespace collector::aws {
+} // namespace collector::aws

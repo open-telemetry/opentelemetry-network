@@ -16,10 +16,10 @@
 
 #pragma once
 
-#include <util/lookup3_hasher.h>
 #include <generated/flowmill/ingest/writer.h>
 #include <util/curl_engine.h>
 #include <util/logger.h>
+#include <util/lookup3_hasher.h>
 
 #include <unordered_map>
 
@@ -36,17 +36,14 @@ public:
   // obtaining the 'namespace' value.
   static std::string docker_ns_label_field;
 
-  CgroupHandler(::flowmill::ingest::Writer &writer, CurlEngine &curl_engine,
-                CgroupSettings const &settings, logging::Logger &log);
+  CgroupHandler(
+      ::flowmill::ingest::Writer &writer, CurlEngine &curl_engine, CgroupSettings const &settings, logging::Logger &log);
   ~CgroupHandler();
 
   void kill_css(u64 timestamp, struct jb_agent_internal__kill_css *msg);
-  void css_populate_dir(u64 timestamp,
-                        struct jb_agent_internal__css_populate_dir *msg);
-  void cgroup_clone_children_read(
-      u64 timestamp, struct jb_agent_internal__cgroup_clone_children_read *msg);
-  void cgroup_attach_task(u64 timestamp,
-                          struct jb_agent_internal__cgroup_attach_task *msg);
+  void css_populate_dir(u64 timestamp, struct jb_agent_internal__css_populate_dir *msg);
+  void cgroup_clone_children_read(u64 timestamp, struct jb_agent_internal__cgroup_clone_children_read *msg);
+  void cgroup_attach_task(u64 timestamp, struct jb_agent_internal__cgroup_attach_task *msg);
   void handle_pid_info(u32 pid, u64 cgroup, uint8_t comm[16]);
 
 private:
@@ -75,8 +72,7 @@ private:
   void handle_docker_container(u64 cgroup, std::string const &name);
 
   void data_available_cb(const char *data, size_t data_length, u64 cgroup);
-  void fetch_done_cb(CurlEngineStatus status, long responseCode,
-                     std::string_view curlError, u64 cgroup);
+  void fetch_done_cb(CurlEngineStatus status, long responseCode, std::string_view curlError, u64 cgroup);
 
   void handle_docker_response(u64 cgroup, std::string const &response_data);
 };

@@ -50,10 +50,8 @@ namespace internal {
 
 #ifndef NDEBUG
 
-# define ASSUME(...) \
-    (__VA_ARGS__) || ::internal::Panicker( \
-                       ::absl::StrCat("Assumption `", #__VA_ARGS__, \
-                                    "` failed at ", __FILE__, ":", __LINE__))
+#define ASSUME(...)                                                                                                            \
+  (__VA_ARGS__) || ::internal::Panicker(::absl::StrCat("Assumption `", #__VA_ARGS__, "` failed at ", __FILE__, ":", __LINE__))
 
 // Internal class that prints a message. Exits and dumps everything in the
 // destructor.
@@ -66,8 +64,7 @@ struct Panicker {
   [[noreturn]] ~Panicker();
 
   // Custom message formatter. Uses spdlog-like formatting.
-  template <typename... Args>
-  Panicker &else_log(std::string_view format, Args &&... args)
+  template <typename... Args> Panicker &else_log(std::string_view format, Args &&... args)
   {
     fmt::memory_buffer out;
     fmt::format_to(out, format, std::forward<Args>(args)...);
@@ -84,12 +81,11 @@ private:
 };
 
 #else // NDEBUG
-# define ASSUME(...) (::internal::Panicker{})
+#define ASSUME(...) (::internal::Panicker{})
 
 struct Panicker {
   // Custom message formatter. Uses spdlog-like formatting.
-  template <typename... Args>
-  Panicker &else_log(Args &&... args) { return *this; }
+  template <typename... Args> Panicker &else_log(Args &&... args) { return *this; }
 
   // Needed so that the `(expression) || Panicker(...)` statement compiles.
   operator bool() const { return true; }

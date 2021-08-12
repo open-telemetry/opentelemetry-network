@@ -21,7 +21,8 @@
 namespace collector::aws {
 
 IngestConnection::IngestConnection(
-    std::string_view hostname, ::uv_loop_t &loop,
+    std::string_view hostname,
+    ::uv_loop_t &loop,
     std::chrono::milliseconds aws_metadata_timeout,
     std::chrono::milliseconds heartbeat_interval,
     config::IntakeConfig intake_config,
@@ -34,14 +35,18 @@ IngestConnection::IngestConnection(
       connection_callback_(connection_callback),
       encoder_(channel_.intake_config().make_encoder()),
       writer_(channel_.buffered_writer(), monotonic, get_boot_time(), encoder_.get()),
-      caretaker_(hostname, ClientType::aws, authz_fetcher,
-                 {},
-                 &loop, writer_,
-                 aws_metadata_timeout, heartbeat_interval,
-                 std::bind(&channel::ReconnectingChannel::flush, &channel_),
-                 std::bind(&channel::ReconnectingChannel::set_compression,
-                           &channel_, std::placeholders::_1),
-                 std::move(on_authenticated_cb)),
+      caretaker_(
+          hostname,
+          ClientType::aws,
+          authz_fetcher,
+          {},
+          &loop,
+          writer_,
+          aws_metadata_timeout,
+          heartbeat_interval,
+          std::bind(&channel::ReconnectingChannel::flush, &channel_),
+          std::bind(&channel::ReconnectingChannel::set_compression, &channel_, std::placeholders::_1),
+          std::move(on_authenticated_cb)),
       index_({writer_})
 {
   channel_.register_pipeline_observer(this);

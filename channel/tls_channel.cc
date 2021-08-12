@@ -41,7 +41,8 @@ constexpr u32 APP_READ_SIZE = (16 * 1024);
 
 int channel::TLSChannel::Initializer::channel_index = -1;
 
-static bool verify_name(std::string_view peername, std::string_view certname) {
+static bool verify_name(std::string_view peername, std::string_view certname)
+{
   if (peername == certname) {
     LOG::trace_in(channel::Component::tls, "Successfully validated cert names. Got '{}', expected '{}'", certname, peername);
     return true;
@@ -62,30 +63,29 @@ static bool verify_name(std::string_view peername, std::string_view certname) {
       /* Everything after the wildcard compared equal */
       LOG::trace_in(channel::Component::tls, "Successfully validated cert names. Got '{}', expected '{}'", certname, peername);
       return true;
-    }
-    else {
+    } else {
       LOG::trace_in(
-        channel::Component::tls,
-        "Certificate verification with wildcards error: subject name differs:"
-        " got '{}' expected '{}'",
-        certname, peername
-      );
+          channel::Component::tls,
+          "Certificate verification with wildcards error: subject name differs:"
+          " got '{}' expected '{}'",
+          certname,
+          peername);
       return false;
     }
-  }
-  else {
+  } else {
     /* not equal. reject */
     LOG::trace_in(
-      channel::Component::tls,
-      "Certificate verification error: subject name differs:"
-      " got '{}' expected '{}'",
-      certname, peername
-    );
+        channel::Component::tls,
+        "Certificate verification error: subject name differs:"
+        " got '{}' expected '{}'",
+        certname,
+        peername);
     return false;
   }
 }
 
-static int verify_callback(int preverify, X509_STORE_CTX *ctx) {
+static int verify_callback(int preverify, X509_STORE_CTX *ctx)
+{
   if (preverify != 1)
     return 0;
 
@@ -95,12 +95,10 @@ static int verify_callback(int preverify, X509_STORE_CTX *ctx) {
     return preverify;
 
   /* Get the ssl pointer from the context */
-  SSL *ssl = (SSL *)X509_STORE_CTX_get_ex_data(
-      ctx, SSL_get_ex_data_X509_STORE_CTX_idx());
+  SSL *ssl = (SSL *)X509_STORE_CTX_get_ex_data(ctx, SSL_get_ex_data_X509_STORE_CTX_idx());
 
   /* get the TLSChannel pointer from the SSL object */
-  auto channel = (channel::TLSChannel *)SSL_get_ex_data(
-      ssl, channel::TLSChannel::Initializer::channel_index);
+  auto channel = (channel::TLSChannel *)SSL_get_ex_data(ssl, channel::TLSChannel::Initializer::channel_index);
 
   /* note: cert is an internal pointer (don't free) */
   X509 *cert = X509_STORE_CTX_get_current_cert(ctx);
@@ -154,13 +152,12 @@ static int verify_callback(int preverify, X509_STORE_CTX *ctx) {
     if (verify_name(peer_hostname, subject_string)) {
       OPENSSL_free(subject);
       return preverify;
-    }
-    else {
+    } else {
       // Did not validate, free subject and move on to alternate names
       OPENSSL_free(subject);
     }
 
-    GENERAL_NAMES* names = reinterpret_cast<GENERAL_NAMES*>(X509_get_ext_d2i(cert, NID_subject_alt_name, 0, 0));
+    GENERAL_NAMES *names = reinterpret_cast<GENERAL_NAMES *>(X509_get_ext_d2i(cert, NID_subject_alt_name, 0, 0));
     if (!names) {
       LOG::error("Certificate verification error: cannot get general names");
       return 0;
@@ -173,7 +170,7 @@ static int verify_callback(int preverify, X509_STORE_CTX *ctx) {
       return 0;
     }
     for (int i = 0; i < count; ++i) {
-      GENERAL_NAME* entry = sk_GENERAL_NAME_value(names, i);
+      GENERAL_NAME *entry = sk_GENERAL_NAME_value(names, i);
       if (!entry) {
         LOG::error("Certificate verification error: could not get alternate name entry");
         GENERAL_NAMES_free(names);
@@ -214,10 +211,9 @@ static int verify_callback(int preverify, X509_STORE_CTX *ctx) {
 /****************************
  * TLSChannel::Initializer
  ****************************/
-channel::TLSChannel::Initializer::Initializer() {
-  static_assert(OPENSSL_VERSION_NUMBER == 0x1010102fL
-  ,
-                "unexpected OpenSSL version");
+channel::TLSChannel::Initializer::Initializer()
+{
+  static_assert(OPENSSL_VERSION_NUMBER == 0x1010102fL, "unexpected OpenSSL version");
 
   /* https://www.openssl.org/docs/ssl/SSL_library_init.html */
   int ret = OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS, NULL);
@@ -225,14 +221,14 @@ channel::TLSChannel::Initializer::Initializer() {
     throw std::runtime_error("Failed to initialize TLS library");
   }
 
-  channel_index = CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_SSL, 0, nullptr,
-                                          nullptr, nullptr, nullptr);
+  channel_index = CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_SSL, 0, nullptr, nullptr, nullptr, nullptr);
   if (channel_index == -1) {
     throw std::runtime_error("could not allocate SSL index for channels");
   }
 }
 
-channel::TLSChannel::Initializer::~Initializer() {
+channel::TLSChannel::Initializer::~Initializer()
+{
   /* free the index mapping SSL to TLSChannel */
   CRYPTO_free_ex_index(CRYPTO_EX_INDEX_SSL, channel_index);
 
@@ -249,39 +245,35 @@ channel::TLSChannel::Initializer::~Initializer() {
 /****************************
  * TLSChannel::Credentials
  ****************************/
-channel::TLSChannel::Credentials::Credentials(
-  std::string client_key,
-  std::string client_crt
-):
-  client_key_(std::move(client_key)),
-  client_crt_(std::move(client_crt))
+channel::TLSChannel::Credentials::Credentials(std::string client_key, std::string client_crt)
+    : client_key_(std::move(client_key)), client_crt_(std::move(client_crt))
 {}
 
 /****************************
  * TLSChannel
  ****************************/
-channel::TLSChannel::TLSChannel(TCPChannel &transport, Credentials &creds,
-                                std::string server_hostname)
-    : transport_(transport), creds_(creds),
+channel::TLSChannel::TLSChannel(TCPChannel &transport, Credentials &creds, std::string server_hostname)
+    : transport_(transport),
+      creds_(creds),
       server_hostname_(std::move(server_hostname)),
-      ssl_context_(std::make_unique<internal::SSLContext>(
-        creds_.client_key_, creds.client_crt_))
+      ssl_context_(std::make_unique<internal::SSLContext>(creds_.client_key_, creds.client_crt_))
 {
   LOG::trace_in(channel::Component::tls, "TLSChannel - server hostname: '{}'", server_hostname_);
 }
 
-channel::TLSChannel::~TLSChannel() {
+channel::TLSChannel::~TLSChannel()
+{
   if (tls_shim_ && !tls_shim_->is_closed()) {
     try {
       close();
-    }
-    catch (...) {
+    } catch (...) {
       /* pass, best effort */
     }
   }
 }
 
-void channel::TLSChannel::connect(Callbacks &callbacks) {
+void channel::TLSChannel::connect(Callbacks &callbacks)
+{
   if (tls_shim_ && !tls_shim_->is_closed()) {
     throw std::runtime_error("TLSChannel: (re)connect with unclosed client");
   }
@@ -325,7 +317,8 @@ void channel::TLSChannel::connect(Callbacks &callbacks) {
   }
 }
 
-u32 channel::TLSChannel::received_data(const u8 *data, u32 data_len) {
+u32 channel::TLSChannel::received_data(const u8 *data, u32 data_len)
+{
   ASSUME(tls_shim_);
   BIO *bio = tls_shim_->get_transport_bio();
   SSL *ssl = tls_shim_->get_SSL();
@@ -359,11 +352,9 @@ u32 channel::TLSChannel::received_data(const u8 *data, u32 data_len) {
     if (read > 0) {
       /* read some data, pass it to the caller */
       callbacks_->received_data((u8 *)buf, read);
-    }
-    else {
+    } else {
       int err = ERR_get_error();
-      if ((err != SSL_ERROR_WANT_READ) && (err != SSL_ERROR_WANT_WRITE) &&
-          (err != SSL_ERROR_NONE)) {
+      if ((err != SSL_ERROR_WANT_READ) && (err != SSL_ERROR_WANT_WRITE) && (err != SSL_ERROR_NONE)) {
         LOG::error("TLSChannel: application-side read failed: {}", TLSError(err));
         callbacks_->on_error(-ENOTCONN);
       }
@@ -373,26 +364,25 @@ u32 channel::TLSChannel::received_data(const u8 *data, u32 data_len) {
   return (u32)wrote;
 }
 
-void channel::TLSChannel::close() {
+void channel::TLSChannel::close()
+{
   if (!tls_shim_ || tls_shim_->is_closed()) {
-    LOG::trace_in(channel::Component::tls,
-      "TLSChannel::{}: (tls_shim={}): '{}'",
-      __func__, static_cast<bool>(tls_shim_), server_hostname_);
+    LOG::trace_in(
+        channel::Component::tls,
+        "TLSChannel::{}: (tls_shim={}): '{}'",
+        __func__,
+        static_cast<bool>(tls_shim_),
+        server_hostname_);
     return;
   }
 
-  LOG::trace_in(channel::Component::tls, "TLSChannel::{}: '{}'",
-    __func__, server_hostname_
-  );
+  LOG::trace_in(channel::Component::tls, "TLSChannel::{}: '{}'", __func__, server_hostname_);
   SSL *ssl = tls_shim_->get_SSL();
   if (SSL_is_init_finished(ssl)) {
     int res = SSL_shutdown(ssl);
     int err = ERR_get_error();
     if ((res < 0) && (err != SSL_ERROR_WANT_READ) && (err != SSL_ERROR_WANT_WRITE)) {
-      throw std::runtime_error(
-        fmt::format("TLSChannel::{}: unexpected error in close(): {}",
-        __func__, TLSError(err))
-      );
+      throw std::runtime_error(fmt::format("TLSChannel::{}: unexpected error in close(): {}", __func__, TLSError(err)));
     }
   }
 
@@ -402,7 +392,8 @@ void channel::TLSChannel::close() {
   tls_shim_.reset();
 }
 
-std::error_code channel::TLSChannel::send(const u8 *data, int data_len) {
+std::error_code channel::TLSChannel::send(const u8 *data, int data_len)
+{
   ASSUME(tls_shim_);
   ASSUME(is_open());
   SSL *ssl = tls_shim_->get_SSL();
@@ -420,12 +411,9 @@ std::error_code channel::TLSChannel::send(const u8 *data, int data_len) {
 
     /* make sure only a flush is required */
     int err = ERR_get_error();
-    if ((err != SSL_ERROR_WANT_READ) && (err != SSL_ERROR_WANT_WRITE) &&
-        (err != SSL_ERROR_NONE)) {
+    if ((err != SSL_ERROR_WANT_READ) && (err != SSL_ERROR_WANT_WRITE) && (err != SSL_ERROR_NONE)) {
       // TODO: gracefully handle TLS errors
-      throw std::runtime_error(
-        fmt::format("TLSChannel: application-side send failed: {}", TLSError(err))
-      );
+      throw std::runtime_error(fmt::format("TLSChannel: application-side send failed: {}", TLSError(err)));
     }
 
     /* error might be due to full buffers. try to flush */
@@ -442,15 +430,11 @@ std::error_code channel::TLSChannel::send(const u8 *data, int data_len) {
       data_len -= res;
       data += res;
       continue;
-    }
-    else {
+    } else {
       /* this shouldn't happen because we've disabled renegotiation, so
        * if the buffer is flushed, forward progress should be possible
        */
-      throw std::runtime_error(
-        fmt::format("TLSChannel: application-side send failed after flush: {}",
-                    TLSError(err))
-      );
+      throw std::runtime_error(fmt::format("TLSChannel: application-side send failed after flush: {}", TLSError(err)));
     }
 
     /* in one of the above SSL_write()'s, res returns > 0 and data_len was
@@ -467,7 +451,8 @@ std::error_code channel::TLSChannel::send(const u8 *data, int data_len) {
   return {};
 }
 
-std::error_code channel::TLSChannel::flush_transport_bio() {
+std::error_code channel::TLSChannel::flush_transport_bio()
+{
   ASSUME(tls_shim_);
   BIO *bio = tls_shim_->get_transport_bio();
 
@@ -501,7 +486,8 @@ std::error_code channel::TLSChannel::flush_transport_bio() {
   return {};
 }
 
-int channel::TLSChannel::handshake() {
+int channel::TLSChannel::handshake()
+{
   SSL *ssl = tls_shim_->get_SSL();
 
   int res = SSL_do_handshake(ssl);
@@ -517,8 +503,7 @@ int channel::TLSChannel::handshake() {
     return 0;
   default: {
     int err = ERR_get_error();
-    if ((err == SSL_ERROR_WANT_READ) || (err == SSL_ERROR_WANT_WRITE) ||
-        (err == SSL_ERROR_NONE)) {
+    if ((err == SSL_ERROR_WANT_READ) || (err == SSL_ERROR_WANT_WRITE) || (err == SSL_ERROR_NONE)) {
       return 0; /* will need more iterations */
     }
 
@@ -530,6 +515,7 @@ int channel::TLSChannel::handshake() {
   }
 }
 
-const std::string &channel::TLSChannel::peer_hostname() {
+const std::string &channel::TLSChannel::peer_hostname()
+{
   return server_hostname_;
 }

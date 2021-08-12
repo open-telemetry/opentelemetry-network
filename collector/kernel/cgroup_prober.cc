@@ -14,11 +14,11 @@
 // limitations under the License.
 //
 
+#include <collector/agent_log.h>
 #include <collector/kernel/cgroup_prober.h>
 #include <collector/kernel/fd_reader.h>
 #include <collector/kernel/probe_handler.h>
 #include <collector/kernel/proc_reader.h>
-#include <collector/agent_log.h>
 
 #include <fstream>
 #include <iostream>
@@ -27,35 +27,32 @@
 #include <string>
 
 #include <dirent.h>
-#include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #include <unistd.h>
 
-CgroupProber::CgroupProber(ProbeHandler &probe_handler,
-                           ebpf::BPFModule &bpf_module,
-                           std::function<void(void)> periodic_cb,
-                           std::function<void(std::string)> check_cb)
+CgroupProber::CgroupProber(
+    ProbeHandler &probe_handler,
+    ebpf::BPFModule &bpf_module,
+    std::function<void(void)> periodic_cb,
+    std::function<void(std::string)> check_cb)
     : close_dir_error_count_(0)
 {
   // END
-  if(probe_handler.start_probe(bpf_module, "on_kill_css", "kill_css")!=0) {
+  if (probe_handler.start_probe(bpf_module, "on_kill_css", "kill_css") != 0) {
     probe_handler.start_probe(bpf_module, "on_cgroup_destroy_locked", "cgroup_destroy_locked");
   }
   periodic_cb();
 
   // START
-  if(probe_handler.start_probe(bpf_module, "on_css_populate_dir",
-                            "css_populate_dir")!=0) {
-    probe_handler.start_probe(bpf_module, "on_cgroup_populate_dir",
-                              "cgroup_populate_dir");    
+  if (probe_handler.start_probe(bpf_module, "on_css_populate_dir", "css_populate_dir") != 0) {
+    probe_handler.start_probe(bpf_module, "on_cgroup_populate_dir", "cgroup_populate_dir");
   }
   periodic_cb();
 
   // EXISTING
-  probe_handler.start_probe(bpf_module, "on_cgroup_clone_children_read",
-                            "cgroup_clone_children_read");
-  probe_handler.start_probe(bpf_module, "on_cgroup_attach_task",
-                            "cgroup_attach_task");
+  probe_handler.start_probe(bpf_module, "on_cgroup_clone_children_read", "cgroup_clone_children_read");
+  probe_handler.start_probe(bpf_module, "on_cgroup_attach_task", "cgroup_attach_task");
   periodic_cb();
   check_cb("cgroup prober startup");
 
@@ -74,8 +71,7 @@ CgroupProber::CgroupProber(ProbeHandler &probe_handler,
   check_cb("cgroup prober cleanup()");
 }
 
-void CgroupProber::trigger_cgroup_clone_children_read(
-    std::string dir_name, std::function<void(void)> periodic_cb)
+void CgroupProber::trigger_cgroup_clone_children_read(std::string dir_name, std::function<void(void)> periodic_cb)
 {
   std::stack<std::string> dirs_stack;
   dirs_stack.emplace(dir_name);
@@ -101,9 +97,7 @@ void CgroupProber::trigger_cgroup_clone_children_read(
         close_dir_error_count_++;
       }
       continue;
-    }
-    else
-    {
+    } else {
       LOG::debug_in(AgentLogKind::CGROUPS, "   success for path={}", clone_children_path);
     }
     std::string line;

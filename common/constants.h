@@ -31,9 +31,6 @@ constexpr u32 DEFAULT_CGROUP_QUOTA = 100'000;
 
 namespace versions {
 
-constexpr VersionInfo release{
-    FLOWMILL_MAJOR_VERSION,
-    FLOWMILL_MINOR_VERSION,
-    FLOWMILL_COLLECTOR_BUILD_NUMBER};
+constexpr VersionInfo release{FLOWMILL_MAJOR_VERSION, FLOWMILL_MINOR_VERSION, FLOWMILL_COLLECTOR_BUILD_NUMBER};
 
 } // namespace versions

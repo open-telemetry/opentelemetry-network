@@ -21,7 +21,7 @@
 
 namespace channel {
 
-class FileChannel: public Channel {
+class FileChannel : public Channel {
 public:
   FileChannel(FileDescriptor fd);
 
@@ -33,7 +33,7 @@ public:
   bool valid() const { return fd_.valid(); }
 
   explicit operator bool() const { return valid(); }
-  bool operator !() const { return !valid(); }
+  bool operator!() const { return !valid(); }
 
   bool is_open() const override { return fd_.valid(); }
 

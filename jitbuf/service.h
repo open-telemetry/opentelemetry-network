@@ -22,8 +22,7 @@
 
 namespace jitbuf {
 
-typedef uint16_t (*handler_func_t)(const char *msg, Transform &xform,
-                                   void *priv);
+typedef uint16_t (*handler_func_t)(const char *msg, Transform &xform, void *priv);
 
 /**
  * Information required to construct a single message handler
@@ -44,10 +43,7 @@ struct handler_package {
 class Service {
 public:
   virtual ~Service() {}
-  virtual const handler_package get_package()
-  {
-    throw std::runtime_error("unimplemented");
-  }
+  virtual const handler_package get_package() { throw std::runtime_error("unimplemented"); }
 };
 
 } // namespace jitbuf

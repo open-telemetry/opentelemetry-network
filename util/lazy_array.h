@@ -26,8 +26,7 @@
 // Simple array-like container in which elements are constructed only when
 // they are first accessed.
 //
-template <typename T, std::size_t SIZE, class Allocator = std::allocator<T>>
-class LazyArray {
+template <typename T, std::size_t SIZE, class Allocator = std::allocator<T>> class LazyArray {
 public:
   static_assert(std::is_default_constructible<T>::value);
 
@@ -43,19 +42,13 @@ public:
 
 private:
   /* POD type suitable for use as uninitialized storage */
-  using storage_type =
-      typename std::aligned_storage<sizeof(value_type),
-                                    alignof(value_type)>::type;
+  using storage_type = typename std::aligned_storage<sizeof(value_type), alignof(value_type)>::type;
 
   /* allocator traits rebound to the storage type */
-  using allocator_traits = typename std::allocator_traits<
-      Allocator>::template rebind_traits<storage_type>;
+  using allocator_traits = typename std::allocator_traits<Allocator>::template rebind_traits<storage_type>;
 
 public:
-  LazyArray()
-  {
-    array_ = allocator_traits::allocate(allocator_, size);
-  }
+  LazyArray() { array_ = allocator_traits::allocate(allocator_, size); }
 
   ~LazyArray()
   {
@@ -96,4 +89,3 @@ private:
 
   storage_type *array_;
 };
-

@@ -20,24 +20,20 @@
 
 #include <set>
 
-template <typename Hash, typename... Values>
-void test_values_iteration(Values ...values) {
+template <typename Hash, typename... Values> void test_values_iteration(Values... values)
+{
   Hash hash;
   std::set<typename Hash::value_type> inserted;
 
   // trick to expand the variadic argument in insert() calls using fold expressions
-  std::size_t const n = ((
-    hash.insert(values, values),
-    inserted.insert(values),
-    1
-  ) + ... + 0);
+  std::size_t const n = ((hash.insert(values, values), inserted.insert(values), 1) + ... + 0);
   EXPECT_EQ(sizeof...(values), n);
 
   EXPECT_EQ(sizeof...(values), hash.size());
   EXPECT_EQ(sizeof...(values), inserted.size());
 
   std::set<typename Hash::value_type> found;
-  for (auto const &value: hash.values()) {
+  for (auto const &value : hash.values()) {
     found.insert(value);
   }
 
@@ -51,7 +47,8 @@ void test_values_iteration(Values ...values) {
   EXPECT_EQ(f, found.end());
 }
 
-TEST(fixed_hash, values) {
+TEST(fixed_hash, values)
+{
   test_values_iteration<FixedHash<int, int, 100, std::hash<int>>>();
 
   test_values_iteration<FixedHash<int, int, 100, std::hash<int>>>(0, 1, 2, 3);

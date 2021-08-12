@@ -17,15 +17,14 @@
 #ifndef INCLUDE_JITBUF_ELEMENT_QUEUE_JLOG_FACTORY_H_
 #define INCLUDE_JITBUF_ELEMENT_QUEUE_JLOG_FACTORY_H_
 
+#include <jitbuf/jlog.h>
 #include <platform/spin_lock.h>
 #include <util/element_queue_cpp.h>
-#include <jitbuf/jlog.h>
 #include <vector>
 
 class FactoryElementQueue {
 public:
-  FactoryElementQueue(std::shared_ptr<ElementQueueStorage> storage,
-                      struct element_queue_jlog_output_factory *factory);
+  FactoryElementQueue(std::shared_ptr<ElementQueueStorage> storage, struct element_queue_jlog_output_factory *factory);
 
   virtual ~FactoryElementQueue();
 

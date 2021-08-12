@@ -42,14 +42,9 @@ inline std::string make_docker_query_url(std::string const &container_name)
 
 std::string CgroupHandler::docker_ns_label_field;
 
-CgroupHandler::CgroupHandler(::flowmill::ingest::Writer &writer,
-                             CurlEngine &curl_engine,
-                             CgroupSettings const &settings,
-                             logging::Logger &log):
-  writer_(writer),
-  curl_engine_(curl_engine),
-  settings_(settings),
-  log_(log)
+CgroupHandler::CgroupHandler(
+    ::flowmill::ingest::Writer &writer, CurlEngine &curl_engine, CgroupSettings const &settings, logging::Logger &log)
+    : writer_(writer), curl_engine_(curl_engine), settings_(settings), log_(log)
 {}
 
 CgroupHandler::~CgroupHandler()
@@ -76,24 +71,26 @@ std::string_view CgroupHandler::get_name(u64 cgroup)
 }
 
 /* END */
-void CgroupHandler::kill_css(u64 timestamp,
-                             struct jb_agent_internal__kill_css *msg)
+void CgroupHandler::kill_css(u64 timestamp, struct jb_agent_internal__kill_css *msg)
 {
-  LOG::debug_in(AgentLogKind::CGROUPS, 
-    "CgroupHandler::kill_css"
-    "\n{{"
-    "\n\tcgroup: {}"
-    "\n\tcgroup_parent: {}"
-    "\n\tname: "
-    "\n}}",
-    msg->cgroup, msg->cgroup_parent, msg->name);
+  LOG::debug_in(
+      AgentLogKind::CGROUPS,
+      "CgroupHandler::kill_css"
+      "\n{{"
+      "\n\tcgroup: {}"
+      "\n\tcgroup_parent: {}"
+      "\n\tname: "
+      "\n}}",
+      msg->cgroup,
+      msg->cgroup_parent,
+      msg->name);
 
   if (has_cgroup(msg->cgroup)) {
     LOG::debug_in(AgentLogKind::CGROUPS, "Success: cgroup found. \t{}", get_name(msg->cgroup));
   } else {
     LOG::error("cgroup not found: {:x}", msg->cgroup);
   }
-  
+
   auto pos = cgroup_table_.find(msg->cgroup);
   if (pos == cgroup_table_.end()) {
     return;
@@ -103,66 +100,68 @@ void CgroupHandler::kill_css(u64 timestamp,
 }
 
 /* START */
-void CgroupHandler::css_populate_dir(
-    u64 timestamp, struct jb_agent_internal__css_populate_dir *msg)
+void CgroupHandler::css_populate_dir(u64 timestamp, struct jb_agent_internal__css_populate_dir *msg)
 {
-  LOG::debug_in(AgentLogKind::CGROUPS, 
-    "CgroupHandler::css_populate_dir"
-    "\n{{"
-    "\n\tcgroup: {}"
-    "\n\tcgroup_parent: {}"
-    "\n\tname: {}"
-    "\n}}",
-    msg->cgroup, msg->cgroup_parent, msg->name);
+  LOG::debug_in(
+      AgentLogKind::CGROUPS,
+      "CgroupHandler::css_populate_dir"
+      "\n{{"
+      "\n\tcgroup: {}"
+      "\n\tcgroup_parent: {}"
+      "\n\tname: {}"
+      "\n}}",
+      msg->cgroup,
+      msg->cgroup_parent,
+      msg->name);
 
   if (has_cgroup(msg->cgroup_parent)) {
-    LOG::debug_in(AgentLogKind::CGROUPS, 
-      "Success: cgroup->parent found. \t{}",
-      get_name(msg->cgroup_parent));
+    LOG::debug_in(AgentLogKind::CGROUPS, "Success: cgroup->parent found. \t{}", get_name(msg->cgroup_parent));
   } else {
-    LOG::error("cgroup->parent not found: cgroup_parent={:x}, cgroup={:x}, name={}", msg->cgroup_parent, msg->cgroup, msg->name);
+    LOG::error(
+        "cgroup->parent not found: cgroup_parent={:x}, cgroup={:x}, name={}", msg->cgroup_parent, msg->cgroup, msg->name);
   }
-  
-  std::string name{(char *)msg->name,
-                   strnlen((char *)msg->name, sizeof(msg->name))};
+
+  std::string name{(char *)msg->name, strnlen((char *)msg->name, sizeof(msg->name))};
 
   handle_cgroup(msg->cgroup, msg->cgroup_parent, name);
 }
 
 /* EXISTING */
-void CgroupHandler::cgroup_clone_children_read(
-    u64 timestamp, struct jb_agent_internal__cgroup_clone_children_read *msg)
+void CgroupHandler::cgroup_clone_children_read(u64 timestamp, struct jb_agent_internal__cgroup_clone_children_read *msg)
 {
-  LOG::debug_in(AgentLogKind::CGROUPS, 
-    "CgroupHandler::cgroup_clone_children_read"
-    "\n{{"
-    "\n\tcgroup: {}"
-    "\n\tcgroup_parent: {}"
-    "\n\tname: {}"
-    "\n}}",
-    msg->cgroup, msg->cgroup_parent, msg->name);
-  
-  std::string name{(char *)msg->name,
-                   strnlen((char *)msg->name, sizeof(msg->name))};
+  LOG::debug_in(
+      AgentLogKind::CGROUPS,
+      "CgroupHandler::cgroup_clone_children_read"
+      "\n{{"
+      "\n\tcgroup: {}"
+      "\n\tcgroup_parent: {}"
+      "\n\tname: {}"
+      "\n}}",
+      msg->cgroup,
+      msg->cgroup_parent,
+      msg->name);
+
+  std::string name{(char *)msg->name, strnlen((char *)msg->name, sizeof(msg->name))};
 
   handle_cgroup(msg->cgroup, msg->cgroup_parent, name);
 }
 
-void CgroupHandler::cgroup_attach_task(
-    u64 timestamp, struct jb_agent_internal__cgroup_attach_task *msg)
+void CgroupHandler::cgroup_attach_task(u64 timestamp, struct jb_agent_internal__cgroup_attach_task *msg)
 {
-  LOG::debug_in(AgentLogKind::CGROUPS, 
-    "CgroupHandler::cgroup_attach_task"
-    "\n{{"
-    "\n\tcgroup: {}"
-    "\n\tpid: {}"
-    "\n\tcomm: {}"
-    "\n}}",
-    msg->cgroup, msg->pid, msg->comm);
+  LOG::debug_in(
+      AgentLogKind::CGROUPS,
+      "CgroupHandler::cgroup_attach_task"
+      "\n{{"
+      "\n\tcgroup: {}"
+      "\n\tpid: {}"
+      "\n\tcomm: {}"
+      "\n}}",
+      msg->cgroup,
+      msg->pid,
+      msg->comm);
 
   if (has_cgroup(msg->cgroup)) {
-    LOG::debug_in(AgentLogKind::CGROUPS, 
-      "Success: cgroup found. \t{}", get_name(msg->cgroup));
+    LOG::debug_in(AgentLogKind::CGROUPS, "Success: cgroup found. \t{}", get_name(msg->cgroup));
   } else {
     LOG::error("cgroup not found: {:x}", msg->cgroup);
   }
@@ -170,25 +169,26 @@ void CgroupHandler::cgroup_attach_task(
 
 void CgroupHandler::handle_pid_info(u32 pid, u64 cgroup, uint8_t comm[16])
 {
-  LOG::debug_in(AgentLogKind::CGROUPS, 
-    "CgroupHandler::handle_pid_info"
-    "\n{{"
-    "\n\tpid: {}"
-    "\n\tcgroup: {}"
-    "\n\tcomm: {}"
-    "\n}}",
-    pid, cgroup, comm);
+  LOG::debug_in(
+      AgentLogKind::CGROUPS,
+      "CgroupHandler::handle_pid_info"
+      "\n{{"
+      "\n\tpid: {}"
+      "\n\tcgroup: {}"
+      "\n\tcomm: {}"
+      "\n}}",
+      pid,
+      cgroup,
+      comm);
 
   if (has_cgroup(cgroup)) {
-    LOG::debug_in(AgentLogKind::CGROUPS, 
-      "Success: cgroup found. \t{}", get_name(cgroup));
+    LOG::debug_in(AgentLogKind::CGROUPS, "Success: cgroup found. \t{}", get_name(cgroup));
   } else {
     LOG::error("cgroup not found: {:x}", cgroup);
   }
 }
 
-void CgroupHandler::handle_cgroup(u64 cgroup, u64 cgroup_parent,
-                                  std::string const &name)
+void CgroupHandler::handle_cgroup(u64 cgroup, u64 cgroup_parent, std::string const &name)
 {
   auto emp = cgroup_table_.emplace(cgroup, CgroupEntry{cgroup_parent, name});
   if (emp.second == false) {
@@ -225,23 +225,22 @@ void CgroupHandler::handle_cgroup(u64 cgroup, u64 cgroup_parent,
 
 void CgroupHandler::handle_docker_container(u64 cgroup, std::string const &name)
 {
-  LOG::debug_in(AgentLogKind::DOCKER,
-    "CgroupHandler::handle_docker_container:"
-    "\n{{"
-    "\n\tcgroup: {}"
-    "\n\tname: {}"
-    "\n}}",
-    cgroup, name);
+  LOG::debug_in(
+      AgentLogKind::DOCKER,
+      "CgroupHandler::handle_docker_container:"
+      "\n{{"
+      "\n\tcgroup: {}"
+      "\n\tname: {}"
+      "\n}}",
+      cgroup,
+      name);
 
   auto request = std::make_unique<CurlEngine::FetchRequest>(
-    make_docker_query_url(name),
-    [this, cgroup](const char *data, size_t data_length) {
-      this->data_available_cb(data, data_length, cgroup);
-    },
-    [this, cgroup](CurlEngineStatus status, int responseCode, std::string_view curlError) {
-      this->fetch_done_cb(status, responseCode, curlError, cgroup);
-    }
-  );
+      make_docker_query_url(name),
+      [this, cgroup](const char *data, size_t data_length) { this->data_available_cb(data, data_length, cgroup); },
+      [this, cgroup](CurlEngineStatus status, int responseCode, std::string_view curlError) {
+        this->fetch_done_cb(status, responseCode, curlError, cgroup);
+      });
 
   request->unix_socket(UNIX_SOCKET_PATH);
 
@@ -261,22 +260,23 @@ void CgroupHandler::handle_docker_container(u64 cgroup, std::string const &name)
     return;
   }
 
-  LOG::debug_in(AgentLogKind::DOCKER,
-    "\tqueries_.size(): {}", queries_.size());
+  LOG::debug_in(AgentLogKind::DOCKER, "\tqueries_.size(): {}", queries_.size());
 }
 
-void CgroupHandler::data_available_cb(const char *data, size_t data_length,
-                                      u64 cgroup)
+void CgroupHandler::data_available_cb(const char *data, size_t data_length, u64 cgroup)
 {
   std::string s(data, data_length);
-  LOG::debug_in(AgentLogKind::DOCKER,
-    "DataAvailableFn:"
-    "\n{{"
-    "\n\tcgroup: {}"
-    "\n\tdata_length: {}"
-    "\n\ts: {}"
-    "\n}}",
-    cgroup, data_length, s);
+  LOG::debug_in(
+      AgentLogKind::DOCKER,
+      "DataAvailableFn:"
+      "\n{{"
+      "\n\tcgroup: {}"
+      "\n\tdata_length: {}"
+      "\n\ts: {}"
+      "\n}}",
+      cgroup,
+      data_length,
+      s);
 
   auto pos = queries_.find(cgroup);
   if (pos == queries_.end()) {
@@ -288,20 +288,20 @@ void CgroupHandler::data_available_cb(const char *data, size_t data_length,
   query.response.append(s);
 }
 
-void CgroupHandler::fetch_done_cb(CurlEngineStatus status,
-                                  long responseCode, std::string_view curlError,
-                                  u64 cgroup)
+void CgroupHandler::fetch_done_cb(CurlEngineStatus status, long responseCode, std::string_view curlError, u64 cgroup)
 {
   bool success = (status == CurlEngineStatus::OK);
 
-  LOG::debug_in(AgentLogKind::DOCKER,
-    "FetchDoneFn:"
-    "\n{{"
-    "\n\tcgroup: {}"
-    "\n\tsuccess: {}"
-    "\n}}",
-    cgroup, success);
-  
+  LOG::debug_in(
+      AgentLogKind::DOCKER,
+      "FetchDoneFn:"
+      "\n{{"
+      "\n\tcgroup: {}"
+      "\n\tsuccess: {}"
+      "\n}}",
+      cgroup,
+      success);
+
   auto pos = queries_.find(cgroup);
   if (pos == queries_.end()) {
     log_.error("query entry for cgroup:{} not found", cgroup);
@@ -318,8 +318,7 @@ void CgroupHandler::fetch_done_cb(CurlEngineStatus status,
 
   handle_docker_response(cgroup, response_data);
 
-  LOG::debug_in(AgentLogKind::DOCKER,
-    "\tqueries_.size(): {}", queries_.size());
+  LOG::debug_in(AgentLogKind::DOCKER, "\tqueries_.size(): {}", queries_.size());
 }
 
 inline std::string get_string(json const &j)
@@ -350,7 +349,8 @@ inline jb_blob blob(std::string const &str)
   return jb_blob{str.c_str(), static_cast<u16>(str.size())};
 }
 
-void CgroupHandler::handle_docker_response(u64 cgroup, std::string const &response_data) {
+void CgroupHandler::handle_docker_response(u64 cgroup, std::string const &response_data)
+{
   std::string id;
   std::string name;
   std::string image;
@@ -368,10 +368,9 @@ void CgroupHandler::handle_docker_response(u64 cgroup, std::string const &respon
 
   if (settings_.dump_docker_metadata) {
     auto const dump_filename = fmt::format(
-      DUMP_DOCKER_METADATA_BASE_PATH "/docker-inspect.{}.{}.json",
-      cgroup,
-      std::chrono::system_clock::now().time_since_epoch().count()
-    );
+        DUMP_DOCKER_METADATA_BASE_PATH "/docker-inspect.{}.{}.json",
+        cgroup,
+        std::chrono::system_clock::now().time_since_epoch().count());
 
     if (auto const error = write_file(dump_filename.c_str(), response_data)) {
       LOG::warn("failed to dump docker metadata to {}: {}", dump_filename, error);
@@ -406,10 +405,8 @@ void CgroupHandler::handle_docker_response(u64 cgroup, std::string const &respon
       pod_name = get_string(labels, "io.kubernetes.pod.name");
     }
 
-    task_family =
-        get_string(labels, "com.amazonaws.ecs.task-definition-family");
-    task_version =
-        get_string(labels, "com.amazonaws.ecs.task-definition-version");
+    task_family = get_string(labels, "com.amazonaws.ecs.task-definition-family");
+    task_version = get_string(labels, "com.amazonaws.ecs.task-definition-version");
 
     if (!docker_ns_label_field.empty()) {
       ns = get_string(labels, docker_ns_label_field.c_str());
@@ -419,18 +416,18 @@ void CgroupHandler::handle_docker_response(u64 cgroup, std::string const &respon
     nomad_metadata.emplace(NomadMetadata(env));
     k8s_metadata.emplace(labels);
 
-    for (auto const &item: labels.items()) {
-      if (!item.value().is_string()) { continue; }
+    for (auto const &item : labels.items()) {
+      if (!item.value().is_string()) {
+        continue;
+      }
 
       std::string_view key = item.key();
       std::string_view value = item.value().get<std::string>();
 
-      if ((key.size() + value.size() + sizeof(u64) +
-           jb_ingest__container_annotation__data_size) > WRITE_BUFFER_SIZE) {
+      if ((key.size() + value.size() + sizeof(u64) + jb_ingest__container_annotation__data_size) > WRITE_BUFFER_SIZE) {
         // NOTE: we use a substring of the key to make sure it fits in the
         // warning message.
-        log_.warn("Docker metadata label for key '{}' is too large to send",
-                  key.substr(0, 256));
+        log_.warn("Docker metadata label for key '{}' is too large to send", key.substr(0, 256));
         continue;
       }
 
@@ -442,89 +439,89 @@ void CgroupHandler::handle_docker_response(u64 cgroup, std::string const &respon
   }
 
   if (docker_host_config.has_value()) {
-    LOG::debug_in(AgentLogKind::DOCKER,
-      "container resource limits: {}",
-      *docker_host_config
-    );
+    LOG::debug_in(AgentLogKind::DOCKER, "container resource limits: {}", *docker_host_config);
 
     auto const cpu_period = docker_host_config->cpu_period();
     auto const cpu_quota = docker_host_config->cpu_quota();
     writer_.container_resource_limits(
-      cgroup,
-      std::max(
-        kernel::MIN_CGROUP_CPU_SHARES,
-        std::min(
-          kernel::MAX_CGROUP_CPU_SHARES,
-          docker_host_config->cpu_shares()
-        )
-      ),
-      cpu_period <= 0 ? kernel::DEFAULT_CGROUP_QUOTA : cpu_period,
-      cpu_quota < 0 ? kernel::DEFAULT_CGROUP_QUOTA : cpu_quota,
-      docker_host_config->memory_swappiness(),
-      docker_host_config->memory_limit(),
-      docker_host_config->memory_soft_limit(),
-      docker_host_config->total_memory_limit()
-    );
+        cgroup,
+        std::max(kernel::MIN_CGROUP_CPU_SHARES, std::min(kernel::MAX_CGROUP_CPU_SHARES, docker_host_config->cpu_shares())),
+        cpu_period <= 0 ? kernel::DEFAULT_CGROUP_QUOTA : cpu_period,
+        cpu_quota < 0 ? kernel::DEFAULT_CGROUP_QUOTA : cpu_quota,
+        docker_host_config->memory_swappiness(),
+        docker_host_config->memory_limit(),
+        docker_host_config->memory_soft_limit(),
+        docker_host_config->total_memory_limit());
   }
 
-  LOG::debug_in(AgentLogKind::DOCKER,
-    "container metadata:"
-    "\n{{"
-    "\n\tid: {}"
-    "\n\tname: {}"
-    "\n\timage: {}"
-    "\n\tip_addr: {}"
-    "\n\tcluster: {}"
-    "\n\tcontainer: {}"
-    "\n\ttask_family: {}"
-    "\n\ttask_version: {}"
-    "\n\tns: {}"
-    "\n}}",
-    id, name, image, ip_addr, cluster, container, task_family,
-    task_version, ns);
+  LOG::debug_in(
+      AgentLogKind::DOCKER,
+      "container metadata:"
+      "\n{{"
+      "\n\tid: {}"
+      "\n\tname: {}"
+      "\n\timage: {}"
+      "\n\tip_addr: {}"
+      "\n\tcluster: {}"
+      "\n\tcontainer: {}"
+      "\n\ttask_family: {}"
+      "\n\ttask_version: {}"
+      "\n\tns: {}"
+      "\n}}",
+      id,
+      name,
+      image,
+      ip_addr,
+      cluster,
+      container,
+      task_family,
+      task_version,
+      ns);
 
-  writer_.container_metadata(cgroup, blob(id), blob(name), blob(image),
-                             blob(ip_addr), blob(cluster), blob(container),
-                             blob(task_family), blob(task_version), blob(ns));
+  writer_.container_metadata(
+      cgroup,
+      blob(id),
+      blob(name),
+      blob(image),
+      blob(ip_addr),
+      blob(cluster),
+      blob(container),
+      blob(task_family),
+      blob(task_version),
+      blob(ns));
 
   if (nomad_metadata.has_value() && *nomad_metadata) {
     writer_.nomad_metadata(
-      cgroup,
-      jb_blob{nomad_metadata->ns()},
-      jb_blob{nomad_metadata->group_name()},
-      jb_blob{nomad_metadata->task_name()},
-      jb_blob{nomad_metadata->job_name()}
-    );
+        cgroup,
+        jb_blob{nomad_metadata->ns()},
+        jb_blob{nomad_metadata->group_name()},
+        jb_blob{nomad_metadata->task_name()},
+        jb_blob{nomad_metadata->job_name()});
   }
 
   if (!pod_name.empty()) {
-    LOG::debug_in(AgentLogKind::DOCKER,
-      "pod_name:"
-      "\n{{"
-      "\n\tname: {}"
-      "\n}}",
-      pod_name);
+    LOG::debug_in(
+        AgentLogKind::DOCKER,
+        "pod_name:"
+        "\n{{"
+        "\n\tname: {}"
+        "\n}}",
+        pod_name);
 
     writer_.pod_name(cgroup, blob("") /* deprecated pod_uid */, blob(pod_name));
   }
 
   if (k8s_metadata.has_value() && *k8s_metadata) {
     writer_.k8s_metadata(
-      cgroup,
-      jb_blob{k8s_metadata->container_name()},
-      jb_blob{k8s_metadata->pod_name()},
-      jb_blob{k8s_metadata->pod_ns()},
-      jb_blob{k8s_metadata->pod_uid()},
-      jb_blob{k8s_metadata->sandbox_uid()}
-    );
-
-    for (auto const &port: k8s_metadata->ports()) {
-      writer_.k8s_metadata_port(
         cgroup,
-        port.second.port,
-        integer_value(port.second.protocol),
-        jb_blob{port.second.name}
-      );
+        jb_blob{k8s_metadata->container_name()},
+        jb_blob{k8s_metadata->pod_name()},
+        jb_blob{k8s_metadata->pod_ns()},
+        jb_blob{k8s_metadata->pod_uid()},
+        jb_blob{k8s_metadata->sandbox_uid()});
+
+    for (auto const &port : k8s_metadata->ports()) {
+      writer_.k8s_metadata_port(cgroup, port.second.port, integer_value(port.second.protocol), jb_blob{port.second.name});
     }
   };
 

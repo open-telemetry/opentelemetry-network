@@ -17,8 +17,8 @@
 #ifndef INCLUDE_FASTPASS_UTIL_PERF_RING_H_
 #define INCLUDE_FASTPASS_UTIL_PERF_RING_H_
 
-#include <platform/platform.h>
 #include <linux/perf_event.h>
+#include <platform/platform.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -77,8 +77,7 @@ struct perf_ring {
  * @returns 0 on success,
  *   -EINVAL on NULL pointers, non-power-of 2 sizes.
  */
-int pr_init_contig(struct perf_ring *eq, void *data, u32 n_pages,
-                   u64 page_size);
+int pr_init_contig(struct perf_ring *eq, void *data, u32 n_pages, u64 page_size);
 
 /**
  * Returns the size, in bytes, of a contiguous element queue
@@ -217,7 +216,6 @@ struct pr_data_view pr_peek(const struct perf_ring *eq);
  */
 int pr_read(struct perf_ring *eq, u16 *lenp);
 
-
 /**
  * Return the number of bytes left to read in the perf ring
  * @param eq: the eq to read from
@@ -228,7 +226,6 @@ int pr_read(struct perf_ring *eq, u16 *lenp);
  */
 
 u32 pr_bytes_remaining(const struct perf_ring *eq, u32 *total_size);
-
 
 /**
  * Finish the read batch, freeing space for producer
@@ -242,7 +239,6 @@ static inline void pr_finish_read_batch(struct perf_ring *eq)
 
   assert((int)eq->buf_tail - eq->buf_head >= 0);
 }
-
 
 #ifdef __cplusplus
 }

@@ -35,7 +35,8 @@ void close_uv_loop_cleanly(uv_loop_t *const loop)
   CHECK_UV(uv_loop_close(loop));
 }
 
-void sync_uv_run(::uv_loop_t &loop, std::function<void()> fn) {
+void sync_uv_run(::uv_loop_t &loop, std::function<void()> fn)
+{
   std::mutex lock;
   std::condition_variable sync;
 
@@ -44,8 +45,8 @@ void sync_uv_run(::uv_loop_t &loop, std::function<void()> fn) {
     std::mutex lock;
     std::condition_variable sync;
     ::uv_async_t async;
-  } context {
-    .fn = std::move(fn),
+  } context{
+      .fn = std::move(fn),
   };
 
   CHECK_UV(::uv_async_init(&loop, &context.async, [](::uv_async_t *handle) {
@@ -54,12 +55,10 @@ void sync_uv_run(::uv_loop_t &loop, std::function<void()> fn) {
       std::unique_lock<std::mutex> guard(context.lock);
       context.fn();
     }
-    ::uv_close(
-        reinterpret_cast<::uv_handle_t *>(&context.async),
-        [](::uv_handle_t *handle) {
-            auto &context = *reinterpret_cast<Context *>(handle->data);
-            context.sync.notify_all();
-        });
+    ::uv_close(reinterpret_cast<::uv_handle_t *>(&context.async), [](::uv_handle_t *handle) {
+      auto &context = *reinterpret_cast<Context *>(handle->data);
+      context.sync.notify_all();
+    });
   }));
   context.async.data = &context;
 
@@ -68,10 +67,11 @@ void sync_uv_run(::uv_loop_t &loop, std::function<void()> fn) {
   context.sync.wait(guard);
 }
 
-struct libuv_error_category: std::error_category {
+struct libuv_error_category : std::error_category {
   char const *name() const noexcept override { return "libuv"; }
 
-  std::string message(int condition) const override {
+  std::string message(int condition) const override
+  {
     std::ostringstream out;
     out << uv_error_t(condition);
     return out.str();
@@ -80,6 +80,7 @@ struct libuv_error_category: std::error_category {
 
 static libuv_error_category libuv_category_;
 
-std::error_category const &libuv_category() noexcept {
+std::error_category const &libuv_category() noexcept
+{
   return libuv_category_;
 }

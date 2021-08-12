@@ -35,8 +35,7 @@ public:
   /* at l4 we have one word for every 2^30 bits */
   static constexpr size_type l4 = ((l3 == 1) ? 0 : ((l3 + 63) / 64));
   /* number of levels */
-  static constexpr size_type levels =
-      ((l4 > 0) ? 5 : ((l3 > 0) ? 4 : ((l2 > 0) ? 3 : ((l1 > 0) ? 2 : 1))));
+  static constexpr size_type levels = ((l4 > 0) ? 5 : ((l3 > 0) ? 4 : ((l2 > 0) ? 3 : ((l1 > 0) ? 2 : 1))));
 
   IterableBitmap() : mask0{}, mask1{}, mask2{}, mask3{}, mask4{}
   {
@@ -146,17 +145,13 @@ public:
     u64 root;
     if (l4 > 0) {
       root = mask4[0];
-    }
-    else if (l3 > 0) {
+    } else if (l3 > 0) {
       root = mask3[0];
-    }
-    else if (l2 > 0) {
+    } else if (l2 > 0) {
       root = mask2[0];
-    }
-    else if (l1 > 0) {
+    } else if (l1 > 0) {
       root = mask1[0];
-    }
-    else /* l0 > 0 */ {
+    } else /* l0 > 0 */ {
       root = mask0[0];
     }
     res.mask[levels - 1] = root;

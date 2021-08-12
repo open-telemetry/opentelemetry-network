@@ -18,8 +18,10 @@
 
 #include <util/proc_ops.h>
 
-TEST(proc_stat_view, pid_3062214) {
-  constexpr std::string_view data = R"(3062214 (multi thread) S 2829421 3062214 2829421 34819 3062214 1077936128 138 0 0 0 3 0 0 0 20 0 4 0 183646228 29917184 289 18446744073709551615 94693039165440 94693039850013 140729897079600 0 0 0 0 0 0 0 0 0 17 2 0 0 0 0 0 94693040067224 94693040096472 94693057708032 140729897082593 140729897082611 140729897082611 140729897086950 0)";
+TEST(proc_stat_view, pid_3062214)
+{
+  constexpr std::string_view data =
+      R"(3062214 (multi thread) S 2829421 3062214 2829421 34819 3062214 1077936128 138 0 0 0 3 0 0 0 20 0 4 0 183646228 29917184 289 18446744073709551615 94693039165440 94693039850013 140729897079600 0 0 0 0 0 0 0 0 0 17 2 0 0 0 0 0 94693040067224 94693040096472 94693057708032 140729897082593 140729897082611 140729897082611 140729897086950 0)";
 
   ProcStatView const view(data);
   EXPECT_TRUE(view.valid());
@@ -78,8 +80,10 @@ TEST(proc_stat_view, pid_3062214) {
   EXPECT_EQ(0, view.exit_code);
 }
 
-TEST(proc_stat_view, pid_3049866) {
-  constexpr std::string_view data = R"(3049866 (multi-thread) S 2829421 3049866 2829421 34819 3049866 1077936128 136 0 0 0 22 26 0 0 20 0 4 0 183619102 29917184 305 18446744073709551615 94892149485568 94892150170141 140724065920688 0 0 0 0 0 0 0 0 0 17 1 0 0 0 0 0 94892150387352 94892150416600 94892153749504 140724065922713 140724065922755 140724065922755 140724065927118 0)";
+TEST(proc_stat_view, pid_3049866)
+{
+  constexpr std::string_view data =
+      R"(3049866 (multi-thread) S 2829421 3049866 2829421 34819 3049866 1077936128 136 0 0 0 22 26 0 0 20 0 4 0 183619102 29917184 305 18446744073709551615 94892149485568 94892150170141 140724065920688 0 0 0 0 0 0 0 0 0 17 1 0 0 0 0 0 94892150387352 94892150416600 94892153749504 140724065922713 140724065922755 140724065922755 140724065927118 0)";
 
   ProcStatView const view(data);
   EXPECT_TRUE(view.valid());
@@ -138,8 +142,10 @@ TEST(proc_stat_view, pid_3049866) {
   EXPECT_EQ(0, view.exit_code);
 }
 
-TEST(proc_stat_view, pid_3070715) {
-  constexpr std::string_view data = R"(3070715 (multi (99) thre) S 2829421 3070715 2829421 34819 3070715 1077936128 139 0 0 0 2 1 0 0 20 0 4 0 183650343 29917184 306 18446744073709551615 94786539032576 94786539717149 140728695372256 0 0 0 0 0 0 0 0 0 17 0 0 0 0 0 0 94786539934360 94786539963608 94786569641984 140728695377618 140728695377641 140728695377641 140728695381985 0)";
+TEST(proc_stat_view, pid_3070715)
+{
+  constexpr std::string_view data =
+      R"(3070715 (multi (99) thre) S 2829421 3070715 2829421 34819 3070715 1077936128 139 0 0 0 2 1 0 0 20 0 4 0 183650343 29917184 306 18446744073709551615 94786539032576 94786539717149 140728695372256 0 0 0 0 0 0 0 0 0 17 0 0 0 0 0 0 94786539934360 94786539963608 94786569641984 140728695377618 140728695377641 140728695377641 140728695381985 0)";
 
   ProcStatView const view(data);
   EXPECT_TRUE(view.valid());
@@ -198,7 +204,8 @@ TEST(proc_stat_view, pid_3070715) {
   EXPECT_EQ(0, view.exit_code);
 }
 
-TEST(proc_io_view, pid_6545) {
+TEST(proc_io_view, pid_6545)
+{
   constexpr std::string_view data = R"(rchar: 783422713330
 wchar: 197059793079
 syscr: 127142356
@@ -219,7 +226,8 @@ cancelled_write_bytes: 11436556288)";
   EXPECT_EQ(11436556288ull, view.cancelled_write_bytes);
 }
 
-TEST(proc_io_view, pid_662910) {
+TEST(proc_io_view, pid_662910)
+{
   constexpr std::string_view data = R"(rchar: 9069720
 wchar: 337393
 syscr: 1131
@@ -240,7 +248,8 @@ cancelled_write_bytes: 16384)";
   EXPECT_EQ(16384ull, view.cancelled_write_bytes);
 }
 
-TEST(proc_io_view, pid_717621) {
+TEST(proc_io_view, pid_717621)
+{
   constexpr std::string_view data = R"(rchar: 41578
 wchar: 8
 syscr: 53
@@ -261,7 +270,8 @@ cancelled_write_bytes: 0)";
   EXPECT_EQ(0ull, view.cancelled_write_bytes);
 }
 
-TEST(proc_io_view, pid_98303) {
+TEST(proc_io_view, pid_98303)
+{
   constexpr std::string_view data = R"(rchar: 394415079
 wchar: 82744660
 syscr: 554996
@@ -282,7 +292,8 @@ cancelled_write_bytes: 610304)";
   EXPECT_EQ(610304ull, view.cancelled_write_bytes);
 }
 
-TEST(proc_io_view, pid_996354) {
+TEST(proc_io_view, pid_996354)
+{
   constexpr std::string_view data = R"(rchar: 42616
 wchar: 1236
 syscr: 2570
@@ -303,7 +314,8 @@ cancelled_write_bytes: 0)";
   EXPECT_EQ(0ull, view.cancelled_write_bytes);
 }
 
-TEST(proc_status_view, pid_6545) {
+TEST(proc_status_view, pid_6545)
+{
   constexpr std::string_view data = R"(Name:	docker-containe
 Umask:	0022
 State:	S (sleeping)
@@ -367,7 +379,8 @@ nonvoluntary_ctxt_switches:	0)";
   EXPECT_EQ(0, view.nonvoluntary_ctxt_switches);
 }
 
-TEST(proc_status_view, pid_662910) {
+TEST(proc_status_view, pid_662910)
+{
   constexpr std::string_view data = R"(Name:	mysqld
 Umask:	0006
 State:	S (sleeping)
@@ -431,7 +444,8 @@ nonvoluntary_ctxt_switches:	18)";
   EXPECT_EQ(18, view.nonvoluntary_ctxt_switches);
 }
 
-TEST(proc_status_view, pid_717621) {
+TEST(proc_status_view, pid_717621)
+{
   constexpr std::string_view data = R"(Name:	VBoxXPCOMIPCD
 Umask:	0077
 State:	S (sleeping)
@@ -495,7 +509,8 @@ nonvoluntary_ctxt_switches:	6003)";
   EXPECT_EQ(6003, view.nonvoluntary_ctxt_switches);
 }
 
-TEST(proc_status_view, pid_98303) {
+TEST(proc_status_view, pid_98303)
+{
   constexpr std::string_view data = R"(Name:	bash
 Umask:	0022
 State:	S (sleeping)
@@ -559,7 +574,8 @@ nonvoluntary_ctxt_switches:	61)";
   EXPECT_EQ(61, view.nonvoluntary_ctxt_switches);
 }
 
-TEST(proc_status_view, pid_996354) {
+TEST(proc_status_view, pid_996354)
+{
   constexpr std::string_view data = R"(Name:	chrome
 Umask:	0022
 State:	S (sleeping)
@@ -623,8 +639,10 @@ nonvoluntary_ctxt_switches:	281)";
   EXPECT_EQ(281, view.nonvoluntary_ctxt_switches);
 }
 
-TEST(proc_stat_view, pid_19929) {
-  constexpr std::string_view data = R"(19929 (docker-containe) S 2075 19929 2075 0 -1 1077936384 2186078 5647 0 0 6716 10474 0 3 20 0 10 0 164204224 7675904 1075 18446744073709551615 4194304 6343957 140724213514144 0 0 0 1006249984 0 2143420159 0 0 0 17 1 0 0 0 0 0 8261632 8367936 36073472 140724213521731 140724213522062 140724213522062 140724213522392 0)";
+TEST(proc_stat_view, pid_19929)
+{
+  constexpr std::string_view data =
+      R"(19929 (docker-containe) S 2075 19929 2075 0 -1 1077936384 2186078 5647 0 0 6716 10474 0 3 20 0 10 0 164204224 7675904 1075 18446744073709551615 4194304 6343957 140724213514144 0 0 0 1006249984 0 2143420159 0 0 0 17 1 0 0 0 0 0 8261632 8367936 36073472 140724213521731 140724213522062 140724213522062 140724213522392 0)";
 
   ProcStatView const view(data);
   EXPECT_TRUE(view.valid());
@@ -683,8 +701,10 @@ TEST(proc_stat_view, pid_19929) {
   EXPECT_EQ(0, view.exit_code);
 }
 
-TEST(proc_stat_view, ipv6_addrconf) {
-  constexpr std::string_view data = R"(80 (ipv6_addrconf) I 2 0 0 0 -1 69238880 0 0 0 0 0 0 0 0 0 -20 1 0 87 0 0 18446744073709551615 0 0 0 0 0 0 0 2147483647 0 0 0 0 17 1 0 0 0 0 0 0 0 0 0 0 0 0 0
+TEST(proc_stat_view, ipv6_addrconf)
+{
+  constexpr std::string_view data =
+      R"(80 (ipv6_addrconf) I 2 0 0 0 -1 69238880 0 0 0 0 0 0 0 0 0 -20 1 0 87 0 0 18446744073709551615 0 0 0 0 0 0 0 2147483647 0 0 0 0 17 1 0 0 0 0 0 0 0 0 0 0 0 0 0
 )";
 
   ProcStatView const view(data);
@@ -744,8 +764,10 @@ TEST(proc_stat_view, ipv6_addrconf) {
   EXPECT_EQ(0, view.exit_code);
 }
 
-TEST(proc_stat_view, kernel_collector) {
-  constexpr std::string_view data = R"(39973 (kernel-collecto) S 1293 39973 1293 34817 39973 4194304 393 27583 0 0 0 0 7 8 20 0 1 0 9864441 6959104 906 18446744073709551615 94780814675968 94780815573037 140724866766880 0 0 0 65536 4 65538 0 0 0 17 0 0 0 0 0 0 94780815803376 94780815850756 94780843311104 140724866770313 140724866770428 140724866770428 140724866772962 0
+TEST(proc_stat_view, kernel_collector)
+{
+  constexpr std::string_view data =
+      R"(39973 (kernel-collecto) S 1293 39973 1293 34817 39973 4194304 393 27583 0 0 0 0 7 8 20 0 1 0 9864441 6959104 906 18446744073709551615 94780814675968 94780815573037 140724866766880 0 0 0 65536 4 65538 0 0 0 17 0 0 0 0 0 0 94780815803376 94780815850756 94780843311104 140724866770313 140724866770428 140724866770428 140724866772962 0
 )";
 
   ProcStatView const view(data);
@@ -805,8 +827,10 @@ TEST(proc_stat_view, kernel_collector) {
   EXPECT_EQ(0, view.exit_code);
 }
 
-TEST(proc_stat_view, collector_entry) {
-  constexpr std::string_view data = R"(40060 (collector-entry) S 40043 40060 40060 34816 40060 4194560 441 81195 0 0 0 0 41 5 20 0 1 0 9864881 3956736 782 18446744073709551615 94886840201216 94886841096077 140732640240592 0 0 0 65536 4 65538 0 0 0 17 0 0 0 0 0 0 94886841324528 94886841371908 94886870679552 140732640246970 140732640247110 140732640247110 140732640247771 0
+TEST(proc_stat_view, collector_entry)
+{
+  constexpr std::string_view data =
+      R"(40060 (collector-entry) S 40043 40060 40060 34816 40060 4194560 441 81195 0 0 0 0 41 5 20 0 1 0 9864881 3956736 782 18446744073709551615 94886840201216 94886841096077 140732640240592 0 0 0 65536 4 65538 0 0 0 17 0 0 0 0 0 0 94886841324528 94886841371908 94886870679552 140732640246970 140732640247110 140732640247110 140732640247771 0
 )";
 
   ProcStatView const view(data);
@@ -866,8 +890,10 @@ TEST(proc_stat_view, collector_entry) {
   EXPECT_EQ(0, view.exit_code);
 }
 
-TEST(proc_stat_view, kworker_39842) {
-  constexpr std::string_view data = R"(39842 (kworker/u4:0-events_unbound) I 2 0 0 0 -1 69238880 0 315 0 0 0 0 0 0 20 0 1 0 9863357 0 0 18446744073709551615 0 0 0 0 0 0 0 2147483647 0 0 0 0 17 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+TEST(proc_stat_view, kworker_39842)
+{
+  constexpr std::string_view data =
+      R"(39842 (kworker/u4:0-events_unbound) I 2 0 0 0 -1 69238880 0 315 0 0 0 0 0 0 20 0 1 0 9863357 0 0 18446744073709551615 0 0 0 0 0 0 0 2147483647 0 0 0 0 17 0 0 0 0 0 0 0 0 0 0 0 0 0 0
 )";
 
   ProcStatView const view(data);

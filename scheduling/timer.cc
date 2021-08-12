@@ -18,8 +18,7 @@
 
 namespace scheduling {
 
-Timer::Timer(uv_loop_t &loop, CallbackType callback):
-  callback_(std::move(callback))
+Timer::Timer(uv_loop_t &loop, CallbackType callback) : callback_(std::move(callback))
 {
   handle_.data = this;
 
@@ -28,26 +27,31 @@ Timer::Timer(uv_loop_t &loop, CallbackType callback):
   }
 }
 
-Timer::Timer(Timer &&rhs):
-  handle_(std::move(rhs.handle_)),
-  callback_(std::move(rhs.callback_))
+Timer::Timer(Timer &&rhs) : handle_(std::move(rhs.handle_)), callback_(std::move(rhs.callback_))
 {
   handle_.data = this;
   rhs.handle_.data = nullptr;
 }
 
-Timer::~Timer() {
-  if (!handle_.data) { return; }
+Timer::~Timer()
+{
+  if (!handle_.data) {
+    return;
+  }
 
-  if (is_active()) { stop(); }
+  if (is_active()) {
+    stop();
+  }
   uv_close(reinterpret_cast<uv_handle_t *>(&handle_), nullptr);
 }
 
-Expected<bool, uv_error_t> Timer::defer(TimerPeriod timeout) {
+Expected<bool, uv_error_t> Timer::defer(TimerPeriod timeout)
+{
   return start(timeout, TimerPeriod::zero());
 }
 
-Expected<bool, uv_error_t> Timer::start(TimerPeriod timeout, TimerPeriod interval) {
+Expected<bool, uv_error_t> Timer::start(TimerPeriod timeout, TimerPeriod interval)
+{
   assert(!is_active());
 
   if (auto const error = uv_timer_start(&handle_, callback, timeout.count(), interval.count())) {
@@ -57,7 +61,8 @@ Expected<bool, uv_error_t> Timer::start(TimerPeriod timeout, TimerPeriod interva
   return true;
 }
 
-Expected<bool, uv_error_t> Timer::restart() {
+Expected<bool, uv_error_t> Timer::restart()
+{
   assert(is_active());
 
   if (auto const error = uv_timer_again(&handle_)) {
@@ -67,11 +72,13 @@ Expected<bool, uv_error_t> Timer::restart() {
   return true;
 }
 
-void Timer::update(TimerPeriod interval) {
+void Timer::update(TimerPeriod interval)
+{
   uv_timer_set_repeat(&handle_, interval.count());
 }
 
-Expected<bool, uv_error_t> Timer::stop() {
+Expected<bool, uv_error_t> Timer::stop()
+{
   assert(is_active());
 
   if (auto const error = uv_timer_stop(&handle_)) {
@@ -81,11 +88,13 @@ Expected<bool, uv_error_t> Timer::stop() {
   return true;
 }
 
-bool Timer::is_active() const {
+bool Timer::is_active() const
+{
   return uv_is_active(reinterpret_cast<uv_handle_t const *>(&handle_));
 }
 
-void Timer::callback(uv_timer_t *handle) {
+void Timer::callback(uv_timer_t *handle)
+{
   reinterpret_cast<Timer *>(handle->data)->callback_();
 };
 

@@ -19,8 +19,4 @@
 #include <string>
 #include <string_view>
 
-std::string format_url(
-  std::string host,
-  std::string_view path,
-  std::string_view default_scheme = "https"
-);
+std::string format_url(std::string host, std::string_view path, std::string_view default_scheme = "https");

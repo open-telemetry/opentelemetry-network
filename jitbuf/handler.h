@@ -60,8 +60,7 @@ public:
    * @param handler_func: the function to handle messages
    * @param service: a Service class to implement the service
    */
-  void add(std::shared_ptr<jitbuf::TransformRecord> &transform,
-           handler_func_t handler_func, std::shared_ptr<Service> service);
+  void add(std::shared_ptr<jitbuf::TransformRecord> &transform, handler_func_t handler_func, std::shared_ptr<Service> service);
 
   /**
    * Add handling of new message
@@ -69,16 +68,14 @@ public:
    * @param handler_func: the function to handle messages
    * @param priv: parameter to the function
    */
-  void add(std::shared_ptr<jitbuf::TransformRecord> &transform,
-           handler_func_t handler_func, void *priv);
+  void add(std::shared_ptr<jitbuf::TransformRecord> &transform, handler_func_t handler_func, void *priv);
 
   /**
    * Add identity handling of all messages in package
    * @param builder: a TransformBuilder to generate transforms
    * @param service: the service to add identity handlers for
    */
-  void add_identity(TransformBuilder &builder,
-                    std::shared_ptr<Service> service);
+  void add_identity(TransformBuilder &builder, std::shared_ptr<Service> service);
 
   /**
    * Add identity handling of all messages in package. No smart-pointer variant

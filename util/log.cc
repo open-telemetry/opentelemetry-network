@@ -52,39 +52,26 @@ void LOG::init(bool console, std::string const *filename)
   std::vector<spdlog::sink_ptr> sinks;
 
   if (filename) {
-    sinks.emplace_back(
-      std::make_shared<spdlog::sinks::rotating_file_sink_mt>(
-        *filename, MAX_FILE_SIZE, MAX_NUM_FILES
-      )
-    );
+    sinks.emplace_back(std::make_shared<spdlog::sinks::rotating_file_sink_mt>(*filename, MAX_FILE_SIZE, MAX_NUM_FILES));
   }
 
   if (console) {
     if (auto const fd = fileno(stdout); fd != -1 && isatty(fd)) {
       // colored output if stdout is a tty
-      sinks.emplace_back(
-        std::make_shared<spdlog::sinks::stdout_color_sink_mt>()
-      );
+      sinks.emplace_back(std::make_shared<spdlog::sinks::stdout_color_sink_mt>());
     } else {
-      sinks.emplace_back(
-        std::make_shared<spdlog::sinks::stdout_sink_mt>()
-      );
+      sinks.emplace_back(std::make_shared<spdlog::sinks::stdout_sink_mt>());
     }
   }
 
   if (sinks.empty()) {
-    sinks.emplace_back(
-      std::make_shared<spdlog::sinks::null_sink_mt>()
-    );
+    sinks.emplace_back(std::make_shared<spdlog::sinks::null_sink_mt>());
   }
 
   // thread pool values borrowed from spdlog's defaults
   spdlog::init_thread_pool(8192, 1);
   auto logger = std::make_shared<spdlog::async_logger>(
-    "main_logger", sinks.begin(), sinks.end(),
-    spdlog::thread_pool(),
-    spdlog::async_overflow_policy::block
-  );
+      "main_logger", sinks.begin(), sinks.end(), spdlog::thread_pool(), spdlog::async_overflow_policy::block);
 
   spdlog::set_default_logger(std::move(logger));
 
@@ -95,7 +82,8 @@ void LOG::init(bool console, std::string const *filename)
   spdlog::flush_every(FLUSH_INTERVAL);
 }
 
-std::string_view LOG::log_file_path() {
+std::string_view LOG::log_file_path()
+{
   return try_get_env_var(FLOWMILL_LOG_FILE_VAR.data(), FLOWMILL_LOG_FILE_PATH);
 }
 
@@ -131,8 +119,7 @@ void LOG::refill_rate_limit_budget(int64_t amount)
   // Try a few times to update the budget atomically
   for (int i = 0; i < 2; i++) {
     int64_t current = LOG::rate_limit_budget.load();
-    if (LOG::rate_limit_budget.compare_exchange_strong(
-          current, std::max(current, amount))) {
+    if (LOG::rate_limit_budget.compare_exchange_strong(current, std::max(current, amount))) {
       return;
     }
   }

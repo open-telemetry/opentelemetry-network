@@ -30,10 +30,9 @@
 
 class RestfulFetcher {
 public:
-  template <typename T>
-  class CtorDecoder {
+  template <typename T> class CtorDecoder {
   public:
-    Expected<T, std::runtime_error> operator ()(std::string body) const;
+    Expected<T, std::runtime_error> operator()(std::string body) const;
   };
 
   RestfulFetcher(std::initializer_list<std::string_view> headers = {});
@@ -42,15 +41,14 @@ public:
 
   template <typename T, typename Decoder = CtorDecoder<T>>
   Expected<T, std::runtime_error> sync_fetch(
-    std::string_view description,
-    std::string url,
-    Decoder &&decoder = Decoder(),
-    std::chrono::milliseconds const timeout = 0ms,
-    std::size_t const retries = 0,
-    std::chrono::milliseconds const initial_backoff = 200ms,
-    std::chrono::milliseconds const maximum_backoff = 1min,
-    unsigned const backoff_geometric_ratio = 2
-  );
+      std::string_view description,
+      std::string url,
+      Decoder &&decoder = Decoder(),
+      std::chrono::milliseconds const timeout = 0ms,
+      std::size_t const retries = 0,
+      std::chrono::milliseconds const initial_backoff = 200ms,
+      std::chrono::milliseconds const maximum_backoff = 1min,
+      unsigned const backoff_geometric_ratio = 2);
 
 private:
   std::list<std::string> headers_;

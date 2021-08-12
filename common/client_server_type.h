@@ -28,13 +28,13 @@ enum CLIENT_SERVER_TYPE {
 
 inline const char *client_server_type_to_string(enum CLIENT_SERVER_TYPE client_server)
 {
-  switch(client_server) {
-    case SC_CLIENT:
-      return "CLIENT";
-    case SC_SERVER:
-      return "SERVER";
-    default:
-      break;
+  switch (client_server) {
+  case SC_CLIENT:
+    return "CLIENT";
+  case SC_SERVER:
+    return "SERVER";
+  default:
+    break;
   }
   throw std::runtime_error("invalid CLIENT_SERVER_TYPE value");
 }

@@ -40,8 +40,7 @@ public:
    * @param periodic_cb: a callback to be called every once in a while, to
    *   allow user to e.g., flush rings
    */
-  NatProber(ProbeHandler &probe_handler, ebpf::BPFModule &bpf_module,
-            std::function<void(void)> periodic_cb);
+  NatProber(ProbeHandler &probe_handler, ebpf::BPFModule &bpf_module, std::function<void(void)> periodic_cb);
 
 private:
   /**

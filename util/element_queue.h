@@ -78,8 +78,7 @@ void eq_init_shared(struct element_queue_shared *shared);
  * @returns 0 on success,
  *   -EINVAL on NULL pointers, non-power-of 2 sizes.
  */
-int eq_init_contig(struct element_queue *eq, u32 n_elems, u32 buf_len,
-                   void *data);
+int eq_init_contig(struct element_queue *eq, u32 n_elems, u32 buf_len, void *data);
 
 /**
  * Returns the size, in bytes, of a contiguous element queue

@@ -7,9 +7,8 @@ typedef uint16_t u16;
 
 #define EMPTY_RPC_ID ((u32)-1)
 
-
-int jbf_init(struct jitbuf_fixed *client, struct jitbuf_handler *handler_buf,
-             uint32_t n_handlers, uint32_t (*hash_fn)(uint32_t rpc_id))
+int jbf_init(
+    struct jitbuf_fixed *client, struct jitbuf_handler *handler_buf, uint32_t n_handlers, uint32_t (*hash_fn)(uint32_t rpc_id))
 {
   uint32_t i;
 
@@ -28,8 +27,7 @@ int jbf_init(struct jitbuf_fixed *client, struct jitbuf_handler *handler_buf,
   return 0;
 }
 
-int jbf_add(struct jitbuf_fixed *client, const struct jb_rpc *rpc,
-            jbc_handler_func f, void *context)
+int jbf_add(struct jitbuf_fixed *client, const struct jb_rpc *rpc, jbc_handler_func f, void *context)
 {
   struct jitbuf_handler *h_elem;
   uint32_t slot;
@@ -62,7 +60,7 @@ int jbf_add(struct jitbuf_fixed *client, const struct jb_rpc *rpc,
   return 0;
 }
 
-int jbf_make_descriptor(struct jitbuf_fixed* client, char* buf, int len)
+int jbf_make_descriptor(struct jitbuf_fixed *client, char *buf, int len)
 {
   int i = 0;
   int used = 0;
@@ -85,7 +83,7 @@ int jbf_make_descriptor(struct jitbuf_fixed* client, char* buf, int len)
   return used;
 }
 
-int jbf_handle(struct jitbuf_fixed* client, char* buf, int len)
+int jbf_handle(struct jitbuf_fixed *client, char *buf, int len)
 {
   u32 rpc_id;
   uint32_t slot;

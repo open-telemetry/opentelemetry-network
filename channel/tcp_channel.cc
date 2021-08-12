@@ -41,8 +41,7 @@ static constexpr std::string_view CONNECTED_DISCONNECTED[2] = {"disconnected", "
 /**
  * Callback passed to uv_read_start that allocates memory for the read callback
  */
-void TCPChannel::conn_read_alloc_cb(uv_handle_t *handle, size_t suggested_size,
-                                    uv_buf_t *buf)
+void TCPChannel::conn_read_alloc_cb(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf)
 {
   uv_tcp_t *tcp_conn = (uv_tcp_t *)handle;
   TCPChannel *conn = (TCPChannel *)tcp_conn->data;
@@ -61,8 +60,7 @@ void TCPChannel::conn_read_alloc_cb(uv_handle_t *handle, size_t suggested_size,
 /**
  * Read callback
  */
-void TCPChannel::conn_read_cb(uv_stream_t *stream, ssize_t nread,
-                              const uv_buf_t *buf)
+void TCPChannel::conn_read_cb(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
 {
   uv_tcp_t *tcp_conn = (uv_tcp_t *)stream;
   TCPChannel *conn = (TCPChannel *)tcp_conn->data;
@@ -132,9 +130,7 @@ void TCPChannel::conn_connect_cb(uv_connect_t *req, int status)
   auto tcp = (TCPChannel *)req->handle->data;
 
   if (status < 0) {
-    LOG::trace_in(channel::Component::tcp,
-      "TCPChannel::{}(): error {}",
-      __func__, static_cast<std::errc>(-status));
+    LOG::trace_in(channel::Component::tcp, "TCPChannel::{}(): error {}", __func__, static_cast<std::errc>(-status));
     /* error occurred */
     tcp->connected_ = false;
     tcp->callbacks_->on_error(status);
@@ -143,8 +139,7 @@ void TCPChannel::conn_connect_cb(uv_connect_t *req, int status)
 
   tcp->connected_ = true;
 
-  LOG::trace_in(channel::Component::tcp,
-    "TCPChannel::{}(): calling callback::on_connect()", __func__);
+  LOG::trace_in(channel::Component::tcp, "TCPChannel::{}(): calling callback::on_connect()", __func__);
   tcp->callbacks_->on_connect();
 
   tcp->start_processing();
@@ -158,8 +153,7 @@ void TCPChannel::conn_write_cb(uv_write_t *req, int status)
   if (status < 0) {
     /* no need to notify if close() was called, otherwise -- notify */
     if (!uv_is_closing((uv_handle_t *)req->handle)) {
-      LOG::trace_in(channel::Component::tcp,
-        "TCPChannel::{}: connection not closing, calling close on handle()", __func__);
+      LOG::trace_in(channel::Component::tcp, "TCPChannel::{}: connection not closing, calling close on handle()", __func__);
       tcp->connected_ = false;
       tcp->callbacks_->on_error(status);
     }
@@ -169,40 +163,32 @@ void TCPChannel::conn_write_cb(uv_write_t *req, int status)
   free(req);
 }
 
-TCPChannel::TCPChannel(uv_loop_t &loop) {
+TCPChannel::TCPChannel(uv_loop_t &loop)
+{
   reinit(&loop);
 }
 
-TCPChannel::TCPChannel(
-  uv_loop_t &loop,
-  std::string addr,
-  std::string port, 
-  std::optional<config::HttpProxyConfig> proxy
-):
-  addr_(std::move(addr)),
-  port_(std::move(port)),
-  proxy_(std::move(proxy))
+TCPChannel::TCPChannel(uv_loop_t &loop, std::string addr, std::string port, std::optional<config::HttpProxyConfig> proxy)
+    : addr_(std::move(addr)), port_(std::move(port)), proxy_(std::move(proxy))
 {
   reinit(&loop);
 }
 
 TCPChannel::~TCPChannel()
 {
-  LOG::trace_in(channel::Component::tcp,
-    "TCPChannel::{}: connection not closing, calling close on handle()", __func__);
+  LOG::trace_in(channel::Component::tcp, "TCPChannel::{}: connection not closing, calling close on handle()", __func__);
   ASSUME(uv_is_closing((uv_handle_t *)&conn_));
 }
 
-void TCPChannel::connect(Callbacks &callbacks) {
+void TCPChannel::connect(Callbacks &callbacks)
+{
   LOG::trace_in(channel::Component::tcp, "TCPChannel::{}()", __func__);
 
   if (proxy_) {
-    callback_wrapper_ = proxy_->make_callback(addr_, port_ ,*this, callbacks);
+    callback_wrapper_ = proxy_->make_callback(addr_, port_, *this, callbacks);
   }
 
-  callbacks_ = callback_wrapper_
-    ? callback_wrapper_.get()
-    : &callbacks;
+  callbacks_ = callback_wrapper_ ? callback_wrapper_.get() : &callbacks;
 
   struct addrinfo hints;
   memset(&hints, 0, sizeof hints);
@@ -212,10 +198,7 @@ void TCPChannel::connect(Callbacks &callbacks) {
   struct addrinfo *res = nullptr;
   auto const addr = proxy_ ? proxy_->host().c_str() : addr_.c_str();
   auto const port = proxy_ ? proxy_->port().c_str() : port_.c_str();
-  LOG::debug(
-    "TCPChannel::{}: Connecting to {} @ {}:{}",
-    __func__, proxy_ ? "proxy" : "intake", addr, port
-  );
+  LOG::debug("TCPChannel::{}: Connecting to {} @ {}:{}", __func__, proxy_ ? "proxy" : "intake", addr, port);
   int status = getaddrinfo(addr, port, &hints, &res);
 
   if (status != 0) {
@@ -233,28 +216,20 @@ void TCPChannel::connect(Callbacks &callbacks) {
   }
 
   if (auto const error = ::uv_tcp_connect(&connect_req_, &conn_, res->ai_addr, &conn_connect_cb)) {
-    LOG::error(
-      "TCPChannel::{}: failed to establish connection to {}:{}: {}",
-      __func__, addr, port, uv_error_t{error}
-    );
+    LOG::error("TCPChannel::{}: failed to establish connection to {}:{}: {}", __func__, addr, port, uv_error_t{error});
     callbacks_->on_error(error);
   }
 }
 
-void TCPChannel::accept(Callbacks &callbacks, uv_tcp_t *listener) {
+void TCPChannel::accept(Callbacks &callbacks, uv_tcp_t *listener)
+{
   LOG::trace_in(channel::Component::tcp, "TCPChannel::{}()", __func__);
   callbacks_ = &callbacks;
 
-  if (auto const error = ::uv_accept(
-    reinterpret_cast<uv_stream_t *>(listener),
-    reinterpret_cast<uv_stream_t *>(&conn_)
-  )) {
+  if (auto const error = ::uv_accept(reinterpret_cast<uv_stream_t *>(listener), reinterpret_cast<uv_stream_t *>(&conn_))) {
     // this is guaranteed to succeed when called from the connection callback:
     // http://docs.libuv.org/en/v1.x/stream.html#c.uv_accept
-    LOG::error(
-      "TCPChannel::{}: failed to accept incoming connections: {}",
-      __func__, uv_error_t{error}
-    );
+    LOG::error("TCPChannel::{}: failed to accept incoming connections: {}", __func__, uv_error_t{error});
     CHECK_UV(error); // TODO: verify that users of `accept` properly handle `on_error`
     callbacks_->on_error(error);
   } else {
@@ -263,15 +238,13 @@ void TCPChannel::accept(Callbacks &callbacks, uv_tcp_t *listener) {
   }
 }
 
-void TCPChannel::open_fd(Callbacks &callbacks, const uv_os_sock_t fd) {
+void TCPChannel::open_fd(Callbacks &callbacks, const uv_os_sock_t fd)
+{
   LOG::trace_in(channel::Component::tcp, "TCPChannel::{}()", __func__);
   callbacks_ = &callbacks;
 
   if (auto const error = ::uv_tcp_open(&conn_, fd)) {
-    LOG::error(
-      "TCPChannel::{}: failed to open existing file descriptor as a TCP handle: {}",
-      __func__, uv_error_t{error}
-    );
+    LOG::error("TCPChannel::{}: failed to open existing file descriptor as a TCP handle: {}", __func__, uv_error_t{error});
     CHECK_UV(error); // TODO: verify that users of `open_fd` properly handle `on_error`
     callbacks_->on_error(error);
   } else {
@@ -280,7 +253,8 @@ void TCPChannel::open_fd(Callbacks &callbacks, const uv_os_sock_t fd) {
   }
 }
 
-void TCPChannel::close() {
+void TCPChannel::close()
+{
   LOG::trace_in(channel::Component::tcp, "TCPChannel::{}()", __func__);
   close_internal(&conn_close_and_reinit_cb);
 }
@@ -291,9 +265,9 @@ void TCPChannel::close_permanently()
   close_internal(&conn_close_cb);
 }
 
-std::error_code TCPChannel::send(const u8 *data, int data_len) {
-  LOG::trace_in(channel::Component::tcp,
-    "TCPChannel::{}(len:{})", __func__, data_len);
+std::error_code TCPChannel::send(const u8 *data, int data_len)
+{
+  LOG::trace_in(channel::Component::tcp, "TCPChannel::{}(len:{})", __func__, data_len);
   auto send_buffer = allocate_send_buffer(data_len);
   if (!send_buffer) {
     // TODO: gracefully handle out-of-memory errors
@@ -315,7 +289,7 @@ struct TCPChannel::send_buffer_t *TCPChannel::allocate_send_buffer(u32 size)
     LOG::critical("Failed to allocate send buffer of size {} mem_size {}", size, mem_size);
     return nullptr;
   }
-  
+
   // clear memory to ensure we don't exfiltrate uninitialized data
   memset(ret, 0, mem_size);
 
@@ -324,18 +298,15 @@ struct TCPChannel::send_buffer_t *TCPChannel::allocate_send_buffer(u32 size)
 
 std::error_code TCPChannel::send(struct send_buffer_t *send_buffer)
 {
-  uv_buf_t uv_buf = {.base = (char *)send_buffer->data,
-                     .len = send_buffer->len};
+  uv_buf_t uv_buf = {.base = (char *)send_buffer->data, .len = send_buffer->len};
 
-  if (auto const error = ::uv_write(
-    &send_buffer->req,
-    reinterpret_cast<uv_stream_t *>(&conn_),
-    &uv_buf, 1, conn_write_cb
-  )) {
+  if (auto const error = ::uv_write(&send_buffer->req, reinterpret_cast<uv_stream_t *>(&conn_), &uv_buf, 1, conn_write_cb)) {
     LOG::error(
-      "TCPChannel::{}: failed to write {} bytes into {} channel: {}",
-      __func__, send_buffer->len, CONNECTED_DISCONNECTED[connected_], uv_error_t{error}
-    );
+        "TCPChannel::{}: failed to write {} bytes into {} channel: {}",
+        __func__,
+        send_buffer->len,
+        CONNECTED_DISCONNECTED[connected_],
+        uv_error_t{error});
 
     callbacks_->on_error(error);
     return {error, libuv_category()};
@@ -356,32 +327,24 @@ void TCPChannel::reinit(uv_loop_t *loop)
   conn_.data = this;
 }
 
-void TCPChannel::start_processing() {
+void TCPChannel::start_processing()
+{
   LOG::trace_in(channel::Component::tcp, "TCPChannel::{}()", __func__);
 
   if (auto const error = ::uv_tcp_nodelay(&conn_, true)) {
-    LOG::error(
-      "TCPChannel::{}: failed to disable Nagle's algorithm: {}",
-      __func__, uv_error_t{error}
-    );
+    LOG::error("TCPChannel::{}: failed to disable Nagle's algorithm: {}", __func__, uv_error_t{error});
     // this error is not critical, we may continue
   }
 
-  if (auto const error = ::uv_read_start(
-    reinterpret_cast<uv_stream_t *>(&conn_),
-    &conn_read_alloc_cb,
-    conn_read_cb
-  )) {
-    LOG::error(
-      "TCPChannel::{}: failed to start read loop on channel: {}",
-      __func__, uv_error_t{error}
-    );
+  if (auto const error = ::uv_read_start(reinterpret_cast<uv_stream_t *>(&conn_), &conn_read_alloc_cb, conn_read_cb)) {
+    LOG::error("TCPChannel::{}: failed to start read loop on channel: {}", __func__, uv_error_t{error});
 
     callbacks_->on_error(error);
   }
 }
 
-in_addr_t const *channel::TCPChannel::connected_address() const {
+in_addr_t const *channel::TCPChannel::connected_address() const
+{
   std::array<in_addr_t const *, 2> choice = {nullptr, &connected_address_};
   return choice[connected_address_available_];
 }
@@ -392,8 +355,7 @@ void channel::TCPChannel::close_internal(const uv_close_cb close_cb)
   connected_address_available_ = false;
   connected_ = false;
   if (!uv_is_closing((uv_handle_t *)&conn_)) {
-    LOG::trace_in(channel::Component::tcp,
-      "TCPChannel::{}: connection not closing, calling close on handle()", __func__);
+    LOG::trace_in(channel::Component::tcp, "TCPChannel::{}: connection not closing, calling close on handle()", __func__);
     uv_close((uv_handle_t *)&conn_, close_cb);
   }
 }

@@ -41,8 +41,9 @@ public:
   virtual void finish_write() = 0;
 
   // Writes the given payload in smaller batches to fit the internal buffer
-  Expected<bool, std::error_code> write_as_chunks(std::string_view payload) {
-    for (auto const max = buf_size(); !payload.empty(); ) {
+  Expected<bool, std::error_code> write_as_chunks(std::string_view payload)
+  {
+    for (auto const max = buf_size(); !payload.empty();) {
       auto const size = max <= payload.size() ? max : static_cast<u32>(payload.size());
 
       auto const allocated = start_write(size);

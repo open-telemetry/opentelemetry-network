@@ -74,10 +74,10 @@ public:
  * `std::exception` or `ErrorValueExpectedErrorPolicy` otherwise.
  */
 template <typename Error>
-using DefaultExpectedErrorPolicy =
-    std::conditional_t<std::is_base_of_v<std::exception, Error>,
-                       ThrowableExpectedErrorPolicy<Error>,
-                       ErrorValueExpectedErrorPolicy<Error>>;
+using DefaultExpectedErrorPolicy = std::conditional_t<
+    std::is_base_of_v<std::exception, Error>,
+    ThrowableExpectedErrorPolicy<Error>,
+    ErrorValueExpectedErrorPolicy<Error>>;
 
 ////////////////////
 // check policies //
@@ -91,20 +91,12 @@ public:
   /**
    * Asserts that `expected` contains a value.
    */
-  template <typename Expected>
-  static void check_is_value(Expected const &expected)
-  {
-    assert(expected.has_value());
-  }
+  template <typename Expected> static void check_is_value(Expected const &expected) { assert(expected.has_value()); }
 
   /**
    * Asserts that `expected` contains an error.
    */
-  template <typename Expected>
-  static void check_is_error(Expected const &expected)
-  {
-    assert(!expected.has_value());
-  }
+  template <typename Expected> static void check_is_error(Expected const &expected) { assert(!expected.has_value()); }
 };
 
 /**
@@ -120,8 +112,7 @@ public:
   static void check_is_value(Expected const &expected)
   {
     if (!expected.has_value()) {
-      throw std::logic_error(
-          "attempting to retrieve the value out of an unexpected error");
+      throw std::logic_error("attempting to retrieve the value out of an unexpected error");
     }
   }
 
@@ -129,12 +120,10 @@ public:
    * Checks that `expected` contains an error and throws a `std::logic_error` if
    * not.
    */
-  template <typename Expected>
-  static void check_is_error(Expected const &expected)
+  template <typename Expected> static void check_is_error(Expected const &expected)
   {
     if (expected.has_value()) {
-      throw std::logic_error(
-          "attempting to retrieve the error out of an expected value");
+      throw std::logic_error("attempting to retrieve the error out of an expected value");
     }
   }
 };
@@ -157,9 +146,8 @@ template <typename, typename...> struct is_safe_overload : std::true_type {
 template <typename Class, typename T>
 struct is_safe_overload<Class, T>
     : std::integral_constant<
-          bool, !std::is_base_of<Class, typename std::remove_cv<
-                                            typename std::remove_reference<
-                                                T>::type>::type>::value> {
+          bool,
+          !std::is_base_of<Class, typename std::remove_cv<typename std::remove_reference<T>::type>::type>::value> {
 };
 
 /**
@@ -168,9 +156,11 @@ struct is_safe_overload<Class, T>
  * Allows the representation of both expected return values and unexpected error
  * conditions.
  */
-template <typename T, typename Error,
-          typename CheckPolicy = DefaultExpectedCheckPolicy,
-          template <typename> typename ErrorPolicy = DefaultExpectedErrorPolicy>
+template <
+    typename T,
+    typename Error,
+    typename CheckPolicy = DefaultExpectedCheckPolicy,
+    template <typename> typename ErrorPolicy = DefaultExpectedErrorPolicy>
 class Expected {
 public:
   using value_type = T;
@@ -181,10 +171,8 @@ public:
 private:
   class ErrorContainer {
   public:
-    template <typename... UArgs, typename = std::enable_if_t<is_safe_overload<
-                                     ErrorContainer, UArgs...>::value>>
-    explicit ErrorContainer(UArgs &&... args)
-        : error_(std::forward<UArgs>(args)...)
+    template <typename... UArgs, typename = std::enable_if_t<is_safe_overload<ErrorContainer, UArgs...>::value>>
+    explicit ErrorContainer(UArgs &&... args) : error_(std::forward<UArgs>(args)...)
     {}
 
     ErrorContainer(ErrorContainer const &) = default;
@@ -213,19 +201,15 @@ public:
   template <
       typename... UArgs,
       typename = std::enable_if_t<is_safe_overload<Expected, UArgs...>::value>,
-      typename =
-          std::enable_if_t<sizeof...(UArgs) != 1 ||
-                           !(std::is_same_v<Unexpected, UArgs> && ... && true)>>
-  Expected(UArgs &&... args)
-      : data_(std::in_place_type<value_type>, std::forward<UArgs>(args)...)
+      typename = std::enable_if_t<sizeof...(UArgs) != 1 || !(std::is_same_v<Unexpected, UArgs> && ... && true)>>
+  Expected(UArgs &&... args) : data_(std::in_place_type<value_type>, std::forward<UArgs>(args)...)
   {}
 
   /**
    * Constructs an `Expected` with an unexpected error.
    */
   template <typename... UArgs>
-  Expected(Unexpected, UArgs &&... args)
-      : data_(std::in_place_type<ErrorContainer>, std::forward<UArgs>(args)...)
+  Expected(Unexpected, UArgs &&... args) : data_(std::in_place_type<ErrorContainer>, std::forward<UArgs>(args)...)
   {}
 
   Expected(Expected const &) = default;
@@ -336,8 +320,8 @@ public:
   /**
    * Stores a value in-place constructed from the given arguments.
    */
-  template <typename... UArgs>
-  Expected &set_value(UArgs &&...args) {
+  template <typename... UArgs> Expected &set_value(UArgs &&... args)
+  {
     data_.template emplace<0>(std::forward<UArgs>(args)...);
     return *this;
   }
@@ -345,8 +329,8 @@ public:
   /**
    * Stores an error in-place constructed from the given arguments.
    */
-  template <typename... UArgs>
-  Expected &set_error(UArgs &&...args) {
+  template <typename... UArgs> Expected &set_error(UArgs &&... args)
+  {
     data_.template emplace<1>(std::forward<UArgs>(args)...);
     return *this;
   }
@@ -506,7 +490,8 @@ public:
   explicit operator bool() const { return has_value(); }
   bool operator!() const { return !has_value(); }
 
-  Expected &operator =(Expected const &rhs) {
+  Expected &operator=(Expected const &rhs)
+  {
     if (rhs.has_value()) {
       set_value(rhs.value());
     } else {
@@ -515,7 +500,8 @@ public:
     return *this;
   }
 
-  Expected &operator =(Expected &&rhs) {
+  Expected &operator=(Expected &&rhs)
+  {
     if (rhs.has_value()) {
       set_value(std::move(rhs.value()));
     } else {
@@ -533,30 +519,20 @@ private:
 /**
  * Convenient alias for an `Expected` that uses `ThrowingExpectedCheckPolicy`.
  */
-template <typename T, typename Error,
-          template <typename> typename ErrorPolicy = DefaultExpectedErrorPolicy>
-using CheckedExpected =
-    Expected<T, Error, ThrowingExpectedCheckPolicy, ErrorPolicy>;
+template <typename T, typename Error, template <typename> typename ErrorPolicy = DefaultExpectedErrorPolicy>
+using CheckedExpected = Expected<T, Error, ThrowingExpectedCheckPolicy, ErrorPolicy>;
 
 // specializations
 
-template <> class ErrorValueExpectedErrorPolicy<std::error_code>:
-  public ThrowableExpectedErrorPolicy<std::error_code>
-{
+template <> class ErrorValueExpectedErrorPolicy<std::error_code> : public ThrowableExpectedErrorPolicy<std::error_code> {
 public:
-  [[noreturn]] static void raise(error_type const &error) {
-    throw std::system_error(error);
-  }
+  [[noreturn]] static void raise(error_type const &error) { throw std::system_error(error); }
 };
 
-template <> class ErrorValueExpectedErrorPolicy<std::errc>:
-  public ThrowableExpectedErrorPolicy<std::errc>
-{
+template <> class ErrorValueExpectedErrorPolicy<std::errc> : public ThrowableExpectedErrorPolicy<std::errc> {
 public:
-  [[noreturn]] static void raise(error_type const &error) {
-    throw std::system_error{
-      static_cast<std::underlying_type_t<error_type>>(error),
-      std::generic_category()
-    };
+  [[noreturn]] static void raise(error_type const &error)
+  {
+    throw std::system_error{static_cast<std::underlying_type_t<error_type>>(error), std::generic_category()};
   }
 };

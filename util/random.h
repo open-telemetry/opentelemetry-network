@@ -19,16 +19,11 @@
 #include <random>
 #include <type_traits>
 
-template <typename T>
-class RNG {
+template <typename T> class RNG {
 public:
   static_assert(std::is_integral_v<T> && std::is_unsigned_v<T>);
 
-  using engine_type = std::conditional_t<
-    (sizeof(T) <= sizeof(std::mt19937::result_type)),
-    std::mt19937,
-    std::mt19937_64
-  >;
+  using engine_type = std::conditional_t<(sizeof(T) <= sizeof(std::mt19937::result_type)), std::mt19937, std::mt19937_64>;
 
   using result_type = typename engine_type::result_type;
 
@@ -37,20 +32,17 @@ public:
   /**
    * Generates a random integer of type `Value` in the range [`lower_bound`, `upper_bound`].
    */
-  template <typename Value = result_type>
-  static Value next(Value lower_bound, Value upper_bound);
+  template <typename Value = result_type> static Value next(Value lower_bound, Value upper_bound);
 
   /**
    * Generates a random integer of type `Value` in the range [0, `upper_bound`].
    */
-  template <typename Value = result_type>
-  static Value next(Value upper_bound);
+  template <typename Value = result_type> static Value next(Value upper_bound);
 
   /**
    * Generates a random integer of type `Value`.
    */
-  template <typename Value = result_type>
-  static Value next();
+  template <typename Value = result_type> static Value next();
 
   static thread_local engine_type engine;
 };

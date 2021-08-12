@@ -39,8 +39,7 @@ public:
 
   explicit operator bool() const;
 
-  template <typename Out>
-  friend Out &&operator <<(Out &&out, DockerHostConfigMetadata const &what);
+  template <typename Out> friend Out &&operator<<(Out &&out, DockerHostConfigMetadata const &what);
 
 private:
   std::uint16_t cpu_shares_;

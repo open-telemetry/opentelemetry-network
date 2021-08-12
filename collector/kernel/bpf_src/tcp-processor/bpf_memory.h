@@ -18,14 +18,13 @@
 // bpf_memory.h - BPF memory related utility functions
 //
 
-#pragma once 
+#pragma once
 
 #include "bpf_debug.h"
 #include "bpf_types.h"
 
 // s2 can not be longer than 16 bytes due to older bpf inlining limitations
-inline static int string_starts_with(const char *s1, const size_t s1_len,
-                                     const char *s2)
+inline static int string_starts_with(const char *s1, const size_t s1_len, const char *s2)
 {
 
   const size_t s2_len = strlen(s2);

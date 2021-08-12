@@ -25,14 +25,14 @@
 #include <vector>
 
 #include "channel/buffered_writer.h"
+#include "generated/flowmill/ingest/writer.h"
+#include "generated/kubernetes_info.pb.h"
+#include "kubernetes_owner_kind.h"
 #include "platform/types.h"
+#include "resync_channel.h"
 #include "util/boot_time.h"
 #include "util/log.h"
 #include "util/lookup3_hasher.h"
-#include "generated/kubernetes_info.pb.h"
-#include "generated/flowmill/ingest/writer.h"
-#include "kubernetes_owner_kind.h"
-#include "resync_channel.h"
 #include <util/protobuf_log.h>
 
 namespace collector {
@@ -81,8 +81,7 @@ private:
 
     // Maps from the id of the ReplicaSet which is not available yet,
     // to list of ids of the Pods relying on this ReplicaSet.
-    std::unordered_map<u64, std::vector<u64>, ::util::Lookup3Hasher<u64>>
-        waiting;
+    std::unordered_map<u64, std::vector<u64>, ::util::Lookup3Hasher<u64>> waiting;
   };
 
   struct PodStore {
@@ -118,19 +117,19 @@ void K8sHandler::send_pod_new(const PodInfo &pod_info, const OwnerInfo &owner)
 
   jb_blob uid{pod_info.uid().data(), (u16)pod_info.uid().size()};
 
-  writer_->pod_new_with_name(uid,
-                             (u32)(inet_addr(pod_info.ip().c_str())),
-                             jb_blob{owner.name().data(), (u16)owner.name().size()},
-                             jb_blob{pod_info.name().c_str(), (u16)pod_info.name().size()},
-                             (uint8_t)KubernetesOwnerKindFromString(owner.kind()),
-                             jb_blob{owner.uid().data(), (u16)owner.uid().size()},
-                             (pod_info.is_host_network() ? 1 : 0),
-                             jb_blob{pod_info.ns().data(), (u16)pod_info.ns().size()},
-                             jb_blob{pod_info.version().data(), (u16)pod_info.version().size()});
+  writer_->pod_new_with_name(
+      uid,
+      (u32)(inet_addr(pod_info.ip().c_str())),
+      jb_blob{owner.name().data(), (u16)owner.name().size()},
+      jb_blob{pod_info.name().c_str(), (u16)pod_info.name().size()},
+      (uint8_t)KubernetesOwnerKindFromString(owner.kind()),
+      jb_blob{owner.uid().data(), (u16)owner.uid().size()},
+      (pod_info.is_host_network() ? 1 : 0),
+      jb_blob{pod_info.ns().data(), (u16)pod_info.ns().size()},
+      jb_blob{pod_info.version().data(), (u16)pod_info.version().size()});
 
   send_pod_containers(pod_info);
 }
-
 
 void K8sHandler::send_pod_new_no_owner(const PodInfo &pod_info)
 {
@@ -138,15 +137,16 @@ void K8sHandler::send_pod_new_no_owner(const PodInfo &pod_info)
 
   jb_blob uid{pod_info.uid().data(), (u16)pod_info.uid().size()};
 
-  writer_->pod_new_with_name(uid,
-                             (u32)(inet_addr(pod_info.ip().c_str())),
-                             jb_blob{pod_info.name().c_str(), (u16)pod_info.name().size()},
-                             jb_blob{pod_info.name().c_str(), (u16)pod_info.name().size()},
-                             (uint8_t)(KubernetesOwnerKind::NoOwner),
-                             jb_blob{"", (u16)0},
-                             (pod_info.is_host_network() ? 1 : 0),
-                             jb_blob{pod_info.ns().data(), (u16)pod_info.ns().size()},
-                             jb_blob{pod_info.version().data(), (u16)pod_info.version().size()});
+  writer_->pod_new_with_name(
+      uid,
+      (u32)(inet_addr(pod_info.ip().c_str())),
+      jb_blob{pod_info.name().c_str(), (u16)pod_info.name().size()},
+      jb_blob{pod_info.name().c_str(), (u16)pod_info.name().size()},
+      (uint8_t)(KubernetesOwnerKind::NoOwner),
+      jb_blob{"", (u16)0},
+      (pod_info.is_host_network() ? 1 : 0),
+      jb_blob{pod_info.ns().data(), (u16)pod_info.ns().size()},
+      jb_blob{pod_info.version().data(), (u16)pod_info.version().size()});
 
   send_pod_containers(pod_info);
 }
@@ -159,10 +159,11 @@ void K8sHandler::send_pod_containers(const PodInfo &pod_info)
     std::string const &cid = pod_info.container_infos(i).id();
     std::string const &name = pod_info.container_infos(i).name();
     std::string const &image = pod_info.container_infos(i).image();
-    writer_->pod_container(uid,
-                           jb_blob{cid.data(), (u16)cid.size()},
-                           jb_blob{name.data(), (u16)name.size()},
-                           jb_blob{image.data(), (u16)image.size()});
+    writer_->pod_container(
+        uid,
+        jb_blob{cid.data(), (u16)cid.size()},
+        jb_blob{name.data(), (u16)name.size()},
+        jb_blob{image.data(), (u16)image.size()});
   }
 }
 
@@ -191,8 +192,7 @@ void K8sHandler::replica_set_new_or_modified(const ReplicaSetInfo &rs_info)
   if (iter != replica_sets_.infos.end()) {
     // updated
     iter->second.MergeFrom(rs_info);
-  }
-  else {
+  } else {
     // insert
     replica_sets_.infos.emplace(id, std::move(rs_info));
   }
@@ -218,8 +218,7 @@ void K8sHandler::replica_set_new_or_modified(const ReplicaSetInfo &rs_info)
 
     if (KubernetesOwnerIsDeployment(rs_info.owner().kind())) {
       send_pod_new(pod_iter->second, rs_info.owner());
-    }
-    else {
+    } else {
       send_pod_new(pod_iter->second, pod_iter->second.owner());
     }
     pods_.waiting.erase(pod_id);
@@ -274,8 +273,7 @@ void K8sHandler::pod_new_or_modified(const PodInfo &pod_info)
   if (iter != pods_.infos.end()) {
     iter->second.MergeFrom(pod_info);
     LOG::trace("Merged pod into internal state: {}", pod_info);
-  }
-  else {
+  } else {
     iter = pods_.infos.emplace(id, std::move(pod_info)).first;
     LOG::trace("Added pod into internal state: {}", pod_info);
   }
@@ -318,8 +316,7 @@ void K8sHandler::pod_new_or_modified(const PodInfo &pod_info)
     if (waiting_iter == replica_sets_.waiting.end()) {
       replica_sets_.waiting[owner_id] = std::vector<u64>({id});
       LOG::trace("Pod's ReplicaSet and queue did not exist, added queue and enqueued. {}", pod_info);
-    }
-    else {
+    } else {
       waiting_iter->second.push_back(id);
       LOG::trace("Pod's ReplicaSet did not exist, enqueued to existing queue. {}", pod_info);
     }
@@ -331,8 +328,7 @@ void K8sHandler::pod_new_or_modified(const PodInfo &pod_info)
   if (KubernetesOwnerIsDeployment(owner.kind())) {
     LOG::trace("Pod's owner ReplicaSet has Deployment owner. Sending pod with owner {}", owner);
     send_pod_new(pod, owner);
-  }
-  else {
+  } else {
     LOG::trace("Pod's owner ReplicaSet has non-Deployment owner. Sending pod with owner {}", pod.owner());
     send_pod_new(pod, pod.owner());
   }
@@ -351,8 +347,7 @@ void K8sHandler::pod_deleted(const PodInfo &pod_info)
   if (live_iter != pods_.live.end()) {
     LOG::trace("Server: enqueue POD Delete: {}\n", pod_info.uid());
 
-    writer_->pod_delete(
-        jb_blob{pod_info.uid().data(), (u16)pod_info.uid().size()});
+    writer_->pod_delete(jb_blob{pod_info.uid().data(), (u16)pod_info.uid().size()});
   }
 
   pods_.live.erase(id);
@@ -362,18 +357,13 @@ void K8sHandler::pod_deleted(const PodInfo &pod_info)
 }
 } // namespace
 
-KubernetesRpcServer::KubernetesRpcServer(ResyncChannelFactory *channel_factory,
-                                         std::size_t collect_buffer_size)
-    : channel_factory_(channel_factory),
-      collect_buffer_size_(collect_buffer_size)
-{
-}
+KubernetesRpcServer::KubernetesRpcServer(ResyncChannelFactory *channel_factory, std::size_t collect_buffer_size)
+    : channel_factory_(channel_factory), collect_buffer_size_(collect_buffer_size)
+{}
 
 KubernetesRpcServer::~KubernetesRpcServer() {}
 
-Status
-KubernetesRpcServer::Collect(ServerContext *context,
-                             ServerReaderWriter<Response, Info> *reader_writer)
+Status KubernetesRpcServer::Collect(ServerContext *context, ServerReaderWriter<Response, Info> *reader_writer)
 {
   std::function<void(void)> reset_callback = [&]() {
     Response response;
@@ -386,8 +376,7 @@ KubernetesRpcServer::Collect(ServerContext *context,
     context->TryCancel();
   };
 
-  std::unique_ptr<ResyncChannel> resync_channel =
-      channel_factory_->new_channel(reset_callback);
+  std::unique_ptr<ResyncChannel> resync_channel = channel_factory_->new_channel(reset_callback);
 
   channel::BufferedWriter buffered_writer(*resync_channel, collect_buffer_size_);
 
@@ -411,8 +400,7 @@ KubernetesRpcServer::Collect(ServerContext *context,
         // do nothing now.
         break;
       }
-    }
-    else {
+    } else {
       // K8S_POD
       const PodInfo &pod_info = info.pod_info();
       switch (info.event()) {

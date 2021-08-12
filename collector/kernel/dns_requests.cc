@@ -15,9 +15,9 @@
 //
 
 #include "spdlog/common.h"
+#include <collector/kernel/dns_requests.h>
 #include <platform/platform.h>
 #include <util/log.h>
-#include <collector/kernel/dns_requests.h>
 
 /**
  * DNS requests key hash function
@@ -25,11 +25,9 @@
  * @param[in] k The dns request key to hash
  * @return the hash of the dns request key
  */
-size_t DnsRequests::dns_request_key_hash::
-operator()(const dns_request_key &k) const noexcept
+size_t DnsRequests::dns_request_key_hash::operator()(const dns_request_key &k) const noexcept
 {
-  return std::hash<uint16_t>{}(k.qid) ^ std::hash<uint16_t>{}(k.type) ^
-         std::hash<std::string>{}(k.name);
+  return std::hash<uint16_t>{}(k.qid) ^ std::hash<uint16_t>{}(k.type) ^ std::hash<std::string>{}(k.name);
 }
 
 /**
@@ -39,8 +37,7 @@ operator()(const dns_request_key &k) const noexcept
  * @param[in] k2 The second dns request key to compare
  * @return true if the keys are equal, false otherwise
  */
-bool DnsRequests::dns_request_key_equal_to::
-operator()(const dns_request_key &k, const dns_request_key &k2) const noexcept
+bool DnsRequests::dns_request_key_equal_to::operator()(const dns_request_key &k, const dns_request_key &k2) const noexcept
 {
   return k.qid == k2.qid && k.type == k2.type && k.name == k2.name;
 }
@@ -51,11 +48,9 @@ operator()(const dns_request_key &k, const dns_request_key &k2) const noexcept
  * @param[in] key Key of the DNS request
  * @param[in] value Value of the DNS request
  */
-void DnsRequests::add(const dns_request_key &key,
-                      const dns_request_value &value)
+void DnsRequests::add(const dns_request_key &key, const dns_request_value &value)
 {
-  auto iter =
-      dns_requests_.insert(dns_requests_.end(), std::make_pair(key, value));
+  auto iter = dns_requests_.insert(dns_requests_.end(), std::make_pair(key, value));
   dns_requests_by_key_.insert(std::make_pair(key, iter));
   dns_requests_by_sock_.insert(std::make_pair(value.sk, iter));
 }
@@ -81,8 +76,7 @@ void DnsRequests::lookup(const dns_request_key &key, std::list<Request> &out)
  * @param[out] out The list of matching dns request key/value pairs
  */
 
-void DnsRequests::lookup_older_than(u64 timestamp_ns,
-                                    std::list<DnsRequests::Request> &out)
+void DnsRequests::lookup_older_than(u64 timestamp_ns, std::list<DnsRequests::Request> &out)
 {
   for (auto iter = dns_requests_.begin(); iter != dns_requests_.end(); iter++) {
     if (iter->second.timestamp_ns >= timestamp_ns) {

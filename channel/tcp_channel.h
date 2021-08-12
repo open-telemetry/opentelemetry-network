@@ -58,12 +58,7 @@ public:
   /**
    * c'tor -- leaves socket ready for connect()
    */
-  TCPChannel(
-    uv_loop_t &loop,
-    std::string addr,
-    std::string port,
-    std::optional<config::HttpProxyConfig> proxy = {}
-  );
+  TCPChannel(uv_loop_t &loop, std::string addr, std::string port, std::optional<config::HttpProxyConfig> proxy = {});
 
   /**
    * d'tor
@@ -128,10 +123,8 @@ public:
   bool is_open() const override { return connected_; }
 
 private:
-  static void conn_read_alloc_cb(uv_handle_t *handle, size_t suggested_size,
-                                 uv_buf_t *buf);
-  static void conn_read_cb(uv_stream_t *stream, ssize_t nread,
-                           const uv_buf_t *buf);
+  static void conn_read_alloc_cb(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf);
+  static void conn_read_cb(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf);
   static void conn_close_cb(uv_handle_t *handle);
   static void conn_close_and_reinit_cb(uv_handle_t *handle);
   static void conn_connect_cb(uv_connect_t *req, int status);

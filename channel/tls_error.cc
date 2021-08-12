@@ -22,15 +22,17 @@
 
 namespace channel {
 
-TLSError::TLSError(): TLSError(ERR_get_error()) {}
+TLSError::TLSError() : TLSError(ERR_get_error()) {}
 
-TLSError::TLSError(int code): code_(code) {}
+TLSError::TLSError(int code) : code_(code) {}
 
-std::string_view TLSError::name() const {
+std::string_view TLSError::name() const
+{
   return ERR_lib_error_string(code_);
 }
 
-std::string_view TLSError::reason() const {
+std::string_view TLSError::reason() const
+{
   return ERR_reason_error_string(code_);
 }
 

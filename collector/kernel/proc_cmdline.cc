@@ -35,8 +35,7 @@ Expected<std::string, std::error_code> read_proc_cmdline(u32 pid)
 
   FileDescriptor fd;
 
-  if (auto error = fd.open(path, FileDescriptor::Access::read_only,
-                           FileDescriptor::Positioning::beginning)) {
+  if (auto error = fd.open(path, FileDescriptor::Access::read_only, FileDescriptor::Positioning::beginning)) {
     return {unexpected, std::move(error)};
   }
 
@@ -55,8 +54,7 @@ Expected<std::string, std::error_code> try_read_proc_cmdline(u32 pid)
   auto r = read_proc_cmdline(pid);
 
   if (!r) {
-    if ((r.error().category() == std::generic_category()) &&
-        ((r.error().value() == ENOENT) || (r.error().value() == ESRCH))) {
+    if ((r.error().category() == std::generic_category()) && ((r.error().value() == ENOENT) || (r.error().value() == ESRCH))) {
       // no such process
       return "";
     }

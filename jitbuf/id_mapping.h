@@ -17,8 +17,8 @@
 #ifndef SRC_JITBUF_ID_MAPPING_H_
 #define SRC_JITBUF_ID_MAPPING_H_
 
-#include <platform/platform.h>
 #include <google/protobuf/descriptor.h>
+#include <platform/platform.h>
 
 namespace jitbuf {
 

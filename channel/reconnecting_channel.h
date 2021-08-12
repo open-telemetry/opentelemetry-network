@@ -20,7 +20,6 @@
 
 #include <channel/callbacks.h>
 #include <channel/channel.h>
-#include <channel/channel.h>
 #include <channel/tls_handler.h>
 #include <channel/upstream_connection.h>
 #include <config/intake_config.h>
@@ -35,12 +34,9 @@ namespace channel {
 // network error occurs.
 //
 // Note that this class is NOT thread safe.
-class ReconnectingChannel : public Channel,
-                            public Callbacks {
+class ReconnectingChannel : public Channel, public Callbacks {
 public:
-  ReconnectingChannel(config::IntakeConfig intake_config,
-                      uv_loop_t &loop,
-                      std::size_t buffer_size);
+  ReconnectingChannel(config::IntakeConfig intake_config, uv_loop_t &loop, std::size_t buffer_size);
   ~ReconnectingChannel() final;
 
   // Registers/unregisters a observer.

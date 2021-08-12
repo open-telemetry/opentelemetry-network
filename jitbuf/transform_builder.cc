@@ -22,10 +22,7 @@
 
 namespace jitbuf {
 
-TransformBuilder::TransformBuilder(llvm::LLVMContext &context)
-    : xformer_(context)
-{
-}
+TransformBuilder::TransformBuilder(llvm::LLVMContext &context) : xformer_(context) {}
 
 void TransformBuilder::add_descriptor(std::shared_ptr<Descriptor> descriptor)
 {
@@ -43,16 +40,14 @@ void TransformBuilder::add_descriptor(std::shared_ptr<Descriptor> descriptor)
 
 void jitbuf::TransformBuilder::add_descriptor(const std::string &descriptor)
 {
-  std::shared_ptr<Descriptor> desc(new Descriptor(
-      DescriptorReader::read((u8 *)descriptor.data(), descriptor.size())));
+  std::shared_ptr<Descriptor> desc(new Descriptor(DescriptorReader::read((u8 *)descriptor.data(), descriptor.size())));
 
   DescriptorReader::compute_positions(*desc, false);
 
   add_descriptor(desc);
 }
 
-std::shared_ptr<TransformRecord>
-TransformBuilder::get_xform(const std::string &from)
+std::shared_ptr<TransformRecord> TransformBuilder::get_xform(const std::string &from)
 {
   /* first try the cache */
   auto iter = cache_.find(from);
@@ -85,8 +80,7 @@ TransformBuilder::get_xform(const std::string &from)
   return buf;
 }
 
-std::shared_ptr<TransformRecord>
-TransformBuilder::get_xform_to(const Descriptor &from, const Descriptor &to)
+std::shared_ptr<TransformRecord> TransformBuilder::get_xform_to(const Descriptor &from, const Descriptor &to)
 {
   std::vector<u32> src_pos;
   std::vector<u32> dst_pos;
@@ -133,8 +127,7 @@ TransformBuilder::get_xform_to(const Descriptor &from, const Descriptor &to)
 
   /* sanity checks */
   if (min_size > src_size)
-    throw std::runtime_error(
-        "descriptor fields must be smaller than incoming total size");
+    throw std::runtime_error("descriptor fields must be smaller than incoming total size");
 
   /** VAR fields */
   int from_blobs = from.n_var_fields;
@@ -169,8 +162,7 @@ TransformBuilder::get_xform_to(const Descriptor &from, const Descriptor &to)
       if (i == from.n_var_fields - 1) {
         /* last blob does not have src; its length is the remainder */
         blob.length_is_remainder = true;
-      }
-      else {
+      } else {
         blob.src_pos = from_field.pos;
         blob.length_is_remainder = false;
       }
@@ -181,8 +173,7 @@ TransformBuilder::get_xform_to(const Descriptor &from, const Descriptor &to)
       if (to_field_it == to_map.end()) {
         /* no field in @to */
         blob.should_write = false;
-      }
-      else {
+      } else {
         blob.dst_pos = to_field_it->second;
         blob.should_write = true;
         last_should_write = i;
@@ -211,8 +202,7 @@ TransformBuilder::get_xform_to(const Descriptor &from, const Descriptor &to)
   /* jit-compile the transformation */
   std::shared_ptr<TransformRecord> buf(new TransformRecord);
   buf->msg_rpc_id = to.rpc_id;
-  buf->xform = xformer_.get_xform(src_pos.data(), dst_pos.data(), sizes.data(),
-                                  sizes.size(), len_pos, src_size, blobs);
+  buf->xform = xformer_.get_xform(src_pos.data(), dst_pos.data(), sizes.data(), sizes.size(), len_pos, src_size, blobs);
   buf->size = src_size;
   buf->min_buffer_size = min_size;
 

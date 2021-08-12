@@ -23,8 +23,8 @@
 #define ENUM_NAMESPACE collector
 #define ENUM_NAME Component
 #define ENUM_TYPE std::uint16_t
-#define ENUM_ELEMENTS(X)  \
-  X(none, 0) \
+#define ENUM_ELEMENTS(X)                                                                                                       \
+  X(none, 0)                                                                                                                   \
   X(auth, 1)
 #define ENUM_DEFAULT none
 #include <util/enum_operators.inl>

@@ -16,8 +16,8 @@
 
 #pragma once
 
-#include <platform/types.h>
 #include <jitbuf/descriptor.h>
+#include <platform/types.h>
 
 namespace jitbuf {
 

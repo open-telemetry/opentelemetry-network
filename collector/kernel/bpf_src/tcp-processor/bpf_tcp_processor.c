@@ -18,8 +18,6 @@ BPF_PROG_ARRAY(tail_calls, NUM_TAIL_CALLS);
 // #error "Kernel version needs to be 4.4 or newer"
 // #endif
 
-
-
 ////////////////////////////////////////////////////////////////////////////
 // Utilities
 
@@ -40,20 +38,22 @@ BPF_PROG_ARRAY(tail_calls, NUM_TAIL_CALLS);
 
 // TCP send/receive handling
 
-static void tcp_client_handler(struct pt_regs *ctx,
-                               struct tcp_connection_t *pconn,
-                               struct tcp_control_value_t *pctrl,
-                               enum STREAM_TYPE streamtype, const void *data,
-                               size_t data_len);
-static void tcp_server_handler(struct pt_regs *ctx,
-                               struct tcp_connection_t *pconn,
-                               struct tcp_control_value_t *pctrl,
-                               enum STREAM_TYPE streamtype, const void *data,
-                               size_t data_len);
-#define TCP_CLIENT_HANDLER(CTX, CONN, CTRL, ST, DATA, LEN)                     \
-  tcp_client_handler(CTX, CONN, CTRL, ST, DATA, LEN)
-#define TCP_SERVER_HANDLER(CTX, CONN, CTRL, ST, DATA, LEN)                     \
-  tcp_server_handler(CTX, CONN, CTRL, ST, DATA, LEN)
+static void tcp_client_handler(
+    struct pt_regs *ctx,
+    struct tcp_connection_t *pconn,
+    struct tcp_control_value_t *pctrl,
+    enum STREAM_TYPE streamtype,
+    const void *data,
+    size_t data_len);
+static void tcp_server_handler(
+    struct pt_regs *ctx,
+    struct tcp_connection_t *pconn,
+    struct tcp_control_value_t *pctrl,
+    enum STREAM_TYPE streamtype,
+    const void *data,
+    size_t data_len);
+#define TCP_CLIENT_HANDLER(CTX, CONN, CTRL, ST, DATA, LEN) tcp_client_handler(CTX, CONN, CTRL, ST, DATA, LEN)
+#define TCP_SERVER_HANDLER(CTX, CONN, CTRL, ST, DATA, LEN) tcp_server_handler(CTX, CONN, CTRL, ST, DATA, LEN)
 
 #include "bpf_tcp_send_recv.h"
 
@@ -70,18 +70,19 @@ static void tcp_server_handler(struct pt_regs *ctx,
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-static void tcp_client_handler(struct pt_regs *ctx,
-                               struct tcp_connection_t *pconn,
-                               struct tcp_control_value_t *pctrl,
-                               enum STREAM_TYPE streamtype, const void *data,
-                               size_t data_len)
+static void tcp_client_handler(
+    struct pt_regs *ctx,
+    struct tcp_connection_t *pconn,
+    struct tcp_control_value_t *pctrl,
+    enum STREAM_TYPE streamtype,
+    const void *data,
+    size_t data_len)
 {
 
 #pragma passthrough on
 #if ENABLE_TCP_DATA_STREAM
 #pragma passthrough off
-  
+
   tcp_events_submit_tcp_data(ctx, pconn, streamtype, 0, data, data_len);
 
 #pragma passthrough on
@@ -96,8 +97,7 @@ static void tcp_client_handler(struct pt_regs *ctx,
     // Detect HTTP
     if (state->candidates & TCP_PROTOCOL_BIT(TCPPROTO_HTTP)) {
 
-      enum TCP_PROTOCOL_DETECT_RESULT res =
-          http_detect(ctx, pconn, pctrl, streamtype, data, data_len);
+      enum TCP_PROTOCOL_DETECT_RESULT res = http_detect(ctx, pconn, pctrl, streamtype, data, data_len);
       if (res == TPD_FAILED) {
         state->candidates &= ~TCP_PROTOCOL_BIT(TCPPROTO_HTTP);
       } else if (res == TPD_SUCCESS) {
@@ -127,15 +127,15 @@ static void tcp_client_handler(struct pt_regs *ctx,
 #pragma passthrough on
 #endif
 #pragma passthrough off
-
-
 }
 
-static void tcp_server_handler(struct pt_regs *ctx,
-                               struct tcp_connection_t *pconn,
-                               struct tcp_control_value_t *pctrl,
-                               enum STREAM_TYPE streamtype, const void *data,
-                               size_t data_len)
+static void tcp_server_handler(
+    struct pt_regs *ctx,
+    struct tcp_connection_t *pconn,
+    struct tcp_control_value_t *pctrl,
+    enum STREAM_TYPE streamtype,
+    const void *data,
+    size_t data_len)
 {
 #pragma passthrough on
 #if ENABLE_TCP_DATA_STREAM
@@ -165,5 +165,4 @@ static void tcp_server_handler(struct pt_regs *ctx,
 #pragma passthrough on
 #endif
 #pragma passthrough off
-
 }

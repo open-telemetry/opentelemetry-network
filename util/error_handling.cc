@@ -16,8 +16,8 @@
 
 #include "util/error_handling.h"
 
-#include "util/log.h"
 #include "util/defer.h"
+#include "util/log.h"
 
 #include <absl/debugging/symbolize.h>
 #include <absl/strings/str_cat.h>

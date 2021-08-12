@@ -23,9 +23,10 @@
 #include <cstdio>
 #include <cstdlib>
 
-std::string base64_encode(std::string_view input) {
+std::string base64_encode(std::string_view input)
+{
   std::string buffer;
-  buffer.resize(4 * std::ceil(static_cast<double>(input.size())/3) + 1);
+  buffer.resize(4 * std::ceil(static_cast<double>(input.size()) / 3) + 1);
 
   auto out = ::fmemopen(buffer.data(), buffer.size(), "w");
   auto encoder = BIO_push(BIO_new(BIO_f_base64()), BIO_new_fp(out, BIO_NOCLOSE));

@@ -27,10 +27,10 @@
 
 #include <array>
 #include <iostream>
-#include <string>
-#include <optional>
-#include <system_error>
 #include <netinet/in.h>
+#include <optional>
+#include <string>
+#include <system_error>
 
 class IPv4Address;
 
@@ -43,20 +43,16 @@ public:
   constexpr IPv6Address() {}
 
   // Constructs an address from the provided host byte order hextets.
-  static IPv6Address from_host_hextets(const Hextets& hextets);
+  static IPv6Address from_host_hextets(const Hextets &hextets);
 
   // Parses the IPv6 address from the buffer. Assumes network byte order.
   static IPv6Address from(const std::array<uint64_t, 2> &buffer);
   static IPv6Address from(const std::array<uint32_t, 4> &buffer);
   static IPv6Address from(const uint8_t buffer[16]);
 
-  static IPv6Address from(struct in6_addr const &address) {
-    return IPv6Address::from(address.s6_addr);
-  }
+  static IPv6Address from(struct in6_addr const &address) { return IPv6Address::from(address.s6_addr); }
 
-  static IPv6Address localhost() {
-    return IPv6Address::from_host_hextets({0, 0, 0, 0, 0, 0, 0, 1});
-  }
+  static IPv6Address localhost() { return IPv6Address::from_host_hextets({0, 0, 0, 0, 0, 0, 0, 1}); }
 
   // Parses the null-terminated string representation of an IPv6 address.
   //
@@ -103,14 +99,11 @@ public:
   // Returns nullopt otherwise.
   std::optional<IPv4Address> to_ipv4() const;
 
-  short_string<16> bytes_view() const {
-    return {reinterpret_cast<char const *>(hextets_.data()), 16};
-  }
+  short_string<16> bytes_view() const { return {reinterpret_cast<char const *>(hextets_.data()), 16}; }
 
   bool operator==(const IPv6Address &rhs) const;
 
-  template <typename H>
-  friend H AbslHashValue(H hash_state, const IPv6Address &addr);
+  template <typename H> friend H AbslHashValue(H hash_state, const IPv6Address &addr);
 
 private:
   // Expects the hextets to be network byte order.
@@ -130,13 +123,9 @@ std::ostream &operator<<(std::ostream &os, const IPv6Address &ipv6);
 // etc.
 namespace fmt {
 template <> struct formatter<IPv6Address> {
-  template <typename ParseContext> constexpr auto parse(ParseContext &ctx)
-  {
-    return ctx.begin();
-  }
+  template <typename ParseContext> constexpr auto parse(ParseContext &ctx) { return ctx.begin(); }
 
-  template <typename FormatContext>
-  auto format(const IPv6Address &p, FormatContext &ctx)
+  template <typename FormatContext> auto format(const IPv6Address &p, FormatContext &ctx)
   {
     return format_to(ctx.begin(), "{}", p.str());
   }
@@ -155,9 +144,7 @@ public:
   // Parses the IPv4 address from the buffer. Assumes network byte order.
   static IPv4Address from(uint32_t buffer);
 
-  static IPv4Address from(struct in_addr const &address) {
-    return IPv4Address::from(address.s_addr);
-  }
+  static IPv4Address from(struct in_addr const &address) { return IPv4Address::from(address.s_addr); }
 
   // Parses the null-terminated string representation of an IPv4 address.
   //
@@ -198,18 +185,16 @@ public:
    * The `least_significant_octet` parameter can be used to customize the resulting address to
    * something other than the default 127.0.0.1.
    */
-  static constexpr IPv4Address localhost(uint8_t least_significant_octet = 1) {
+  static constexpr IPv4Address localhost(uint8_t least_significant_octet = 1)
+  {
     return IPv4Address({127, 0, 0, least_significant_octet});
   }
 
-  short_string<4> bytes_view() const {
-    return {reinterpret_cast<char const *>(octets_.data()), 4};
-  }
+  short_string<4> bytes_view() const { return {reinterpret_cast<char const *>(octets_.data()), 4}; }
 
   bool operator==(const IPv4Address &rhs) const;
 
-  template <typename H>
-  friend H AbslHashValue(H hash_state, const IPv4Address &addr);
+  template <typename H> friend H AbslHashValue(H hash_state, const IPv4Address &addr);
 
 private:
   Octets octets_ = {};

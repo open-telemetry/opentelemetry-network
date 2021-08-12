@@ -26,22 +26,21 @@
 namespace channel {
 
 TlsOverTcpChannel::TlsOverTcpChannel(
-  uv_loop_t &loop,
-  std::string addr,
-  std::string port,
-  TLSChannel::Credentials &creds,
-  std::string server_hostname,
-  std::optional<config::HttpProxyConfig> proxy
-):
-  tcp_callbacks_(*this),
-  tcp_(loop, std::move(addr), std::move(port), std::move(proxy)),
-  tls_(tcp_, creds, std::move(server_hostname))
-{
-}
+    uv_loop_t &loop,
+    std::string addr,
+    std::string port,
+    TLSChannel::Credentials &creds,
+    std::string server_hostname,
+    std::optional<config::HttpProxyConfig> proxy)
+    : tcp_callbacks_(*this),
+      tcp_(loop, std::move(addr), std::move(port), std::move(proxy)),
+      tls_(tcp_, creds, std::move(server_hostname))
+{}
 
 TlsOverTcpChannel::~TlsOverTcpChannel() {}
 
-void TlsOverTcpChannel::connect(Callbacks &callbacks) {
+void TlsOverTcpChannel::connect(Callbacks &callbacks)
+{
   LOG::debug("TlsOverTcpChannel::connect()");
   callbacks_ = &callbacks;
   tcp_.connect(tcp_callbacks_);
@@ -52,7 +51,8 @@ std::error_code TlsOverTcpChannel::send(const u8 *data, int data_len)
   return tls_.send(data, data_len);
 }
 
-void TlsOverTcpChannel::close() {
+void TlsOverTcpChannel::close()
+{
   tls_.close();
   tcp_.close();
 }
@@ -69,10 +69,7 @@ std::error_code TlsOverTcpChannel::flush()
  * TCP CALLBACKS
  **************************************/
 
-TlsOverTcpChannel::TcpCallbacks::TcpCallbacks(TlsOverTcpChannel &parent_channel)
-    : parent_channel_(parent_channel)
-{
-}
+TlsOverTcpChannel::TcpCallbacks::TcpCallbacks(TlsOverTcpChannel &parent_channel) : parent_channel_(parent_channel) {}
 
 u32 TlsOverTcpChannel::TcpCallbacks::received_data(const u8 *data, int data_len)
 {

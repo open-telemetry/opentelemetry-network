@@ -41,9 +41,11 @@ public:
    * @param periodic_cb: a callback to be called every once in a while, to
    *   allow user to e.g., flush rings
    */
-  CgroupProber(ProbeHandler &probe_handler, ebpf::BPFModule &bpf_module,
-               std::function<void(void)> periodic_cb,
-               std::function<void(std::string)> check_cb);
+  CgroupProber(
+      ProbeHandler &probe_handler,
+      ebpf::BPFModule &bpf_module,
+      std::function<void(void)> periodic_cb,
+      std::function<void(std::string)> check_cb);
 
   int error_count() { return close_dir_error_count_; };
 
@@ -61,9 +63,7 @@ private:
    * @param dir_name: path to directory in which to perform the search
    * @param periodic_cb: callback to call after doing some work.
    */
-  void
-  trigger_cgroup_clone_children_read(std::string dir_name,
-                                     std::function<void(void)> periodic_cb);
+  void trigger_cgroup_clone_children_read(std::string dir_name, std::function<void(void)> periodic_cb);
 
   int close_dir_error_count_;
 };

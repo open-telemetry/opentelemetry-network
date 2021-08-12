@@ -22,14 +22,11 @@
 #include <openssl/err.h>
 #include <openssl/ssl.h>
 
-channel::internal::TLSShim::TLSShim(SSLContext &ctx)
-    : ssl_(nullptr), transport_bio_(nullptr)
+channel::internal::TLSShim::TLSShim(SSLContext &ctx) : ssl_(nullptr), transport_bio_(nullptr)
 {
   ssl_ = SSL_new(ctx.get());
   if (ssl_ == nullptr) {
-    throw std::runtime_error(
-      fmt::format("could not instantiate TLS object: {}", TLSError())
-    );
+    throw std::runtime_error(fmt::format("could not instantiate TLS object: {}", TLSError()));
   }
 
   BIO *ssl_obj_bio = nullptr;
@@ -37,9 +34,7 @@ channel::internal::TLSShim::TLSShim(SSLContext &ctx)
   if (res != 1) {
     SSL_free(ssl_);
     ssl_ = nullptr;
-    throw std::runtime_error(
-      fmt::format("could not allocate TLS bio pair: {}", TLSError())
-    );
+    throw std::runtime_error(fmt::format("could not allocate TLS bio pair: {}", TLSError()));
   }
 
   /* we will pass two references of ssl_obj_bio_ to ssl_: read and write */

@@ -50,8 +50,7 @@ IdMapping::IdMapping(const google::protobuf::FileDescriptor *file)
     namespace_msg = namespace_msg->FindNestedTypeByName(packages[i]);
     if (namespace_msg == NULL) {
       std::ostringstream oss;
-      oss << "cannot find the " << i
-          << "-depth package nesting: " << packages[i];
+      oss << "cannot find the " << i << "-depth package nesting: " << packages[i];
       throw std::runtime_error(oss.str());
     }
   }
@@ -59,13 +58,11 @@ IdMapping::IdMapping(const google::protobuf::FileDescriptor *file)
   /* now find the field corresponding to the innermost package */
   auto field = namespace_msg->FindFieldByName(packages.back());
   if (field == NULL)
-    throw std::runtime_error("could not find innermost package: " +
-                             packages.back());
+    throw std::runtime_error("could not find innermost package: " + packages.back());
 
   /* the ID ranges are in the default option */
   if (field->has_default_value() == false)
-    throw std::runtime_error(
-        "package does not have a default value specifying ranges");
+    throw std::runtime_error("package does not have a default value specifying ranges");
 
   auto ranges_str = field->default_value_string();
 

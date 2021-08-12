@@ -18,12 +18,9 @@
 
 namespace collector {
 
-ResyncChannel::ResyncChannel(const u64 resync,
-                             ResyncQueueProducerInterface *resync_queue,
-                             std::function<void(void)> &reset_callback):
-  resync_(resync),
-  resync_queue_(resync_queue),
-  reset_callback_(reset_callback)
+ResyncChannel::ResyncChannel(
+    const u64 resync, ResyncQueueProducerInterface *resync_queue, std::function<void(void)> &reset_callback)
+    : resync_(resync), resync_queue_(resync_queue), reset_callback_(reset_callback)
 {}
 
 ResyncChannel::~ResyncChannel()

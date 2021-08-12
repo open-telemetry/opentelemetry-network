@@ -60,8 +60,8 @@ using namespace std::literals::chrono_literals;
 #include <iomanip>
 
 namespace {
-template <typename Out>
-void print_large_unsigned(Out &out, u128 value) {
+template <typename Out> void print_large_unsigned(Out &out, u128 value)
+{
   constexpr u128 mask = 10000000000000ull;
   auto const piece = static_cast<u64>(value % mask);
   u128 const head = value / mask;
@@ -74,12 +74,9 @@ void print_large_unsigned(Out &out, u128 value) {
 }
 } // namespace
 
-template <
-  typename Out,
-  typename T,
-  typename = std::enable_if_t<std::is_same_v<T, s128> || std::is_same_v<T, u128>>
->
-Out &operator <<(Out &&out, T value) {
+template <typename Out, typename T, typename = std::enable_if_t<std::is_same_v<T, s128> || std::is_same_v<T, u128>>>
+Out &operator<<(Out &&out, T value)
+{
   auto format_flags(out.flags());
   if constexpr (std::is_same_v<T, u128>) {
     print_large_unsigned(out, value);

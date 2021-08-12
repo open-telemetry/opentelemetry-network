@@ -88,16 +88,22 @@ void __handle_close_cb(uv_handle_t *handle)
 }
 
 KernelCollector::KernelCollector(
-    const std::string &full_program, config::IntakeConfig const &intake_config,
+    const std::string &full_program,
+    config::IntakeConfig const &intake_config,
     u64 boot_time_adjustment,
-    AwsMetadata const *aws_metadata, GcpInstanceMetadata const *gcp_metadata,
-    std::map<std::string, std::string> configuration_data, uv_loop_t &loop,
+    AwsMetadata const *aws_metadata,
+    GcpInstanceMetadata const *gcp_metadata,
+    std::map<std::string, std::string> configuration_data,
+    uv_loop_t &loop,
     CurlEngine &curl_engine,
     std::optional<AuthzFetcher> &authz_fetcher,
-    bool enable_http_metrics, bool enable_userland_tcp,
+    bool enable_http_metrics,
+    bool enable_userland_tcp,
     CgroupHandler::CgroupSettings cgroup_settings,
     ProcessHandler::CpuMemIoSettings const *cpu_mem_io_settings,
-    std::string const &bpf_dump_file, HostInfo host_info, EntrypointError entrypoint_error)
+    std::string const &bpf_dump_file,
+    HostInfo host_info,
+    EntrypointError entrypoint_error)
     : full_program_(full_program),
       intake_config_(std::move(intake_config)),
       boot_time_adjustment_(boot_time_adjustment),
@@ -113,20 +119,21 @@ KernelCollector::KernelCollector(
       primary_channel_(intake_config_.make_channel(loop)),
       secondary_channel_(intake_config_.create_output_record_file()),
       upstream_connection_(
-        WRITE_BUFFER_SIZE,
-        intake_config_.allow_compression(),
-        *primary_channel_,
-        secondary_channel_ ? &secondary_channel_ : nullptr
-      ),
+          WRITE_BUFFER_SIZE,
+          intake_config_.allow_compression(),
+          *primary_channel_,
+          secondary_channel_ ? &secondary_channel_ : nullptr),
       writer_(upstream_connection_.buffered_writer(), monotonic, boot_time_adjustment, encoder_.get()),
       last_probe_monotonic_time_ns_(monotonic() - inter_probe_time_ns_),
       is_connected_(false),
       curl_engine_(curl_engine),
       authz_fetcher_(authz_fetcher),
-      heartbeat_sender_(loop_, [this] {
-        send_heartbeat();
-        return scheduling::JobFollowUp::ok;
-      }),
+      heartbeat_sender_(
+          loop_,
+          [this] {
+            send_heartbeat();
+            return scheduling::JobFollowUp::ok;
+          }),
       enable_http_metrics_(enable_http_metrics),
       enable_userland_tcp_(enable_userland_tcp),
       cgroup_settings_(std::move(cgroup_settings)),
@@ -141,12 +148,11 @@ KernelCollector::KernelCollector(
 
   if (!bpf_dump_file.empty()) {
     auto const error = bpf_dump_file_.create(
-      bpf_dump_file.c_str(),
-      FileDescriptor::Access::write_only,
-      FileDescriptor::Positioning::append,
-      FileDescriptor::Permission::read_write,
-      FileDescriptor::Permission::read
-    );
+        bpf_dump_file.c_str(),
+        FileDescriptor::Access::write_only,
+        FileDescriptor::Positioning::append,
+        FileDescriptor::Permission::read_write,
+        FileDescriptor::Permission::read);
 
     if (error) {
       LOG::warn("unable to open/create eBPF dump file at '{}': {}", bpf_dump_file, error);
@@ -265,10 +271,7 @@ void KernelCollector::on_upstream_connected()
   try {
     send_connection_metadata();
   } catch (std::exception &e) {
-    LOG::error(
-      "Exception thrown when sending authentication request and agent metadata: {}",
-      e.what()
-    );
+    LOG::error("Exception thrown when sending authentication request and agent metadata: {}", e.what());
     return;
   }
 }
@@ -283,7 +286,7 @@ void KernelCollector::on_authenticated()
 
 void KernelCollector::probe_holdoff_timeout(uv_timer_t *timer)
 {
-  auto const upstream_connection_flush_and_close = [this] () {
+  auto const upstream_connection_flush_and_close = [this]() {
     upstream_connection_.flush();
     upstream_connection_.close();
   };
@@ -297,21 +300,26 @@ void KernelCollector::probe_holdoff_timeout(uv_timer_t *timer)
 
   last_probe_monotonic_time_ns_ = monotonic();
 
-  auto const handle_exception = [&] (TroubleshootItem item, std::exception const &e) {
+  auto const handle_exception = [&](TroubleshootItem item, std::exception const &e) {
     log_.error("Exception during BPFHandler initialization, closing connection: {}", e.what());
     print_troubleshooting_message_and_exit(host_info_, item, e, log_, upstream_connection_flush_and_close);
   };
 
   auto potential_troubleshoot_item = TroubleshootItem::bpf_compilation_failed;
   try {
-    bpf_handler_.emplace(loop_, full_program_, enable_http_metrics_, enable_userland_tcp_, bpf_dump_file_, log_, encoder_.get());
+    bpf_handler_.emplace(
+        loop_, full_program_, enable_http_metrics_, enable_userland_tcp_, bpf_dump_file_, log_, encoder_.get());
 
     potential_troubleshoot_item = TroubleshootItem::unexpected_exception;
     writer_.bpf_compiled();
 
-    bpf_handler_->load_buffered_poller(upstream_connection_.buffered_writer(),
-                                       boot_time_adjustment_, curl_engine_, nic_poller_,
-                                       cgroup_settings_, cpu_mem_io_settings_);
+    bpf_handler_->load_buffered_poller(
+        upstream_connection_.buffered_writer(),
+        boot_time_adjustment_,
+        curl_engine_,
+        nic_poller_,
+        cgroup_settings_,
+        cpu_mem_io_settings_);
 
     potential_troubleshoot_item = TroubleshootItem::bpf_load_probes_failed;
     bpf_handler_->load_probes(writer_);
@@ -341,8 +349,7 @@ void KernelCollector::send_connection_metadata()
 {
   // send a version_info message
   upstream_connection_.set_compression(false);
-  writer_.version_info(
-      versions::release.major(), versions::release.minor(), versions::release.build());
+  writer_.version_info(versions::release.major(), versions::release.minor(), versions::release.build());
   upstream_connection_.flush();
   upstream_connection_.set_compression(true);
 
@@ -352,14 +359,13 @@ void KernelCollector::send_connection_metadata()
 #pragma GCC diagnostic ignored "-Wstringop-truncation"
 
   /* Write config file labels */
-#define make_bufs_from_field(struct_name, field1, buf_name1, field2,           \
-                             buf_name2)                                        \
-  struct struct_name __##struct_name##__##buf_name1;                           \
-  char buf_name1[sizeof(__##struct_name##__##buf_name1.field1)] = {};          \
-  struct struct_name __##struct_name##__##buf_name2;                           \
+#define make_bufs_from_field(struct_name, field1, buf_name1, field2, buf_name2)                                                \
+  struct struct_name __##struct_name##__##buf_name1;                                                                           \
+  char buf_name1[sizeof(__##struct_name##__##buf_name1.field1)] = {};                                                          \
+  struct struct_name __##struct_name##__##buf_name2;                                                                           \
   char buf_name2[sizeof(__##struct_name##__##buf_name2.field2)] = {};
 
-  switch(intake_config_.auth_method()) {
+  switch (intake_config_.auth_method()) {
   case collector::AuthMethod::none:
     if (intake_config_.encoder() == IntakeEncoder::binary) {
       writer_.no_auth_connect(static_cast<u8>(ClientType::kernel), jb_blob{host_info_.hostname});
@@ -370,27 +376,20 @@ void KernelCollector::send_connection_metadata()
     assert(authz_token_);
     auto const &token = authz_token_->payload();
     LOG::info(
-      "sending authz token with {}s left until expiration (iat={}s exp={}s)",
-      authz_token_->time_left<std::chrono::seconds>(std::chrono::system_clock::now()).count(),
-      authz_token_->issued_at<std::chrono::seconds>().count(),
-      authz_token_->expiration<std::chrono::seconds>().count());
-    writer_.authz_authenticate(jb_blob{token},
-                               static_cast<u8>(ClientType::kernel),
-                               jb_blob{host_info_.hostname});
+        "sending authz token with {}s left until expiration (iat={}s exp={}s)",
+        authz_token_->time_left<std::chrono::seconds>(std::chrono::system_clock::now()).count(),
+        authz_token_->issued_at<std::chrono::seconds>().count(),
+        authz_token_->expiration<std::chrono::seconds>().count());
+    writer_.authz_authenticate(jb_blob{token}, static_cast<u8>(ClientType::kernel), jb_blob{host_info_.hostname});
     upstream_connection_.flush();
-  }
-    break;
+  } break;
   default:
     throw std::runtime_error("invalid auth_method");
     break;
   }
 
   writer_.os_info(
-    integer_value(host_info_.os),
-    host_info_.os_flavor,
-    jb_blob{host_info_.os_version},
-    jb_blob{host_info_.kernel_version}
-  );
+      integer_value(host_info_.os), host_info_.os_flavor, jb_blob{host_info_.os_version}, jb_blob{host_info_.kernel_version});
 
   writer_.report_cpu_cores(std::thread::hardware_concurrency());
 
@@ -401,32 +400,27 @@ void KernelCollector::send_connection_metadata()
     upstream_connection_.flush();
   }
 
-  for (auto const &label: configuration_data) {
+  for (auto const &label : configuration_data) {
     writer_.set_config_label(jb_blob{label.first}, jb_blob{label.second});
   }
 
   /* Kernel version */
-  constexpr std::string_view kernel_version_label =  "__kernel_version";
+  constexpr std::string_view kernel_version_label = "__kernel_version";
   writer_.set_config_label(jb_blob{kernel_version_label}, jb_blob{host_info_.kernel_version});
   upstream_connection_.flush();
 
-#define make_buf_from_field(struct_name, field, buf_name)                      \
-  struct struct_name __##struct_name##__##buf_name;                            \
+#define make_buf_from_field(struct_name, field, buf_name)                                                                      \
+  struct struct_name __##struct_name##__##buf_name;                                                                            \
   char buf_name[sizeof(__##struct_name##__##buf_name.field)] = {};
 
   if (aws_metadata_) {
     writer_.cloud_platform(static_cast<u16>(CloudPlatform::aws));
     if (auto const &account_id = aws_metadata_->account_id()) {
       LOG::trace_in(
-        std::make_tuple(CloudPlatform::aws, collector::Component::auth),
-        "reporting aws account id: {}", account_id.value()
-      );
+          std::make_tuple(CloudPlatform::aws, collector::Component::auth), "reporting aws account id: {}", account_id.value());
       writer_.cloud_platform_account_info(jb_blob{account_id.value()});
     } else {
-      LOG::trace_in(
-        std::make_tuple(CloudPlatform::aws, collector::Component::auth),
-        "no aws account id to report"
-      );
+      LOG::trace_in(std::make_tuple(CloudPlatform::aws, collector::Component::auth), "no aws account id to report");
     }
 
     auto id = aws_metadata_->id().value();
@@ -435,16 +429,15 @@ void KernelCollector::send_connection_metadata()
     }
 
     writer_.set_node_info(
-      jb_blob{aws_metadata_->az().value()},
-      jb_blob{aws_metadata_->iam_role().value()},
-      jb_blob{id},
-      jb_blob{aws_metadata_->type().value()}
-    );
+        jb_blob{aws_metadata_->az().value()},
+        jb_blob{aws_metadata_->iam_role().value()},
+        jb_blob{id},
+        jb_blob{aws_metadata_->type().value()});
 
     upstream_connection_.flush();
 
-    for (auto const &interface: aws_metadata_->network_interfaces()) {
-      for (auto const &ipv4: interface.private_ipv4s()) {
+    for (auto const &interface : aws_metadata_->network_interfaces()) {
+      for (auto const &ipv4 : interface.private_ipv4s()) {
         struct sockaddr_in private_sa;
         int res = inet_pton(AF_INET, ipv4.c_str(), &(private_sa.sin_addr));
         if (res != 1) {
@@ -455,7 +448,7 @@ void KernelCollector::send_connection_metadata()
         writer_.private_ipv4_addr(private_sa.sin_addr.s_addr, (u8 *)vpc_id_buf);
       }
 
-      for (auto const &ipv6: interface.ipv6s()) {
+      for (auto const &ipv6 : interface.ipv6s()) {
         struct sockaddr_in6 sa;
         int res = inet_pton(AF_INET6, ipv6.c_str(), &(sa.sin6_addr));
         if (res != 1) {
@@ -466,25 +459,20 @@ void KernelCollector::send_connection_metadata()
         writer_.ipv6_addr(sa.sin6_addr.s6_addr, (u8 *)vpc_id_buf);
       }
 
-      for (auto const &mapped_ipv4: interface.mapped_ipv4s()) {
+      for (auto const &mapped_ipv4 : interface.mapped_ipv4s()) {
         struct sockaddr_in public_sa;
-        int res =
-            inet_pton(AF_INET, mapped_ipv4.first.c_str(), &(public_sa.sin_addr));
+        int res = inet_pton(AF_INET, mapped_ipv4.first.c_str(), &(public_sa.sin_addr));
         if (res != 1) {
           continue;
         }
         struct sockaddr_in private_sa;
-        res = inet_pton(AF_INET, mapped_ipv4.second.c_str(),
-                        &(private_sa.sin_addr));
+        res = inet_pton(AF_INET, mapped_ipv4.second.c_str(), &(private_sa.sin_addr));
         if (res != 1) {
           continue;
         }
-        make_buf_from_field(jb_ingest__public_to_private_ipv4, vpc_id,
-                            vpc_id_buf);
+        make_buf_from_field(jb_ingest__public_to_private_ipv4, vpc_id, vpc_id_buf);
         strncpy(vpc_id_buf, interface.vpc_id().c_str(), sizeof(vpc_id_buf));
-        writer_.public_to_private_ipv4(public_sa.sin_addr.s_addr,
-                                       private_sa.sin_addr.s_addr,
-                                       (u8 *)vpc_id_buf);
+        writer_.public_to_private_ipv4(public_sa.sin_addr.s_addr, private_sa.sin_addr.s_addr, (u8 *)vpc_id_buf);
       }
     }
   } else if (gcp_metadata_) {
@@ -497,21 +485,20 @@ void KernelCollector::send_connection_metadata()
     // writer_.cloud_platform_account_info(jb_blob{account_id});
 
     writer_.set_node_info(
-      jb_blob{gcp_metadata_->az()},
-      jb_blob{gcp_metadata_->role()},
-      jb_blob{gcp_metadata_->hostname()},
-      jb_blob{gcp_metadata_->type()}
-    );
+        jb_blob{gcp_metadata_->az()},
+        jb_blob{gcp_metadata_->role()},
+        jb_blob{gcp_metadata_->hostname()},
+        jb_blob{gcp_metadata_->type()});
 
     upstream_connection_.flush();
 
-    for (auto const &interface: gcp_metadata_->network_interfaces()) {
+    for (auto const &interface : gcp_metadata_->network_interfaces()) {
       if (auto const ipv4 = interface.ipv4()) {
         make_buf_from_field(jb_ingest__private_ipv4_addr, vpc_id, vpc_id_buf);
         strncpy(vpc_id_buf, interface.vpc_id().c_str(), sizeof(vpc_id_buf));
         writer_.private_ipv4_addr(ipv4->as_int(), (u8 *)vpc_id_buf);
 
-        for (auto const &public_ip: interface.public_ips()) {
+        for (auto const &public_ip : interface.public_ips()) {
           make_buf_from_field(jb_ingest__public_to_private_ipv4, vpc_id, vpc_id_buf);
           strncpy(vpc_id_buf, interface.vpc_id().c_str(), sizeof(vpc_id_buf));
           writer_.public_to_private_ipv4(public_ip.as_int(), ipv4->as_int(), (u8 *)vpc_id_buf);
@@ -527,12 +514,7 @@ void KernelCollector::send_connection_metadata()
   } else {
     writer_.cloud_platform(static_cast<u16>(CloudPlatform::unknown));
 
-    writer_.set_node_info(
-      jb_blob{/* az */},
-      jb_blob{/* role */},
-      jb_blob{host_info_.hostname},
-      jb_blob{/* instance_type */}
-    );
+    writer_.set_node_info(jb_blob{/* az */}, jb_blob{/* role */}, jb_blob{host_info_.hostname}, jb_blob{/* instance_type */});
 
     // no network interface data (public/private ip) to send
   }
@@ -556,7 +538,8 @@ void KernelCollector::send_connection_metadata()
   on_authenticated();
 }
 
-void KernelCollector::on_error(int error) {
+void KernelCollector::on_error(int error)
+{
   /* we don't want attempts to perform IO on the channel */
   heartbeat_sender_.stop();
   stop_all_timers();
@@ -569,33 +552,32 @@ void KernelCollector::cleanup_pointers()
 
 void KernelCollector::received_data(const u8 *data, int data_len)
 {
-  std::string_view const response{reinterpret_cast<char const *>(data),
-      static_cast<std::size_t>(data_len)};
+  std::string_view const response{reinterpret_cast<char const *>(data), static_cast<std::size_t>(data_len)};
   LOG::trace("KernelCollector::received_data({}): {}", data_len);
 
   switch (intake_config_.encoder()) {
-    case IntakeEncoder::binary: {
-      static constexpr int max_command_length = 8;
+  case IntakeEncoder::binary: {
+    static constexpr int max_command_length = 8;
 
-      for (int i = 0; i < data_len; i++) {
-        received_command_ = (received_command_ << 8) | *(data + i);
-        recieved_length_++;
+    for (int i = 0; i < data_len; i++) {
+      received_command_ = (received_command_ << 8) | *(data + i);
+      recieved_length_++;
 
-        if (recieved_length_ == max_command_length) {
-          handle_received_command(received_command_);
-          recieved_length_ = 0;
-        }
+      if (recieved_length_ == max_command_length) {
+        handle_received_command(received_command_);
+        recieved_length_ = 0;
       }
-      break;
     }
+    break;
+  }
 
-    case IntakeEncoder::otlp_log: {
-      static constexpr std::string_view http_200 = "HTTP/1.1 200 ";
-      if (response.size() < http_200.size() || response.substr(0, http_200.size()) != http_200) {
-        LOG::error("HTTP response from OTLP log collector (sz:{}): {}", data_len, response);
-      }
-      break;
+  case IntakeEncoder::otlp_log: {
+    static constexpr std::string_view http_200 = "HTTP/1.1 200 ";
+    if (response.size() < http_200.size() || response.substr(0, http_200.size()) != http_200) {
+      LOG::error("HTTP response from OTLP log collector (sz:{}): {}", data_len, response);
     }
+    break;
+  }
   }
 }
 
@@ -613,9 +595,7 @@ void KernelCollector::send_heartbeat()
   upstream_connection_.flush();
 }
 
-KernelCollector::Callbacks::Callbacks(KernelCollector &collector)
-    : collector_(collector)
-{}
+KernelCollector::Callbacks::Callbacks(KernelCollector &collector) : collector_(collector) {}
 
 u32 KernelCollector::Callbacks::received_data(const u8 *data, int data_len)
 {
@@ -640,8 +620,7 @@ void KernelCollector::Callbacks::on_closed()
   if (collector_.intake_config_.auth_method() == collector::AuthMethod::authz) {
     assert(collector_.authz_fetcher_);
     if (auto const &current = collector_.authz_fetcher_->token();
-        !current || current->has_expired(std::chrono::system_clock::now())
-    ) {
+        !current || current->has_expired(std::chrono::system_clock::now())) {
       LOG::trace("refreshing invalid or expired authz token before reconnecting...");
       collector_.authz_fetcher_->sync_refresh();
     }
@@ -670,25 +649,26 @@ void KernelCollector::enter_try_connecting(std::chrono::milliseconds discount)
   if (now - last_probe_monotonic_time_ns_ < inter_probe_time_ns_) {
     // need to bound using inter_probe_time_ns_
     std::chrono::milliseconds const at_least{
-        (inter_probe_time_ns_ - (now - last_probe_monotonic_time_ns_)) /
-        ((u64)1000 * 1000)};
+        (inter_probe_time_ns_ - (now - last_probe_monotonic_time_ns_)) / ((u64)1000 * 1000)};
     timeout = std::max(timeout, at_least);
   }
 
   // add jitter
   {
     std::random_device rd;
-    std::uniform_int_distribution<u64> d(0,
-      integer_time<std::chrono::milliseconds>(MAX_JITTER_TIME));
+    std::uniform_int_distribution<u64> d(0, integer_time<std::chrono::milliseconds>(MAX_JITTER_TIME));
     timeout += std::chrono::milliseconds{d(rd)};
   }
 
-  LOG::trace("KernelCollector: entering TRY_CONNECTING state. Next "
-             "reconnection attempt in {}",
-             timeout);
-  int res = uv_timer_start(&try_connecting_timer_, __try_connecting_cb,
-                           integer_time<std::chrono::milliseconds>(timeout),
-                           integer_time<std::chrono::milliseconds>(TRY_CONNECTING_TIMEOUT));
+  LOG::trace(
+      "KernelCollector: entering TRY_CONNECTING state. Next "
+      "reconnection attempt in {}",
+      timeout);
+  int res = uv_timer_start(
+      &try_connecting_timer_,
+      __try_connecting_cb,
+      integer_time<std::chrono::milliseconds>(timeout),
+      integer_time<std::chrono::milliseconds>(TRY_CONNECTING_TIMEOUT));
   if (res != 0) {
     throw std::runtime_error("Could not start try_connecting_timer");
   }
@@ -700,8 +680,7 @@ void KernelCollector::enter_connecting()
 
   LOG::trace("KernelCollector: entering CONNECTING state");
 
-  int res = uv_timer_start(&connection_timeout_, __connection_timeout_cb,
-                           connection_timeout_ms_, 0);
+  int res = uv_timer_start(&connection_timeout_, __connection_timeout_cb, connection_timeout_ms_, 0);
   if (res != 0)
     throw std::runtime_error("Could not start connection_timeout timer");
 }
@@ -712,8 +691,7 @@ void KernelCollector::enter_probe_holdoff()
 
   LOG::trace("KernelCollector: entering PROBE_HOLDOFF state");
 
-  int res = uv_timer_start(&probe_holdoff_timer_, __probe_holdoff_cb,
-                           probe_holdoff_timeout_ms_, 0);
+  int res = uv_timer_start(&probe_holdoff_timer_, __probe_holdoff_cb, probe_holdoff_timeout_ms_, 0);
   if (res != 0)
     throw std::runtime_error("Could not start probe_holdoff_timer");
 }
@@ -724,13 +702,11 @@ void KernelCollector::enter_polling_state()
 
   LOG::trace("KernelCollector: entering POLLING state");
 
-  int res = uv_timer_start(&polling_timer_, __polling_steady_state_cb,
-                           polling_timeout_ms_, polling_timeout_ms_);
+  int res = uv_timer_start(&polling_timer_, __polling_steady_state_cb, polling_timeout_ms_, polling_timeout_ms_);
   if (res != 0)
     throw std::runtime_error("Could not start polling_timer");
 
-  res = uv_timer_start(&slow_timer_, __polling_steady_state_slow_cb,
-                       slow_polling_timeout_ms_, slow_polling_timeout_ms_);
+  res = uv_timer_start(&slow_timer_, __polling_steady_state_slow_cb, slow_polling_timeout_ms_, slow_polling_timeout_ms_);
   if (res != 0)
     throw std::runtime_error("Could not start slow_timer");
 }
@@ -744,13 +720,11 @@ void KernelCollector::stop_all_timers()
   uv_timer_stop(&slow_timer_);
 }
 
-std::chrono::milliseconds
-KernelCollector::update_authz_token(AuthzToken const &token)
+std::chrono::milliseconds KernelCollector::update_authz_token(AuthzToken const &token)
 {
   assert(authz_token_);
   auto const time_left = std::chrono::duration_cast<std::chrono::milliseconds>(
-      authz_token_->expiration() -
-      std::chrono::system_clock::now().time_since_epoch());
+      authz_token_->expiration() - std::chrono::system_clock::now().time_since_epoch());
   authz_token_ = token;
   return time_left;
 }

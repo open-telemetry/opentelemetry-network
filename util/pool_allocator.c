@@ -1,10 +1,8 @@
 #include <util/pool_allocator.h>
 
-int pool_allocator_init(struct pool_allocator *map, void *pool,
-                        u32 elem_size, u32 n_elems)
+int pool_allocator_init(struct pool_allocator *map, void *pool, u32 elem_size, u32 n_elems)
 {
-  if ((map == NULL) || (pool == NULL) || (n_elems == 0) ||
-      (elem_size < sizeof(u32)))
+  if ((map == NULL) || (pool == NULL) || (n_elems == 0) || (elem_size < sizeof(u32)))
     return -EINVAL;
 
   map->pool = pool;

@@ -31,7 +31,7 @@ namespace buffer {
  */
 class WritableBufferView {
 public:
-  WritableBufferView(char *begin, char *end): begin_(begin), end_(end) {}
+  WritableBufferView(char *begin, char *end) : begin_(begin), end_(end) {}
 
   /**
    * Returns a read-only view of this writable view.
@@ -71,16 +71,12 @@ private:
  *   read operations;
  * - free: free space in the buffer, available for write operations.
  */
-template <std::size_t Size>
-class Buffer {
+template <std::size_t Size> class Buffer {
 public:
   /**
    * Constructs an empty buffer of size `Size`.
    */
-  Buffer():
-    read_(buffer_),
-    write_(buffer_)
-  {}
+  Buffer() : read_(buffer_), write_(buffer_) {}
 
   Buffer(Buffer const &) = delete;
   Buffer(Buffer &&) = delete;
@@ -88,24 +84,18 @@ public:
   /**
    * Returns a read-only view of the `consumed` data section.
    */
-  std::string_view consumed() const {
-    return {buffer_, static_cast<std::size_t>(read_ - buffer_)};
-  }
+  std::string_view consumed() const { return {buffer_, static_cast<std::size_t>(read_ - buffer_)}; }
 
   /**
    * Returns a read-only view of the `available` data section.
    */
-  std::string_view available() const {
-    return {read_, static_cast<std::size_t>(write_ - read_)};
-  }
+  std::string_view available() const { return {read_, static_cast<std::size_t>(write_ - read_)}; }
 
   /**
    * Returns a read-only view of the `consumed` and `available` data sections
    * in a single chunk.
    */
-  std::string_view view() const {
-    return {buffer_, static_cast<std::size_t>(write_ - buffer_)};
-  }
+  std::string_view view() const { return {buffer_, static_cast<std::size_t>(write_ - buffer_)}; }
 
   /**
    * Marks the first `count` bytes of the `available` section as `consumed`.
@@ -114,7 +104,8 @@ public:
    *
    * @assumes: `count` <= `available.size()`
    */
-  Buffer &consume(std::size_t count) {
+  Buffer &consume(std::size_t count)
+  {
     assert(count <= available().size());
     read_ += count;
     return *this;
@@ -125,7 +116,8 @@ public:
    *
    * See `commit()` for how to make written data available to read operations.
    */
-  WritableBufferView writable() {
+  WritableBufferView writable()
+  {
     assert(buffer_ <= write_);
     assert(buffer_ + Size >= write_);
     return {write_, buffer_ + Size};
@@ -138,7 +130,8 @@ public:
    *
    * @assumes: `count` <= `free()`
    */
-  Buffer &commit(std::size_t count) {
+  Buffer &commit(std::size_t count)
+  {
     assert(count <= free());
     write_ += count;
     return *this;
@@ -147,7 +140,8 @@ public:
   /**
    * Drop all written data that hasn't been consumed by a read operation.
    */
-  Buffer &drop() {
+  Buffer &drop()
+  {
     write_ = read_;
     return *this;
   }
@@ -157,7 +151,8 @@ public:
    *
    * @assumes: `count` <= `available().size()`
    */
-  Buffer &drop(std::size_t count) {
+  Buffer &drop(std::size_t count)
+  {
     assert(count <= available().size());
     write_ = read_;
     return *this;
@@ -167,7 +162,8 @@ public:
    * Rewinds the read cursor to the beginning of the buffer, so that data
    * that has already been consumed can be read again.
    */
-  Buffer &rewind() {
+  Buffer &rewind()
+  {
     read_ = 0;
     return *this;
   }
@@ -178,7 +174,8 @@ public:
    *
    * @assumes: `count` <= `consumed().size()`
    */
-  Buffer &rewind(std::size_t count) {
+  Buffer &rewind(std::size_t count)
+  {
     assert(count <= consumed().size());
     read_ -= count;
     return *this;
@@ -191,7 +188,8 @@ public:
    *
    * No data in the internal buffer is overwritten.
    */
-  Buffer &clear() {
+  Buffer &clear()
+  {
     read_ = write_ = buffer_;
     return *this;
   }
@@ -200,7 +198,8 @@ public:
    * Frees up space in the buffer by pruning the `consumed` section and
    * moving the `available` section to the beginning of the buffer.
    */
-  Buffer &compact() {
+  Buffer &compact()
+  {
     std::memmove(buffer_, read_, available().size());
     write_ -= consumed().size();
     read_ = buffer_;

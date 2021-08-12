@@ -41,18 +41,13 @@ protected:
     size_t operator()(const dns_request_key &k) const noexcept;
   };
   struct dns_request_key_equal_to {
-    bool operator()(const dns_request_key &k,
-                    const dns_request_key &k2) const noexcept;
+    bool operator()(const dns_request_key &k, const dns_request_key &k2) const noexcept;
   };
 
-  typedef std::list<std::pair<dns_request_key, dns_request_value>>
-      DnsRequestsList;
-  typedef std::unordered_multimap<dns_request_key, DnsRequestsList::iterator,
-                                  dns_request_key_hash,
-                                  dns_request_key_equal_to>
+  typedef std::list<std::pair<dns_request_key, dns_request_value>> DnsRequestsList;
+  typedef std::unordered_multimap<dns_request_key, DnsRequestsList::iterator, dns_request_key_hash, dns_request_key_equal_to>
       DnsRequestsByKeyMap;
-  typedef std::unordered_multimap<u64, DnsRequestsList::iterator>
-      DnsRequestsBySockMap;
+  typedef std::unordered_multimap<u64, DnsRequestsList::iterator> DnsRequestsBySockMap;
 
 public:
   typedef DnsRequestsList::iterator Request;

@@ -25,18 +25,14 @@ struct CustomError : public std::exception {
   CustomError() = default;
 
   template <typename... Args>
-  explicit CustomError(std::string_view message, Args &&... args)
-      : message_(message), code_((0 + ... + args))
+  explicit CustomError(std::string_view message, Args &&... args) : message_(message), code_((0 + ... + args))
   {}
 
   CustomError(CustomError const &) = default;
   CustomError(CustomError &&) = default;
 
   bool operator!=(CustomError const &rhs) const { return !(*this == rhs); }
-  bool operator==(CustomError const &rhs) const
-  {
-    return message_ == rhs.message_ && code_ == rhs.code_;
-  }
+  bool operator==(CustomError const &rhs) const { return message_ == rhs.message_ && code_ == rhs.code_; }
 
   auto const &message() const { return message_; }
 
@@ -67,9 +63,7 @@ TEST(expected, success_with_arguments_example)
 {
   // simulates a function that returns a success value constructed with
   // arguments through `expected`
-  auto computation = []() -> Expected<std::string, CustomError> {
-    return {"test string"};
-  };
+  auto computation = []() -> Expected<std::string, CustomError> { return {"test string"}; };
 
   EXPECT_NO_THROW({
     auto result = computation();
@@ -88,10 +82,7 @@ TEST(expected, success_with_multiple_arguments_example)
 {
   // simulates a function that returns a success value constructed with multiple
   // arguments through `expected`
-  auto computation =
-      []() -> Expected<std::pair<std::string, int>, CustomError> {
-    return {"test string", 100};
-  };
+  auto computation = []() -> Expected<std::pair<std::string, int>, CustomError> { return {"test string", 100}; };
 
   EXPECT_NO_THROW({
     auto result = computation();
@@ -181,9 +172,7 @@ TEST(expected, failure_with_arguments_example)
 {
   // simulates a function that returns an error constructed with arguments
   // through `expected`
-  auto computation = []() -> Expected<int, CustomError> {
-    return {unexpected, "error message"};
-  };
+  auto computation = []() -> Expected<int, CustomError> { return {unexpected, "error message"}; };
 
   EXPECT_THROW(
       {
@@ -214,9 +203,7 @@ TEST(expected, failure_with_multiple_arguments_example)
 {
   // simulates a function that returns an error constructed with multiple
   // arguments through `expected`
-  auto computation = []() -> Expected<int, CustomError> {
-    return {unexpected, "error message", 1, 2, 3};
-  };
+  auto computation = []() -> Expected<int, CustomError> { return {unexpected, "error message", 1, 2, 3}; };
 
   EXPECT_THROW(
       {
@@ -395,30 +382,21 @@ TEST(expected, on_error_with_value)
 {
   auto computation = []() -> Expected<int, CustomError> { return 10; };
 
-  EXPECT_NO_THROW(
-      { computation().on_error([](auto &error) { throw CustomError(); }); });
+  EXPECT_NO_THROW({ computation().on_error([](auto &error) { throw CustomError(); }); });
 }
 
 TEST(expected, on_error_with_error__no_arguments)
 {
-  auto computation = []() -> Expected<int, CustomError> {
-    return {unexpected, "error message"};
-  };
+  auto computation = []() -> Expected<int, CustomError> { return {unexpected, "error message"}; };
 
-  EXPECT_THROW(
-      { computation().on_error([](auto &error) { throw CustomError(); }); },
-      CustomError);
+  EXPECT_THROW({ computation().on_error([](auto &error) { throw CustomError(); }); }, CustomError);
 }
 
 TEST(expected, on_error_with_error__error_argument)
 {
-  auto computation = []() -> Expected<int, CustomError> {
-    return {unexpected, "error message"};
-  };
+  auto computation = []() -> Expected<int, CustomError> { return {unexpected, "error message"}; };
 
-  EXPECT_THROW(
-      { computation().on_error([](CustomError const &e) { throw e; }); },
-      CustomError);
+  EXPECT_THROW({ computation().on_error([](CustomError const &e) { throw e; }); }, CustomError);
 }
 
 TEST(expected, recover_with_value_const)

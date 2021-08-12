@@ -39,9 +39,12 @@ public:
   /**
    * c'tor
    */
-  TCPDataHandler(uv_loop_t &loop, ebpf::BPFModule &bpf_module,
-                 ::flowmill::ingest::Writer &writer, PerfContainer &container,
-                 logging::Logger &log);
+  TCPDataHandler(
+      uv_loop_t &loop,
+      ebpf::BPFModule &bpf_module,
+      ::flowmill::ingest::Writer &writer,
+      PerfContainer &container,
+      logging::Logger &log);
 
   /**
    * d'tor
@@ -49,8 +52,15 @@ public:
   virtual ~TCPDataHandler();
 
   // Data processing entrypoint
-  void process(size_t idx, u64 tstamp, u64 sk, u32 pid, u32 length, u64 offset,
-               STREAM_TYPE stream_type, CLIENT_SERVER_TYPE client_server);
+  void process(
+      size_t idx,
+      u64 tstamp,
+      u64 sk,
+      u32 pid,
+      u32 length,
+      u64 offset,
+      STREAM_TYPE stream_type,
+      CLIENT_SERVER_TYPE client_server);
 
   void handle_close_socket(u64 sk);
 
@@ -58,23 +68,18 @@ public:
   inline ::flowmill::ingest::Writer &writer() { return writer_; }
 
   // tcp kernel->userland throttling control backchannel
-  void enable_stream(const tcp_control_key_t &key, STREAM_TYPE stream_type,
-                     bool enable);
+  void enable_stream(const tcp_control_key_t &key, STREAM_TYPE stream_type, bool enable);
   void enable_stream(const tcp_control_key_t &key, bool enable);
-  void update_stream_start(const tcp_control_key_t &key,
-                           STREAM_TYPE stream_type, u64 start);
+  void update_stream_start(const tcp_control_key_t &key, STREAM_TYPE stream_type, u64 start);
 
   // create a new protocol handler, possibly for upgrade
-  ProtocolHandlerBase::ptr_type
-  create_protocol_handler(int protocol, const tcp_control_key_t &key, u32 pid);
+  ProtocolHandlerBase::ptr_type create_protocol_handler(int protocol, const tcp_control_key_t &key, u32 pid);
 
 protected:
-  void upgrade_protocol_handler(ProtocolHandlerBase::ptr_type new_handler,
-                                ProtocolHandlerBase::ptr_type original_handler);
+  void upgrade_protocol_handler(ProtocolHandlerBase::ptr_type new_handler, ProtocolHandlerBase::ptr_type original_handler);
 
   struct tcp_control_key_t_comparator {
-    bool operator()(const tcp_control_key_t &a,
-                    const tcp_control_key_t &b) const;
+    bool operator()(const tcp_control_key_t &a, const tcp_control_key_t &b) const;
   };
 
 protected:
@@ -83,9 +88,7 @@ protected:
   ::flowmill::ingest::Writer &writer_;
   PerfContainer &container_;
   u64 lost_record_total_count_ = 0;
-  std::map<tcp_control_key_t, std::shared_ptr<ProtocolHandlerBase>,
-           tcp_control_key_t_comparator>
-      protocol_handlers_;
+  std::map<tcp_control_key_t, std::shared_ptr<ProtocolHandlerBase>, tcp_control_key_t_comparator> protocol_handlers_;
   ebpf::TableDesc tcp_control_desc_;
   logging::Logger &log_;
 };

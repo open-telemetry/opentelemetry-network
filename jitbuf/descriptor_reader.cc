@@ -68,8 +68,7 @@ Descriptor DescriptorReader::read(u8 *buffer, u16 len)
     /* sanity checks */
     if (is_arr) {
       if (array_index >= n_arrays)
-        throw std::runtime_error(
-            "descriptor has more than n_arrays fields marked as arrays");
+        throw std::runtime_error("descriptor has more than n_arrays fields marked as arrays");
       if ((arrays[array_index] == 0) || (arrays[array_index] > 4096))
         throw std::runtime_error("array size out of bounds");
     }
@@ -104,8 +103,7 @@ Descriptor DescriptorReader::read(u8 *buffer, u16 len)
   return res;
 }
 
-void DescriptorReader::compute_positions(Descriptor &descriptor,
-                                         bool packed_strings)
+void DescriptorReader::compute_positions(Descriptor &descriptor, bool packed_strings)
 {
   /* is this message dynamically sized? */
   u16 n_var_fields = 0;

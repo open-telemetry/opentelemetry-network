@@ -27,7 +27,8 @@
 
 namespace config {
 
-FileDescriptor IntakeConfig::create_output_record_file() const {
+FileDescriptor IntakeConfig::create_output_record_file() const
+{
   FileDescriptor fd;
 
   LOG::debug("intake record file: `{}`", record_path_);
@@ -42,67 +43,59 @@ FileDescriptor IntakeConfig::create_output_record_file() const {
   return fd;
 }
 
-std::unique_ptr<channel::NetworkChannel> IntakeConfig::make_channel(
-  uv_loop_t &loop,
-  std::string_view private_key,
-  std::string_view certificate
-) const {
+std::unique_ptr<channel::NetworkChannel>
+IntakeConfig::make_channel(uv_loop_t &loop, std::string_view private_key, std::string_view certificate) const
+{
   if (disable_tls_) {
     return std::make_unique<channel::TCPChannel>(loop, host_, port_, proxy_);
   }
 
   return std::make_unique<channel::TLSHandler>(
-    loop, host_, port_,
-    std::string{private_key},
-    std::string{certificate},
-    name_, proxy_
-  );
+      loop, host_, port_, std::string{private_key}, std::string{certificate}, name_, proxy_);
 }
 
-IntakeConfig IntakeConfig::read_from_env() {
+IntakeConfig IntakeConfig::read_from_env()
+{
   IntakeConfig intake{
-    .name_ = get_env_var(INTAKE_NAME_VAR),
-    .host_ = get_env_var(INTAKE_HOST_VAR),
-    .port_ = get_env_var(INTAKE_PORT_VAR),
-    .proxy = config::HttpProxyConfig::read_from_env(),
-    .record_output_path = std::string(try_get_env_var(INTAKE_RECORD_OUTPUT_PATH_VAR)),
-    .disable_tls_ = try_get_env_value<bool>(INTAKE_DISABLE_TLS_VAR),
-    .encoder_ = try_get_env_value<IntakeEncoder>(INTAKE_INTAKE_ENCODER_VAR),
-    .auth_method_ = try_get_env_value<collector::AuthMethod>(INTAKE_AUTH_METHOD_VAR, collector::AuthMethod::authz)
-  };
+      .name_ = get_env_var(INTAKE_NAME_VAR),
+      .host_ = get_env_var(INTAKE_HOST_VAR),
+      .port_ = get_env_var(INTAKE_PORT_VAR),
+      .proxy = config::HttpProxyConfig::read_from_env(),
+      .record_output_path = std::string(try_get_env_var(INTAKE_RECORD_OUTPUT_PATH_VAR)),
+      .disable_tls_ = try_get_env_value<bool>(INTAKE_DISABLE_TLS_VAR),
+      .encoder_ = try_get_env_value<IntakeEncoder>(INTAKE_INTAKE_ENCODER_VAR),
+      .auth_method_ = try_get_env_value<collector::AuthMethod>(INTAKE_AUTH_METHOD_VAR, collector::AuthMethod::authz)};
 
   return intake;
 }
 
-IntakeConfig IntakeConfig::read_from_env_and_intake(std::string_view intake_name) {
+IntakeConfig IntakeConfig::read_from_env_and_intake(std::string_view intake_name)
+{
   LOG::trace_in(Utility::authz, "Got intake name from token: {}", intake_name);
   IntakeConfig intake{
-    .name_ = std::string(try_get_env_var(INTAKE_NAME_VAR, intake_name)),
-    .host_ = get_env_var(INTAKE_HOST_VAR),
-    .port_ = get_env_var(INTAKE_PORT_VAR),
-    .proxy = config::HttpProxyConfig::read_from_env(),
-    .record_output_path = std::string(try_get_env_var(INTAKE_RECORD_OUTPUT_PATH_VAR)),
-    .disable_tls_ = try_get_env_value<bool>(INTAKE_DISABLE_TLS_VAR),
-    .encoder_ = try_get_env_value<IntakeEncoder>(INTAKE_INTAKE_ENCODER_VAR),
-    .auth_method_ = try_get_env_value<collector::AuthMethod>(INTAKE_AUTH_METHOD_VAR, collector::AuthMethod::authz)
-  };
+      .name_ = std::string(try_get_env_var(INTAKE_NAME_VAR, intake_name)),
+      .host_ = get_env_var(INTAKE_HOST_VAR),
+      .port_ = get_env_var(INTAKE_PORT_VAR),
+      .proxy = config::HttpProxyConfig::read_from_env(),
+      .record_output_path = std::string(try_get_env_var(INTAKE_RECORD_OUTPUT_PATH_VAR)),
+      .disable_tls_ = try_get_env_value<bool>(INTAKE_DISABLE_TLS_VAR),
+      .encoder_ = try_get_env_value<IntakeEncoder>(INTAKE_INTAKE_ENCODER_VAR),
+      .auth_method_ = try_get_env_value<collector::AuthMethod>(INTAKE_AUTH_METHOD_VAR, collector::AuthMethod::authz)};
 
   return intake;
 }
 
-IntakeConfig::ArgsHandler::ArgsHandler(cli::ArgsParser &parser):
-  encoder_(
-    parser.add_arg(
-      "intake-encoder",
-      "Chooses the intake encoder to use"
-        " - this relates to the sink used to dump collected telemetry to",
-      INTAKE_INTAKE_ENCODER_VAR,
-      IntakeEncoder::binary
-    )
-  )
+IntakeConfig::ArgsHandler::ArgsHandler(cli::ArgsParser &parser)
+    : encoder_(parser.add_arg(
+          "intake-encoder",
+          "Chooses the intake encoder to use"
+          " - this relates to the sink used to dump collected telemetry to",
+          INTAKE_INTAKE_ENCODER_VAR,
+          IntakeEncoder::binary))
 {}
 
-IntakeConfig IntakeConfig::ArgsHandler::read_config(std::string_view intake_name) {
+IntakeConfig IntakeConfig::ArgsHandler::read_config(std::string_view intake_name)
+{
   auto intake_config = config::IntakeConfig::read_from_env_and_intake(intake_name);
 
   intake_config.encoder(*encoder_);
@@ -110,7 +103,8 @@ IntakeConfig IntakeConfig::ArgsHandler::read_config(std::string_view intake_name
   return intake_config;
 }
 
-IntakeConfig IntakeConfig::ArgsHandler::read_config() {
+IntakeConfig IntakeConfig::ArgsHandler::read_config()
+{
   auto intake_config = config::IntakeConfig::read_from_env();
 
   intake_config.encoder(*encoder_);
@@ -118,4 +112,4 @@ IntakeConfig IntakeConfig::ArgsHandler::read_config() {
   return intake_config;
 }
 
-} // namespace config {
+} // namespace config

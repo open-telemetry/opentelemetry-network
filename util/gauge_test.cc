@@ -24,7 +24,8 @@
 
 namespace data {
 
-TEST(gauge_int, default_ctor) {
+TEST(gauge_int, default_ctor)
+{
   Gauge<int> const gauge;
   EXPECT_TRUE(gauge.empty());
   EXPECT_EQ(0ul, gauge.count());
@@ -34,7 +35,8 @@ TEST(gauge_int, default_ctor) {
   EXPECT_EQ(0.0, gauge.average());
 }
 
-TEST(gauge_int, cast_constructor) {
+TEST(gauge_int, cast_constructor)
+{
   Gauge<int> const gauge(10);
   EXPECT_FALSE(gauge.empty());
   EXPECT_EQ(1ul, gauge.count());
@@ -44,7 +46,8 @@ TEST(gauge_int, cast_constructor) {
   EXPECT_EQ(10.0, gauge.average());
 }
 
-TEST(gauge_int, default_ctor_add_4_values) {
+TEST(gauge_int, default_ctor_add_4_values)
+{
   Gauge<int> gauge;
   gauge += 10;
   gauge += 20;
@@ -58,7 +61,8 @@ TEST(gauge_int, default_ctor_add_4_values) {
   EXPECT_EQ(25.0, gauge.average());
 }
 
-TEST(gauge_int, cast_ctor_add_4_values) {
+TEST(gauge_int, cast_ctor_add_4_values)
+{
   Gauge<int> gauge(60);
   gauge += 90;
   gauge += 70;
@@ -72,7 +76,8 @@ TEST(gauge_int, cast_ctor_add_4_values) {
   EXPECT_EQ(70.0, gauge.average());
 }
 
-TEST(gauge_int, merge_assignment) {
+TEST(gauge_int, merge_assignment)
+{
   Gauge<int> gauge;
   gauge += 10;
   gauge += 20;
@@ -102,7 +107,8 @@ TEST(gauge_int, merge_assignment) {
   EXPECT_EQ(70.0, other.average());
 }
 
-TEST(gauge_int, reset) {
+TEST(gauge_int, reset)
+{
   Gauge<int> gauge(60);
   gauge += 90;
   gauge += 70;
@@ -118,7 +124,8 @@ TEST(gauge_int, reset) {
   EXPECT_EQ(0.0, gauge.average());
 }
 
-TEST(gauge_chrono, default_ctor) {
+TEST(gauge_chrono, default_ctor)
+{
   Gauge<std::chrono::seconds> const gauge;
   EXPECT_TRUE(gauge.empty());
   EXPECT_EQ(0ul, gauge.count());
@@ -128,7 +135,8 @@ TEST(gauge_chrono, default_ctor) {
   EXPECT_EQ(0ms, gauge.average<std::chrono::seconds>());
 }
 
-TEST(gauge_chrono, cast_constructor) {
+TEST(gauge_chrono, cast_constructor)
+{
   Gauge<std::chrono::seconds> const gauge(10s);
   EXPECT_FALSE(gauge.empty());
   EXPECT_EQ(1ul, gauge.count());
@@ -138,7 +146,8 @@ TEST(gauge_chrono, cast_constructor) {
   EXPECT_EQ(10s, gauge.average<std::chrono::seconds>());
 }
 
-TEST(gauge_chrono, default_ctor_add_4_values) {
+TEST(gauge_chrono, default_ctor_add_4_values)
+{
   Gauge<std::chrono::seconds> gauge;
   gauge += 10s;
   gauge += 20s;
@@ -152,7 +161,8 @@ TEST(gauge_chrono, default_ctor_add_4_values) {
   EXPECT_EQ(25s, gauge.average<std::chrono::seconds>());
 }
 
-TEST(gauge_chrono, cast_ctor_add_4_values) {
+TEST(gauge_chrono, cast_ctor_add_4_values)
+{
   Gauge<std::chrono::seconds> gauge(60s);
   gauge += 90s;
   gauge += 70s;
@@ -166,7 +176,8 @@ TEST(gauge_chrono, cast_ctor_add_4_values) {
   EXPECT_EQ(70s, gauge.average<std::chrono::seconds>());
 }
 
-TEST(gauge_chrono, merge_assignment) {
+TEST(gauge_chrono, merge_assignment)
+{
   Gauge<std::chrono::seconds> gauge;
   gauge += 10s;
   gauge += 20s;
@@ -196,7 +207,8 @@ TEST(gauge_chrono, merge_assignment) {
   EXPECT_EQ(70s, other.average<std::chrono::seconds>());
 }
 
-TEST(gauge_chrono, reset) {
+TEST(gauge_chrono, reset)
+{
   Gauge<std::chrono::seconds> gauge(60s);
   gauge += 90s;
   gauge += 70s;

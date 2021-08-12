@@ -16,9 +16,9 @@
 
 #pragma once
 
+#include <list>
 #include <map>
 #include <string>
-#include <list>
 
 /**
  * Sends a minidump file to the server.
@@ -31,14 +31,13 @@ public:
    * Based on prototype of google_breakpad::HTTPUpload::SendRequest
    */
   bool send(
-    std::string const &url,
-    std::list<std::string> headers,
-    std::map<std::string, std::string> const &parameters,
-    std::map<std::string, std::string> const &files,
-    std::string const &proxy = {},
-    std::string const &proxy_user_pwd = {},
-    std::string const &ca_certificate_file = {}
-  );
+      std::string const &url,
+      std::list<std::string> headers,
+      std::map<std::string, std::string> const &parameters,
+      std::map<std::string, std::string> const &files,
+      std::string const &proxy = {},
+      std::string const &proxy_user_pwd = {},
+      std::string const &ca_certificate_file = {});
 
   std::string const &response_body() const { return response_body_; }
   long response_code() const { return response_code_; }

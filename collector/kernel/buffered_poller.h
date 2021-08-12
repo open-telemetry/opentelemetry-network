@@ -51,10 +51,8 @@ public:
   // The hash map needs to be some 20% larger than the max number of elements.
   // Otherwise you'd start getting hash failures before all the elements are
   // exhausted
-  static constexpr u32 tcp_socket_table_max_sockets =
-      TABLE_SIZE__TCP_OPEN_SOCKETS;
-  static constexpr u32 udp_socket_table_max_sockets =
-      TABLE_SIZE__UDP_OPEN_SOCKETS;
+  static constexpr u32 tcp_socket_table_max_sockets = TABLE_SIZE__TCP_OPEN_SOCKETS;
+  static constexpr u32 udp_socket_table_max_sockets = TABLE_SIZE__UDP_OPEN_SOCKETS;
 
   static constexpr u32 n_epochs = 2;
 
@@ -67,14 +65,20 @@ public:
    * @param time_adjustment: how much to add to CLOCK_MONOTONIC when comparing
    *   to ring timestamp
    */
-  BufferedPoller(uv_loop_t &loop, PerfContainer &container,
-                 IBufferedWriter &writer, u64 time_adjustment,
-                 CurlEngine &curl_engine, FileDescriptor &bpf_dump_file,
-                 logging::Logger &log, ProbeHandler &probe_handler,
-                 ebpf::BPFModule &bpf_module, NicPoller &nic_poller,
-                 CgroupHandler::CgroupSettings const &cgroup_settings,
-                 ProcessHandler::CpuMemIoSettings const *cpu_mem_io_settings,
-                 ::flowmill::ingest::Encoder *encoder);
+  BufferedPoller(
+      uv_loop_t &loop,
+      PerfContainer &container,
+      IBufferedWriter &writer,
+      u64 time_adjustment,
+      CurlEngine &curl_engine,
+      FileDescriptor &bpf_dump_file,
+      logging::Logger &log,
+      ProbeHandler &probe_handler,
+      ebpf::BPFModule &bpf_module,
+      NicPoller &nic_poller,
+      CgroupHandler::CgroupSettings const &cgroup_settings,
+      ProcessHandler::CpuMemIoSettings const *cpu_mem_io_settings,
+      ::flowmill::ingest::Encoder *encoder);
 
   virtual ~BufferedPoller() {}
 
@@ -145,79 +149,66 @@ private:
 
   template <typename MessageMetadata>
   using message_handler_fn =
-      void (BufferedPoller::*)(message_metadata const &metadata,
-                               typename MessageMetadata::wire_message &);
+      void (BufferedPoller::*)(message_metadata const &metadata, typename MessageMetadata::wire_message &);
 
-  template <typename MessageMetadata, message_handler_fn<MessageMetadata>,
-            std::size_t MaxPadding, typename Alignment>
+  template <typename MessageMetadata, message_handler_fn<MessageMetadata>, std::size_t MaxPadding, typename Alignment>
   void message_handler_entrypoint(PerfReader &reader, u16 length);
 
   /**
    * Adds a handler to the hash. Throws on collision.
    */
-  template <typename MessageMetadata, message_handler_fn<MessageMetadata>,
-            std::size_t MaxPadding = 0, typename Alignment = u64>
+  template <typename MessageMetadata, message_handler_fn<MessageMetadata>, std::size_t MaxPadding = 0, typename Alignment = u64>
   void add_handler();
 
   /**
    * Handler for DNS RPC messages
    */
-  void handle_dns_message(message_metadata const &metadata,
-                          jb_agent_internal__dns_packet &msg);
+  void handle_dns_message(message_metadata const &metadata, jb_agent_internal__dns_packet &msg);
 
   /**
    * Handler a new socket message
    */
-  void handle_new_socket(message_metadata const &metadata,
-                         jb_agent_internal__new_sock_created &msg);
+  void handle_new_socket(message_metadata const &metadata, jb_agent_internal__new_sock_created &msg);
 
   /**
    * Handle a ipv4 address for a socket
    */
-  void handle_set_state_ipv4(message_metadata const &metadata,
-                             jb_agent_internal__set_state_ipv4 &msg);
+  void handle_set_state_ipv4(message_metadata const &metadata, jb_agent_internal__set_state_ipv4 &msg);
 
   /**
    * Handle ipv6 address for a socket
    */
-  void handle_set_state_ipv6(message_metadata const &metadata,
-                             jb_agent_internal__set_state_ipv6 &msg);
+  void handle_set_state_ipv6(message_metadata const &metadata, jb_agent_internal__set_state_ipv6 &msg);
 
   /**
    * Handler a socket close message
    */
-  void handle_close_socket(message_metadata const &metadata,
-                           jb_agent_internal__close_sock_info &msg);
+  void handle_close_socket(message_metadata const &metadata, jb_agent_internal__close_sock_info &msg);
 
   /**
    * Handler a rtt_estimator telemetry message
    */
-  void handle_rtt_estimator(message_metadata const &metadata,
-                            jb_agent_internal__rtt_estimator &msg);
+  void handle_rtt_estimator(message_metadata const &metadata, jb_agent_internal__rtt_estimator &msg);
 
   /**
    * Handler a rtt_estimator telemetry message
    */
-  void handle_reset_tcp_counters(message_metadata const &metadata,
-                                 jb_agent_internal__reset_tcp_counters &msg);
+  void handle_reset_tcp_counters(message_metadata const &metadata, jb_agent_internal__reset_tcp_counters &msg);
 
   /**
    * Handle a TCP SYN timeout message
    */
-  void handle_tcp_syn_timeout(message_metadata const &metadata,
-                              jb_agent_internal__tcp_syn_timeout &msg);
+  void handle_tcp_syn_timeout(message_metadata const &metadata, jb_agent_internal__tcp_syn_timeout &msg);
 
   /**
    * Handle TCP RST
    */
-  void handle_tcp_reset(message_metadata const &metadata,
-                        jb_agent_internal__tcp_reset &msg);
+  void handle_tcp_reset(message_metadata const &metadata, jb_agent_internal__tcp_reset &msg);
 
   /**
    * Handle a http_response message
    */
-  void handle_http_response(message_metadata const &metadata,
-                            jb_agent_internal__http_response &msg);
+  void handle_http_response(message_metadata const &metadata, jb_agent_internal__http_response &msg);
 
   /**
    * Sends a message with statistics for the entry
@@ -237,50 +228,42 @@ private:
   /**
    * Handler a new or existing udp socket message
    */
-  void handle_udp_new_socket(message_metadata const &metadata,
-                             jb_agent_internal__udp_new_socket &msg);
+  void handle_udp_new_socket(message_metadata const &metadata, jb_agent_internal__udp_new_socket &msg);
 
   /**
    * Handler a UDP socket close message
    */
-  void handle_udp_destroy_socket(message_metadata const &metadata,
-                                 jb_agent_internal__udp_destroy_socket &msg);
+  void handle_udp_destroy_socket(message_metadata const &metadata, jb_agent_internal__udp_destroy_socket &msg);
 
   /**
    * Handler for udp TX notification
    */
-  void handle_udp_stats(message_metadata const &metadata,
-                        jb_agent_internal__udp_stats &msg);
+  void handle_udp_stats(message_metadata const &metadata, jb_agent_internal__udp_stats &msg);
 
   /**
    * Handler for new process
    */
-  void handle_pid_info(message_metadata const &metadata,
-                       jb_agent_internal__pid_info &msg);
+  void handle_pid_info(message_metadata const &metadata, jb_agent_internal__pid_info &msg);
 
   /**
    * Handler for close process
    */
-  void handle_pid_close(message_metadata const &metadata,
-                        jb_agent_internal__pid_close &msg);
+  void handle_pid_close(message_metadata const &metadata, jb_agent_internal__pid_close &msg);
 
   /**
    * Handler for process comm change
    */
-  void handle_pid_set_comm(message_metadata const &metadata,
-                           jb_agent_internal__pid_set_comm &msg);
+  void handle_pid_set_comm(message_metadata const &metadata, jb_agent_internal__pid_set_comm &msg);
 
   /**
    * Handler for process cpu time
    */
-  void handle_report_task_status(message_metadata const &metadata,
-                                 jb_agent_internal__report_task_status &msg);
+  void handle_report_task_status(message_metadata const &metadata, jb_agent_internal__report_task_status &msg);
 
   /**
    * Handler for process exit
    */
-  void handle_pid_exit(message_metadata const &metadata,
-                       jb_agent_internal__pid_exit &msg);
+  void handle_pid_exit(message_metadata const &metadata, jb_agent_internal__pid_exit &msg);
 
   /**
    * Sends a udp socket message
@@ -295,8 +278,7 @@ private:
    * Also marks the entry as invalid.
    * @assumes entry is valid
    */
-  void udp_send_stats(u64 t, u32 sk_id, u8 is_rx, udp_socket_entry &entry,
-                      udp_statistics &stats);
+  void udp_send_stats(u64 t, u32 sk_id, u8 is_rx, udp_socket_entry &entry, udp_statistics &stats);
 
   /**
    * Processes the current queue in socket_stats_, sending out messages and
@@ -309,47 +291,32 @@ private:
   /**
    * Handler for a new cgroup dir
    */
-  void handle_kill_css(message_metadata const &metadata,
-                       jb_agent_internal__kill_css &msg);
+  void handle_kill_css(message_metadata const &metadata, jb_agent_internal__kill_css &msg);
 
-  void handle_css_populate_dir(message_metadata const &metadata,
-                               jb_agent_internal__css_populate_dir &msg);
+  void handle_css_populate_dir(message_metadata const &metadata, jb_agent_internal__css_populate_dir &msg);
 
-  void handle_cgroup_clone_children_read(
-      message_metadata const &metadata,
-      jb_agent_internal__cgroup_clone_children_read &msg);
+  void handle_cgroup_clone_children_read(message_metadata const &metadata, jb_agent_internal__cgroup_clone_children_read &msg);
 
-  void handle_cgroup_attach_task(message_metadata const &metadata,
-                                 jb_agent_internal__cgroup_attach_task &msg);
+  void handle_cgroup_attach_task(message_metadata const &metadata, jb_agent_internal__cgroup_attach_task &msg);
 
   /*** NAT ***/
-  void handle_nf_nat_cleanup_conntrack(
-      message_metadata const &metadata,
-      jb_agent_internal__nf_nat_cleanup_conntrack &msg);
+  void handle_nf_nat_cleanup_conntrack(message_metadata const &metadata, jb_agent_internal__nf_nat_cleanup_conntrack &msg);
 
-  void handle_nf_conntrack_alter_reply(
-      message_metadata const &metadata,
-      jb_agent_internal__nf_conntrack_alter_reply &msg);
+  void handle_nf_conntrack_alter_reply(message_metadata const &metadata, jb_agent_internal__nf_conntrack_alter_reply &msg);
 
-  void handle_existing_conntrack_tuple(
-      message_metadata const &metadata,
-      jb_agent_internal__existing_conntrack_tuple &msg);
+  void handle_existing_conntrack_tuple(message_metadata const &metadata, jb_agent_internal__existing_conntrack_tuple &msg);
 
   /*** DNS ***/
   void timeout_dns_request(u64 timestamp_ns, const DnsRequests::Request &req);
 
   /*** ERRORS ***/
-  void handle_bpf_log(message_metadata const &metadata,
-                      jb_agent_internal__bpf_log &msg);
-  void handle_stack_trace(message_metadata const &metadata,
-                          jb_agent_internal__stack_trace &msg);
+  void handle_bpf_log(message_metadata const &metadata, jb_agent_internal__bpf_log &msg);
+  void handle_stack_trace(message_metadata const &metadata, jb_agent_internal__stack_trace &msg);
 
   /*** TCP DATA ***/
-  void handle_tcp_data(message_metadata const &metadata,
-                       jb_agent_internal__tcp_data &msg);
+  void handle_tcp_data(message_metadata const &metadata, jb_agent_internal__tcp_data &msg);
 
-  void handle_nic_queue_state(message_metadata const &metadata,
-                              jb_agent_internal__nic_queue_state &msg);
+  void handle_nic_queue_state(message_metadata const &metadata, jb_agent_internal__nic_queue_state &msg);
 
   /////////////////////////////////////////////////////////////////////////
 
@@ -383,12 +350,8 @@ private:
   NicPoller &nic_poller_;
 
   /* TCP */
-  typedef FixedHash<u64, tcp_socket_entry, tcp_socket_table_max_sockets,
-                    u64_hasher>
-      TcpSocketTable;
-  typedef MetricStore<struct tcp_statistics, tcp_socket_table_max_sockets,
-                      n_epochs>
-      TcpSocketStatistics;
+  typedef FixedHash<u64, tcp_socket_entry, tcp_socket_table_max_sockets, u64_hasher> TcpSocketTable;
+  typedef MetricStore<struct tcp_statistics, tcp_socket_table_max_sockets, n_epochs> TcpSocketStatistics;
 
   TcpSocketTable tcp_socket_table_;
   bool tcp_socket_table_ever_full_;
@@ -397,12 +360,8 @@ private:
   u64 tcp_index_to_sk_[tcp_socket_table_max_sockets];
 
   /* UDP */
-  typedef FixedHash<u64, udp_socket_entry, udp_socket_table_max_sockets,
-                    u64_hasher>
-      UdpSocketTable;
-  typedef MetricStore<struct udp_statistics, udp_socket_table_max_sockets,
-                      n_epochs>
-      UdpSocketStatistics;
+  typedef FixedHash<u64, udp_socket_entry, udp_socket_table_max_sockets, u64_hasher> UdpSocketTable;
+  typedef MetricStore<struct udp_statistics, udp_socket_table_max_sockets, n_epochs> UdpSocketStatistics;
 
   UdpSocketTable udp_socket_table_;
   bool udp_socket_table_ever_full_;

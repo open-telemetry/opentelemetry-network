@@ -30,7 +30,7 @@ constexpr std::string_view NON_EOL_WHITESPACE = " \t";
 /**
  * Behavior for functions that perform string lookups with delimiters.
  */
-enum class SeekBehavior: std::uint8_t  {
+enum class SeekBehavior : std::uint8_t {
   /**
    * Exclude delimiter/needle from result and leave it in the haystack.
    */
@@ -100,16 +100,8 @@ std::string_view trim_run(std::string_view &input, std::string_view what);
  *  // returns 6
  *  count_up_to("ABAABA", "Z", false);
  */
-std::size_t count_up_to(
-  std::string_view input,
-  char what,
-  bool include
-);
-std::size_t count_up_to(
-  std::string_view input,
-  std::string_view what,
-  bool include
-);
+std::size_t count_up_to(std::string_view input, char what, bool include);
+std::size_t count_up_to(std::string_view input, std::string_view what, bool include);
 
 /**
  * Trims characters from the beginning of `input` up until the first occurence
@@ -131,16 +123,8 @@ std::size_t count_up_to(
  *  // returns "ABAABA", changes `input` to ""
  *  trim_up_to("ABAABA", "Z", SeekBehavior::EXCLUDE);
  */
-std::string_view trim_up_to(
-  std::string_view &input,
-  char what,
-  SeekBehavior behavior
-);
-std::string_view trim_up_to(
-  std::string_view &input,
-  std::string_view what,
-  SeekBehavior behavior
-);
+std::string_view trim_up_to(std::string_view &input, char what, SeekBehavior behavior);
+std::string_view trim_up_to(std::string_view &input, std::string_view what, SeekBehavior behavior);
 
 /**
  * Count how many characters are in the beginning of `input` up until the last
@@ -162,16 +146,8 @@ std::string_view trim_up_to(
  *  // returns 0
  *  count_up_to_last("ABAABA", "Z", true);
  */
-std::size_t count_up_to_last(
-  std::string_view input,
-  char what,
-  bool include
-);
-std::size_t count_up_to_last(
-  std::string_view input,
-  std::string_view what,
-  bool include
-);
+std::size_t count_up_to_last(std::string_view input, char what, bool include);
+std::size_t count_up_to_last(std::string_view input, std::string_view what, bool include);
 
 /**
  * Trims characters from the beginning of `input` up until the last occurence
@@ -195,16 +171,8 @@ std::size_t count_up_to_last(
  *  // returns "", leaves `input` unchanged
  *  trim_up_to_last("ABAABA", "Z", SeekBehavior::EXCLUDE);
  */
-std::string_view trim_up_to_last(
-  std::string_view &input,
-  char what,
-  SeekBehavior behavior
-);
-std::string_view trim_up_to_last(
-  std::string_view &input,
-  std::string_view what,
-  SeekBehavior behavior
-);
+std::string_view trim_up_to_last(std::string_view &input, char what, SeekBehavior behavior);
+std::string_view trim_up_to_last(std::string_view &input, std::string_view what, SeekBehavior behavior);
 
 /**
  * Returns the last `size` characters from the string view.
@@ -243,11 +211,10 @@ bool ends_with(std::string_view view, std::string_view suffix);
  *  // parses the other string view, return 5 on error
  *  int value2 = view.value(5);
  */
-template <typename T>
-struct NumberView {
+template <typename T> struct NumberView {
   constexpr NumberView() = default;
 
-  constexpr explicit NumberView(std::string_view view): view_(view) {}
+  constexpr explicit NumberView(std::string_view view) : view_(view) {}
 
   static_assert(std::is_arithmetic_v<T> || std::is_enum_v<T>);
 
@@ -268,7 +235,8 @@ struct NumberView {
    */
   constexpr T unpadded_value(T fallback = {}) const;
 
-  NumberView &operator =(std::string_view view) {
+  NumberView &operator=(std::string_view view)
+  {
     view_ = view;
     return *this;
   }
@@ -279,22 +247,22 @@ struct NumberView {
 
   explicit constexpr operator T() const { return unpadded_value(); }
 
-  constexpr bool operator ==(T rhs) const { return static_cast<T>(*this) == rhs; }
-  constexpr bool operator !=(T rhs) const { return static_cast<T>(*this) != rhs; }
-  constexpr bool operator <(T rhs) const { return static_cast<T>(*this) < rhs; }
-  constexpr bool operator <=(T rhs) const { return static_cast<T>(*this) <= rhs; }
-  constexpr bool operator >(T rhs) const { return static_cast<T>(*this) > rhs; }
-  constexpr bool operator >=(T rhs) const { return static_cast<T>(*this) >= rhs; }
+  constexpr bool operator==(T rhs) const { return static_cast<T>(*this) == rhs; }
+  constexpr bool operator!=(T rhs) const { return static_cast<T>(*this) != rhs; }
+  constexpr bool operator<(T rhs) const { return static_cast<T>(*this) < rhs; }
+  constexpr bool operator<=(T rhs) const { return static_cast<T>(*this) <= rhs; }
+  constexpr bool operator>(T rhs) const { return static_cast<T>(*this) > rhs; }
+  constexpr bool operator>=(T rhs) const { return static_cast<T>(*this) >= rhs; }
 
-  friend constexpr bool operator ==(T lhs, NumberView rhs) { return lhs == static_cast<T>(rhs); }
-  friend constexpr bool operator !=(T lhs, NumberView rhs) { return lhs != static_cast<T>(rhs); }
-  friend constexpr bool operator <(T lhs, NumberView rhs) { return lhs < static_cast<T>(rhs); }
-  friend constexpr bool operator <=(T lhs, NumberView rhs) { return lhs <= static_cast<T>(rhs); }
-  friend constexpr bool operator >(T lhs, NumberView rhs) { return lhs > static_cast<T>(rhs); }
-  friend constexpr bool operator >=(T lhs, NumberView rhs) { return lhs >= static_cast<T>(rhs); }
+  friend constexpr bool operator==(T lhs, NumberView rhs) { return lhs == static_cast<T>(rhs); }
+  friend constexpr bool operator!=(T lhs, NumberView rhs) { return lhs != static_cast<T>(rhs); }
+  friend constexpr bool operator<(T lhs, NumberView rhs) { return lhs < static_cast<T>(rhs); }
+  friend constexpr bool operator<=(T lhs, NumberView rhs) { return lhs <= static_cast<T>(rhs); }
+  friend constexpr bool operator>(T lhs, NumberView rhs) { return lhs > static_cast<T>(rhs); }
+  friend constexpr bool operator>=(T lhs, NumberView rhs) { return lhs >= static_cast<T>(rhs); }
 
   constexpr explicit operator bool() const { return !empty(); }
-  constexpr bool operator !() const { return empty(); }
+  constexpr bool operator!() const { return empty(); }
 
 private:
   std::string_view view_;

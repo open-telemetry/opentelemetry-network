@@ -31,18 +31,19 @@ namespace impl {
  *
  * Needed because `underlying_type_t` doesn't "just work" for non-enums.
  */
-template <typename T, bool = std::is_enum_v<T>>
-struct enum_integer { using type = T; };
+template <typename T, bool = std::is_enum_v<T>> struct enum_integer {
+  using type = T;
+};
 
-template <typename T>
-struct enum_integer<T, true> { using type = std::underlying_type_t<T>; };
+template <typename T> struct enum_integer<T, true> {
+  using type = std::underlying_type_t<T>;
+};
 
-template <typename T>
-using enum_integer_t = typename enum_integer<T>::type;
+template <typename T> using enum_integer_t = typename enum_integer<T>::type;
 
 // implementation of `smallest_unsigned_integer`
-template <std::size_t BitCount>
-constexpr auto smallest_unsigned_integer_impl() {
+template <std::size_t BitCount> constexpr auto smallest_unsigned_integer_impl()
+{
   if constexpr (BitCount <= 1) {
     return bool{};
   } else if constexpr (BitCount <= (sizeof(u8) * CHAR_BIT)) {
@@ -56,10 +57,7 @@ constexpr auto smallest_unsigned_integer_impl() {
   } else if constexpr (BitCount <= (sizeof(u128) * CHAR_BIT)) {
     return u128{};
   } else {
-    static_assert(
-      BitCount <= (sizeof(u128) * CHAR_BIT),
-      "bit count is too large for any known integer"
-    );
+    static_assert(BitCount <= (sizeof(u128) * CHAR_BIT), "bit count is too large for any known integer");
   }
 }
 
@@ -68,8 +66,7 @@ constexpr auto smallest_unsigned_integer_impl() {
 /**
  * Resolves to the smallest unsigned integer type capable of holding `BitCount` bits.
  */
-template <std::size_t BitCount>
-using smallest_unsigned_integer = decltype(impl::smallest_unsigned_integer_impl<BitCount>());
+template <std::size_t BitCount> using smallest_unsigned_integer = decltype(impl::smallest_unsigned_integer_impl<BitCount>());
 
 /**
  * Counts the number of `on` bits in the given value.
@@ -82,19 +79,16 @@ using smallest_unsigned_integer = decltype(impl::smallest_unsigned_integer_impl<
  *  count_bits_set(0b1011); // returns 3
  *  count_bits_set(0b1100); // returns 2
  */
-template <typename T>
-constexpr std::size_t count_bits_set(T value) {
+template <typename T> constexpr std::size_t count_bits_set(T value)
+{
   static_assert(std::is_integral_v<T>);
   if constexpr (sizeof(T) <= (sizeof(unsigned int))) {
-    return __builtin_popcount(static_cast<unsigned int>(
-      static_cast<std::make_unsigned_t<T>>(value)));
+    return __builtin_popcount(static_cast<unsigned int>(static_cast<std::make_unsigned_t<T>>(value)));
   } else if constexpr (sizeof(T) <= (sizeof(unsigned long))) {
-    return __builtin_popcountl(static_cast<unsigned long>(
-      static_cast<std::make_unsigned_t<T>>(value)));
+    return __builtin_popcountl(static_cast<unsigned long>(static_cast<std::make_unsigned_t<T>>(value)));
   } else {
     static_assert(sizeof(T) <= (sizeof(unsigned long long)));
-    return __builtin_popcountll(static_cast<unsigned long long>(
-      static_cast<std::make_unsigned_t<T>>(value)));
+    return __builtin_popcountll(static_cast<unsigned long long>(static_cast<std::make_unsigned_t<T>>(value)));
   }
 }
 
@@ -109,19 +103,16 @@ constexpr std::size_t count_bits_set(T value) {
  *  least_significant_bit_index(0b1011); // returns 0
  *  least_significant_bit_index(0b1000); // returns 3
  */
-template <typename T>
-constexpr std::size_t least_significant_bit_index(T value) {
+template <typename T> constexpr std::size_t least_significant_bit_index(T value)
+{
   static_assert(std::is_integral_v<T>);
   if constexpr (sizeof(T) <= (sizeof(unsigned int))) {
-    return __builtin_ctz(static_cast<unsigned int>(
-      static_cast<std::make_unsigned_t<T>>(value)));
+    return __builtin_ctz(static_cast<unsigned int>(static_cast<std::make_unsigned_t<T>>(value)));
   } else if constexpr (sizeof(T) <= (sizeof(unsigned long))) {
-    return __builtin_ctzl(static_cast<unsigned long>(
-      static_cast<std::make_unsigned_t<T>>(value)));
+    return __builtin_ctzl(static_cast<unsigned long>(static_cast<std::make_unsigned_t<T>>(value)));
   } else {
     static_assert(sizeof(T) <= (sizeof(unsigned long long)));
-    return __builtin_ctzll(static_cast<unsigned long long>(
-      static_cast<std::make_unsigned_t<T>>(value)));
+    return __builtin_ctzll(static_cast<unsigned long long>(static_cast<std::make_unsigned_t<T>>(value)));
   }
 }
 
@@ -139,12 +130,10 @@ constexpr std::size_t least_significant_bit_index(T value) {
  *  disable_least_significant_bit(0b1011); // returns 0b1010
  *  disable_least_significant_bit(0b1100); // returns 0b1000
  */
-template <typename T>
-constexpr T disable_least_significant_bit(T value) {
+template <typename T> constexpr T disable_least_significant_bit(T value)
+{
   using type = impl::enum_integer_t<T>;
-  return static_cast<T>(
-    static_cast<type>(value) & (static_cast<type>(value) - type{1})
-  );
+  return static_cast<T>(static_cast<type>(value) & (static_cast<type>(value) - type{1}));
 }
 
 /**
@@ -161,13 +150,10 @@ constexpr T disable_least_significant_bit(T value) {
  *  least_significant_bit(0b1011); // returns 0b0001
  *  least_significant_bit(0b1100); // returns 0b0100
  */
-template <typename T>
-constexpr T least_significant_bit(T value) {
+template <typename T> constexpr T least_significant_bit(T value)
+{
   using type = impl::enum_integer_t<T>;
-  return static_cast<T>(
-    (static_cast<type>(value) ^ (static_cast<type>(value) - type{1}))
-      & static_cast<type>(value)
-  );
+  return static_cast<T>((static_cast<type>(value) ^ (static_cast<type>(value) - type{1})) & static_cast<type>(value));
 }
 
 /**
@@ -184,8 +170,8 @@ constexpr T least_significant_bit(T value) {
  *  make_bit<int>(2); // returns 0b0100
  *  make_bit<int>(3); // returns 0b1000
  */
-template <typename T>
-constexpr T make_bit(std::size_t bit_index) {
+template <typename T> constexpr T make_bit(std::size_t bit_index)
+{
   using type = impl::enum_integer_t<T>;
   // ensure that the given bit fits in the result type
   assert(bit_index < (sizeof(T) * CHAR_BIT));
@@ -196,8 +182,8 @@ constexpr T make_bit(std::size_t bit_index) {
  * Returns the result of `value << shift`, taking care of implicit type
  * promotions which could go unnoticed.
  */
-template <typename T, typename LHS, typename RHS>
-constexpr T shift_left(LHS value, RHS shift) {
+template <typename T, typename LHS, typename RHS> constexpr T shift_left(LHS value, RHS shift)
+{
   return static_cast<T>(static_cast<T>(value) << static_cast<T>(shift));
 }
 
@@ -205,7 +191,7 @@ constexpr T shift_left(LHS value, RHS shift) {
  * Returns the result of `value >> shift`, taking care of implicit type
  * promotions which could go unnoticed.
  */
-template <typename T, typename LHS, typename RHS>
-constexpr T shift_right(LHS value, RHS shift) {
+template <typename T, typename LHS, typename RHS> constexpr T shift_right(LHS value, RHS shift)
+{
   return static_cast<T>(static_cast<T>(value) >> static_cast<T>(shift));
 }

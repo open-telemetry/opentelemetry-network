@@ -18,7 +18,8 @@
 
 #include <util/base64.h>
 
-TEST(base64, test_battery) {
+TEST(base64, test_battery)
+{
   EXPECT_EQ("", base64_encode(""));
 
   EXPECT_EQ("MA==", base64_encode("0"));

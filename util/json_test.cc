@@ -27,7 +27,8 @@ using nlohmann::json;
 
 // some of these tests are meant as a quick reference on how to use the JSON API
 
-TEST(json, example_type) {
+TEST(json, example_type)
+{
   EXPECT_EQ(json::value_t::null, json::parse(R"json(null)json").type());
   EXPECT_EQ(json::value_t::boolean, json::parse(R"json(true)json").type());
   EXPECT_EQ(json::value_t::string, json::parse(R"json("foobar")json").type());
@@ -38,14 +39,9 @@ TEST(json, example_type) {
   EXPECT_EQ(json::value_t::array, json::parse(R"json([])json").type());
 }
 
-TEST(json, example_dictionary) {
-  std::vector<std::pair<std::string, std::int64_t>> const expected{
-    {"a", 10},
-    {"b", 20},
-    {"c", 30},
-    {"d", 40},
-    {"e", 50}
-  };
+TEST(json, example_dictionary)
+{
+  std::vector<std::pair<std::string, std::int64_t>> const expected{{"a", 10}, {"b", 20}, {"c", 30}, {"d", 40}, {"e", 50}};
 
   auto const data = json::parse(R"json(
     {
@@ -62,7 +58,7 @@ TEST(json, example_dictionary) {
 
   { // iterate on values
     auto i = expected.begin();
-    for (auto const &value: data) {
+    for (auto const &value : data) {
       ASSERT_NE(i, expected.end());
 
       EXPECT_EQ(json::value_t::number_unsigned, value.type());
@@ -75,7 +71,7 @@ TEST(json, example_dictionary) {
 
   { // iterate on key/value pairs
     auto i = expected.begin();
-    for (auto const &item: data.items()) {
+    for (auto const &item : data.items()) {
       ASSERT_NE(i, expected.end());
 
       EXPECT_EQ(i->first, item.key());

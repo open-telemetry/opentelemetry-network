@@ -108,8 +108,7 @@ static inline void pool_allocator_free(struct pool_allocator *map, u32 id)
  * @returns: 0 on success, -EINVAL on (n_elems == 0), NULL map or pool, or
  *   when elem_size is too small to hold a u32.
  */
-int pool_allocator_init(struct pool_allocator *map, void *pool, u32 elem_size,
-                        u32 n_elems);
+int pool_allocator_init(struct pool_allocator *map, void *pool, u32 elem_size, u32 n_elems);
 
 #ifdef __cplusplus
 }

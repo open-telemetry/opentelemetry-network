@@ -44,9 +44,10 @@ class HttpProxyConfig {
   static constexpr std::string_view DEFAULT_PROXY_PORT = "1080";
 
 public:
-  struct Auth {};
+  struct Auth {
+  };
 
-  struct BasicAuth: Auth {
+  struct BasicAuth : Auth {
     explicit BasicAuth(std::string_view credentials);
 
     inline std::string_view payload() const { return payload_; }
@@ -55,19 +56,14 @@ public:
     std::string payload_;
   };
 
-  struct CallbackWrapper: channel::Callbacks {
+  struct CallbackWrapper : channel::Callbacks {
     explicit CallbackWrapper(
-      std::string_view host,
-      std::string_view port,
-      std::string_view credentials,
-      channel::Channel &channel,
-      channel::Callbacks &callback
-    ):
-      host_(host),
-      port_(port),
-      credentials_(credentials),
-      channel_(channel),
-      callback_(&callback)
+        std::string_view host,
+        std::string_view port,
+        std::string_view credentials,
+        channel::Channel &channel,
+        channel::Callbacks &callback)
+        : host_(host), port_(port), credentials_(credentials), channel_(channel), callback_(&callback)
     {}
 
     u32 received_data(const u8 *data, int length) override;
@@ -77,8 +73,8 @@ public:
     void on_closed() override { return callback_->on_closed(); }
 
     void on_connect() override;
-    
-    enum class stage_t: std::uint8_t {
+
+    enum class stage_t : std::uint8_t {
       disconnected = 0,
       connecting = 1,
       connected = 2,
@@ -99,10 +95,7 @@ public:
    * host: the host to connect to through the http proxy
    * port: the port to connect to through the http proxy
    */
-  explicit HttpProxyConfig(std::string host, std::string port):
-    host_(std::move(host)),
-    port_(std::move(port))
-  {}
+  explicit HttpProxyConfig(std::string host, std::string port) : host_(std::move(host)), port_(std::move(port)) {}
 
   /**
    * host: the host to connect to through the http proxy
@@ -110,21 +103,14 @@ public:
    * credentials: the credentials to use for the `Proxy-Authorization` header
    */
   template <
-    typename Credentials,
-    typename = std::enable_if_t<std::is_base_of_v<HttpProxyConfig::Auth, std::decay_t<Credentials>>>
-  >
-  explicit HttpProxyConfig(std::string host, std::string port, Credentials &&credentials = {}):
-    host_(std::move(host)),
-    port_(std::move(port)),
-    credentials_(credentials.payload())
+      typename Credentials,
+      typename = std::enable_if_t<std::is_base_of_v<HttpProxyConfig::Auth, std::decay_t<Credentials>>>>
+  explicit HttpProxyConfig(std::string host, std::string port, Credentials &&credentials = {})
+      : host_(std::move(host)), port_(std::move(port)), credentials_(credentials.payload())
   {}
 
-  std::unique_ptr<channel::Callbacks> make_callback(
-    std::string_view host,
-    std::string_view port,
-    channel::Channel &channel,
-    channel::Callbacks &callback
-  ) const;
+  std::unique_ptr<channel::Callbacks>
+  make_callback(std::string_view host, std::string_view port, channel::Channel &channel, channel::Callbacks &callback) const;
 
   inline std::string const &host() const { return host_; }
   inline std::string const &port() const { return port_; }

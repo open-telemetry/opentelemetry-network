@@ -29,11 +29,11 @@
 
 #define ENUM_NAME CurlEngineStatus
 #define ENUM_TYPE std::uint8_t
-#define ENUM_ELEMENTS(X)  \
-  X(OK, 0) \
-  X(TIMEOUT, 1) \
-  X(ERROR, 2) \
-  X(CANCELED, 3) \
+#define ENUM_ELEMENTS(X)                                                                                                       \
+  X(OK, 0)                                                                                                                     \
+  X(TIMEOUT, 1)                                                                                                                \
+  X(ERROR, 2)                                                                                                                  \
+  X(CANCELED, 3)                                                                                                               \
   X(SCHEDULE_ERROR, 4)
 #define ENUM_DEFAULT ERROR
 #include <util/enum_operators.inl>
@@ -62,8 +62,7 @@ public:
   //
   // CurlEngine might overwrite |data| after this callback is invoked. Thus,
   // it's client's responsiblity to make a copy of |data| if that's needed.
-  using DataAvailableFn =
-      std::function<void(const char *data, size_t data_length)>;
+  using DataAvailableFn = std::function<void(const char *data, size_t data_length)>;
 
   // Callback function to be  executed when fetch finishes.
   // |status|: the status of the fetch.
@@ -86,19 +85,19 @@ public:
 
     ~FetchRequest();
 
-    template <typename T>
-    bool try_set_option(CURLoption option, T &&value) {
+    template <typename T> bool try_set_option(CURLoption option, T &&value)
+    {
       return curl_easy_setopt(easy_handle_, option, std::forward<T>(value)) == CURLE_OK;
     }
 
-    template <typename T>
-    FetchRequest &set_option(CURLoption option, T &&value) {
+    template <typename T> FetchRequest &set_option(CURLoption option, T &&value)
+    {
       try_set_option(option, std::forward<T>(value));
       return *this;
     }
 
-    template <typename T>
-    T *get_info(CURLINFO info, T &fallback) {
+    template <typename T> T *get_info(CURLINFO info, T &fallback)
+    {
       return curl_easy_getinfo(easy_handle_, info, &fallback) == CURLE_OK ? &fallback : nullptr;
     }
 
@@ -116,10 +115,10 @@ public:
 
     void done(CurlEngineStatus status, bool success, std::string_view error);
 
-    CURL const *operator *() const { return easy_handle_; }
-    CURL *operator *() { return easy_handle_; }
-  
-    bool operator !() const { return !easy_handle_; }
+    CURL const *operator*() const { return easy_handle_; }
+    CURL *operator*() { return easy_handle_; }
+
+    bool operator!() const { return !easy_handle_; }
     explicit operator bool() const { return static_cast<bool>(easy_handle_); }
 
     CURL *prepare();

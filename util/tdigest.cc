@@ -30,8 +30,7 @@ double k_to_q(double k, double d)
   if (k_div_d >= 0.5) {
     double base = 1 - k_div_d;
     return 1 - 2 * base * base;
-  }
-  else {
+  } else {
     return 2 * k_div_d * k_div_d;
   }
 }
@@ -40,8 +39,7 @@ double clamp(double v, double lo, double hi)
 {
   if (v > hi) {
     return hi;
-  }
-  else if (v < lo) {
+  } else if (v < lo) {
     return lo;
   }
   return v;
@@ -92,19 +90,16 @@ double TDigest::estimate_value_at_quantile(double q) const
     if (pos == 0) {
       delta = centroids_[pos + 1].mean - centroids_[pos].mean;
       max = centroids_[pos + 1].mean;
-    }
-    else if (pos == centroid_count_ - 1) {
+    } else if (pos == centroid_count_ - 1) {
       delta = centroids_[pos].mean - centroids_[pos - 1].mean;
       min = centroids_[pos - 1].mean;
-    }
-    else {
+    } else {
       delta = (centroids_[pos + 1].mean - centroids_[pos - 1].mean) / 2.0;
       min = centroids_[pos - 1].mean;
       max = centroids_[pos + 1].mean;
     }
   }
-  auto value = centroids_[pos].mean +
-               ((rank - t) / centroids_[pos].weight - 0.5) * delta;
+  auto value = centroids_[pos].mean + ((rank - t) / centroids_[pos].weight - 0.5) * delta;
   return clamp(value, min, max);
 }
 
@@ -127,8 +122,7 @@ void TDigestAccumulator::flush()
   value_count_ = 0;
 }
 
-void TDigestMerger::merge_from_values(TDigest &tdigest, double *values,
-                                      u32 value_count)
+void TDigestMerger::merge_from_values(TDigest &tdigest, double *values, u32 value_count)
 {
   if (value_count == 0) {
     return;
@@ -138,18 +132,15 @@ void TDigestMerger::merge_from_values(TDigest &tdigest, double *values,
   // TODO: use double_radix_sort.
   std::sort(values, (values + value_count));
 
-  tdigest.min_ =
-      (tdigest.value_count_ == 0) ? *values : (std::min(tdigest.min_, *values));
-  tdigest.max_ = (tdigest.value_count_ == 0)
-                     ? *(values + value_count - 1)
-                     : (std::max(tdigest.max_, *(values + value_count - 1)));
+  tdigest.min_ = (tdigest.value_count_ == 0) ? *values : (std::min(tdigest.min_, *values));
+  tdigest.max_ =
+      (tdigest.value_count_ == 0) ? *(values + value_count - 1) : (std::max(tdigest.max_, *(values + value_count - 1)));
 
   tdigest.value_count_ += value_count;
   tdigest.sum_ = 0; // recompute as we go.
 
   double k_limit = 1;
-  double q_limit_times_count =
-      k_to_q(k_limit++, TDIGEST_CENTROID_COUNT_MAX) * tdigest.value_count_;
+  double q_limit_times_count = k_to_q(k_limit++, TDIGEST_CENTROID_COUNT_MAX) * tdigest.value_count_;
 
   Centroid *curr = &merging_buffer_[0];
   Centroid *next = curr + 1;
@@ -164,8 +155,7 @@ void TDigestMerger::merge_from_values(TDigest &tdigest, double *values,
   if (sp != sp_end && sp->mean < *vp) {
     *curr = *sp;
     sp++;
-  }
-  else {
+  } else {
     curr->mean = *vp;
     curr->weight = 1.0;
     vp++;
@@ -184,8 +174,7 @@ void TDigestMerger::merge_from_values(TDigest &tdigest, double *values,
     if (sp != sp_end && (vp == vp_end || sp->mean < *vp)) {
       *next = *sp;
       sp++;
-    }
-    else {
+    } else {
       next->mean = *vp;
       next->weight = 1.0;
       vp++;
@@ -198,16 +187,14 @@ void TDigestMerger::merge_from_values(TDigest &tdigest, double *values,
       // will merge this centroid into curr
       sums_to_merge += next_sum;
       weights_to_merge += next->weight;
-    }
-    else {
+    } else {
       // close the centroid
       tdigest.sum_ += curr->add(sums_to_merge, weights_to_merge);
       sums_to_merge = 0;
       weights_to_merge = 0;
       curr++;
       next++;
-      q_limit_times_count =
-          k_to_q(k_limit++, TDIGEST_CENTROID_COUNT_MAX) * tdigest.value_count_;
+      q_limit_times_count = k_to_q(k_limit++, TDIGEST_CENTROID_COUNT_MAX) * tdigest.value_count_;
     }
   }
 
@@ -242,8 +229,7 @@ void TDigestMerger::merge(TDigest &left, const TDigest &right)
   left.sum_ = 0; // recompute as we go.
 
   double k_limit = 1;
-  double q_limit_times_count =
-      k_to_q(k_limit++, TDIGEST_CENTROID_COUNT_MAX) * left.value_count_;
+  double q_limit_times_count = k_to_q(k_limit++, TDIGEST_CENTROID_COUNT_MAX) * left.value_count_;
 
   Centroid *curr = merging_buffer_;
   Centroid *next = curr + 1;
@@ -257,8 +243,7 @@ void TDigestMerger::merge(TDigest &left, const TDigest &right)
   if (lp->mean < rp->mean) {
     *curr = *lp;
     lp++;
-  }
-  else {
+  } else {
     *curr = *rp;
     rp++;
   }
@@ -271,8 +256,7 @@ void TDigestMerger::merge(TDigest &left, const TDigest &right)
     if (lp != lp_end && (rp == rp_end || lp->mean < rp->mean)) {
       *next = *lp;
       lp++;
-    }
-    else {
+    } else {
       *next = *rp;
       rp++;
     }
@@ -283,15 +267,13 @@ void TDigestMerger::merge(TDigest &left, const TDigest &right)
     if (weights_so_far <= q_limit_times_count) {
       sums_to_merge += next_sum;
       weights_to_merge += next->weight;
-    }
-    else {
+    } else {
       left.sum_ += curr->add(sums_to_merge, weights_to_merge);
       sums_to_merge = 0;
       weights_to_merge = 0;
       curr++;
       next++;
-      q_limit_times_count =
-          k_to_q(k_limit++, TDIGEST_CENTROID_COUNT_MAX) * left.value_count_;
+      q_limit_times_count = k_to_q(k_limit++, TDIGEST_CENTROID_COUNT_MAX) * left.value_count_;
     }
   }
 

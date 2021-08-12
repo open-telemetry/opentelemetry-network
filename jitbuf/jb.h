@@ -67,14 +67,12 @@ struct jb_blob {
 
   constexpr jb_blob(const char *buf, unsigned short len) : buf(buf), len(len) {}
 
-  explicit constexpr jb_blob(std::string_view from)
-      : jb_blob(from.data(), static_cast<unsigned short>(from.size()))
+  explicit constexpr jb_blob(std::string_view from) : jb_blob(from.data(), static_cast<unsigned short>(from.size()))
   {
     assert(from.size() <= std::numeric_limits<unsigned short>::max());
   }
 
-  explicit jb_blob(std::string const &from)
-      : jb_blob(from.data(), static_cast<unsigned short>(from.size()))
+  explicit jb_blob(std::string const &from) : jb_blob(from.data(), static_cast<unsigned short>(from.size()))
   {
     assert(from.size() <= std::numeric_limits<unsigned short>::max());
   }
@@ -85,17 +83,12 @@ struct jb_blob {
 
   constexpr operator std::string_view() const { return string_view(); }
 
-  constexpr bool operator==(std::string_view rhs) const
-  {
-    return string_view() == rhs;
-  }
+  constexpr bool operator==(std::string_view rhs) const { return string_view() == rhs; }
 
-  constexpr bool operator!=(std::string_view rhs) const
-  {
-    return string_view() != rhs;
-  }
+  constexpr bool operator!=(std::string_view rhs) const { return string_view() != rhs; }
 
-  jb_blob &operator =(std::string_view from) {
+  jb_blob &operator=(std::string_view from)
+  {
     assert(from.size() <= std::numeric_limits<unsigned short>::max());
     buf = from.data();
     len = from.size();
@@ -112,15 +105,15 @@ struct jb_blob {
 #ifdef __cplusplus
 }
 
-template <std::size_t Size>
-constexpr jb_blob to_jb_blob(std::uint8_t const (&data)[Size]) {
+template <std::size_t Size> constexpr jb_blob to_jb_blob(std::uint8_t const (&data)[Size])
+{
   static_assert(Size <= std::numeric_limits<unsigned short>::max());
   auto const length = strnlen(reinterpret_cast<char const *>(data), Size / sizeof(*data));
   return {reinterpret_cast<char const *>(data), static_cast<unsigned short>(length)};
 }
 
-template <std::size_t Size>
-constexpr jb_blob to_jb_blob(std::array<std::uint8_t, Size> const &data) {
+template <std::size_t Size> constexpr jb_blob to_jb_blob(std::array<std::uint8_t, Size> const &data)
+{
   static_assert(Size <= std::numeric_limits<unsigned short>::max());
   auto const length = strnlen(reinterpret_cast<char const *>(data.data()), Size);
   return {reinterpret_cast<char const *>(data.data()), static_cast<unsigned short>(length)};
@@ -138,27 +131,20 @@ inline std::string &assign_jb(std::string &lhs, jb_blob const &rhs)
   return lhs;
 }
 
-template <std::size_t Size>
-std::string &assign_render_array(std::string &lhs,
-                                 std::uint8_t const (&rhs)[Size])
+template <std::size_t Size> std::string &assign_render_array(std::string &lhs, std::uint8_t const (&rhs)[Size])
 {
-  lhs.assign(reinterpret_cast<char const *>(rhs),
-             strnlen(reinterpret_cast<char const *>(rhs), Size / sizeof(*rhs)));
+  lhs.assign(reinterpret_cast<char const *>(rhs), strnlen(reinterpret_cast<char const *>(rhs), Size / sizeof(*rhs)));
   return lhs;
 }
 
-template <std::size_t Size>
-std::string render_array_to_string(std::uint8_t const (&data)[Size])
+template <std::size_t Size> std::string render_array_to_string(std::uint8_t const (&data)[Size])
 {
-  return {reinterpret_cast<char const *>(data),
-          strnlen(reinterpret_cast<char const *>(data), Size / sizeof(*data))};
+  return {reinterpret_cast<char const *>(data), strnlen(reinterpret_cast<char const *>(data), Size / sizeof(*data))};
 }
 
-template <std::size_t Size>
-std::string_view render_array_to_string_view(std::uint8_t const (&data)[Size])
+template <std::size_t Size> std::string_view render_array_to_string_view(std::uint8_t const (&data)[Size])
 {
-  return {reinterpret_cast<char const *>(data),
-          strnlen(reinterpret_cast<char const *>(data), Size / sizeof(*data))};
+  return {reinterpret_cast<char const *>(data), strnlen(reinterpret_cast<char const *>(data), Size / sizeof(*data))};
 }
 
 #endif /* __cplusplus */

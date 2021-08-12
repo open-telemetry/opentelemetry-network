@@ -43,24 +43,18 @@
 // call them only in main before any threads are created
 template <typename Which> void log_whitelist_all();
 template <typename Which> void log_whitelist_clear();
-template <typename Which>
-void set_log_whitelist(std::list<Which> whitelist);
-template <typename Which>
-void set_log_whitelist(std::initializer_list<Which> whitelist);
+template <typename Which> void set_log_whitelist(std::list<Which> whitelist);
+template <typename Which> void set_log_whitelist(std::initializer_list<Which> whitelist);
 void log_whitelist_all_globally();
 
 // this function is thread-safe
-template <typename Whitelist,
-          typename = std::enable_if_t<std::is_enum_v<Whitelist>>>
-bool is_log_whitelisted(Whitelist which);
+template <typename Whitelist, typename = std::enable_if_t<std::is_enum_v<Whitelist>>> bool is_log_whitelisted(Whitelist which);
 
 // this function is thread-safe
-template <typename... Whitelist>
-bool is_log_whitelisted(std::tuple<Whitelist...> const &which);
+template <typename... Whitelist> bool is_log_whitelisted(std::tuple<Whitelist...> const &which);
 
 // args parser handler for whitelists
-template <typename Which>
-class LogWhitelistHandler: public cli::ArgsParser::Handler {
+template <typename Which> class LogWhitelistHandler : public cli::ArgsParser::Handler {
 public:
   LogWhitelistHandler(cli::ArgsParser &parser, std::string const &option_name);
 

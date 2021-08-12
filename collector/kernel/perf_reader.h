@@ -22,6 +22,7 @@
 #include <vector>
 
 #include <platform/platform.h>
+
 #include <collector/kernel/bpf_src/render_bpf.h>
 #include <util/perf_ring_cpp.h>
 
@@ -159,10 +160,7 @@ public:
    *
    * Assumes reader is not empty (i.e., !empty()) and type==PERF_RECORD_SAMPLE
    */
-  inline u16 peek_unpadded_length()
-  {
-    return top().peek_aligned_u32(sizeof(u32));
-  }
+  inline u16 peek_unpadded_length() { return top().peek_aligned_u32(sizeof(u32)); }
 
   /**
    * Returns the length of the payload of the next value

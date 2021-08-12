@@ -16,8 +16,8 @@
 
 #pragma once
 
-#include <linux/bpf.h>
 #include <bcc/BPF.h>
+#include <linux/bpf.h>
 
 #include <functional>
 #include <memory>
@@ -43,9 +43,12 @@ public:
    * @param periodic_cb: a callback to be called every once in a while, to
    *   allow user to e.g., flush rings
    */
-  SocketProber(ProbeHandler &probe_handler, ebpf::BPFModule &bpf_module,
-               std::function<void(void)> periodic_cb,
-               std::function<void(std::string)> check_cb, logging::Logger &log);
+  SocketProber(
+      ProbeHandler &probe_handler,
+      ebpf::BPFModule &bpf_module,
+      std::function<void(void)> periodic_cb,
+      std::function<void(std::string)> check_cb,
+      logging::Logger &log);
 
 private:
   /**
@@ -54,8 +57,7 @@ private:
    * @param map: the inode->pid map to fill
    * @param periodic_cb: callback to call after doing some work.
    */
-  void fill_inode_to_pid_map(ebpf::BPFHashTable<u32, u32> &map,
-                             std::function<void(void)> periodic_cb);
+  void fill_inode_to_pid_map(ebpf::BPFHashTable<u32, u32> &map, std::function<void(void)> periodic_cb);
 
   /**
    * Iterates through proc, and triggers the corresponding seq_show functions
@@ -71,8 +73,7 @@ private:
    * @param filename: the file to read
    * @param periodic_cb: callback to call after doing some work.
    */
-  void read_proc_net_tcp(const std::string &filename,
-                         std::function<void(void)> periodic_cb);
+  void read_proc_net_tcp(const std::string &filename, std::function<void(void)> periodic_cb);
 
   /**
    * Reads a file in /proc/<pid>/net/{udp,udp6}
@@ -80,8 +81,7 @@ private:
    * @param filename: the file to read
    * @param periodic_cb: callback to call after doing some work.
    */
-  void read_proc_net_udp(const std::string &filename,
-                         std::function<void(void)> periodic_cb);
+  void read_proc_net_udp(const std::string &filename, std::function<void(void)> periodic_cb);
 
   /**
    * Returns the network namespace the pid lives in, by reading /proc

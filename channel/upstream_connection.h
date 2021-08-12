@@ -25,14 +25,10 @@
 
 namespace channel {
 
-class UpstreamConnection: public NetworkChannel {
+class UpstreamConnection : public NetworkChannel {
 public:
   UpstreamConnection(
-    std::size_t buffer_size,
-    bool allow_compression,
-    NetworkChannel &primary_channel,
-    Channel *secondary_channel = nullptr
-  );
+      std::size_t buffer_size, bool allow_compression, NetworkChannel &primary_channel, Channel *secondary_channel = nullptr);
 
   /**
    * Connects to an endpoint and starts negotiating

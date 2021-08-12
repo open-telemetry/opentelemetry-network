@@ -14,11 +14,10 @@
 // limitations under the License.
 //
 
-#include <sstream>
 #include <collector/kernel/proc_net_reader.h>
+#include <sstream>
 
-ProcNetReader::ProcNetReader(std::string filename)
-    : tcp_file_(filename), sk_ino_(0), sk_p_(0), sk_state_(0)
+ProcNetReader::ProcNetReader(std::string filename) : tcp_file_(filename), sk_ino_(0), sk_p_(0), sk_state_(0)
 {
   // skip the first line of the file
   std::string line;
@@ -59,14 +58,11 @@ int ProcNetReader::next()
     tk_id++;
     if (tk_id == 4) { // parse the state
       sscanf(tk.c_str(), "%x", &sk_state_);
-    }
-    else if (tk_id == 10) { // parse inode_number
+    } else if (tk_id == 10) { // parse inode_number
       sscanf(tk.c_str(), "%d", &sk_ino_);
-    }
-    else if (tk_id == 12) { // parse sk pointer
+    } else if (tk_id == 12) { // parse sk pointer
       sscanf(tk.c_str(), "%lx", &sk_p_);
-    }
-    else if (tk_id > 12) { // done
+    } else if (tk_id > 12) { // done
       break;
     }
   } while (issline);

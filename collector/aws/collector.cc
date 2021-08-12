@@ -37,52 +37,55 @@ constexpr std::chrono::milliseconds RECONNECT_JITTER = 1s;
 } // namespace
 
 AwsCollector::AwsCollector(
-  ::uv_loop_t &loop,
-  std::string_view hostname,
-  AuthzFetcher &authz_fetcher,
-  std::chrono::milliseconds aws_metadata_timeout,
-  std::chrono::milliseconds heartbeat_interval,
-  std::size_t buffer_size,
-  config::IntakeConfig intake_config,
-  std::chrono::milliseconds poll_interval
-):
-  loop_(loop),
-  connection_(
-    hostname,
-    loop_,
-    aws_metadata_timeout,
-    heartbeat_interval,
-    std::move(intake_config),
-    authz_fetcher,
-    buffer_size,
-    *this,
-    std::bind(&AwsCollector::on_authenticated, this)
-  ),
-  log_(connection_.writer()),
-  enumerator_(log_, connection_.index(), connection_.writer()),
-  scheduler_(loop_, std::bind(&AwsCollector::callback, this)),
-  poll_interval_(poll_interval)
+    ::uv_loop_t &loop,
+    std::string_view hostname,
+    AuthzFetcher &authz_fetcher,
+    std::chrono::milliseconds aws_metadata_timeout,
+    std::chrono::milliseconds heartbeat_interval,
+    std::size_t buffer_size,
+    config::IntakeConfig intake_config,
+    std::chrono::milliseconds poll_interval)
+    : loop_(loop),
+      connection_(
+          hostname,
+          loop_,
+          aws_metadata_timeout,
+          heartbeat_interval,
+          std::move(intake_config),
+          authz_fetcher,
+          buffer_size,
+          *this,
+          std::bind(&AwsCollector::on_authenticated, this)),
+      log_(connection_.writer()),
+      enumerator_(log_, connection_.index(), connection_.writer()),
+      scheduler_(loop_, std::bind(&AwsCollector::callback, this)),
+      poll_interval_(poll_interval)
 {}
 
-AwsCollector::~AwsCollector() {
+AwsCollector::~AwsCollector()
+{
   ::uv_loop_close(&loop_);
 }
 
-void AwsCollector::run_loop() {
+void AwsCollector::run_loop()
+{
   connection_.connect();
 
-  while (::uv_run(&loop_, UV_RUN_DEFAULT));
+  while (::uv_run(&loop_, UV_RUN_DEFAULT))
+    ;
 
   scheduler_.stop();
 }
 
-scheduling::JobFollowUp AwsCollector::callback() {
+scheduling::JobFollowUp AwsCollector::callback()
+{
   auto result = enumerator_.enumerate();
   connection_.flush();
   return result;
 }
 
-void AwsCollector::on_error(int err) {
+void AwsCollector::on_error(int err)
+{
   scheduler_.stop();
 
   enumerator_.free_handles();
@@ -90,8 +93,9 @@ void AwsCollector::on_error(int err) {
   std::this_thread::sleep_for(add_jitter(RECONNECT_DELAY, -RECONNECT_JITTER, RECONNECT_JITTER));
 }
 
-void AwsCollector::on_authenticated() {
+void AwsCollector::on_authenticated()
+{
   scheduler_.start(poll_interval_, poll_interval_);
 }
 
-} // namespace collector::aws {
+} // namespace collector::aws

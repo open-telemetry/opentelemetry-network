@@ -30,41 +30,41 @@ public:
   using clock = std::chrono::system_clock;
   using duration = clock::time_point::duration;
 
-  AuthzToken(
-    std::string payload,
-    duration issued_at,
-    duration expiration,
-    std::string intake
-  );
+  AuthzToken(std::string payload, duration issued_at, duration expiration, std::string intake);
 
   std::string const &payload() const { return payload_; }
 
   std::string const &intake() const { return intake_; }
 
-  template <typename Duration = duration>
-  Duration issued_at() const { return std::chrono::duration_cast<Duration>(issued_at_); }
+  template <typename Duration = duration> Duration issued_at() const
+  {
+    return std::chrono::duration_cast<Duration>(issued_at_);
+  }
 
-  template <typename Duration = duration>
-  Duration expiration() const { return std::chrono::duration_cast<Duration>(expiration_); }
+  template <typename Duration = duration> Duration expiration() const
+  {
+    return std::chrono::duration_cast<Duration>(expiration_);
+  }
 
   template <typename Duration = duration, typename R, typename P>
-  constexpr Duration time_left(std::chrono::duration<R, P> at) const {
-    return std::chrono::duration_cast<Duration>(expiration_)
-      - std::chrono::duration_cast<Duration>(at);
+  constexpr Duration time_left(std::chrono::duration<R, P> at) const
+  {
+    return std::chrono::duration_cast<Duration>(expiration_) - std::chrono::duration_cast<Duration>(at);
   }
 
   template <typename Duration = duration, typename C, typename D>
-  constexpr Duration time_left(std::chrono::time_point<C, D> at) const {
+  constexpr Duration time_left(std::chrono::time_point<C, D> at) const
+  {
     return time_left<Duration>(at.time_since_epoch());
   }
 
-  template <typename R, typename P>
-  constexpr bool has_expired(std::chrono::duration<R, P> at) const {
+  template <typename R, typename P> constexpr bool has_expired(std::chrono::duration<R, P> at) const
+  {
     return time_left(at).count() <= 0;
   }
 
-  template <typename C, typename D>
-  constexpr bool has_expired(std::chrono::time_point<C, D> at) const {
+  template <typename C, typename D> constexpr bool has_expired(std::chrono::time_point<C, D> at) const
+  {
     return time_left(at).count() <= 0;
   }
 

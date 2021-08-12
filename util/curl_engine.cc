@@ -17,8 +17,8 @@
 #include <util/curl_engine.h>
 #include <util/utility.h>
 
-#include <unordered_set>
 #include <stdexcept>
+#include <unordered_set>
 
 #include <util/log.h>
 
@@ -61,18 +61,15 @@ private:
 };
 } // namespace
 
-CurlEngine::FetchRequest::FetchRequest(
-  std::string target,
-  DataAvailableFn available_fn,
-  FetchDoneFn done_fn
-):
-  easy_handle_(curl_easy_init()),
-  target_(std::move(target)),
-  available_fn_(std::move(available_fn)),
-  done_fn_(std::move(done_fn))
+CurlEngine::FetchRequest::FetchRequest(std::string target, DataAvailableFn available_fn, FetchDoneFn done_fn)
+    : easy_handle_(curl_easy_init()),
+      target_(std::move(target)),
+      available_fn_(std::move(available_fn)),
+      done_fn_(std::move(done_fn))
 {}
 
-CurlEngine::FetchRequest::~FetchRequest() {
+CurlEngine::FetchRequest::~FetchRequest()
+{
   // curl cleanup functions are no-op when the handle is null
   if (easy_handle_) {
     curl_easy_cleanup(easy_handle_);
@@ -82,7 +79,8 @@ CurlEngine::FetchRequest::~FetchRequest() {
   }
 }
 
-bool CurlEngine::FetchRequest::add_header(char const *header) {
+bool CurlEngine::FetchRequest::add_header(char const *header)
+{
   if (auto head = curl_slist_append(headers_, header)) {
     headers_ = head;
     return true;
@@ -92,7 +90,8 @@ bool CurlEngine::FetchRequest::add_header(char const *header) {
   }
 }
 
-void CurlEngine::FetchRequest::http_proxy(std::string host, std::uint16_t port) {
+void CurlEngine::FetchRequest::http_proxy(std::string host, std::uint16_t port)
+{
   proxy_ = std::move(host);
   proxy_port_ = port;
   proxy_type_ = CURLPROXY_HTTP;
@@ -100,7 +99,8 @@ void CurlEngine::FetchRequest::http_proxy(std::string host, std::uint16_t port) 
 
 // curl_write() is a callback passed to libcurl, which is invoked when
 // server returns data.
-size_t CurlEngine::FetchRequest::curl_write(char *ptr, size_t size, size_t nmemb, void *userdata) {
+size_t CurlEngine::FetchRequest::curl_write(char *ptr, size_t size, size_t nmemb, void *userdata)
+{
   LOG::trace_in(Utility::curl, "{}(): {}", __func__, size * nmemb);
 
   auto *request = (CurlEngine::FetchRequest *)userdata;
@@ -114,15 +114,18 @@ size_t CurlEngine::FetchRequest::curl_write(char *ptr, size_t size, size_t nmemb
 }
 
 // |unix_socket|: if not empty, the unix socket the engine should talk to.
-void CurlEngine::FetchRequest::unix_socket(std::string_view path) {
+void CurlEngine::FetchRequest::unix_socket(std::string_view path)
+{
   unix_socket_ = std::string(path);
 }
 
-void CurlEngine::FetchRequest::debug_mode(bool debug) {
+void CurlEngine::FetchRequest::debug_mode(bool debug)
+{
   curl_easy_setopt(easy_handle_, CURLOPT_VERBOSE, static_cast<long>(debug));
 }
 
-void CurlEngine::FetchRequest::done(CurlEngineStatus status, bool success, std::string_view error) {
+void CurlEngine::FetchRequest::done(CurlEngineStatus status, bool success, std::string_view error)
+{
   long response_code = -1;
   if (success && !get_info(CURLINFO_RESPONSE_CODE, response_code)) {
     error = "fetch successful, but unable to fetch response code";
@@ -131,7 +134,8 @@ void CurlEngine::FetchRequest::done(CurlEngineStatus status, bool success, std::
   done_fn_(status, response_code, error);
 }
 
-CURL *CurlEngine::FetchRequest::prepare() {
+CURL *CurlEngine::FetchRequest::prepare()
+{
   // Note: unfortunately libcurl does not validate the URL.
   // This function call always returns OK.
   // See: https://curl.haxx.se/libcurl/c/CURLOPT_URL.html
@@ -164,7 +168,8 @@ CURL *CurlEngine::FetchRequest::prepare() {
   return easy_handle_;
 }
 
-std::unique_ptr<CurlEngine> CurlEngine::create(uv_loop_t *loop) {
+std::unique_ptr<CurlEngine> CurlEngine::create(uv_loop_t *loop)
+{
   std::unique_ptr<CurlEngine> engine(new CurlEngineImpl(loop));
   return engine;
 }
@@ -172,14 +177,14 @@ std::unique_ptr<CurlEngine> CurlEngine::create(uv_loop_t *loop) {
 namespace {
 // curl_start_timer() is a callback passed to libcurl. Libcurl uses it to
 // inform libuv to start or stop timer.
-static int curl_start_timer(CURLM *multi, long timeout_ms, void *userp) {
+static int curl_start_timer(CURLM *multi, long timeout_ms, void *userp)
+{
   LOG::trace_in(Utility::curl, "curl_start_timer(): {}ms", timeout_ms);
 
   CurlEngineImpl *engine = (CurlEngineImpl *)userp;
   if (timeout_ms < 0) {
     engine->stop_timer();
-  }
-  else {
+  } else {
     // timeout_ms ==0 means we can invoke the timer callback right away.
     // But we will run it via the uv_loop moment later.
     engine->start_timer(timeout_ms);
@@ -190,8 +195,7 @@ static int curl_start_timer(CURLM *multi, long timeout_ms, void *userp) {
 // curl_handle_socket() is a callback passed to libcurl. Libcurl uses it to
 // signal that a socket_fd has become available, or is distroyed, libuv should
 // start, or remove, a poll routine.
-static int curl_handle_socket(CURL *easy, curl_socket_t socket_fd, int action,
-                              void *userp, void *socketp)
+static int curl_handle_socket(CURL *easy, curl_socket_t socket_fd, int action, void *userp, void *socketp)
 {
   LOG::trace_in(Utility::curl, "curl_handle_socket(), action: {}", action);
 
@@ -214,8 +218,7 @@ static int curl_handle_socket(CURL *easy, curl_socket_t socket_fd, int action,
     if (poll_handle == nullptr) {
       // Start a fresh poll.
       engine->start_poll(socket_fd, events);
-    }
-    else {
+    } else {
       // Call uv_poll_start() again to update the event masks.
       int res = uv_poll_start(poll_handle, events, on_uv_poll);
       if (res != 0) {
@@ -306,8 +309,7 @@ CurlEngineImpl::~CurlEngineImpl()
   }
 
   if (num_active_fetches_ != 0) {
-    LOG::error("{} on-going fetches when the CurlEngine is destroyed",
-               num_active_fetches_);
+    LOG::error("{} on-going fetches when the CurlEngine is destroyed", num_active_fetches_);
     assert(num_active_fetches_ == 0); // trigger assert on debug
     return;
   }
@@ -319,11 +321,9 @@ CurlEngineImpl::~CurlEngineImpl()
 void CurlEngineImpl::on_timeout()
 {
   int running_handles = 0;
-  auto mcode = curl_multi_socket_action(curl_handle_, CURL_SOCKET_TIMEOUT, 0,
-                                        &running_handles);
+  auto mcode = curl_multi_socket_action(curl_handle_, CURL_SOCKET_TIMEOUT, 0, &running_handles);
   if (mcode != CURLM_OK) {
-    LOG::error("Cannot trigger CURL_SOCKET_TIMEOUT: {}",
-               curl_multi_strerror(mcode));
+    LOG::error("Cannot trigger CURL_SOCKET_TIMEOUT: {}", curl_multi_strerror(mcode));
     throw std::runtime_error("Cannot trigger CURL_SOCKET_TIMEOUT.");
     return;
   }
@@ -346,8 +346,7 @@ void CurlEngineImpl::on_poll(uv_poll_t *poll_handle, int flags)
     return;
   }
 
-  auto mcode =
-      curl_multi_socket_action(curl_handle_, fd, flags, &running_handles);
+  auto mcode = curl_multi_socket_action(curl_handle_, fd, flags, &running_handles);
 
   if (mcode != CURLM_OK) {
     LOG::error("Cannot trigger IN/OUT event: {}", curl_multi_strerror(mcode));
@@ -379,12 +378,8 @@ void CurlEngineImpl::handle_curl_info_queue()
     if (message->data.result == CURLE_OK) {
       LOG::trace_in(Utility::curl, "Successfully fetch from {}", request->target());
       error_message = "successfull fetch";
-    }
-    else {
-      LOG::debug_in(Utility::curl,
-        "Fail to fetch from {}, {}",
-        request->target(), request->error_message()
-      );
+    } else {
+      LOG::debug_in(Utility::curl, "Fail to fetch from {}, {}", request->target(), request->error_message());
       status = CurlEngineStatus::ERROR;
       error_message = request->error_message();
     }
@@ -463,8 +458,7 @@ void CurlEngineImpl::start_poll(curl_socket_t socket_fd, int events)
     return;
   }
 
-  auto mcode =
-      curl_multi_assign(curl_handle_, socket_fd, poll_handle.release());
+  auto mcode = curl_multi_assign(curl_handle_, socket_fd, poll_handle.release());
   if (mcode != CURLM_OK) {
     LOG::error("Cannot add easy handle", curl_multi_strerror(mcode));
     throw std::runtime_error("Cannot add easy handle.");
@@ -476,9 +470,7 @@ void CurlEngineImpl::remove_poll(uv_poll_t *poll_handle)
 {
   LOG::trace_in(Utility::curl, "remove_poll()");
 
-  uv_close((uv_handle_t*)poll_handle, [](uv_handle_t* handle){
-    delete handle;
-  });
+  uv_close((uv_handle_t *)poll_handle, [](uv_handle_t *handle) { delete handle; });
 }
 
 } // namespace

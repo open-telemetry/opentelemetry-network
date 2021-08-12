@@ -22,14 +22,14 @@
 #include <curlpp/Types.hpp>
 
 bool MinidumpSender::send(
-  std::string const &url,
-  std::list<std::string> headers,
-  std::map<std::string, std::string> const &parameters,
-  std::map<std::string, std::string> const &files,
-  std::string const &proxy,
-  std::string const &proxy_user_pwd,
-  std::string const &ca_certificate_file
-) {
+    std::string const &url,
+    std::list<std::string> headers,
+    std::map<std::string, std::string> const &parameters,
+    std::map<std::string, std::string> const &files,
+    std::string const &proxy,
+    std::string const &proxy_user_pwd,
+    std::string const &ca_certificate_file)
+{
   curlpp::Easy curl;
 
   curl.setOpt(curlpp::Options::Url(url));
@@ -67,13 +67,11 @@ bool MinidumpSender::send(
   curl.setOpt(curlpp::Options::HttpPost(form_parts));
 
   /* if we need to get response body */
-  curl.setOpt(curlpp::Options::WriteFunction(
-    [this](char *ptr, size_t size, size_t nmemb) -> size_t {
-      size_t real_size = size * nmemb;
-      response_body_.append(reinterpret_cast<char *>(ptr), real_size);
-      return real_size;
-    }
-  ));
+  curl.setOpt(curlpp::Options::WriteFunction([this](char *ptr, size_t size, size_t nmemb) -> size_t {
+    size_t real_size = size * nmemb;
+    response_body_.append(reinterpret_cast<char *>(ptr), real_size);
+    return real_size;
+  }));
 
   // Fail if 400+ is returned from the web server.
   curl.setOpt(curlpp::Options::FailOnError(1));

@@ -20,8 +20,8 @@
 #include <channel/internal/private_key.h>
 #include <memory>
 #include <openssl/ssl.h>
-#include <string>
 #include <optional>
+#include <string>
 
 namespace channel {
 namespace internal {

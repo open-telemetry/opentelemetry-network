@@ -23,10 +23,11 @@
 #include <collector/kernel/probe_handler.h>
 #include <collector/kernel/proc_reader.h>
 
-ProcessProber::ProcessProber(ProbeHandler &probe_handler,
-                             ebpf::BPFModule &bpf_module,
-                             std::function<void(void)> periodic_cb,
-                             std::function<void(std::string)> check_cb)
+ProcessProber::ProcessProber(
+    ProbeHandler &probe_handler,
+    ebpf::BPFModule &bpf_module,
+    std::function<void(void)> periodic_cb,
+    std::function<void(std::string)> check_cb)
 {
   // END
   probe_handler.start_probe(bpf_module, "on_taskstats_exit", "taskstats_exit");
@@ -38,8 +39,7 @@ ProcessProber::ProcessProber(ProbeHandler &probe_handler,
    * Note that other functions we considered were:
    * sys_execve, sched_fork, __sched_fork, _do_fork, sched_exec
    */
-  probe_handler.start_probe(bpf_module, "on_wake_up_new_task",
-                            "wake_up_new_task");
+  probe_handler.start_probe(bpf_module, "on_wake_up_new_task", "wake_up_new_task");
   probe_handler.start_probe(bpf_module, "on_set_task_comm", "__set_task_comm");
 
   // EXISTING

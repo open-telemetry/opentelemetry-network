@@ -47,8 +47,7 @@ std::string_view try_get_env_var(char const *name, std::string_view fallback = {
  * before any thread is created, given that reading/writing to environment
  * variables is not thread safe and we can't control 3rd party libraries.
  */
-template <typename T>
-T try_get_env_value(char const *name, T fallback = {});
+template <typename T> T try_get_env_value(char const *name, T fallback = {});
 
 /**
  * Reads the environment variable named `name` and returns its value. Name must be

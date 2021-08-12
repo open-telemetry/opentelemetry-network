@@ -14,25 +14,26 @@
 // limitations under the License.
 //
 
-#include <config.h>
-#include <util/log.h>
-#include <iostream>
-#include <set>
 #include <collector/agent_log.h>
 #include <collector/kernel/fd_reader.h>
 #include <collector/kernel/probe_handler.h>
 #include <collector/kernel/proc_net_reader.h>
 #include <collector/kernel/proc_reader.h>
 #include <collector/kernel/socket_prober.h>
+#include <config.h>
+#include <iostream>
+#include <set>
+#include <util/log.h>
 
 static constexpr u32 periodic_cb_mask = 0x3f;
 
-SocketProber::SocketProber(ProbeHandler &probe_handler,
-                           ebpf::BPFModule &bpf_module,
-                           std::function<void(void)> periodic_cb,
-                           std::function<void(std::string)> check_cb,
-                           logging::Logger &log):
-  log_(log)
+SocketProber::SocketProber(
+    ProbeHandler &probe_handler,
+    ebpf::BPFModule &bpf_module,
+    std::function<void(void)> periodic_cb,
+    std::function<void(std::string)> check_cb,
+    logging::Logger &log)
+    : log_(log)
 {
   // END
   // NOTE: Covers all protocols
@@ -52,16 +53,13 @@ SocketProber::SocketProber(ProbeHandler &probe_handler,
 
   // CHANGE OF STATE
   probe_handler.start_probe(bpf_module, "on_tcp_connect", "tcp_connect");
-  probe_handler.start_probe(bpf_module, "on_inet_csk_listen_start",
-                            "inet_csk_listen_start");
-  
+  probe_handler.start_probe(bpf_module, "on_inet_csk_listen_start", "inet_csk_listen_start");
+
   // START
   probe_handler.start_probe(bpf_module, "on_tcp_init_sock", "tcp_init_sock");
   // NOTE: these probes also sends out state information
-  probe_handler.start_kretprobe(bpf_module, "onret_inet_csk_accept",
-                                "inet_csk_accept");
-  probe_handler.start_probe(bpf_module, "on_inet_csk_accept",
-                            "inet_csk_accept");
+  probe_handler.start_kretprobe(bpf_module, "onret_inet_csk_accept", "inet_csk_accept");
+  probe_handler.start_probe(bpf_module, "on_inet_csk_accept", "inet_csk_accept");
   // UDP START
   probe_handler.start_kretprobe(bpf_module, "onret_udp_v46_get_port", "udp_v4_get_port");
   probe_handler.start_kretprobe(bpf_module, "onret_udp_v46_get_port", "udp_v6_get_port");
@@ -78,8 +76,7 @@ SocketProber::SocketProber(ProbeHandler &probe_handler,
   check_cb("socket prober startup");
 
   /* First step: fill up the "seen_inodes" bpf hashmap: inode -> pid */
-  ebpf::BPFHashTable<u32, u32> seen_inodes =
-      probe_handler.get_hash_table(bpf_module, "seen_inodes");
+  ebpf::BPFHashTable<u32, u32> seen_inodes = probe_handler.get_hash_table(bpf_module, "seen_inodes");
   seen_inodes.clear_table_non_atomic();
   periodic_cb();
   check_cb("clear inode table");
@@ -107,8 +104,7 @@ SocketProber::SocketProber(ProbeHandler &probe_handler,
   check_cb("socket prober cleanup (4)");
 }
 
-void SocketProber::fill_inode_to_pid_map(ebpf::BPFHashTable<u32, u32> &map,
-                                         std::function<void(void)> periodic_cb)
+void SocketProber::fill_inode_to_pid_map(ebpf::BPFHashTable<u32, u32> &map, std::function<void(void)> periodic_cb)
 {
   // iterate over /proc/
   ProcReader proc_reader;
@@ -144,7 +140,8 @@ void SocketProber::fill_inode_to_pid_map(ebpf::BPFHashTable<u32, u32> &map,
         u32 lookup_pid = 0;
         ebpf::StatusTuple stat = map.get_value((u32)ino, lookup_pid);
         if (stat.code() == 0) {
-          LOG::trace_in(AgentLogKind::SOCKET, "Duplicate file descriptor for pid={}, ino={} (lookup_pid={})", pid, ino, lookup_pid);
+          LOG::trace_in(
+              AgentLogKind::SOCKET, "Duplicate file descriptor for pid={}, ino={} (lookup_pid={})", pid, ino, lookup_pid);
           continue;
         }
         stat = map.update_value((u32)ino, (u32)pid);
@@ -153,8 +150,7 @@ void SocketProber::fill_inode_to_pid_map(ebpf::BPFHashTable<u32, u32> &map,
           if (++n_update_failures < 10) {
             // bcc creates an unnecessary string copy in its getter
             // waiving the logging overhead check for `msg`
-            LOG::debug("Error updating hash_map: {} - {}", stat.code(),
-                       log_waive(stat.msg()));
+            LOG::debug("Error updating hash_map: {} - {}", stat.code(), log_waive(stat.msg()));
           }
           continue;
         }
@@ -171,8 +167,7 @@ void SocketProber::fill_inode_to_pid_map(ebpf::BPFHashTable<u32, u32> &map,
   }
 
   if (n_update_failures != 0) {
-    log_.warn("Recovering existing socket inodes got {} total update failures",
-              n_update_failures);
+    log_.warn("Recovering existing socket inodes got {} total update failures", n_update_failures);
   }
 }
 
@@ -203,18 +198,15 @@ void SocketProber::trigger_seq_show(std::function<void(void)> periodic_cb)
     done_network_namespaces.insert(network_namespace);
 
     read_proc_net_tcp("/proc/" + std::to_string(pid) + "/net/tcp", periodic_cb);
-    read_proc_net_tcp("/proc/" + std::to_string(pid) + "/net/tcp6",
-                      periodic_cb);
+    read_proc_net_tcp("/proc/" + std::to_string(pid) + "/net/tcp6", periodic_cb);
     read_proc_net_udp("/proc/" + std::to_string(pid) + "/net/udp", periodic_cb);
-    read_proc_net_udp("/proc/" + std::to_string(pid) + "/net/udp6",
-                      periodic_cb);
+    read_proc_net_udp("/proc/" + std::to_string(pid) + "/net/udp6", periodic_cb);
   }
 
   periodic_cb();
 }
 
-void SocketProber::read_proc_net_tcp(const std::string &filename,
-                                     std::function<void(void)> periodic_cb)
+void SocketProber::read_proc_net_tcp(const std::string &filename, std::function<void(void)> periodic_cb)
 {
 
   ProcNetReader proc_net_reader(filename);
@@ -224,16 +216,16 @@ void SocketProber::read_proc_net_tcp(const std::string &filename,
     if (((++sk_count) & periodic_cb_mask) == 0)
       periodic_cb();
 
-    //u64 sk_p = proc_net_reader.get_sk();
+    // u64 sk_p = proc_net_reader.get_sk();
 
-    //int sk_state = proc_net_reader.get_sk_state();
+    // int sk_state = proc_net_reader.get_sk_state();
     // if ((sk_state != 1) && (sk_state != 10)) {
     //   LOG::trace_in(AgentLogKind::SOCKET, "sk {:x} state not listen/established: {}", sk_p, sk_state);
     //   continue;
     // }
 
-    //int sk_ino = proc_net_reader.get_ino();
-    //if (sk_ino == 0) {
+    // int sk_ino = proc_net_reader.get_ino();
+    // if (sk_ino == 0) {
     //  LOG::debug("sk {:x} sk_ino was 0: {}", sk_p, sk_ino);
     //  continue; // skip if ino=0 (sk will already be closed)
     //}
@@ -244,8 +236,7 @@ void SocketProber::read_proc_net_tcp(const std::string &filename,
   }
 }
 
-void SocketProber::read_proc_net_udp(const std::string &filename,
-                                     std::function<void(void)> periodic_cb)
+void SocketProber::read_proc_net_udp(const std::string &filename, std::function<void(void)> periodic_cb)
 {
 
   ProcNetReader proc_net_reader(filename);
@@ -278,7 +269,7 @@ int SocketProber::get_network_namespace(int pid)
     // TODO: add logging
     return -1;
   //		throw std::runtime_error("get_network_namespace: readlink should
-  //start with net:[");
+  // start with net:[");
   sscanf(link_content, "net:[%u]", &network_namespace);
 
   return network_namespace;

@@ -29,8 +29,7 @@ public:
    * @param elems: a buffer large enough to hold num_elems elements of type T
    * @throws runtime_error if num_elems is not a power of two
    */
-  CircularQueue(value_type *elems, uint32_t num_elems)
-      : head_(0), tail_(0), mask_(num_elems - 1), elems_(elems)
+  CircularQueue(value_type *elems, uint32_t num_elems) : head_(0), tail_(0), mask_(num_elems - 1), elems_(elems)
   {
     if ((num_elems & (num_elems - 1)) != 0)
       throw std::runtime_error("num_elems must be a power of two");

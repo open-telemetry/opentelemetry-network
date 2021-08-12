@@ -26,9 +26,7 @@ channel::internal::Certificate::Certificate(const std::string &cert)
 {
   BIO *bio = BIO_new_mem_buf(cert.c_str(), cert.length());
   if (bio == nullptr) {
-    throw std::runtime_error(
-      fmt::format("could not allocate BIO for TLS cert: {}", TLSError())
-    );
+    throw std::runtime_error(fmt::format("could not allocate BIO for TLS cert: {}", TLSError()));
   }
 
   cert_ = PEM_read_bio_X509(bio, nullptr, nullptr, nullptr);
@@ -40,9 +38,7 @@ channel::internal::Certificate::Certificate(const std::string &cert)
 
   /* now check success. */
   if (cert_ == nullptr) {
-    throw std::runtime_error(
-      fmt::format("could not read TLS cert: {}", TLSError(err))
-    );
+    throw std::runtime_error(fmt::format("could not read TLS cert: {}", TLSError(err)));
   }
 }
 

@@ -74,11 +74,13 @@ END_DECLARE_SAVED_ARGS(tcp_sendmsg)
 // Processes data that ends up in the send and receive streams
 // to determine protocols and deal with them.
 
-static void tcp_send_stream_handler(struct pt_regs *ctx,
-                                    struct tcp_connection_t *pconn,
-                                    struct tcp_control_value_t *pctrl,
-                                    enum STREAM_TYPE streamtype,
-                                    const void *data, size_t data_len)
+static void tcp_send_stream_handler(
+    struct pt_regs *ctx,
+    struct tcp_connection_t *pconn,
+    struct tcp_control_value_t *pctrl,
+    enum STREAM_TYPE streamtype,
+    const void *data,
+    size_t data_len)
 {
   // Are we an accepting socket, or an originating socket?
   if (pconn->parent_sk) {
@@ -90,11 +92,13 @@ static void tcp_send_stream_handler(struct pt_regs *ctx,
   }
 }
 
-static void tcp_recv_stream_handler(struct pt_regs *ctx,
-                                    struct tcp_connection_t *pconn,
-                                    struct tcp_control_value_t *pctrl,
-                                    enum STREAM_TYPE streamtype,
-                                    const void *data, size_t data_len)
+static void tcp_recv_stream_handler(
+    struct pt_regs *ctx,
+    struct tcp_connection_t *pconn,
+    struct tcp_control_value_t *pctrl,
+    enum STREAM_TYPE streamtype,
+    const void *data,
+    size_t data_len)
 {
   // Are we an accepting socket, or an originating socket?
   if (pconn->parent_sk) {
@@ -113,11 +117,9 @@ static void tcp_recv_stream_handler(struct pt_regs *ctx,
 
 #pragma passthrough on
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 1, 0)
-int handle_kprobe__tcp_sendmsg(struct pt_regs *ctx, struct kiocb *iocb,
-                               struct sock *sk, struct msghdr *msg, size_t size)
+int handle_kprobe__tcp_sendmsg(struct pt_regs *ctx, struct kiocb *iocb, struct sock *sk, struct msghdr *msg, size_t size)
 #else
-int handle_kprobe__tcp_sendmsg(struct pt_regs *ctx, struct sock *sk,
-                               struct msghdr *msg, size_t size)
+int handle_kprobe__tcp_sendmsg(struct pt_regs *ctx, struct sock *sk, struct msghdr *msg, size_t size)
 #endif
 #pragma passthrough off
 {
@@ -127,9 +129,9 @@ int handle_kprobe__tcp_sendmsg(struct pt_regs *ctx, struct sock *sk,
   pconn = lookup_tcp_connection(sk);
   if (!pconn) {
     // For now ignore sends on sockets we haven't seen the tcp_init_sock for
-//#if TRACE_TCP_SEND
-//    DEBUG_PRINTK("tcp_sendmsg found no tcp connection in kprobe\n");
-//#endif
+    //#if TRACE_TCP_SEND
+    //    DEBUG_PRINTK("tcp_sendmsg found no tcp connection in kprobe\n");
+    //#endif
     return 0;
   }
   struct tcp_control_value_t *pctrl = get_tcp_control(pconn);
@@ -212,11 +214,13 @@ int handle_kprobe__tcp_sendmsg(struct pt_regs *ctx, struct sock *sk,
   END_SAVE_ARGS(tcp_sendmsg)
 
 #if TRACE_TCP_SEND
-  DEBUG_PRINTK("tcp_sendmsg enter: pid %u request to send up to %u bytes "
-               "on socket %llx\n",
-               pconn->upid, (unsigned int)size, sk);
-  DEBUG_PRINTK("                   nr_segs=%lu, iov_offset=%lu\n", nr_segs,
-               iov_offset);
+  DEBUG_PRINTK(
+      "tcp_sendmsg enter: pid %u request to send up to %u bytes "
+      "on socket %llx\n",
+      pconn->upid,
+      (unsigned int)size,
+      sk);
+  DEBUG_PRINTK("                   nr_segs=%lu, iov_offset=%lu\n", nr_segs, iov_offset);
 #endif
 
   return 0;
@@ -267,8 +271,7 @@ int continue_tcp_sendmsg(struct pt_regs *ctx)
       bpf_probe_read(&iov_ptr, sizeof(iov_ptr), &(args->iov->iov_base));
       bpf_probe_read(&iov_len, sizeof(iov_len), &(args->iov->iov_len));
 #if TRACE_TCP_SEND
-      DEBUG_PRINTK("tcp_sendmsg continue: ptr=%llx, len=%d\n", iov_ptr,
-                   iov_len);
+      DEBUG_PRINTK("tcp_sendmsg continue: ptr=%llx, len=%d\n", iov_ptr, iov_len);
 #endif
       args->iov_ptr = iov_ptr;
       args->iov_len = iov_len;
@@ -299,10 +302,9 @@ int continue_tcp_sendmsg(struct pt_regs *ctx)
   args->iov_ptr += to_copy;
   args->iov_len -= to_copy;
 
-  if(to_copy == remaining || args->depth==TCP_TAIL_CALL_MAX_DEPTH) {
+  if (to_copy == remaining || args->depth == TCP_TAIL_CALL_MAX_DEPTH) {
     DELETE_ARGS(tcp_sendmsg);
-  }
-  else {
+  } else {
     args->depth++;
     tail_calls.call(ctx, TAIL_CALL_CONTINUE_TCP_SENDMSG);
   }
@@ -310,19 +312,22 @@ int continue_tcp_sendmsg(struct pt_regs *ctx)
   return 0;
 }
 
-
 // --- tcp_recvmsg ----------------------------------------------------
 // Called when data is to be received by a TCP socket
 
 #pragma passthrough on
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 1, 0)
-int handle_kprobe__tcp_recvmsg(struct pt_regs *ctx, struct kiocb *iocb,
-                               struct sock *sk, struct msghdr *msg, size_t len,
-                               int nonblock, int flags /*, int *addr_len*/)
+int handle_kprobe__tcp_recvmsg(
+    struct pt_regs *ctx,
+    struct kiocb *iocb,
+    struct sock *sk,
+    struct msghdr *msg,
+    size_t len,
+    int nonblock,
+    int flags /*, int *addr_len*/)
 #else
-int handle_kprobe__tcp_recvmsg(struct pt_regs *ctx, struct sock *sk,
-                               struct msghdr *msg, size_t len, int nonblock,
-                               int flags, int *addr_len)
+int handle_kprobe__tcp_recvmsg(
+    struct pt_regs *ctx, struct sock *sk, struct msghdr *msg, size_t len, int nonblock, int flags, int *addr_len)
 #endif
 #pragma passthrough off
 {
@@ -332,9 +337,9 @@ int handle_kprobe__tcp_recvmsg(struct pt_regs *ctx, struct sock *sk,
   pconn = lookup_tcp_connection(sk);
   if (!pconn) {
     // Ignore receives on sockets we haven't seen the tcp_init_sock for
-//#if TRACE_TCP_RECEIVE
-//    DEBUG_PRINTK("tcp_recvmsg found no tcp connection in kprobe\n");
-//#endif
+    //#if TRACE_TCP_RECEIVE
+    //    DEBUG_PRINTK("tcp_recvmsg found no tcp connection in kprobe\n");
+    //#endif
     return 0;
   }
   struct tcp_control_value_t *pctrl = get_tcp_control(pconn);
@@ -413,11 +418,13 @@ int handle_kprobe__tcp_recvmsg(struct pt_regs *ctx, struct sock *sk,
   END_SAVE_ARGS(tcp_recvmsg)
 
 #if TRACE_TCP_RECEIVE
-  DEBUG_PRINTK("tcp_recvmsg enter: pid %u request to receive up to %u "
-               "bytes on socket %llx\n",
-               pconn->upid, (unsigned int)len, sk);
-  DEBUG_PRINTK("                   iov_base=%llx, iov_len=%d\n", iov_base,
-               iov_len);
+  DEBUG_PRINTK(
+      "tcp_recvmsg enter: pid %u request to receive up to %u "
+      "bytes on socket %llx\n",
+      pconn->upid,
+      (unsigned int)len,
+      sk);
+  DEBUG_PRINTK("                   iov_base=%llx, iov_len=%d\n", iov_base, iov_len);
 
 #endif
 
@@ -469,10 +476,9 @@ int continue_tcp_recvmsg(struct pt_regs *ctx)
 
   args->written += to_copy;
 
-  if(to_copy == remaining || args->depth==TCP_TAIL_CALL_MAX_DEPTH) {
+  if (to_copy == remaining || args->depth == TCP_TAIL_CALL_MAX_DEPTH) {
     DELETE_ARGS(tcp_recvmsg);
-  }
-  else {
+  } else {
     args->depth++;
     tail_calls.call(ctx, TAIL_CALL_CONTINUE_TCP_RECVMSG);
   }

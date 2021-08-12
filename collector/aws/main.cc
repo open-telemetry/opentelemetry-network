@@ -48,7 +48,8 @@
  * environment variables `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`.
  */
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
   ::uv_loop_t loop;
   if (auto const error = ::uv_loop_init(&loop)) {
     throw std::runtime_error(::uv_strerror(error));
@@ -57,11 +58,11 @@ int main(int argc, char *argv[]) {
   // read config from environment
 
   auto const agent_key = AuthzFetcher::read_agent_key()
-    .on_error([](auto &error) {
-      LOG::critical("Authentication key error: {}", error);
-      exit(-1);
-    })
-    .value();
+                             .on_error([](auto &error) {
+                               LOG::critical("Authentication key error: {}", error);
+                               exit(-1);
+                             })
+                             .value();
 
   // args parsing
 
@@ -70,15 +71,16 @@ int main(int argc, char *argv[]) {
   args::HelpFlag help(*parser, "help", "Display this help menu", {'h', "help"});
 
   args::ValueFlag<std::chrono::milliseconds::rep> ec2_poll_interval_ms(
-      *parser, "ec2_poll_interval_ms",
+      *parser,
+      "ec2_poll_interval_ms",
       "How often, in milliseconds, to enumerate interfaces in EC2.",
-      {"ec2-poll-interval-ms"}, std::chrono::milliseconds(1s).count());
+      {"ec2-poll-interval-ms"},
+      std::chrono::milliseconds(1s).count());
 
   auto &authz_server = AuthzFetcher::register_args_parser(parser);
 
   args::ValueFlag<u64> aws_metadata_timeout_ms(
-      *parser, "milliseconds", "Milliseconds to wait for AWS instance metadata",
-      {"aws-timeout"}, 1 * 1000);
+      *parser, "milliseconds", "Milliseconds to wait for AWS instance metadata", {"aws-timeout"}, 1 * 1000);
 
   parser.new_handler<LogWhitelistHandler<channel::Component>>("channel");
   parser.new_handler<LogWhitelistHandler<collector::Component>>("component");
@@ -87,8 +89,8 @@ int main(int argc, char *argv[]) {
 
   auto &intake_config_handler = parser.new_handler<config::IntakeConfig::ArgsHandler>();
 
-  SignalManager &signal_manager = parser.new_handler<SignalManager>(loop, "aws-collector")
-    .add_auth(agent_key.key_id, agent_key.secret);
+  SignalManager &signal_manager =
+      parser.new_handler<SignalManager>(loop, "aws-collector").add_auth(agent_key.key_id, agent_key.secret);
 
   if (auto result = parser.process(argc, argv); !result.has_value()) {
     return result.error();
@@ -116,10 +118,7 @@ int main(int argc, char *argv[]) {
 
   auto intake_config = intake_config_handler.read_config(authz_fetcher.token()->intake());
 
-  LOG::info(
-    "AWS Collector version {} ({}) started on host {}",
-    versions::release, release_mode_string, hostname
-  );
+  LOG::info("AWS Collector version {} ({}) started on host {}", versions::release, release_mode_string, hostname);
   LOG::info("AWS Collector agent ID is {}", agent_id);
 
   // aws sdk init
@@ -129,16 +128,16 @@ int main(int argc, char *argv[]) {
   // main
 
   collector::aws::AwsCollector collector{
-    loop, hostname, authz_fetcher,
-    std::chrono::milliseconds(aws_metadata_timeout_ms.Get()),
-    HEARTBEAT_INTERVAL, WRITE_BUFFER_SIZE,
-    std::move(intake_config),
-    std::chrono::milliseconds(ec2_poll_interval_ms.Get())
-  };
+      loop,
+      hostname,
+      authz_fetcher,
+      std::chrono::milliseconds(aws_metadata_timeout_ms.Get()),
+      HEARTBEAT_INTERVAL,
+      WRITE_BUFFER_SIZE,
+      std::move(intake_config),
+      std::chrono::milliseconds(ec2_poll_interval_ms.Get())};
 
-  signal_manager.handle_signals(
-    {SIGINT, SIGTERM}
-    // TODO: close gracefully
+  signal_manager.handle_signals({SIGINT, SIGTERM} // TODO: close gracefully
   );
 
   collector.run_loop();

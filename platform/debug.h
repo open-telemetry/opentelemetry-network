@@ -23,24 +23,24 @@
 
 /* FASTPASS_PR_DEBUG defined in platform.h */
 #if defined __KERNEL__
-#define FASTPASS_PR_DEBUG(enable, fmt, a...)                                   \
-  do {                                                                         \
-    if (enable)                                                                \
-      printk(KERN_DEBUG "%s: " fmt, __func__, ##a);                            \
+#define FASTPASS_PR_DEBUG(enable, fmt, a...)                                                                                   \
+  do {                                                                                                                         \
+    if (enable)                                                                                                                \
+      printk(KERN_DEBUG "%s: " fmt, __func__, ##a);                                                                            \
   } while (0)
 
 #elif defined RTE_ARCH
-#define FASTPASS_PR_DEBUG(enable, fmt, a...)                                   \
-  do {                                                                         \
-    if (enable)                                                                \
-      COMM_DEBUG("%s: " fmt, __func__, ##a);                                   \
+#define FASTPASS_PR_DEBUG(enable, fmt, a...)                                                                                   \
+  do {                                                                                                                         \
+    if (enable)                                                                                                                \
+      COMM_DEBUG("%s: " fmt, __func__, ##a);                                                                                   \
   } while (0)
 
 #else
-#define FASTPASS_PR_DEBUG(enable, fmt, a...)                                   \
-  do {                                                                         \
-    if (enable)                                                                \
-      printf("%s: " fmt, __func__, ##a);                                       \
+#define FASTPASS_PR_DEBUG(enable, fmt, a...)                                                                                   \
+  do {                                                                                                                         \
+    if (enable)                                                                                                                \
+      printf("%s: " fmt, __func__, ##a);                                                                                       \
   } while (0)
 #endif
 
@@ -63,17 +63,16 @@ extern bool fastpass_debug;
  * Warning and debugging macros, (originally taken from DCCP)
  */
 #define FASTPASS_WARN(fmt, a...) net_warn_ratelimited("%s: " fmt, __func__, ##a)
-#define FASTPASS_CRIT(fmt, a...)                                               \
-  printk(KERN_CRIT fmt " at %s:%d/%s()\n", ##a, __FILE__, __LINE__, __func__)
-#define FASTPASS_BUG(a...)                                                     \
-  do {                                                                         \
-    FASTPASS_CRIT("BUG: " a);                                                  \
-    dump_stack();                                                              \
+#define FASTPASS_CRIT(fmt, a...) printk(KERN_CRIT fmt " at %s:%d/%s()\n", ##a, __FILE__, __LINE__, __func__)
+#define FASTPASS_BUG(a...)                                                                                                     \
+  do {                                                                                                                         \
+    FASTPASS_CRIT("BUG: " a);                                                                                                  \
+    dump_stack();                                                                                                              \
   } while (0)
-#define FASTPASS_BUG_ON(cond)                                                  \
-  do {                                                                         \
-    if (unlikely((cond) != 0))                                                 \
-      FASTPASS_BUG("\"%s\" holds (exception!)", __stringify(cond));            \
+#define FASTPASS_BUG_ON(cond)                                                                                                  \
+  do {                                                                                                                         \
+    if (unlikely((cond) != 0))                                                                                                 \
+      FASTPASS_BUG("\"%s\" holds (exception!)", __stringify(cond));                                                            \
   } while (0)
 
 #define fp_info(format, a...) pr_info("%s: " format, __func__, ##a)
@@ -81,8 +80,8 @@ extern bool fastpass_debug;
 #ifndef NDEBUG
 #define assert(cond) BUG_ON(!(cond))
 #else
-#define assert(cond)                                                           \
-  do {                                                                         \
+#define assert(cond)                                                                                                           \
+  do {                                                                                                                         \
   } while (0)
 #endif
 
@@ -120,22 +119,21 @@ static inline void panic(void)
   exit(-1);
 }
 
-#define FASTPASS_CRIT(fmt, a...)                                               \
-  printf(fmt " at %s:%d/%s()\n", ##a, __FILE__, __LINE__, __func__)
+#define FASTPASS_CRIT(fmt, a...) printf(fmt " at %s:%d/%s()\n", ##a, __FILE__, __LINE__, __func__)
 
 /** from linux's include/asm-generic/bug.h */
-#define FASTPASS_BUG()                                                         \
-  do {                                                                         \
-    FASTPASS_CRIT("BUG");                                                      \
-    fp_backtrace();                                                            \
-    if (FASTPASS_BUG_SHOULD_PANIC)                                             \
-      panic();                                                                 \
+#define FASTPASS_BUG()                                                                                                         \
+  do {                                                                                                                         \
+    FASTPASS_CRIT("BUG");                                                                                                      \
+    fp_backtrace();                                                                                                            \
+    if (FASTPASS_BUG_SHOULD_PANIC)                                                                                             \
+      panic();                                                                                                                 \
   } while (0)
 
-#define FASTPASS_BUG_ON(condition)                                             \
-  do {                                                                         \
-    if (unlikely(condition))                                                   \
-      FASTPASS_BUG();                                                          \
+#define FASTPASS_BUG_ON(condition)                                                                                             \
+  do {                                                                                                                         \
+    if (unlikely(condition))                                                                                                   \
+      FASTPASS_BUG();                                                                                                          \
   } while (0)
 
 #define fp_info(format, a...) printf("%s: " format, __func__, ##a)

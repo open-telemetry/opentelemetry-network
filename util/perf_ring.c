@@ -113,7 +113,7 @@ u16 pr_peek_aligned_u16(const struct perf_ring *eq, u16 offset)
   return *(u16 *)&eq->data[total_offset & eq->buf_mask];
 }
 
-void pr_peek_copy(const struct perf_ring *eq, char* buf, u16 offset, u16 len)
+void pr_peek_copy(const struct perf_ring *eq, char *buf, u16 offset, u16 len)
 {
   u32 begin_head;
   u32 begin;
@@ -151,7 +151,9 @@ struct pr_data_view pr_peek(const struct perf_ring *eq)
   const u32 begin = begin_head & eq->buf_mask;
   const u32 end = (begin_head + unpadded_len - 1) & eq->buf_mask;
 
-  if (unpadded_len == 0) { return result ; }
+  if (unpadded_len == 0) {
+    return result;
+  }
 
   assert(pr_peek_size(eq) >= (int)offset + unpadded_len);
 
@@ -206,7 +208,7 @@ u32 pr_bytes_remaining(const struct perf_ring *eq, u32 *total_size)
     return -EINVAL;
 
   u32 buf_size = eq->buf_mask + 1;
-  if(total_size) {
+  if (total_size) {
     *total_size = buf_size;
   }
   u32 begin = eq->buf_head & eq->buf_mask;

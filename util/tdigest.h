@@ -36,10 +36,7 @@ public:
   TDigest() {}
   ~TDigest() {}
 
-  inline double mean() const
-  {
-    return (value_count_ != 0) ? (sum_ / value_count_) : 0.0;
-  }
+  inline double mean() const { return (value_count_ != 0) ? (sum_ / value_count_) : 0.0; }
 
   inline size_t value_count() const { return value_count_; }
   inline double max() const { return max_; }
@@ -77,10 +74,7 @@ private:
     Centroid &operator=(const Centroid &) = default;
     Centroid &operator=(Centroid &&) = default;
 
-    inline bool operator<(const Centroid &other) const
-    {
-      return mean < other.mean;
-    }
+    inline bool operator<(const Centroid &other) const { return mean < other.mean; }
 
     // Adds Centroid{|new_sum|, |new_weight|}, returns resulting sum.
     inline double add(double new_sum, double new_weight)

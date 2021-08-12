@@ -38,12 +38,15 @@ void heartbeat_timer_cb(uv_timer_t *timer)
 } // namespace
 
 ConnectionCaretaker::ConnectionCaretaker(
-    std::string_view hostname, ClientType client_type,     
+    std::string_view hostname,
+    ClientType client_type,
     AuthzFetcher &authz_fetcher,
     config::ConfigFile::LabelsMap const &config_data,
-    uv_loop_t *loop, flowmill::ingest::Writer &writer,
+    uv_loop_t *loop,
+    flowmill::ingest::Writer &writer,
     std::chrono::milliseconds metadata_timeout,
-    std::chrono::milliseconds heartbeat_interval, std::function<void()> flush_cb,
+    std::chrono::milliseconds heartbeat_interval,
+    std::function<void()> flush_cb,
     std::function<void(bool)> set_compression_cb,
     std::function<void()> on_authenticated_cb)
     : hostname_(hostname),
@@ -95,30 +98,25 @@ ConnectionCaretaker::~ConnectionCaretaker()
 void ConnectionCaretaker::send_metadata_header()
 {
   set_compression_cb_(false);
-  LOG::info("initiating authentication of {} collector version {}",
-            client_type_, versions::release);
-  writer_.version_info(
-      versions::release.major(), versions::release.minor(), versions::release.build());
+  LOG::info("initiating authentication of {} collector version {}", client_type_, versions::release);
+  writer_.version_info(versions::release.major(), versions::release.minor(), versions::release.build());
   flush();
   set_compression_cb_(true);
 
   auto const &token = *authz_fetcher_.token();
   LOG::info(
       "sending authz token with {}s left until expiration (iat={}s exp={}s)",
-      token.time_left<std::chrono::seconds>(std::chrono::system_clock::now())
-          .count(),
+      token.time_left<std::chrono::seconds>(std::chrono::system_clock::now()).count(),
       token.issued_at<std::chrono::seconds>().count(),
       token.expiration<std::chrono::seconds>().count());
-  writer_.authz_authenticate(jb_blob(token.payload()),
-                             static_cast<u8>(client_type_),
-                             jb_blob(hostname_));
+  writer_.authz_authenticate(jb_blob(token.payload()), static_cast<u8>(client_type_), jb_blob(hostname_));
 
   writer_.report_cpu_cores(std::thread::hardware_concurrency());
 
   flush();
 
-# define make_buf_from_field(struct_name, field, buf_name)                     \
-  struct struct_name __##struct_name##__##buf_name;                            \
+#define make_buf_from_field(struct_name, field, buf_name)                                                                      \
+  struct struct_name __##struct_name##__##buf_name;                                                                            \
   char buf_name[sizeof(__##struct_name##__##buf_name.field)] = {};
 
   for (auto const &label : config_data_) {
@@ -130,15 +128,10 @@ void ConnectionCaretaker::send_metadata_header()
     writer_.cloud_platform(static_cast<u16>(CloudPlatform::aws));
     if (auto const &account_id = aws_metadata_->account_id()) {
       LOG::trace_in(
-        std::make_tuple(CloudPlatform::aws, collector::Component::auth),
-        "reporting aws account id: {}", account_id.value()
-      );
+          std::make_tuple(CloudPlatform::aws, collector::Component::auth), "reporting aws account id: {}", account_id.value());
       writer_.cloud_platform_account_info(jb_blob{account_id.value()});
     } else {
-      LOG::trace_in(
-        std::make_tuple(CloudPlatform::aws, collector::Component::auth),
-        "no aws account id to report"
-      );
+      LOG::trace_in(std::make_tuple(CloudPlatform::aws, collector::Component::auth), "no aws account id to report");
     }
 
     auto id = aws_metadata_->id().value();
@@ -147,15 +140,14 @@ void ConnectionCaretaker::send_metadata_header()
     }
 
     writer_.set_node_info(
-      jb_blob{aws_metadata_->az().value()},
-      jb_blob{aws_metadata_->iam_role().value()},
-      jb_blob{id},
-      jb_blob{aws_metadata_->type().value()}
-    );
+        jb_blob{aws_metadata_->az().value()},
+        jb_blob{aws_metadata_->iam_role().value()},
+        jb_blob{id},
+        jb_blob{aws_metadata_->type().value()});
     flush();
 
-    for (auto const &interface: aws_metadata_->network_interfaces()) {
-      for (auto const &ipv4: interface.private_ipv4s()) {
+    for (auto const &interface : aws_metadata_->network_interfaces()) {
+      for (auto const &ipv4 : interface.private_ipv4s()) {
         struct sockaddr_in private_sa;
         int res = inet_pton(AF_INET, ipv4.c_str(), &(private_sa.sin_addr));
         if (res != 1) {
@@ -166,7 +158,7 @@ void ConnectionCaretaker::send_metadata_header()
         writer_.private_ipv4_addr(private_sa.sin_addr.s_addr, (u8 *)vpc_id_buf);
       }
 
-      for (auto const &ipv6: interface.ipv6s()) {
+      for (auto const &ipv6 : interface.ipv6s()) {
         struct sockaddr_in6 sa;
         int res = inet_pton(AF_INET6, ipv6.c_str(), &(sa.sin6_addr));
         if (res != 1) {
@@ -177,25 +169,20 @@ void ConnectionCaretaker::send_metadata_header()
         writer_.ipv6_addr(sa.sin6_addr.s6_addr, (u8 *)vpc_id_buf);
       }
 
-      for (auto const &mapped_ipv4: interface.mapped_ipv4s()) {
+      for (auto const &mapped_ipv4 : interface.mapped_ipv4s()) {
         struct sockaddr_in public_sa;
-        int res =
-            inet_pton(AF_INET, mapped_ipv4.first.c_str(), &(public_sa.sin_addr));
+        int res = inet_pton(AF_INET, mapped_ipv4.first.c_str(), &(public_sa.sin_addr));
         if (res != 1) {
           continue;
         }
         struct sockaddr_in private_sa;
-        res = inet_pton(AF_INET, mapped_ipv4.second.c_str(),
-                        &(private_sa.sin_addr));
+        res = inet_pton(AF_INET, mapped_ipv4.second.c_str(), &(private_sa.sin_addr));
         if (res != 1) {
           continue;
         }
-        make_buf_from_field(jb_ingest__public_to_private_ipv4, vpc_id,
-                            vpc_id_buf);
+        make_buf_from_field(jb_ingest__public_to_private_ipv4, vpc_id, vpc_id_buf);
         strncpy(vpc_id_buf, interface.vpc_id().c_str(), sizeof(vpc_id_buf));
-        writer_.public_to_private_ipv4(public_sa.sin_addr.s_addr,
-                                       private_sa.sin_addr.s_addr,
-                                       (u8 *)vpc_id_buf);
+        writer_.public_to_private_ipv4(public_sa.sin_addr.s_addr, private_sa.sin_addr.s_addr, (u8 *)vpc_id_buf);
       }
     }
   } else if (gcp_metadata_) {
@@ -204,20 +191,19 @@ void ConnectionCaretaker::send_metadata_header()
     // writer_.cloud_platform_account_info(jb_blob{account_id});
 
     writer_.set_node_info(
-      jb_blob{gcp_metadata_->az()},
-      jb_blob{gcp_metadata_->role()},
-      jb_blob{gcp_metadata_->hostname()},
-      jb_blob{gcp_metadata_->type()}
-    );
+        jb_blob{gcp_metadata_->az()},
+        jb_blob{gcp_metadata_->role()},
+        jb_blob{gcp_metadata_->hostname()},
+        jb_blob{gcp_metadata_->type()});
     flush();
 
-    for (auto const &interface: gcp_metadata_->network_interfaces()) {
+    for (auto const &interface : gcp_metadata_->network_interfaces()) {
       if (auto const ipv4 = interface.ipv4()) {
         make_buf_from_field(jb_ingest__private_ipv4_addr, vpc_id, vpc_id_buf);
         strncpy(vpc_id_buf, interface.vpc_id().c_str(), sizeof(vpc_id_buf));
         writer_.private_ipv4_addr(ipv4->as_int(), (u8 *)vpc_id_buf);
 
-        for (auto const &public_ip: interface.public_ips()) {
+        for (auto const &public_ip : interface.public_ips()) {
           make_buf_from_field(jb_ingest__public_to_private_ipv4, vpc_id, vpc_id_buf);
           strncpy(vpc_id_buf, interface.vpc_id().c_str(), sizeof(vpc_id_buf));
           writer_.public_to_private_ipv4(public_ip.as_int(), ipv4->as_int(), (u8 *)vpc_id_buf);
@@ -233,12 +219,7 @@ void ConnectionCaretaker::send_metadata_header()
   } else {
     writer_.cloud_platform(static_cast<u16>(CloudPlatform::unknown));
 
-    writer_.set_node_info(
-      jb_blob{/* az */},
-      jb_blob{/* role */},
-      jb_blob{hostname_},
-      jb_blob{/* instance_type */}
-    );
+    writer_.set_node_info(jb_blob{/* az */}, jb_blob{/* role */}, jb_blob{hostname_}, jb_blob{/* instance_type */});
 
     // no network interface data (public/private ip) to send
   }
@@ -246,7 +227,7 @@ void ConnectionCaretaker::send_metadata_header()
   writer_.metadata_complete(0);
 
   flush();
-# undef make_buf_from_field
+#undef make_buf_from_field
 
   on_authenticated_cb_();
 }
@@ -261,16 +242,17 @@ void ConnectionCaretaker::flush()
   flush_cb_();
 }
 
-void ConnectionCaretaker::start_heartbeat() {
-  int res = uv_timer_start(&heartbeat_timer_, heartbeat_timer_cb,
-                     heartbeat_interval_.count(), heartbeat_interval_.count());
+void ConnectionCaretaker::start_heartbeat()
+{
+  int res = uv_timer_start(&heartbeat_timer_, heartbeat_timer_cb, heartbeat_interval_.count(), heartbeat_interval_.count());
 
   if (res != 0) {
     LOG::error("Cannot start heartbeat_timer: {}", uv_err_name(res));
   }
 }
 
-void ConnectionCaretaker::stop_heartbeat() {
+void ConnectionCaretaker::stop_heartbeat()
+{
   uv_timer_stop(&heartbeat_timer_);
 }
 

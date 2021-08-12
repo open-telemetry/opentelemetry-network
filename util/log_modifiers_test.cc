@@ -27,7 +27,8 @@
 
 namespace {
 
-TEST(log_modifiers, logging_overhead) {
+TEST(log_modifiers, logging_overhead)
+{
   EXPECT_FALSE(logger::is_logging_overhead<bool &>);
   EXPECT_FALSE(logger::is_logging_overhead<bool &&>);
   EXPECT_FALSE(logger::is_logging_overhead<bool const &>);
@@ -38,10 +39,10 @@ TEST(log_modifiers, logging_overhead) {
   EXPECT_FALSE(logger::is_logging_overhead<char const &>);
   EXPECT_FALSE(logger::is_logging_overhead<char const &&>);
 
-  EXPECT_FALSE(logger::is_logging_overhead<char const * &>);
-  EXPECT_FALSE(logger::is_logging_overhead<char const * &&>);
-  EXPECT_FALSE(logger::is_logging_overhead<char const * const &>);
-  EXPECT_FALSE(logger::is_logging_overhead<char const * const &&>);
+  EXPECT_FALSE(logger::is_logging_overhead<char const *&>);
+  EXPECT_FALSE(logger::is_logging_overhead<char const *&&>);
+  EXPECT_FALSE(logger::is_logging_overhead<char const *const &>);
+  EXPECT_FALSE(logger::is_logging_overhead<char const *const &&>);
 
   EXPECT_FALSE(logger::is_logging_overhead<int &>);
   EXPECT_FALSE(logger::is_logging_overhead<int &&>);
@@ -79,10 +80,10 @@ TEST(log_modifiers, logging_overhead) {
   EXPECT_FALSE(logger::is_logging_overhead<std::vector<int> const &&>);
 }
 
-#define LOG_STR(...) \
-  fmt::format("{}", __VA_ARGS__)
+#define LOG_STR(...) fmt::format("{}", __VA_ARGS__)
 
-TEST(log_modifiers, log_waive) {
+TEST(log_modifiers, log_waive)
+{
   EXPECT_EQ("10", LOG_STR(log_waive(10)));
   EXPECT_EQ("10", LOG_STR(log_waive(std::string("10"))));
 
@@ -97,10 +98,11 @@ TEST(log_modifiers, log_waive) {
 
   EXPECT_EQ("10", LOG_STR(log_waive(std::move(s))));
 
-  EXPECT_EQ("10", LOG_STR(log_waive([] {return std::string("10"); }())));
+  EXPECT_EQ("10", LOG_STR(log_waive([] { return std::string("10"); }())));
 }
 
-TEST(log_modifiers, log_either) {
+TEST(log_modifiers, log_either)
+{
   EXPECT_EQ("111", LOG_STR(log_either(true, 111, 222)));
   EXPECT_EQ("222", LOG_STR(log_either(false, 111, 222)));
 
@@ -111,7 +113,8 @@ TEST(log_modifiers, log_either) {
   EXPECT_EQ("222", LOG_STR(log_either(false, "TTT", 222)));
 }
 
-TEST(log_modifiers, log_surround) {
+TEST(log_modifiers, log_surround)
+{
   EXPECT_EQ("<10>", LOG_STR(log_surround<'<', '>'>(10)));
 
   std::string s("10");
@@ -124,7 +127,8 @@ TEST(log_modifiers, log_surround) {
   EXPECT_EQ("<10>", LOG_STR(log_surround<'<', '>'>(cref)));
 }
 
-TEST(log_modifiers, log_quoted) {
+TEST(log_modifiers, log_quoted)
+{
   EXPECT_EQ("\"10\"", LOG_STR(log_quoted(10)));
 
   std::string s("10");
@@ -137,7 +141,8 @@ TEST(log_modifiers, log_quoted) {
   EXPECT_EQ("\"10\"", LOG_STR(log_quoted(cref)));
 }
 
-TEST(log_modifiers, log_single_quoted) {
+TEST(log_modifiers, log_single_quoted)
+{
   EXPECT_EQ("'10'", LOG_STR(log_single_quoted(10)));
 
   std::string s("10");
@@ -150,7 +155,8 @@ TEST(log_modifiers, log_single_quoted) {
   EXPECT_EQ("'10'", LOG_STR(log_single_quoted(cref)));
 }
 
-TEST(log_modifiers, log_parens) {
+TEST(log_modifiers, log_parens)
+{
   EXPECT_EQ("(10)", LOG_STR(log_parens(10)));
 
   std::string s("10");
@@ -163,7 +169,8 @@ TEST(log_modifiers, log_parens) {
   EXPECT_EQ("(10)", LOG_STR(log_parens(cref)));
 }
 
-TEST(log_modifiers, log_bracket) {
+TEST(log_modifiers, log_bracket)
+{
   EXPECT_EQ("[10]", LOG_STR(log_bracket(10)));
 
   std::string s("10");
@@ -176,7 +183,8 @@ TEST(log_modifiers, log_bracket) {
   EXPECT_EQ("[10]", LOG_STR(log_bracket(cref)));
 }
 
-TEST(log_modifiers, log_brace) {
+TEST(log_modifiers, log_brace)
+{
   EXPECT_EQ("{10}", LOG_STR(log_brace(10)));
 
   std::string s("10");
@@ -189,7 +197,8 @@ TEST(log_modifiers, log_brace) {
   EXPECT_EQ("{10}", LOG_STR(log_brace(cref)));
 }
 
-TEST(log_modifiers, log_kv_pair) {
+TEST(log_modifiers, log_kv_pair)
+{
   EXPECT_EQ(R"(key="value")", LOG_STR(log_kv_pair("key", "value")));
   EXPECT_EQ(R"(key="10")", LOG_STR(log_kv_pair("key", 10)));
   EXPECT_EQ(R"(v0|"v1")", LOG_STR(log_kv_pair<'|'>("v0", "v1")));
@@ -226,7 +235,8 @@ TEST(log_modifiers, log_kv_pair) {
   }
 }
 
-TEST(log_modifiers, log_call) {
+TEST(log_modifiers, log_call)
+{
   int when_true_count = 0;
   std::string const when_true_value = "TTT";
   auto const when_true = [&] {
@@ -236,8 +246,7 @@ TEST(log_modifiers, log_call) {
 
   int when_false_count = 0;
   std::string const when_false_value = "FFF";
-  [[maybe_unused]]
-  auto const when_false = [&] {
+  [[maybe_unused]] auto const when_false = [&] {
     ++when_false_count;
     return when_false_value;
   };
@@ -259,7 +268,8 @@ TEST(log_modifiers, log_call) {
   EXPECT_EQ(2, when_false_count);
 }
 
-TEST(log_modifiers, log_lazy) {
+TEST(log_modifiers, log_lazy)
+{
   int when_true_count = 0;
   std::string_view const when_true_value = "TTT";
   auto const when_true = [&] {
@@ -269,8 +279,7 @@ TEST(log_modifiers, log_lazy) {
 
   int when_false_count = 0;
   std::string_view const when_false_value = "FFF";
-  [[maybe_unused]]
-  auto const when_false = [&] {
+  [[maybe_unused]] auto const when_false = [&] {
     ++when_false_count;
     return when_false_value;
   };
@@ -292,4 +301,4 @@ TEST(log_modifiers, log_lazy) {
   EXPECT_EQ(2, when_false_count);
 }
 
-} // namespace {
+} // namespace

@@ -25,10 +25,10 @@
 
 #include <args.hxx>
 
+#include <list>
 #include <memory>
 #include <string>
 #include <vector>
-#include <list>
 
 namespace cli {
 
@@ -65,18 +65,13 @@ public:
 
   class FlagProxy {
   public:
-    FlagProxy(
-      args::ArgumentParser &parser,
-      std::string const &name,
-      std::string const &description,
-      bool default_value
-    );
+    FlagProxy(args::ArgumentParser &parser, std::string const &name, std::string const &description, bool default_value);
 
     bool given() const;
 
     explicit operator bool() const;
-    bool operator !() const { return !static_cast<bool>(*this); }
-    bool operator *() const { return static_cast<bool>(*this); }
+    bool operator!() const { return !static_cast<bool>(*this); }
+    bool operator*() const { return static_cast<bool>(*this); }
 
   private:
     args::Flag flag_;
@@ -86,11 +81,7 @@ public:
   /**
    * Adds a boolean flag.
    */
-  FlagProxy add_flag(
-    std::string const &name,
-    std::string const &description,
-    bool default_value = false
-  );
+  FlagProxy add_flag(std::string const &name, std::string const &description, bool default_value = false);
 
   /**
    * Adds a boolean flag that defaults to a given environment variable's value, if present.
@@ -100,34 +91,23 @@ public:
    *  2. environment variable's value
    *  3. default value
    */
-  FlagProxy add_env_flag(
-    std::string const &name,
-    std::string const &description,
-    char const *env_var,
-    bool default_value = false
-  );
+  FlagProxy
+  add_env_flag(std::string const &name, std::string const &description, char const *env_var, bool default_value = false);
 
-  template <typename T>
-  class ArgProxy {
+  template <typename T> class ArgProxy {
     static constexpr bool needs_proxy = std::is_enum_v<T>;
     using proxy_ref = std::conditional_t<needs_proxy, T, T &>;
 
   public:
-    ArgProxy(
-      args::ArgumentParser &parser,
-      std::string const &name,
-      std::string const &description,
-      T const &default_value
-    );
+    ArgProxy(args::ArgumentParser &parser, std::string const &name, std::string const &description, T const &default_value);
 
     bool given() const;
 
     explicit operator bool() const { return given(); }
 
-    proxy_ref operator *();
+    proxy_ref operator*();
 
-    template <typename = std::enable_if_t<needs_proxy>>
-    T *operator ->();
+    template <typename = std::enable_if_t<needs_proxy>> T *operator->();
 
   private:
     using arg_type = std::conditional_t<std::is_enum_v<T>, std::string, T>;
@@ -146,12 +126,8 @@ public:
    * `std::invalid_argument` is thrown.
    */
   template <typename T>
-  ArgProxy<T> add_arg(
-    std::string const &name,
-    std::string const &description,
-    char const *env_var = nullptr,
-    T default_value = {}
-  );
+  ArgProxy<T>
+  add_arg(std::string const &name, std::string const &description, char const *env_var = nullptr, T default_value = {});
 
   /**
    * Parses command line arguments and handles pre-defined flags.
@@ -163,8 +139,8 @@ public:
   /**
    * Compatibility with args::ArgumentsParser.
    */
-  args::ArgumentParser *operator ->() { return &parser_; }
-  args::ArgumentParser &operator *() { return parser_; }
+  args::ArgumentParser *operator->() { return &parser_; }
+  args::ArgumentParser &operator*() { return parser_; }
 
   class Handler {
   public:
@@ -176,13 +152,12 @@ public:
   /**
    * Add an args parser handler
    */
-  template<class HandlerType, typename... Args>
-  HandlerType &new_handler(Args &&... args);
+  template <class HandlerType, typename... Args> HandlerType &new_handler(Args &&... args);
 
   /**
    * Utility function for splitting argument lists
    */
-  static void split_arguments(const std::string &argliststr, std::list<std::string> & argument_list); 
+  static void split_arguments(const std::string &argliststr, std::list<std::string> &argument_list);
 
 private:
   args::ArgumentParser parser_;

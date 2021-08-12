@@ -16,14 +16,15 @@
 
 #pragma once
 
-#include <string>
 #include <map>
+#include <string>
 
 namespace config {
 
 class ConfigFile {
 public:
-  struct YamlFormat {};
+  struct YamlFormat {
+  };
   enum class FailMode { silent, exception };
 
   ConfigFile(YamlFormat, std::string const &path, FailMode fail = FailMode::exception);
@@ -36,4 +37,4 @@ private:
   LabelsMap labels_;
 };
 
-} // namespace config {
+} // namespace config

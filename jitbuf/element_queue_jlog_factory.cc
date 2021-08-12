@@ -20,8 +20,7 @@
 #include <ccan/container_of/container_of.h>
 
 FactoryElementQueue::FactoryElementQueue(
-    std::shared_ptr<ElementQueueStorage> storage,
-    struct element_queue_jlog_output_factory *factory)
+    std::shared_ptr<ElementQueueStorage> storage, struct element_queue_jlog_output_factory *factory)
     : producer(storage), consumer(storage), factory_(factory)
 {
   int ret;
@@ -38,8 +37,7 @@ FactoryElementQueue::~FactoryElementQueue()
   auto iter = std::find(factory_->queues.begin(), factory_->queues.end(), this);
 
   if (iter == factory_->queues.end())
-    throw std::runtime_error(
-        "could not find element_queue in factory's queues when destroying");
+    throw std::runtime_error("could not find element_queue in factory's queues when destroying");
 
   factory_->queues.erase(iter);
 
@@ -47,16 +45,12 @@ FactoryElementQueue::~FactoryElementQueue()
 }
 
 /* create method from jlog_output_factory */
-static int output_create(struct jlog_output_factory *factory,
-                         struct element_queue **eq_ptr,
-                         fp_spinlock_t **write_lock_ptr)
+static int output_create(struct jlog_output_factory *factory, struct element_queue **eq_ptr, fp_spinlock_t **write_lock_ptr)
 {
-  struct element_queue_jlog_output_factory *eq_factory =
-      container_of(factory, typeof(*eq_factory), jlog_factory);
+  struct element_queue_jlog_output_factory *eq_factory = container_of(factory, typeof(*eq_factory), jlog_factory);
 
   try {
-    std::shared_ptr<MemElementQueueStorage> storage(
-        new MemElementQueueStorage(eq_factory->n_elems_, eq_factory->buf_len_));
+    std::shared_ptr<MemElementQueueStorage> storage(new MemElementQueueStorage(eq_factory->n_elems_, eq_factory->buf_len_));
 
     FactoryElementQueue *queue = new FactoryElementQueue(storage, eq_factory);
     if (queue == NULL)
@@ -66,8 +60,7 @@ static int output_create(struct jlog_output_factory *factory,
     *write_lock_ptr = &queue->write_lock;
 
     return 0;
-  }
-  catch (...) {
+  } catch (...) {
     return -ENOMEM;
   }
 }

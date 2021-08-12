@@ -37,8 +37,7 @@ void eq_init_shared(struct element_queue_shared *shared)
   shared->buf_tail = 0;
 }
 
-int eq_init_contig(struct element_queue *eq, u32 n_elems, u32 buf_len,
-                   void *data)
+int eq_init_contig(struct element_queue *eq, u32 n_elems, u32 buf_len, void *data)
 {
   if ((eq == NULL) || (data == NULL))
     return -EINVAL;

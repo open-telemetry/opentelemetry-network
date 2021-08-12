@@ -28,11 +28,7 @@
 
 class GcpServiceAccount {
 public:
-  GcpServiceAccount(
-    std::string name,
-    std::string email,
-    std::vector<std::string> scopes
-  );
+  GcpServiceAccount(std::string name, std::string email, std::vector<std::string> scopes);
 
   std::string const &name() const { return name_; }
   std::string const &email() const { return email_; }
@@ -50,29 +46,16 @@ class GcpNetworkInterface {
 public:
   using ip_address_t = std::variant<IPv4Address, IPv6Address>;
 
-  GcpNetworkInterface(
-    std::string vpc_id,
-    std::string mac,
-    ip_address_t ip,
-    std::vector<IPv4Address> public_ips
-  );
+  GcpNetworkInterface(std::string vpc_id, std::string mac, ip_address_t ip, std::vector<IPv4Address> public_ips);
 
   std::string const &vpc_id() const { return vpc_id_; }
   std::string const &mac() const { return mac_; }
 
   // nullptr if not an ipv4
-  IPv4Address const *ipv4() const {
-    return std::holds_alternative<IPv4Address>(ip_)
-      ? &std::get<IPv4Address>(ip_)
-      : nullptr;
-  }
+  IPv4Address const *ipv4() const { return std::holds_alternative<IPv4Address>(ip_) ? &std::get<IPv4Address>(ip_) : nullptr; }
 
   // nullptr if not an ipv6
-  IPv6Address const *ipv6() const {
-    return std::holds_alternative<IPv6Address>(ip_)
-      ? &std::get<IPv6Address>(ip_)
-      : nullptr;
-  }
+  IPv6Address const *ipv6() const { return std::holds_alternative<IPv6Address>(ip_) ? &std::get<IPv6Address>(ip_) : nullptr; }
 
   std::vector<IPv4Address> const &public_ips() const { return public_ips_; }
 
@@ -88,18 +71,17 @@ private:
 class GcpInstanceMetadata {
 public:
   GcpInstanceMetadata(
-    std::string cluster_name,
-    std::string cluster_location,
-    std::string image,
-    std::string hostname,
-    std::string name,
-    std::int64_t id,
-    std::string az,
-    std::string role,
-    std::string type,
-    std::vector<GcpNetworkInterface> network_interfaces,
-    std::vector<GcpServiceAccount> service_accounts
-  );
+      std::string cluster_name,
+      std::string cluster_location,
+      std::string image,
+      std::string hostname,
+      std::string name,
+      std::int64_t id,
+      std::string az,
+      std::string role,
+      std::string type,
+      std::vector<GcpNetworkInterface> network_interfaces,
+      std::vector<GcpServiceAccount> service_accounts);
 
   std::string const &cluster_name() const { return cluster_name_; }
   std::string const &cluster_location() const { return cluster_location_; }
@@ -111,7 +93,7 @@ public:
   std::string const &role() const { return role_; }
   std::string const &type() const { return type_; }
   std::vector<GcpNetworkInterface> const &network_interfaces() const { return network_interfaces_; }
-  std::vector<GcpServiceAccount> const&service_accounts() const { return service_accounts_; }
+  std::vector<GcpServiceAccount> const &service_accounts() const { return service_accounts_; }
 
   void print() const;
 

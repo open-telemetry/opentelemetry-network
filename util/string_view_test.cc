@@ -21,13 +21,15 @@
 
 namespace views {
 
-TEST(string_view, run_length) {
+TEST(string_view, run_length)
+{
   EXPECT_EQ(5u, run_length("ABAABCADBEF", "AB"));
   EXPECT_EQ(0u, run_length("ABAABCADBEF", "Z"));
   EXPECT_EQ(6u, run_length("ABAABA", "AB"));
 }
 
-TEST(string_view, trim_run) {
+TEST(string_view, trim_run)
+{
   {
     std::string_view data = "ABAABCADBEF";
     EXPECT_EQ("ABAAB", trim_run(data, "AB"));
@@ -39,7 +41,7 @@ TEST(string_view, trim_run) {
     EXPECT_EQ("", trim_run(data, "Z"));
     EXPECT_EQ(data, "ABAABCADBEF");
   }
-  
+
   {
     std::string_view data = "ABAABA";
     EXPECT_EQ("ABAABA", trim_run(data, "AB"));
@@ -47,7 +49,8 @@ TEST(string_view, trim_run) {
   }
 }
 
-TEST(string_view, count_up_to_char) {
+TEST(string_view, count_up_to_char)
+{
   EXPECT_EQ(5u, count_up_to("ABAABCADBEF", 'C', false));
   EXPECT_EQ(0u, count_up_to("ABAABCADBEF", 'A', false));
   EXPECT_EQ(6u, count_up_to("ABAABA", 'Z', false));
@@ -57,7 +60,8 @@ TEST(string_view, count_up_to_char) {
   EXPECT_EQ(6u, count_up_to("ABAABA", 'Z', true));
 }
 
-TEST(string_view, count_up_to_string_view) {
+TEST(string_view, count_up_to_string_view)
+{
   EXPECT_EQ(5u, count_up_to("ABAABCADBEF", "CDEF", false));
   EXPECT_EQ(0u, count_up_to("ABAABCADBEF", "AB", false));
   EXPECT_EQ(6u, count_up_to("ABAABA", "Z", false));
@@ -67,19 +71,20 @@ TEST(string_view, count_up_to_string_view) {
   EXPECT_EQ(6u, count_up_to("ABAABA", "Z", true));
 }
 
-TEST(string_view, trim_up_to_char) {
+TEST(string_view, trim_up_to_char)
+{
   {
     std::string_view data = "ABAABCADBEF";
     EXPECT_EQ("ABAAB", trim_up_to(data, 'C', SeekBehavior::EXCLUDE));
     EXPECT_EQ(data, "CADBEF");
   }
-  
+
   {
     std::string_view data = "ABAABCADBEF";
     EXPECT_EQ("", trim_up_to(data, 'A', SeekBehavior::EXCLUDE));
     EXPECT_EQ(data, "ABAABCADBEF");
   }
-  
+
   {
     std::string_view data = "ABAABA";
     EXPECT_EQ("ABAABA", trim_up_to(data, 'Z', SeekBehavior::EXCLUDE));
@@ -91,13 +96,13 @@ TEST(string_view, trim_up_to_char) {
     EXPECT_EQ("ABAAB", trim_up_to(data, 'C', SeekBehavior::CONSUME));
     EXPECT_EQ(data, "ADBEF");
   }
-  
+
   {
     std::string_view data = "ABAABCADBEF";
     EXPECT_EQ("", trim_up_to(data, 'A', SeekBehavior::CONSUME));
     EXPECT_EQ(data, "BAABCADBEF");
   }
-  
+
   {
     std::string_view data = "ABAABA";
     EXPECT_EQ("ABAABA", trim_up_to(data, 'Z', SeekBehavior::CONSUME));
@@ -109,13 +114,13 @@ TEST(string_view, trim_up_to_char) {
     EXPECT_EQ("ABAABC", trim_up_to(data, 'C', SeekBehavior::INCLUDE));
     EXPECT_EQ(data, "ADBEF");
   }
-  
+
   {
     std::string_view data = "ABAABCADBEF";
     EXPECT_EQ("A", trim_up_to(data, 'A', SeekBehavior::INCLUDE));
     EXPECT_EQ(data, "BAABCADBEF");
   }
-  
+
   {
     std::string_view data = "ABAABA";
     EXPECT_EQ("ABAABA", trim_up_to(data, 'Z', SeekBehavior::INCLUDE));
@@ -123,19 +128,20 @@ TEST(string_view, trim_up_to_char) {
   }
 }
 
-TEST(string_view, trim_up_to_string_view) {
+TEST(string_view, trim_up_to_string_view)
+{
   {
     std::string_view data = "ABAABCADBEF";
     EXPECT_EQ("ABAAB", trim_up_to(data, "CDEF", SeekBehavior::EXCLUDE));
     EXPECT_EQ(data, "CADBEF");
   }
-  
+
   {
     std::string_view data = "ABAABCADBEF";
     EXPECT_EQ("", trim_up_to(data, "AB", SeekBehavior::EXCLUDE));
     EXPECT_EQ(data, "ABAABCADBEF");
   }
-  
+
   {
     std::string_view data = "ABAABA";
     EXPECT_EQ("ABAABA", trim_up_to(data, "Z", SeekBehavior::EXCLUDE));
@@ -147,13 +153,13 @@ TEST(string_view, trim_up_to_string_view) {
     EXPECT_EQ("ABAAB", trim_up_to(data, "CDEF", SeekBehavior::CONSUME));
     EXPECT_EQ(data, "ADBEF");
   }
-  
+
   {
     std::string_view data = "ABAABCADBEF";
     EXPECT_EQ("", trim_up_to(data, "AB", SeekBehavior::CONSUME));
     EXPECT_EQ(data, "BAABCADBEF");
   }
-  
+
   {
     std::string_view data = "ABAABA";
     EXPECT_EQ("ABAABA", trim_up_to(data, "Z", SeekBehavior::CONSUME));
@@ -165,13 +171,13 @@ TEST(string_view, trim_up_to_string_view) {
     EXPECT_EQ("ABAABC", trim_up_to(data, "CDEF", SeekBehavior::INCLUDE));
     EXPECT_EQ(data, "ADBEF");
   }
-  
+
   {
     std::string_view data = "ABAABCADBEF";
     EXPECT_EQ("A", trim_up_to(data, "AB", SeekBehavior::INCLUDE));
     EXPECT_EQ(data, "BAABCADBEF");
   }
-  
+
   {
     std::string_view data = "ABAABA";
     EXPECT_EQ("ABAABA", trim_up_to(data, "Z", SeekBehavior::INCLUDE));
@@ -179,7 +185,8 @@ TEST(string_view, trim_up_to_string_view) {
   }
 }
 
-TEST(string_view, count_up_to_last_char) {
+TEST(string_view, count_up_to_last_char)
+{
   EXPECT_EQ(10u, count_up_to_last("ABAABCADBEF", 'F', false));
   EXPECT_EQ(8u, count_up_to_last("ABAABCADBEF", 'B', false));
   EXPECT_EQ(0u, count_up_to_last("ABAABA", 'Z', false));
@@ -189,7 +196,8 @@ TEST(string_view, count_up_to_last_char) {
   EXPECT_EQ(0u, count_up_to_last("ABAABA", 'Z', true));
 }
 
-TEST(string_view, count_up_to_last_string_view) {
+TEST(string_view, count_up_to_last_string_view)
+{
   EXPECT_EQ(10u, count_up_to_last("ABAABCADBEF", "CDEF", false));
   EXPECT_EQ(8u, count_up_to_last("ABAABCADBEF", "AB", false));
   EXPECT_EQ(0u, count_up_to_last("ABAABA", "Z", false));
@@ -199,19 +207,20 @@ TEST(string_view, count_up_to_last_string_view) {
   EXPECT_EQ(0u, count_up_to_last("ABAABA", "Z", true));
 }
 
-TEST(string_view, trim_up_to_last_char) {
+TEST(string_view, trim_up_to_last_char)
+{
   {
     std::string_view data = "ABAABCADBEF";
     EXPECT_EQ("ABAABCADBE", trim_up_to_last(data, 'F', SeekBehavior::EXCLUDE));
     EXPECT_EQ(data, "F");
   }
-  
+
   {
     std::string_view data = "ABAABCADBEF";
     EXPECT_EQ("ABAABCAD", trim_up_to_last(data, 'B', SeekBehavior::EXCLUDE));
     EXPECT_EQ(data, "BEF");
   }
-  
+
   {
     std::string_view data = "ABAABA";
     EXPECT_EQ("", trim_up_to_last(data, 'Z', SeekBehavior::EXCLUDE));
@@ -223,13 +232,13 @@ TEST(string_view, trim_up_to_last_char) {
     EXPECT_EQ("ABAABCADBE", trim_up_to_last(data, 'F', SeekBehavior::CONSUME));
     EXPECT_EQ(data, "");
   }
-  
+
   {
     std::string_view data = "ABAABCADBEF";
     EXPECT_EQ("ABAABCAD", trim_up_to_last(data, 'B', SeekBehavior::CONSUME));
     EXPECT_EQ(data, "EF");
   }
-  
+
   {
     std::string_view data = "ABAABA";
     EXPECT_EQ("", trim_up_to_last(data, 'Z', SeekBehavior::CONSUME));
@@ -241,13 +250,13 @@ TEST(string_view, trim_up_to_last_char) {
     EXPECT_EQ("ABAABCADBEF", trim_up_to_last(data, 'F', SeekBehavior::INCLUDE));
     EXPECT_EQ(data, "");
   }
-  
+
   {
     std::string_view data = "ABAABCADBEF";
     EXPECT_EQ("ABAABCADB", trim_up_to_last(data, 'B', SeekBehavior::INCLUDE));
     EXPECT_EQ(data, "EF");
   }
-  
+
   {
     std::string_view data = "ABAABA";
     EXPECT_EQ("", trim_up_to_last(data, 'Z', SeekBehavior::INCLUDE));
@@ -255,19 +264,20 @@ TEST(string_view, trim_up_to_last_char) {
   }
 }
 
-TEST(string_view, trim_up_to_last_string_view) {
+TEST(string_view, trim_up_to_last_string_view)
+{
   {
     std::string_view data = "ABAABCADBEF";
     EXPECT_EQ("ABAABCADBE", trim_up_to_last(data, "CDEF", SeekBehavior::EXCLUDE));
     EXPECT_EQ(data, "F");
   }
-  
+
   {
     std::string_view data = "ABAABCADBEF";
     EXPECT_EQ("ABAABCAD", trim_up_to_last(data, "AB", SeekBehavior::EXCLUDE));
     EXPECT_EQ(data, "BEF");
   }
-  
+
   {
     std::string_view data = "ABAABA";
     EXPECT_EQ("", trim_up_to_last(data, "Z", SeekBehavior::EXCLUDE));
@@ -279,13 +289,13 @@ TEST(string_view, trim_up_to_last_string_view) {
     EXPECT_EQ("ABAABCADBE", trim_up_to_last(data, "CDEF", SeekBehavior::CONSUME));
     EXPECT_EQ(data, "");
   }
-  
+
   {
     std::string_view data = "ABAABCADBEF";
     EXPECT_EQ("ABAABCAD", trim_up_to_last(data, "AB", SeekBehavior::CONSUME));
     EXPECT_EQ(data, "EF");
   }
-  
+
   {
     std::string_view data = "ABAABA";
     EXPECT_EQ("", trim_up_to_last(data, "Z", SeekBehavior::CONSUME));
@@ -297,13 +307,13 @@ TEST(string_view, trim_up_to_last_string_view) {
     EXPECT_EQ("ABAABCADBEF", trim_up_to_last(data, "CDEF", SeekBehavior::INCLUDE));
     EXPECT_EQ(data, "");
   }
-  
+
   {
     std::string_view data = "ABAABCADBEF";
     EXPECT_EQ("ABAABCADB", trim_up_to_last(data, "AB", SeekBehavior::INCLUDE));
     EXPECT_EQ(data, "EF");
   }
-  
+
   {
     std::string_view data = "ABAABA";
     EXPECT_EQ("", trim_up_to_last(data, "Z", SeekBehavior::INCLUDE));
@@ -311,7 +321,8 @@ TEST(string_view, trim_up_to_last_string_view) {
   }
 }
 
-TEST(NumberView, integer_u8) {
+TEST(NumberView, integer_u8)
+{
   EXPECT_EQ(0, NumberView<u8>("0").value());
   EXPECT_EQ(1, NumberView<u8>("1").value());
   EXPECT_EQ(10, NumberView<u8>("10").value());
@@ -319,7 +330,8 @@ TEST(NumberView, integer_u8) {
   EXPECT_EQ(255, NumberView<u8>("255").value());
 }
 
-TEST(NumberView, integer_s8) {
+TEST(NumberView, integer_s8)
+{
   EXPECT_EQ(0, NumberView<s8>("0").value());
   EXPECT_EQ(1, NumberView<s8>("1").value());
   EXPECT_EQ(10, NumberView<s8>("10").value());
@@ -330,7 +342,8 @@ TEST(NumberView, integer_s8) {
   EXPECT_EQ(-128, NumberView<s8>("-128").value());
 }
 
-TEST(NumberView, integer_u16) {
+TEST(NumberView, integer_u16)
+{
   EXPECT_EQ(0, NumberView<u16>("0").value());
   EXPECT_EQ(1, NumberView<u16>("1").value());
   EXPECT_EQ(10, NumberView<u16>("10").value());
@@ -342,7 +355,8 @@ TEST(NumberView, integer_u16) {
   EXPECT_EQ(61128, NumberView<u16>("61128").value());
 }
 
-TEST(NumberView, integer_s16) {
+TEST(NumberView, integer_s16)
+{
   EXPECT_EQ(0, NumberView<s16>("0").value());
   EXPECT_EQ(1, NumberView<s16>("1").value());
   EXPECT_EQ(10, NumberView<s16>("10").value());
@@ -358,7 +372,8 @@ TEST(NumberView, integer_s16) {
   EXPECT_EQ(-29128, NumberView<s16>("-29128").value());
 }
 
-TEST(NumberView, integer_u32) {
+TEST(NumberView, integer_u32)
+{
   EXPECT_EQ(0u, NumberView<u32>("0").value());
   EXPECT_EQ(1u, NumberView<u32>("1").value());
   EXPECT_EQ(10u, NumberView<u32>("10").value());
@@ -374,7 +389,8 @@ TEST(NumberView, integer_u32) {
   EXPECT_EQ(+19229128u, NumberView<u32>("+19229128").value());
 }
 
-TEST(NumberView, integer_s32) {
+TEST(NumberView, integer_s32)
+{
   EXPECT_EQ(0, NumberView<s32>("0").value());
   EXPECT_EQ(1, NumberView<s32>("1").value());
   EXPECT_EQ(10, NumberView<s32>("10").value());
@@ -390,7 +406,8 @@ TEST(NumberView, integer_s32) {
   EXPECT_EQ(-19229128, NumberView<s32>("-19229128").value());
 }
 
-TEST(NumberView, integer_u64) {
+TEST(NumberView, integer_u64)
+{
   EXPECT_EQ(0ul, NumberView<u64>("0").value());
   EXPECT_EQ(1ul, NumberView<u64>("1").value());
   EXPECT_EQ(10ul, NumberView<u64>("10").value());
@@ -406,7 +423,8 @@ TEST(NumberView, integer_u64) {
   EXPECT_EQ(+19229128ul, NumberView<u64>("+19229128").value());
 }
 
-TEST(NumberView, integer_s64) {
+TEST(NumberView, integer_s64)
+{
   EXPECT_EQ(0l, NumberView<s64>("0").value());
   EXPECT_EQ(1l, NumberView<s64>("1").value());
   EXPECT_EQ(10l, NumberView<s64>("10").value());
@@ -422,9 +440,10 @@ TEST(NumberView, integer_s64) {
   EXPECT_EQ(-19229128l, NumberView<s64>("-19229128").value());
 }
 
-enum class my_enum: u64 {};
+enum class my_enum : u64 {};
 
-TEST(NumberView, my_enum) {
+TEST(NumberView, my_enum)
+{
   EXPECT_EQ(static_cast<my_enum>(0ul), NumberView<my_enum>("0").value());
   EXPECT_EQ(static_cast<my_enum>(1ul), NumberView<my_enum>("1").value());
   EXPECT_EQ(static_cast<my_enum>(10ul), NumberView<my_enum>("10").value());
@@ -439,6 +458,5 @@ TEST(NumberView, my_enum) {
   EXPECT_EQ(static_cast<my_enum>(9931127ul), NumberView<my_enum>("9931127").value());
   EXPECT_EQ(static_cast<my_enum>(+19229128ul), NumberView<my_enum>("+19229128").value());
 }
-
 
 } // namespace views

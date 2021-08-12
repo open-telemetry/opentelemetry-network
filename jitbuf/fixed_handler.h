@@ -17,8 +17,8 @@
 #ifndef INCLUDE_JITBUF_FIXED_HANDLER_H_
 #define INCLUDE_JITBUF_FIXED_HANDLER_H_
 
-#include <platform/platform.h>
 #include <jitbuf/jb.h>
+#include <platform/platform.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -51,8 +51,8 @@ struct jitbuf_fixed {
  *
  * @returns -EINVAL if pointers are NULL or 0 on success.
  */
-int jbf_init(struct jitbuf_fixed *client, struct jitbuf_handler *handler_buf,
-             uint32_t n_handlers, uint32_t (*hash_fn)(uint32_t rpc_id));
+int jbf_init(
+    struct jitbuf_fixed *client, struct jitbuf_handler *handler_buf, uint32_t n_handlers, uint32_t (*hash_fn)(uint32_t rpc_id));
 
 /**
  * Adds an RPC handler to the client
@@ -68,8 +68,7 @@ int jbf_init(struct jitbuf_fixed *client, struct jitbuf_handler *handler_buf,
  *
  * @note rpc_id == (u32)-1 is reserved.
  */
-int jbf_add(struct jitbuf_fixed *client, const struct jb_rpc *rpc,
-            jbc_handler_func f, void *context);
+int jbf_add(struct jitbuf_fixed *client, const struct jb_rpc *rpc, jbc_handler_func f, void *context);
 
 /**
  * Encodes an aggregate descriptor holding all descriptors for handled rpc_ids

@@ -19,14 +19,12 @@
 #include <cerrno>
 #include <cstdlib>
 
-template <typename T>
-bool integer_from_string(char const *in, T &out) {
+template <typename T> bool integer_from_string(char const *in, T &out)
+{
   using type = std::decay_t<T>;
 
   if constexpr (std::is_enum_v<type>) {
-    if (std::underlying_type_t<type> underlying = {};
-      integer_from_string<std::underlying_type_t<type>>(in, underlying)
-    ) {
+    if (std::underlying_type_t<type> underlying = {}; integer_from_string<std::underlying_type_t<type>>(in, underlying)) {
       out = static_cast<type>(underlying);
       return true;
     } else {
@@ -39,42 +37,39 @@ bool integer_from_string(char const *in, T &out) {
 
     if constexpr (std::is_same_v<type, bool>) {
       std::string_view s{in};
-      if (s == "0"
-        || s == "false" || s == "False" || s == "FALSE"
-        || s == "no" || s == "No" || s == "NO"
-      ) { out = false; }
-      else if (s == "1"
-        || s == "true" || s == "True" || s == "TRUE"
-        || s == "yes" || s == "Yes" || s == "YES"
-      ) { out = true; }
-      else {
+      if (s == "0" || s == "false" || s == "False" || s == "FALSE" || s == "no" || s == "No" || s == "NO") {
+        out = false;
+      } else if (s == "1" || s == "true" || s == "True" || s == "TRUE" || s == "yes" || s == "Yes" || s == "YES") {
+        out = true;
+      } else {
         return false;
       }
 
       return true;
-    } else if constexpr (std::is_same_v<type, char>
-                  || std::is_same_v<type, std::int8_t>
-                  || std::is_same_v<type, short>
-                  || std::is_same_v<type, int>
-                  || std::is_same_v<type, long>) {
+    } else if constexpr (
+        std::is_same_v<type, char> || std::is_same_v<type, std::int8_t> || std::is_same_v<type, short> ||
+        std::is_same_v<type, int> || std::is_same_v<type, long>) {
       auto const result = std::strtol(in, &end, 10);
-      if (in == end || errno == ERANGE) { return false; }
+      if (in == end || errno == ERANGE) {
+        return false;
+      }
 
       if constexpr (!std::is_same_v<type, long>) {
-        if (result < static_cast<long>(std::numeric_limits<type>::min())
-          || result > static_cast<long>(std::numeric_limits<type>::max())
-        ) { return false; }
+        if (result < static_cast<long>(std::numeric_limits<type>::min()) ||
+            result > static_cast<long>(std::numeric_limits<type>::max())) {
+          return false;
+        }
       }
 
       out = static_cast<type>(result);
       return true;
-    } else if constexpr (std::is_same_v<type, unsigned char>
-                  || std::is_same_v<type, std::uint8_t>
-                  || std::is_same_v<type, unsigned short>
-                  || std::is_same_v<type, unsigned int>
-                  || std::is_same_v<type, unsigned long>) {
+    } else if constexpr (
+        std::is_same_v<type, unsigned char> || std::is_same_v<type, std::uint8_t> || std::is_same_v<type, unsigned short> ||
+        std::is_same_v<type, unsigned int> || std::is_same_v<type, unsigned long>) {
       auto const result = std::strtoul(in, &end, 10);
-      if (in == end || errno == ERANGE) { return false; }
+      if (in == end || errno == ERANGE) {
+        return false;
+      }
 
       if constexpr (!std::is_same_v<type, unsigned long>) {
         if (result > static_cast<unsigned long>(std::numeric_limits<type>::max())) {
@@ -86,45 +81,41 @@ bool integer_from_string(char const *in, T &out) {
       return true;
     } else if constexpr (std::is_same_v<type, long long>) {
       auto const result = std::strtoll(in, &end, 10);
-      if (in == end || errno == ERANGE) { return false; }
+      if (in == end || errno == ERANGE) {
+        return false;
+      }
       out = result;
       return true;
     } else if constexpr (std::is_same_v<type, unsigned long long>) {
       auto const result = std::strtoull(in, &end, 10);
-      if (in == end || errno == ERANGE) { return false; }
+      if (in == end || errno == ERANGE) {
+        return false;
+      }
       out = result;
       return true;
     } else {
       static_assert(
-        // this big list is needed because gcc is not smart enough to realize
-        // that the static assert should only be evaluated if all other
-        // conditionals failed
-        std::is_same_v<type, bool>
-        || std::is_same_v<type, char>
-        || std::is_same_v<type, std::int8_t>
-        || std::is_same_v<type, short>
-        || std::is_same_v<type, int>
-        || std::is_same_v<type, long>
-        || std::is_same_v<type, unsigned char>
-        || std::is_same_v<type, unsigned short>
-        || std::is_same_v<type, unsigned int>
-        || std::is_same_v<type, unsigned long>
-        || std::is_same_v<type, long long>
-        || std::is_same_v<type, unsigned long long>,
-        "integer_from_string: unsupported type"
-      );
+          // this big list is needed because gcc is not smart enough to realize
+          // that the static assert should only be evaluated if all other
+          // conditionals failed
+          std::is_same_v<type, bool> || std::is_same_v<type, char> || std::is_same_v<type, std::int8_t> ||
+              std::is_same_v<type, short> || std::is_same_v<type, int> || std::is_same_v<type, long> ||
+              std::is_same_v<type, unsigned char> || std::is_same_v<type, unsigned short> ||
+              std::is_same_v<type, unsigned int> || std::is_same_v<type, unsigned long> || std::is_same_v<type, long long> ||
+              std::is_same_v<type, unsigned long long>,
+          "integer_from_string: unsupported type");
     }
   }
 }
 
-template <typename T>
-T try_integer_from_string(char const *in, T fallback) {
+template <typename T> T try_integer_from_string(char const *in, T fallback)
+{
   integer_from_string(in, fallback);
   return fallback;
 }
 
-template <typename T>
-bool floating_point_from_string(char const *in, T &out) {
+template <typename T> bool floating_point_from_string(char const *in, T &out)
+{
   using type = std::decay_t<T>;
 
   // because C APIs suck regarding constness
@@ -133,41 +124,44 @@ bool floating_point_from_string(char const *in, T &out) {
 
   if constexpr (std::is_same_v<type, float>) {
     auto const result = std::strtof(in, &end);
-    if (in == end || errno == ERANGE) { return false; }
+    if (in == end || errno == ERANGE) {
+      return false;
+    }
     out = result;
     return true;
   } else if constexpr (std::is_same_v<type, double>) {
     auto const result = std::strtod(in, &end);
-    if (in == end || errno == ERANGE) { return false; }
+    if (in == end || errno == ERANGE) {
+      return false;
+    }
     out = result;
     return true;
   } else if constexpr (std::is_same_v<type, long double>) {
     auto const result = std::strtold(in, &end);
-    if (in == end || errno == ERANGE) { return false; }
+    if (in == end || errno == ERANGE) {
+      return false;
+    }
     out = result;
     return true;
   } else {
     static_assert(
-      // this big list is needed because gcc is not smart enough to realize
-      // that the static assert should only be evaluated if all other
-      // conditionals failed
-      std::is_same_v<type, float>
-      || std::is_same_v<type, double>
-      || std::is_same_v<type, long double>,
-      "floating_point_from_string: unsupported type"
-    );
+        // this big list is needed because gcc is not smart enough to realize
+        // that the static assert should only be evaluated if all other
+        // conditionals failed
+        std::is_same_v<type, float> || std::is_same_v<type, double> || std::is_same_v<type, long double>,
+        "floating_point_from_string: unsupported type");
     return false;
   }
 }
 
-template <typename T>
-T try_floating_point_from_string(char const *in, T fallback) {
+template <typename T> T try_floating_point_from_string(char const *in, T fallback)
+{
   floating_point_from_string(in, fallback);
   return fallback;
 }
 
-template <typename T>
-bool from_string(char const *in, T &out) {
+template <typename T> bool from_string(char const *in, T &out)
+{
   if constexpr (std::is_integral_v<T>) {
     return integer_from_string(in, out);
   } else if constexpr (std::is_floating_point_v<T>) {
@@ -179,19 +173,16 @@ bool from_string(char const *in, T &out) {
     return true;
   } else {
     static_assert(
-      // this big list is needed because gcc is not smart enough to realize
-      // that the static assert should only be evaluated if all other
-      // conditionals failed
-      std::is_integral_v<T>
-      || std::is_floating_point_v<T>
-      || std::is_enum_v<T>,
-      "from_string: unsupported type"
-    );
+        // this big list is needed because gcc is not smart enough to realize
+        // that the static assert should only be evaluated if all other
+        // conditionals failed
+        std::is_integral_v<T> || std::is_floating_point_v<T> || std::is_enum_v<T>,
+        "from_string: unsupported type");
   }
 }
 
-template <typename T>
-T try_from_string(char const *in, T fallback) {
+template <typename T> T try_from_string(char const *in, T fallback)
+{
   from_string(in, fallback);
   return fallback;
 }

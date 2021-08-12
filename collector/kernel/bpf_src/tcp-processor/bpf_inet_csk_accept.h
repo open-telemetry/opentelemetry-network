@@ -18,7 +18,7 @@
 // bpf_inet_csk_accept.h - BPF handler for connection-based socket accepts
 //
 
-#pragma once 
+#pragma once
 
 #include "bpf_debug.h"
 #include "bpf_memory.h"
@@ -36,11 +36,9 @@ END_DECLARE_SAVED_ARGS(inet_csk_accept)
 // Called when a listen socket accepts gets a connection
 #pragma passthrough on // Let BCC process this #if
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
-int handle_kprobe__inet_csk_accept(struct pt_regs *ctx, struct sock *sk,
-                                   int flags, int *err, bool kern)
+int handle_kprobe__inet_csk_accept(struct pt_regs *ctx, struct sock *sk, int flags, int *err, bool kern)
 #else
-int handle_kprobe__inet_csk_accept(struct pt_regs *ctx, struct sock *sk,
-                                   int flags, int *err)
+int handle_kprobe__inet_csk_accept(struct pt_regs *ctx, struct sock *sk, int flags, int *err)
 #endif
 #pragma passthrough off // Return to preprocessor handling of directives
 {
@@ -68,8 +66,7 @@ int handle_kprobe__inet_csk_accept(struct pt_regs *ctx, struct sock *sk,
   END_SAVE_ARGS(inet_csk_accept)
 
 #if TRACE_SOCKET_ACCEPT
-  DEBUG_PRINTK("inet_csk_accept enter: pid %u accepting socket on %llx\n",
-               psk_info->upid, sk);
+  DEBUG_PRINTK("inet_csk_accept enter: pid %u accepting socket on %llx\n", psk_info->upid, sk);
   DEBUG_PRINTK("                       pid_tgid %llu added\n", _pid_tgid);
 #endif
 

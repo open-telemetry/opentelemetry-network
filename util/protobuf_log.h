@@ -18,7 +18,8 @@
 #include <google/protobuf/message.h>
 #include <google/protobuf/text_format.h>
 
-std::ostream &operator <<(std::ostream &out, google::protobuf::Message const &message) {
+std::ostream &operator<<(std::ostream &out, google::protobuf::Message const &message)
+{
   google::protobuf::io::OstreamOutputStream output(&out);
 
   google::protobuf::TextFormat::Printer printer;

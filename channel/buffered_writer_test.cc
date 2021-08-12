@@ -24,20 +24,17 @@
 
 namespace {
 using ::testing::_;
-using ::testing::NotNull;
 using ::testing::IsFalse;
 using ::testing::IsTrue;
-using ::testing::Test;
+using ::testing::NotNull;
 using ::testing::Return;
+using ::testing::Test;
 
 static constexpr u32 default_buffer_size = 32;
 
 class BufferedWriterTest : public Test {
 protected:
-  void SetUp() override
-  {
-    writer_.reset(new channel::BufferedWriter(mock_channel_, default_buffer_size));
-  }
+  void SetUp() override { writer_.reset(new channel::BufferedWriter(mock_channel_, default_buffer_size)); }
 
   ::channel::MockChannel mock_channel_;
   std::unique_ptr<channel::BufferedWriter> writer_;

@@ -16,8 +16,8 @@
 
 namespace data {
 
-template <typename Out, typename T>
-Out &&operator <<(Out &&out, Counter<T> const &what) {
+template <typename Out, typename T> Out &&operator<<(Out &&out, Counter<T> const &what)
+{
   if (what.empty()) {
     out << "{no_value}";
   } else {

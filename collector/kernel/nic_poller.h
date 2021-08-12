@@ -29,8 +29,7 @@ class NicPoller {
 public:
   NicPoller(::flowmill::ingest::Writer &writer, logging::Logger &log);
 
-  void handle_nic_queue_state(u64 timestamp,
-                              jb_agent_internal__nic_queue_state *msg);
+  void handle_nic_queue_state(u64 timestamp, jb_agent_internal__nic_queue_state *msg);
 
   void poll();
 

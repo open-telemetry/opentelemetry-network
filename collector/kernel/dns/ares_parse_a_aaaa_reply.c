@@ -30,10 +30,15 @@
  *   characters long.
  */
 
-int dns_parse_a_aaaa_reply(const unsigned char *abuf, int alen,
-                           char *hostname_out, int *hostname_len,
-                           struct in_addr *in_addrs_out, int *num_in_addrs,
-                           struct in6_addr *in6_addrs_out, int *num_in6_addrs)
+int dns_parse_a_aaaa_reply(
+    const unsigned char *abuf,
+    int alen,
+    char *hostname_out,
+    int *hostname_len,
+    struct in_addr *in_addrs_out,
+    int *num_in_addrs,
+    struct in6_addr *in6_addrs_out,
+    int *num_in6_addrs)
 {
   unsigned int qdcount, ancount;
   int status, i, rr_type, rr_class, rr_len, rr_ttl, naddrs, n6addrs;
@@ -44,8 +49,7 @@ int dns_parse_a_aaaa_reply(const unsigned char *abuf, int alen,
   char *hostname = hostname_out;
   char rr_name[DNS_NAME_MAX_LENGTH], rr_data[DNS_NAME_MAX_LENGTH];
   const int max_in_addrs = (in_addrs_out && num_in_addrs) ? *num_in_addrs : 0;
-  const int max_in6_addrs =
-      (in6_addrs_out && num_in6_addrs) ? *num_in6_addrs : 0;
+  const int max_in6_addrs = (in6_addrs_out && num_in6_addrs) ? *num_in6_addrs : 0;
 
   /* Set number of addresses returned to NULL for all failure cases. */
   if (num_in_addrs) {
@@ -74,8 +78,7 @@ int dns_parse_a_aaaa_reply(const unsigned char *abuf, int alen,
 
   /* Expand the name from the question, and skip past the question. */
   aptr = abuf + HFIXEDSZ;
-  status =
-      dns_expand_name_maxlen(aptr, abuf, alen, hostname, &len, hostname_len);
+  status = dns_expand_name_maxlen(aptr, abuf, alen, hostname, &len, hostname_len);
   if (status != ARES_SUCCESS) {
     return status;
   }
@@ -110,9 +113,7 @@ int dns_parse_a_aaaa_reply(const unsigned char *abuf, int alen,
       break;
     }
 
-    if (rr_class == C_IN && rr_type == T_A &&
-        rr_len == sizeof(struct in_addr) &&
-        strcasecmp(rr_name, hostname) == 0) {
+    if (rr_class == C_IN && rr_type == T_A && rr_len == sizeof(struct in_addr) && strcasecmp(rr_name, hostname) == 0) {
 
       if (naddrs < max_in_addrs) {
         struct in_addr *at = &in_addrs_out[naddrs];
@@ -126,9 +127,8 @@ int dns_parse_a_aaaa_reply(const unsigned char *abuf, int alen,
       naddrs++;
       status = ARES_SUCCESS;
 
-    } else if (rr_class == C_IN && rr_type == T_AAAA &&
-               rr_len == sizeof(struct ares_in6_addr) &&
-               strcasecmp(rr_name, hostname) == 0) {
+    } else if (
+        rr_class == C_IN && rr_type == T_AAAA && rr_len == sizeof(struct ares_in6_addr) && strcasecmp(rr_name, hostname) == 0) {
 
       if (n6addrs < max_in6_addrs) {
         struct in6_addr *const at = &in6_addrs_out[n6addrs];

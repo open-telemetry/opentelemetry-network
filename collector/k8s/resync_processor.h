@@ -22,9 +22,9 @@
 
 #include <channel/buffered_writer.h>
 #include <channel/callbacks.h>
-#include <generated/flowmill/ingest/writer.h>
-#include <config/config_file.h>
 #include <channel/connection_caretaker.h>
+#include <config/config_file.h>
+#include <generated/flowmill/ingest/writer.h>
 #include <util/curl_engine.h>
 
 namespace channel {
@@ -36,14 +36,16 @@ namespace collector {
 class ResyncProcessor : public ::channel::Callbacks {
 public:
   // Note, does not take ownership any arguments.
-  ResyncProcessor(uv_loop_t &loop, ResyncQueueConsumerInterface *resync_queue,
-                  channel::ReconnectingChannel &reconnecting_channel,
-                  config::ConfigFile const &configuration_data,
-                  std::string_view hostname, 
-                  AuthzFetcher &auth_fetcher,
-                  std::chrono::milliseconds aws_metadata_timeout,
-                  std::chrono::seconds heartbeat_interval,
-                  std::size_t write_buffer_size);
+  ResyncProcessor(
+      uv_loop_t &loop,
+      ResyncQueueConsumerInterface *resync_queue,
+      channel::ReconnectingChannel &reconnecting_channel,
+      config::ConfigFile const &configuration_data,
+      std::string_view hostname,
+      AuthzFetcher &auth_fetcher,
+      std::chrono::milliseconds aws_metadata_timeout,
+      std::chrono::seconds heartbeat_interval,
+      std::size_t write_buffer_size);
   ~ResyncProcessor();
 
   // Polling routines
@@ -71,7 +73,7 @@ private:
   ResyncQueueConsumerInterface *resync_queue_; // not owned
   std::unique_ptr<CurlEngine> curl_engine_;
 
-  channel::ReconnectingChannel &reconnecting_channel_;  // not owned
+  channel::ReconnectingChannel &reconnecting_channel_; // not owned
   std::unique_ptr<::flowmill::ingest::Encoder> encoder_;
   flowmill::ingest::Writer writer_;
   channel::ConnectionCaretaker caretaker_;

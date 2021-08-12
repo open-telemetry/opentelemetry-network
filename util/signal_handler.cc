@@ -74,15 +74,12 @@ static constexpr std::chrono::microseconds METADATA_TIMEOUT = 1s;
 /**
  * Callback when a crashdump happens via Google Breakpad
  */
-static bool breakpad_callback(
-  const google_breakpad::MinidumpDescriptor &descriptor,
-  void *context,
-  bool succeeded
-) {
+static bool breakpad_callback(const google_breakpad::MinidumpDescriptor &descriptor, void *context, bool succeeded)
+{
   printf(
-    "--------------------------------------------------------------------------------------------\n"
-    "CRASH DETECTED - collecting crash minidump in `%s`...\n",
-    descriptor.path());
+      "--------------------------------------------------------------------------------------------\n"
+      "CRASH DETECTED - collecting crash minidump in `%s`...\n",
+      descriptor.path());
 
   /* get the parent's pid */
   auto const parent_pid = getpid();
@@ -90,17 +87,14 @@ static bool breakpad_callback(
   /* get the path to /proc/<pid>/exe */
   char proc_exe_file[PATH_MAX + 1];
   if (auto const error = snprintf(proc_exe_file, PATH_MAX + 1, "/proc/%d/exe", parent_pid);
-    error < 0 || error >= PATH_MAX + 1
-  ) {
+      error < 0 || error >= PATH_MAX + 1) {
     puts("ERROR: could not result executable path to get a crash dump.");
     return succeeded;
   }
 
   /* get the binary path */
   char current_binary_path[PATH_MAX + 1];
-  if (auto const error = ::readlink(proc_exe_file, current_binary_path, PATH_MAX + 1);
-    error < 0 || error >= PATH_MAX + 1
-  ) {
+  if (auto const error = ::readlink(proc_exe_file, current_binary_path, PATH_MAX + 1); error < 0 || error >= PATH_MAX + 1) {
     puts("ERROR: could not resolve executable filename to get a crash dump.");
     return succeeded;
   }
@@ -120,18 +114,16 @@ static bool breakpad_callback(
   } else if (!pid) {
     /* child */
     printf(
-      "executing crash minidump uploader `%s --" COLLECT_MINIDUMP_FLAG " %s`...\n",
-      current_binary_path,
-      descriptor.path()
-    );
+        "executing crash minidump uploader `%s --" COLLECT_MINIDUMP_FLAG " %s`...\n", current_binary_path, descriptor.path());
 
     auto const exec_result = ::execl(
-      current_binary_path, current_binary_path,
-      /* TODO: pass in log flags properly */ "--log-console", "--no-log-file",
-      "--" COLLECT_MINIDUMP_FLAG,
-      descriptor.path(),
-      (char *)NULL
-    );
+        current_binary_path,
+        current_binary_path,
+        /* TODO: pass in log flags properly */ "--log-console",
+        "--no-log-file",
+        "--" COLLECT_MINIDUMP_FLAG,
+        descriptor.path(),
+        (char *)NULL);
 
     if (exec_result == -1) {
       /* ERROR */
@@ -143,10 +135,7 @@ static bool breakpad_callback(
     int status = 0;
     ::waitpid(pid, &status, 0);
     if (WIFEXITED(status)) {
-      printf(
-        "crash minidump uploader process terminated normally with exit code %d\n",
-        WEXITSTATUS(status)
-      );
+      printf("crash minidump uploader process terminated normally with exit code %d\n", WEXITSTATUS(status));
     } else {
       puts("crash minidump uploader process terminated abnormally\n");
     }
@@ -158,36 +147,29 @@ static bool breakpad_callback(
   return succeeded;
 }
 
-SignalManager::SignalManager(cli::ArgsParser &parser, ::uv_loop_t &loop, std::string_view product):
-  loop_(loop),
-  product_(product),
-  module_name_(try_get_env_var(FLOWMILL_DEBUG_MODULE_NAME_VAR, product_)),
-  module_id_(try_get_env_var(FLOWMILL_DEBUG_MODULE_ID_VAR)),
-  disable_crash_report_(
-    parser.add_flag(
-      "disable-crash-report",
-      "disables minidump / crash reporter"
-    )
-  ),
-  minidump_dir_{try_get_env_var(FLOWMILL_MINIDUMP_DIR_VAR, FLOWMILL_MINIDUMP_DIR)},
-  minidump_path_(parser.add_arg<std::string>(COLLECT_MINIDUMP_FLAG, "internal crash reporting")),
-  breakpad_descriptor_(minidump_dir_),
-  crash_(parser.add_flag("crash", "internal development - force a SIGSEGV")),
-  schedule_crash_(
-    parser.add_arg<std::chrono::seconds::rep>(
-      "schedule-crash",
-      "internal development - will force a SIGSEGV after given number of seconds"
-    )
-  )
+SignalManager::SignalManager(cli::ArgsParser &parser, ::uv_loop_t &loop, std::string_view product)
+    : loop_(loop),
+      product_(product),
+      module_name_(try_get_env_var(FLOWMILL_DEBUG_MODULE_NAME_VAR, product_)),
+      module_id_(try_get_env_var(FLOWMILL_DEBUG_MODULE_ID_VAR)),
+      disable_crash_report_(parser.add_flag("disable-crash-report", "disables minidump / crash reporter")),
+      minidump_dir_{try_get_env_var(FLOWMILL_MINIDUMP_DIR_VAR, FLOWMILL_MINIDUMP_DIR)},
+      minidump_path_(parser.add_arg<std::string>(COLLECT_MINIDUMP_FLAG, "internal crash reporting")),
+      breakpad_descriptor_(minidump_dir_),
+      crash_(parser.add_flag("crash", "internal development - force a SIGSEGV")),
+      schedule_crash_(parser.add_arg<std::chrono::seconds::rep>(
+          "schedule-crash", "internal development - will force a SIGSEGV after given number of seconds"))
 {}
 
-static void cause_crash() {
+static void cause_crash()
+{
   LOG::critical("simulating crash...");
   volatile auto *a = (char *)NULL;
   *a = 1;
 }
 
-void SignalManager::handle() {
+void SignalManager::handle()
+{
   if (!minidump_path_.given()) {
     LOG::debug("setting up breakpad...");
     setup_breakpad();
@@ -209,21 +191,19 @@ void SignalManager::handle() {
   }
 }
 
-void SignalManager::setup_breakpad() {
+void SignalManager::setup_breakpad()
+{
   create_directory(minidump_dir_.c_str());
 
   if (disable_crash_report_) {
     LOG::info("skipping minidump / crash reporter setup");
   } else {
     LOG::debug("setting up breakpad...");
-    breakpad_exception_handler_.emplace(
-      breakpad_descriptor_, nullptr,
-      breakpad_callback, nullptr, true, -1
-    );
+    breakpad_exception_handler_.emplace(breakpad_descriptor_, nullptr, breakpad_callback, nullptr, true, -1);
   }
 
   // avoid generating core dumps
-  struct rlimit const core_dump_limit = { .rlim_cur = 0, .rlim_max = 0 };
+  struct rlimit const core_dump_limit = {.rlim_cur = 0, .rlim_max = 0};
   ::setrlimit(RLIMIT_CORE, &core_dump_limit);
 
   if (*crash_) {
@@ -235,11 +215,11 @@ void SignalManager::setup_breakpad() {
   ::signal(SIGPIPE, SIG_IGN);
 }
 
-void SignalManager::upload_minidump() {
+void SignalManager::upload_minidump()
+{
   auto const minidump_url = format_url(
-    std::string{try_get_env_var(FLOWMILL_CRASH_COLLECTOR_HOST_VAR, FLOWMILL_CRASH_COLLECTOR_HOST)},
-    try_get_env_var(FLOWMILL_CRASH_COLLECTOR_PATH_VAR, FLOWMILL_CRASH_COLLECTOR_PATH)
-  );
+      std::string{try_get_env_var(FLOWMILL_CRASH_COLLECTOR_HOST_VAR, FLOWMILL_CRASH_COLLECTOR_HOST)},
+      try_get_env_var(FLOWMILL_CRASH_COLLECTOR_PATH_VAR, FLOWMILL_CRASH_COLLECTOR_PATH));
 
   if (minidump_url.empty()) {
     LOG::error("no valid crash collection URL provided");
@@ -251,7 +231,9 @@ void SignalManager::upload_minidump() {
   auto const intake_config = config::IntakeConfig::read_from_env();
   auto const proxy_config = intake_config.proxy();
   auto const proxy = [proxy_config]() -> std::string {
-    if (!proxy_config) { return {}; }
+    if (!proxy_config) {
+      return {};
+    }
 
     std::string result = proxy_config->host();
     assert(!result.empty());
@@ -313,13 +295,8 @@ void SignalManager::upload_minidump() {
 
   parameters["host"] = get_host_name(MAX_HOSTNAME_LENGTH).recover([&](auto &error) {
     LOG::error("Unable to retrieve host information from uname: {}", error);
-    return aws_metadata
-      ? aws_metadata->id().valid()
-        ? std::string(aws_metadata->id().value())
-        : "(unknown-aws)"
-      : gcp_metadata
-        ? gcp_metadata->hostname()
-        : "(unknown)";
+    return aws_metadata ? aws_metadata->id().valid() ? std::string(aws_metadata->id().value()) : "(unknown-aws)"
+                        : gcp_metadata ? gcp_metadata->hostname() : "(unknown)";
   });
 
   parameters["intake_name"] = intake_config.name();
@@ -341,9 +318,7 @@ void SignalManager::upload_minidump() {
     files["minidump"] = path;
   }
 
-  if (auto const log_path = LOG::log_file_path();
-    file_exists(log_path.data(), {FileAccess::read})
-  ) {
+  if (auto const log_path = LOG::log_file_path(); file_exists(log_path.data(), {FileAccess::read})) {
     files["log_file"] = log_path;
   }
 
@@ -356,23 +331,16 @@ void SignalManager::upload_minidump() {
     LOG::warn("successfully uploaded crash minidump to {}", minidump_url);
     success = true;
   } else {
-    LOG::error(
-      "unable to upload crash minidump: ({}) {}",
-      sender.response_code(),
-      sender.error_description()
-    );
+    LOG::error("unable to upload crash minidump: ({}) {}", sender.response_code(), sender.error_description());
   }
 
-  cleanup_directory(
-    minidump_dir_.c_str(),
-    MAX_MINIDUMP_DIR_SIZE_FILES,
-    MAX_MINIDUMP_DIR_SIZE_BYTES
-  );
+  cleanup_directory(minidump_dir_.c_str(), MAX_MINIDUMP_DIR_SIZE_FILES, MAX_MINIDUMP_DIR_SIZE_BYTES);
 
   exit(!success);
 }
 
-SignalManager &SignalManager::add_auth(std::string_view key, std::string_view secret) {
+SignalManager &SignalManager::add_auth(std::string_view key, std::string_view secret)
+{
   std::ostringstream auth;
 
   auth << "Authorization: Bearer " << key;
@@ -386,21 +354,21 @@ SignalManager &SignalManager::add_auth(std::string_view key, std::string_view se
   return *this;
 }
 
-SignalManager &SignalManager::add_auth(collector::AuthMethod auth_method) {
+SignalManager &SignalManager::add_auth(collector::AuthMethod auth_method)
+{
   headers_.emplace_back(fmt::format("Authorization: {}", auth_method));
   return *this;
 }
 
-void SignalManager::handle_signals(
-  std::initializer_list<int> signal_numbers,
-  std::function<void()> on_signal
-) {
-  for (auto const signal_number: signal_numbers) {
+void SignalManager::handle_signals(std::initializer_list<int> signal_numbers, std::function<void()> on_signal)
+{
+  for (auto const signal_number : signal_numbers) {
     signals_.emplace_back(*this, on_signal, signal_number);
   }
 }
 
-void SignalManager::clear() {
+void SignalManager::clear()
+{
   signals_.clear();
 }
 
@@ -408,19 +376,15 @@ void SignalManager::clear() {
 // signal_handler //
 ////////////////////
 
-void SignalManager::SignalHandler::signal_handler(uv_signal_t *handle, int signal_number) {
+void SignalManager::SignalHandler::signal_handler(uv_signal_t *handle, int signal_number)
+{
   auto &handler = *reinterpret_cast<SignalManager::SignalHandler *>(handle->data);
   assert(signal_number == handler.signal_number());
   handler.on_signal();
 }
 
-SignalManager::SignalHandler::SignalHandler(
-  SignalManager &manager,
-  std::function<void()> on_signal,
-  int signal_number
-):
-  manager_(manager),
-  on_signal_(std::move(on_signal))
+SignalManager::SignalHandler::SignalHandler(SignalManager &manager, std::function<void()> on_signal, int signal_number)
+    : manager_(manager), on_signal_(std::move(on_signal))
 {
   if (auto const error = ::uv_signal_init(&manager_.loop(), &handler_)) {
     throw std::runtime_error(fmt::format("Could not init handler for signal {}", signal_number));
@@ -433,16 +397,19 @@ SignalManager::SignalHandler::SignalHandler(
   }
 }
 
-static void signal_handle_close_cb(uv_handle_t *handle) {
+static void signal_handle_close_cb(uv_handle_t *handle)
+{
   LOG::debug("Closed a signal handler handle");
 }
 
-SignalManager::SignalHandler::~SignalHandler() {
+SignalManager::SignalHandler::~SignalHandler()
+{
   ::uv_signal_stop(&handler_);
   ::uv_close(reinterpret_cast<uv_handle_t *>(&handler_), signal_handle_close_cb);
 }
 
-void SignalManager::SignalHandler::on_signal() {
+void SignalManager::SignalHandler::on_signal()
+{
   LOG::info("Caught signal {}", handler_.signum);
 
   // call on_signal callback

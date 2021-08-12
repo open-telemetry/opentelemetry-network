@@ -30,19 +30,12 @@ static std::string const EXPIRATION_KEY = "expirationS";
 static std::string const INTAKE_KEY = "intake";
 } // namespace
 
-AuthzToken::AuthzToken(
-  std::string payload,
-  duration issued_at,
-  duration expiration,
-  std::string intake
-):
-  payload_(std::move(payload)),
-  issued_at_(issued_at),
-  expiration_(expiration),
-  intake_(std::move(intake))
+AuthzToken::AuthzToken(std::string payload, duration issued_at, duration expiration, std::string intake)
+    : payload_(std::move(payload)), issued_at_(issued_at), expiration_(expiration), intake_(std::move(intake))
 {}
 
-Expected<AuthzToken, std::runtime_error> AuthzToken::decode_json(std::string_view json) {
+Expected<AuthzToken, std::runtime_error> AuthzToken::decode_json(std::string_view json)
+{
   auto const decoded = [json]() -> Expected<nlohmann::json, std::runtime_error> {
     try {
       return nlohmann::json::parse(json);
