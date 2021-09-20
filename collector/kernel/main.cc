@@ -96,12 +96,6 @@ constexpr StopWatch<>::duration CPU_MEM_IO_POLL_BUDGET = 10us;
 // default poll count between cpu/mem/io batch chunks
 constexpr std::size_t CPU_MEM_IO_BATCH_POLL_COUNT_COOLDOWN = 3;
 
-extern "C" {
-/* bpf source code */
-extern char agent_bpf_c[];
-extern unsigned int agent_bpf_c_len;
-}
-
 static void refill_log_rate_limit_cb(uv_timer_t *timer)
 {
   LOG::refill_rate_limit_budget(200);
@@ -640,7 +634,7 @@ int main(int argc, char *argv[])
         *entrypoint_error};
 
     if (*auth_method == collector::AuthMethod::authz) {
-      assert(*authz_fetcher);
+      assert(authz_fetcher);
       authz_fetcher->auto_refresh(
           loop, std::bind(&KernelCollector::update_authz_token, &kernel_collector, std::placeholders::_1));
     }

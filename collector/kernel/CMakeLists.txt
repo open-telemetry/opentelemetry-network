@@ -240,6 +240,8 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
       ../../LICENSE.txt
     DEPENDENCY_OF
       collectors
+    ARGS
+      BUILD_TYPE="Debug"
   )
 else()
   build_custom_docker_image(

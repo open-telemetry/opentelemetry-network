@@ -22,6 +22,11 @@ RUN apt-get install -y --no-install-recommends \
   coreutils tar gzip sed curl yum yum-utils \
   $EXTRA_PKGS
 
+ARG BUILD_TYPE
+RUN if [ "$BUILD_TYPE" = "Debug" ]; then \
+      apt-get -y install --no-install-recommends cgdb gdb valgrind; \
+    fi
+
 COPY --from=chamber /chamber /bin/chamber
 COPY srv /srv
 WORKDIR /srv

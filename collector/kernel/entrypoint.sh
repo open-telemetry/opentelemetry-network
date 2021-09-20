@@ -108,6 +108,18 @@ if [[ -n "${FLOWMILL_RUN_UNDER_GDB}" ]]; then
   (set -x; exec "${FLOWMILL_RUN_UNDER_GDB}" -q "${GDB_ARGS[@]}" \
     --args "${flowmill_install_dir}/kernel-collector" "${cmd_args[@]}" "$@" \
   )
+elif [[ -n "${FLOWMILL_RUN_UNDER_VALGRIND}" ]]; then
+  # to run the collector under valgrind, set `FLOWMILL_RUN_UNDER_VALGRIND` to the options to pass to valgrind,
+  # including at minimum the tool you want, for example:
+  # "--tool=memcheck", or
+  # "--tool=memcheck --leak-check=full --show-leak-kinds=all --track-origins=yes", or
+  # "--tool=massif --stacks=yes"
+  # note: to get full symbols from valgrind also build the kernel-collector in debug mode
+  apt update -y
+  apt install -y valgrind
+
+  # shellcheck disable=SC2086
+  (set -x; exec /usr/bin/valgrind ${FLOWMILL_RUN_UNDER_VALGRIND} "${flowmill_install_dir}/kernel-collector" "${cmd_args[@]}" "$@")
 else
   (set -x; exec "${flowmill_install_dir}/kernel-collector" "${cmd_args[@]}" "$@")
 fi
