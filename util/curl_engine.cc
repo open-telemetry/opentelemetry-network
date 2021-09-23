@@ -470,7 +470,7 @@ void CurlEngineImpl::remove_poll(uv_poll_t *poll_handle)
 {
   LOG::trace_in(Utility::curl, "remove_poll()");
 
-  uv_close((uv_handle_t *)poll_handle, [](uv_handle_t *handle) { delete handle; });
+  uv_close((uv_handle_t *)poll_handle, [](uv_handle_t *handle) { delete (uv_poll_t *)handle; });
 }
 
 } // namespace
