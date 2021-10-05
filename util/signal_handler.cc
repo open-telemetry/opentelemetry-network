@@ -155,18 +155,23 @@ SignalManager::SignalManager(cli::ArgsParser &parser, ::uv_loop_t &loop, std::st
       disable_crash_report_(parser.add_flag("disable-crash-report", "disables minidump / crash reporter")),
       minidump_dir_{try_get_env_var(FLOWMILL_MINIDUMP_DIR_VAR, FLOWMILL_MINIDUMP_DIR)},
       minidump_path_(parser.add_arg<std::string>(COLLECT_MINIDUMP_FLAG, "internal crash reporting")),
-      breakpad_descriptor_(minidump_dir_),
+      breakpad_descriptor_(minidump_dir_)
+#ifndef NDEBUG
+      ,
       crash_(parser.add_flag("crash", "internal development - force a SIGSEGV")),
       schedule_crash_(parser.add_arg<std::chrono::seconds::rep>(
           "schedule-crash", "internal development - will force a SIGSEGV after given number of seconds"))
+#endif
 {}
 
+#ifndef NDEBUG
 static void cause_crash()
 {
   LOG::critical("simulating crash...");
   volatile auto *a = (char *)NULL;
   *a = 1;
 }
+#endif
 
 void SignalManager::handle()
 {
@@ -178,6 +183,7 @@ void SignalManager::handle()
     upload_minidump();
   }
 
+#ifndef NDEBUG
   if (schedule_crash_.given()) {
     std::chrono::seconds const timeout{*schedule_crash_ < 0 ? 0 : *schedule_crash_};
     LOG::warn("scheduling a crash {} from now, as requested", timeout);
@@ -189,6 +195,7 @@ void SignalManager::handle()
       LOG::error("failed to schedule crash after {} from now: {}", timeout, result.error());
     }
   }
+#endif
 }
 
 void SignalManager::setup_breakpad()
@@ -206,10 +213,12 @@ void SignalManager::setup_breakpad()
   struct rlimit const core_dump_limit = {.rlim_cur = 0, .rlim_max = 0};
   ::setrlimit(RLIMIT_CORE, &core_dump_limit);
 
+#ifndef NDEBUG
   if (*crash_) {
     LOG::warn("forcing a crash now, as requested");
     cause_crash();
   }
+#endif
 
   /* ignore SIGPIPE: http://docs.libuv.org/en/v1.x/guide/filesystem.html?highlight=sigpipe */
   ::signal(SIGPIPE, SIG_IGN);

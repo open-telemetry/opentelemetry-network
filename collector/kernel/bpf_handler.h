@@ -59,7 +59,8 @@ public:
       CurlEngine &curl_engine,
       NicPoller &nic_poller,
       CgroupHandler::CgroupSettings const &cgroup_settings,
-      ProcessHandler::CpuMemIoSettings const *cpu_mem_io_settings);
+      ProcessHandler::CpuMemIoSettings const *cpu_mem_io_settings,
+      KernelCollectorRestarter &kernel_collector_restarter);
 
   /**
    * Loads BPF probes. Takes writer to send out steady_state msgs
@@ -86,6 +87,13 @@ public:
    * Callback passed to probers for checking lost count
    */
   void check_cb(std::string error_loc);
+
+#ifndef NDEBUG
+  /**
+   * Debug code for internal development to simulate lost BPF samples (PERF_RECORD_LOST) in BufferedPoller.
+   */
+  void debug_bpf_lost_samples();
+#endif
 
 private:
   uv_loop_t &loop_;

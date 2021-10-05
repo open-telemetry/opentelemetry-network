@@ -58,8 +58,10 @@ private:
   cli::ArgsParser::ArgProxy<std::string> minidump_path_;
   google_breakpad::MinidumpDescriptor breakpad_descriptor_;
   std::optional<google_breakpad::ExceptionHandler> breakpad_exception_handler_;
+#ifndef NDEBUG
   cli::ArgsParser::FlagProxy crash_;
   cli::ArgsParser::ArgProxy<std::chrono::seconds::rep> schedule_crash_;
+#endif
 
   std::list<std::string> headers_;
 
@@ -81,5 +83,8 @@ private:
   };
 
   std::list<SignalHandler> signals_;
+
+#ifndef NDEBUG
   std::unique_ptr<scheduling::Timer> crash_timer_;
+#endif
 };

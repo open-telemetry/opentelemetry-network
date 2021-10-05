@@ -22,6 +22,7 @@
 #include <channel/upstream_connection.h>
 #include <collector/kernel/bpf_handler.h>
 #include <collector/kernel/entrypoint_error.h>
+#include <collector/kernel/kernel_collector_restarter.h>
 #include <collector/kernel/nic_poller.h>
 #include <collector/kernel/probe_handler.h>
 #include <common/host_info.h>
@@ -40,6 +41,8 @@
 #include <map>
 
 class KernelCollector {
+  friend class KernelCollectorRestarter;
+
 public:
   /**
    * c'tor
@@ -103,6 +106,11 @@ public:
   /* returns the time left until expiration of the old token */
   std::chrono::milliseconds update_authz_token(AuthzToken const &token);
 
+#ifndef NDEBUG
+  /* Debug code for internal development to simulate lost BPF samples (PERF_RECORD_LOST) in BufferedPoller. */
+  void debug_bpf_lost_samples();
+#endif
+
 private:
   class Callbacks : public channel::Callbacks {
   public:
@@ -150,6 +158,10 @@ private:
   void on_authenticated();
   void on_error(int error);
 
+  /* called to restart the KernelCollector */
+  void restart();
+
+private:
   /* parameters for establishing connections */
   std::string const &full_program_;
   config::IntakeConfig const &intake_config_;
@@ -208,4 +220,6 @@ private:
   FileDescriptor bpf_dump_file_;
   logging::Logger log_;
   NicPoller nic_poller_;
+
+  KernelCollectorRestarter kernel_collector_restarter_;
 };

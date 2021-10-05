@@ -72,6 +72,7 @@ add_library(
     proc_cmdline.cc
     probe_handler.cc
     kernel_collector.cc
+    kernel_collector_restarter.cc
     bpf_handler.cc
     cgroup_prober.cc
     cgroup_handler.cc

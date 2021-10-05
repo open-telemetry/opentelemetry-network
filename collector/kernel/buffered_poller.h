@@ -42,6 +42,8 @@
 
 #include <memory>
 
+class KernelCollectorRestarter;
+
 /**
  * A BufferedPoller that empties the perf ring every poll
  * and sends the info to a specified channel
@@ -78,9 +80,8 @@ public:
       NicPoller &nic_poller,
       CgroupHandler::CgroupSettings const &cgroup_settings,
       ProcessHandler::CpuMemIoSettings const *cpu_mem_io_settings,
-      ::flowmill::ingest::Encoder *encoder);
-
-  virtual ~BufferedPoller() {}
+      ::flowmill::ingest::Encoder *encoder,
+      KernelCollectorRestarter &kernel_collector_restarter);
 
   /**
    * batches as many entries into buffer as possible before calling
@@ -126,6 +127,13 @@ public:
    * and have achieved steady-state
    */
   void set_all_probes_loaded(void);
+
+#ifndef NDEBUG
+  /**
+   * Debug code for internal development to simulate lost BPF samples (PERF_RECORD_LOST) in BufferedPoller.
+   */
+  void debug_bpf_lost_samples();
+#endif
 
 private:
   /**
@@ -371,4 +379,10 @@ private:
   DnsRequests dns_requests_;
 
   bool all_probes_loaded_;
+
+  KernelCollectorRestarter &kernel_collector_restarter_;
+
+#ifndef NDEBUG
+  bool debug_bpf_lost_samples_ = false;
+#endif
 };

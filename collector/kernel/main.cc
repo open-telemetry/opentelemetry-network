@@ -357,6 +357,12 @@ int main(int argc, char *argv[])
   args::ValueFlag<std::string> bpf_file(*parser, "bpf_file", "File containing bpf code", {"bpf"}, "");
 #endif // CONFIGURABLE_BPF
 
+#ifndef NDEBUG
+  auto schedule_bpf_lost_samples = parser.add_arg<std::chrono::seconds::rep>(
+      "schedule-bpf-lost-samples",
+      "internal development - will continuously, at the interval in seconds provided, simulate lost BPF samples (PERF_RECORD_LOST) in BufferedPoller to test KernelCollector restarts via that code path");
+#endif
+
   parser.new_handler<LogWhitelistHandler<AgentLogKind>>("agent-log");
   parser.new_handler<LogWhitelistHandler<channel::Component>>("channel");
   parser.new_handler<LogWhitelistHandler<collector::Component>>("component");
@@ -640,6 +646,29 @@ int main(int argc, char *argv[])
     }
 
     signal_manager.handle_signals({SIGINT, SIGTERM}, std::bind(&KernelCollector::on_close, &kernel_collector));
+
+#ifndef NDEBUG
+    std::unique_ptr<scheduling::Timer> debug_bpf_lost_samples_timer;
+    if (schedule_bpf_lost_samples.given() && *schedule_bpf_lost_samples > 0) {
+      std::chrono::seconds const timeout(*schedule_bpf_lost_samples);
+
+      auto schedule_bpf_lost_samples = [&debug_bpf_lost_samples_timer, timeout]() {
+        if (auto const result = debug_bpf_lost_samples_timer->defer(timeout)) {
+          LOG::info("successfully scheduled inject_bpf_lost_samples() {} from now", timeout);
+        } else {
+          LOG::error("failed to schedule inject_bpf_lost_samples() {} from now: {}", timeout, result.error());
+        }
+      };
+
+      auto inject_bpf_lost_samples = [&kernel_collector, schedule_bpf_lost_samples]() {
+        kernel_collector.debug_bpf_lost_samples();
+        schedule_bpf_lost_samples(); // reschedule another callback to inject bpf lost samples
+      };
+
+      debug_bpf_lost_samples_timer = std::make_unique<scheduling::Timer>(loop, inject_bpf_lost_samples);
+      schedule_bpf_lost_samples(); // schedule the first callback to inject bpf lost samples
+    }
+#endif
 
     LOG::debug("starting event loop...");
     uv_run(&loop, UV_RUN_DEFAULT);

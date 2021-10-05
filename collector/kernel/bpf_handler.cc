@@ -63,7 +63,8 @@ void BPFHandler::load_buffered_poller(
     CurlEngine &curl_engine,
     NicPoller &nic_poller,
     CgroupHandler::CgroupSettings const &cgroup_settings,
-    ProcessHandler::CpuMemIoSettings const *cpu_mem_io_settings)
+    ProcessHandler::CpuMemIoSettings const *cpu_mem_io_settings,
+    KernelCollectorRestarter &kernel_collector_restarter)
 {
   LOG::trace("--- Starting BufferedPoller ---");
   buf_poller_ = std::make_unique<BufferedPoller>(
@@ -79,7 +80,8 @@ void BPFHandler::load_buffered_poller(
       nic_poller,
       cgroup_settings,
       cpu_mem_io_settings,
-      encoder_);
+      encoder_,
+      kernel_collector_restarter);
   last_lost_count_ = serv_lost_count();
 }
 
@@ -320,3 +322,12 @@ void BPFHandler::check_cb(std::string error_loc)
     log_.warn("after {}, cumulative lost count non-zero: {} new, {} total", error_loc, diff_lost_count, lost_count);
   }
 }
+
+#ifndef NDEBUG
+void BPFHandler::debug_bpf_lost_samples()
+{
+  if (buf_poller_) {
+    buf_poller_->debug_bpf_lost_samples();
+  }
+}
+#endif
