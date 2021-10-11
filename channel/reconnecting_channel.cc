@@ -43,7 +43,7 @@ ReconnectingChannel::ReconnectingChannel(config::IntakeConfig intake_config, uv_
     : loop_(loop),
       intake_config_(std::move(intake_config)),
       network_channel_(intake_config_.make_channel(loop)),
-      upstream_connection_(buffer_size, intake_config.allow_compression(), *network_channel_),
+      upstream_connection_(buffer_size, intake_config_.allow_compression(), *network_channel_),
       state_(State::INACTIVE)
 {
   int res = uv_timer_init(&loop_, &start_timer_);

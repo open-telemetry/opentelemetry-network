@@ -93,8 +93,8 @@ std::vector<FileMeta> list_directory_contents(char const *directory)
       struct stat statbuf;
 
       const int status = stat(full_path.c_str(), &statbuf);
-      if (status != 0 /* success */) {
-        LOG::warn("Failed to stat file {} : {}", full_path, strerror(status));
+      if (status < 0) {
+        LOG::warn("Failed to stat file {} : {}", full_path, strerror(errno));
         continue;
       }
 
@@ -136,7 +136,7 @@ void cleanup_directory(char const *directory, const int64_t max_file_count, cons
     if (status == 0 /* success */) {
       LOG::info("Deleted file {}", file->path);
     } else {
-      LOG::warn("Failed to delete file {} : {}", file->path, strerror(status));
+      LOG::warn("Failed to delete file {} : {}", file->path, strerror(errno));
     }
   }
 }
@@ -197,7 +197,7 @@ FileDescriptor::~FileDescriptor()
 
 Expected<std::size_t, std::error_code> FileDescriptor::read(void *buffer, std::size_t size)
 {
-  std::size_t const result = ::read(fd_, buffer, size);
+  ssize_t const result = ::read(fd_, buffer, size);
 
   if (result < 0) {
     return {unexpected, std::error_code(errno, std::generic_category())};

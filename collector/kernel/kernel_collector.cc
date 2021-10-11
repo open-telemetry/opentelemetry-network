@@ -115,7 +115,7 @@ KernelCollector::KernelCollector(
       entrypoint_error_(entrypoint_error),
       loop_(loop),
       last_lost_count_(0),
-      encoder_(intake_config.make_encoder()),
+      encoder_(intake_config_.make_encoder()),
       callbacks_(*this),
       primary_channel_(intake_config_.make_channel(loop)),
       secondary_channel_(intake_config_.create_output_record_file()),

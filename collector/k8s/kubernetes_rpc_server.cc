@@ -274,8 +274,8 @@ void K8sHandler::pod_new_or_modified(const PodInfo &pod_info)
     iter->second.MergeFrom(pod_info);
     LOG::trace("Merged pod into internal state: {}", pod_info);
   } else {
+    LOG::trace("Adding pod into internal state: {}", pod_info);
     iter = pods_.infos.emplace(id, std::move(pod_info)).first;
-    LOG::trace("Added pod into internal state: {}", pod_info);
   }
 
   if (pods_.live.find(id) != pods_.live.end()) {

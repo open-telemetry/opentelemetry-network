@@ -94,10 +94,12 @@ static bool breakpad_callback(const google_breakpad::MinidumpDescriptor &descrip
 
   /* get the binary path */
   char current_binary_path[PATH_MAX + 1];
-  if (auto const error = ::readlink(proc_exe_file, current_binary_path, PATH_MAX + 1); error < 0 || error >= PATH_MAX + 1) {
+  auto const len = ::readlink(proc_exe_file, current_binary_path, PATH_MAX);
+  if (len < 0 || len >= PATH_MAX + 1) {
     puts("ERROR: could not resolve executable filename to get a crash dump.");
     return succeeded;
   }
+  current_binary_path[len] = '\0';
 
   /* fork to send the minidump
    *
