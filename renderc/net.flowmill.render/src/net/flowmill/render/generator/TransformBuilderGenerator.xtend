@@ -209,6 +209,9 @@ class TransformBuilderGenerator {
 						dst_msg->«field.name».len = src_msg->_len - consumed;
 					«ENDIF»
 				«ENDFOR»
+
+				dst_msg->_rpc_id = «msg.parsed_msg.rpc_id»;
+
 				return src_msg->_len;
 			«ENDIF»
 		}
