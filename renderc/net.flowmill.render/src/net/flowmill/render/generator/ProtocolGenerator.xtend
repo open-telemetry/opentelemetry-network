@@ -249,10 +249,10 @@ class ProtocolGenerator {
 					constexpr u16 need_auth_rpc_ids[] = {«FOR rpc_id : need_auth_msg.map[wire_msg].map[rpc_id].sort SEPARATOR ", "»«rpc_id»«ENDFOR»};
 
 					if (std::binary_search(need_auth_rpc_ids, need_auth_rpc_ids + need_auth_rpc_ids_count, rpc_id)) {
-						LOG::error("handle(): permission denied for rpc_id: {}", rpc_id);
+						LOG::trace_in(client_type_, "handle(): permission denied for rpc_id: {}", rpc_id);
 						return {.result = -EACCES, .client_timestamp = remote_timestamp};
 					} else {
-						LOG::error("handle(): cannot find handler for rpc_id: {}", rpc_id);
+						LOG::trace_in(client_type_, "handle(): cannot find handler for rpc_id: {}", rpc_id);
 						return {.result = -ENOENT, .client_timestamp = remote_timestamp};
 					}
 				}
