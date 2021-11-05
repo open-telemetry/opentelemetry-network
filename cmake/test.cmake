@@ -60,28 +60,6 @@ function(add_standalone_gtest testName)
   add_dependencies(${testName} googletest)
 endfunction (add_standalone_gtest)
 
-# This function is for your typical gtest-based unit tests. Use this for
-# tests you want to run under `make test`
-function(add_gtest testName)
-  set(options "")
-  set(oneValueArgs "")
-  set(multiValueArgs SRCS DEPS)
-  cmake_parse_arguments(add_gtest
-      "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-
-  add_executable(${testName}
-                 ${add_gtest_SRCS})
-  target_include_directories(${testName} PRIVATE
-      ${gtest_INC_DIR} ${gmock_INC_DIR})
-  target_link_libraries(${testName}
-      ${gmock_MAIN_LIB} ${gtest_LIB} ${gmock_LIB} "-pthread"
-      ${add_gtest_DEPS}
-      shared-executable
-  )
-  add_dependencies(${testName} googletest)
-  add_test(${testName} ${testName})
-endfunction (add_gtest)
-
 # This function is use for gtest/gmock-dependent libraries for use in other
 # unit tests (i.e. does not link a `main` symbol).
 function(add_gtest_lib testName)
@@ -157,19 +135,3 @@ function(add_unit_test NAME)
   add_cpp_test(${NAME} SRCS ${ARG_SRCS} LIBS ${ARG_LIBS} DEPS ${ARG_DEPS})
   add_dependencies(unit_tests "${NAME}_test")
 endfunction(add_unit_test)
-
-# Adds a component test named `${NAME}_test`, which is part of the `component_tests` target.
-#
-# The file `${NAME}_test.cc` is implicitly added as a source.
-# Additional source files can be declared with the `SRCS` parameter.
-#
-# Test executable is implicitly linked with `gtest` and `gmock`.
-# Additional libraries can be linked with the `LIBS` parameter.
-#
-# Additional dependencies can be declares with the `DEPS` parameter.
-add_custom_target(component_tests)
-function(add_component_test NAME)
-  cmake_parse_arguments(ARG "" "" "SRCS;LIBS;DEPS" ${ARGN})
-  add_cpp_test(${NAME} SRCS ${ARG_SRCS} LIBS ${ARG_LIBS} DEPS ${ARG_DEPS})
-  add_dependencies(component_tests "${NAME}_test")
-endfunction(add_component_test)

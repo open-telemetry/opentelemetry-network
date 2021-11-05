@@ -422,7 +422,7 @@ void CgroupHandler::handle_docker_response(u64 cgroup, std::string const &respon
       }
 
       std::string_view key = item.key();
-      const std::string value = item.value().get<std::string>();
+      std::string const value = item.value().get<std::string>();
 
       if ((key.size() + value.size() + sizeof(u64) + jb_ingest__container_annotation__data_size) > WRITE_BUFFER_SIZE) {
         // NOTE: we use a substring of the key to make sure it fits in the

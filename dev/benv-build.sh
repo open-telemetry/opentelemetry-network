@@ -19,9 +19,10 @@ Usage:
 Options:
   --dirty: don't clean previous build artifacts before building
   -j N | --jobs N: use N parallel jobs for building (default: auto-detect)
-  --debug: turn on debug and trace logging, and turn off compiler optimization that prevents readable single stepping
+  --debug: build with CMAKE_BUILD_TYPE="Debug" which includes debug code, debug and trace logging, and turns off compiler
+           optimization that prevents readable single stepping
   --cmake: run cmake but don't build with a subsequent make
-  --asan: enable the address sanitizer
+  --asan: enable the address sanitizer (use with --debug to get better backtraces when an asan issue is hit)
   --ubsan: enable the undefined behavior sanitizer (which can have false positives: https://stackoverflow.com/a/57304113)
   --py-static-check: enables static checks for python
   --go-static-linking: enables static linking for Go binaries
@@ -33,7 +34,7 @@ Options:
   --no-docker: don't run docker commands on docker build targets (needed when using an external docker build tool like CI/CD)
   --fail-fast: fail on the first error instead of building as much as possible
   --dep-tree: produce a dot-file output of the build graph
-  --list-targets: print the list of targets that can be build directly using cmake by running
+  --list-targets: print the list of targets that can be built using cmake by passing target(s) to this build script
   --cicd: use preset settings for building in CI/CD
   -v | --verbose: verbose build output
 

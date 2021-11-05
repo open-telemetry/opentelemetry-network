@@ -260,3 +260,7 @@ else()
       collectors
   )
 endif()
+
+# Unit Tests
+#
+add_unit_test(cgroup_handler LIBS agentlib stringstream_channel)

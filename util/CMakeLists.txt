@@ -346,22 +346,13 @@ target_link_libraries(
     absl::strings
 )
 
-add_gtest(log_modifiers_test SRCS log_modifiers_test.cc)
-target_link_libraries(log_modifiers_test logging)
-add_dependencies(unit_tests log_modifiers_test)
-
-add_gtest(expected_test SRCS expected_test.cc)
-
-add_gtest(enum_test SRCS enum_test.cc)
-
-add_gtest(meta_test SRCS meta_test.cc)
-target_link_libraries(meta_test render_flowmill_artifacts llvm logging)
-
+add_unit_test(log_modifiers LIBS logging)
+add_unit_test(expected)
+add_unit_test(enum)
+add_unit_test(meta LIBS render_flowmill_artifacts llvm logging)
 add_unit_test(lookup3_hasher LIBS fastpass_util)
-
 add_unit_test(jitter)
 add_unit_test(bits)
-
 add_unit_test(counter)
 add_unit_test(counter_to_rate)
 add_unit_test(gauge)

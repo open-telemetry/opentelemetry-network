@@ -124,19 +124,9 @@ target_link_libraries(
     absl::strings
 )
 
-#######
-# tests
-#######
-
-add_gtest(
-  buffered_writer_test
-  SRCS
-    buffered_writer_test.cc
+add_library(
+  stringstream_channel
+  STATIC
+    stringstream_channel.cc
 )
-target_link_libraries(
-  buffered_writer_test
-    buffered_writer
-    element_queue_writer
-    llvm
-)
-add_dependencies(unit_tests buffered_writer_test)
+add_unit_test(buffered_writer LIBS buffered_writer element_queue_writer llvm)
