@@ -21,8 +21,6 @@
 #include <util/logger.h>
 #include <util/lookup3_hasher.h>
 
-#include <gtest/gtest_prod.h>
-
 #include <unordered_map>
 
 static constexpr std::string_view UNIX_SOCKET_PATH = "/var/run/docker.sock";
@@ -49,7 +47,7 @@ public:
   void handle_pid_info(u32 pid, u64 cgroup, uint8_t comm[16]);
 
 private:
-  FRIEND_TEST(cgroup_handler_test, HandleDockerResponse);
+  friend class cgroup_handler_test_HandleDockerResponse_Test;
 
   struct CgroupEntry {
     u64 cgroup_parent;
