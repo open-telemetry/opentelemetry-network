@@ -100,6 +100,7 @@ KernelCollector::KernelCollector(
     std::optional<AuthzFetcher> &authz_fetcher,
     bool enable_http_metrics,
     bool enable_userland_tcp,
+    u64 socket_stats_interval_sec,
     CgroupHandler::CgroupSettings cgroup_settings,
     ProcessHandler::CpuMemIoSettings const *cpu_mem_io_settings,
     std::string const &bpf_dump_file,
@@ -137,6 +138,7 @@ KernelCollector::KernelCollector(
           }),
       enable_http_metrics_(enable_http_metrics),
       enable_userland_tcp_(enable_userland_tcp),
+      socket_stats_interval_sec_(socket_stats_interval_sec),
       cgroup_settings_(std::move(cgroup_settings)),
       cpu_mem_io_settings_(cpu_mem_io_settings),
       log_(writer_),
@@ -321,6 +323,7 @@ void KernelCollector::probe_holdoff_timeout(uv_timer_t *timer)
         boot_time_adjustment_,
         curl_engine_,
         nic_poller_,
+        socket_stats_interval_sec_,
         cgroup_settings_,
         cpu_mem_io_settings_,
         kernel_collector_restarter_);
