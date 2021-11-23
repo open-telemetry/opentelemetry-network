@@ -1,7 +1,5 @@
 buildscript {
-	repositories {
-		jcenter()
-	}
+	apply from: "${rootDir}/gradle/repositories.gradle"
 	dependencies {
 		classpath 'org.xtext:xtext-gradle-plugin:2.0.8'
 	}
@@ -10,12 +8,9 @@ buildscript {
 subprojects {
 	ext.xtextVersion = '2.20.0'
 
-	repositories {
-		jcenter()
-	}
-	
 	apply plugin: 'java'
 	apply plugin: 'org.xtext.xtend'
+	apply from: "${rootDir}/gradle/repositories.gradle"
 	apply from: "${rootDir}/gradle/source-layout.gradle"
 	apply plugin: 'eclipse'
 	apply plugin: 'idea'

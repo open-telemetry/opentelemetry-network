@@ -3,10 +3,6 @@ plugins {
   id 'com.github.johnrengelman.shadow' version '5.2.0' apply false
 }
 
-repositories {
-  jcenter()
-}
-
 application {
   mainClassName = 'net.flowmill.render.standalone.Main'
 }
