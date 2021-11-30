@@ -33,7 +33,6 @@ trace_stats.csv
 exec_at
 generated/
 .DS_Store
-*.pb.*
 *.sw?
 *.orig
 
@@ -60,7 +59,6 @@ release/
 
 stamp-h1
 src/Makefile
-Makefile
 config.h
 config.status
 libtool

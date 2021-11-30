@@ -1,4 +1,4 @@
-setup_go_module(collector "flowmill.net")
+setup_go_module(collector "flowmill.net" VENDORED)
 
 build_protobuf(collector GO collector CPP GRPC)
 build_protobuf(kubernetes_info GO collector CPP)
