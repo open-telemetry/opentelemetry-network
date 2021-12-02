@@ -4,6 +4,8 @@ set(GO_PATH "${CMAKE_BINARY_DIR}/go-path")
 set(GO_PATH_SRC "${GO_PATH}/src")
 
 function(setup_go_module NAME DOMAIN)
+  cmake_parse_arguments(ARG "VENDORED" "" "" ${ARGN})
+
   set(PACKAGE "${DOMAIN}/${NAME}")
   set(TARGET "${NAME}-go-module")
 
@@ -28,15 +30,28 @@ function(setup_go_module NAME DOMAIN)
         "${GO_MOD_FILE}"
   )
 
-  add_custom_command(
-    TARGET
-      "${TARGET}"
-    WORKING_DIRECTORY
-      "${MOD_BUILD_DIR}"
-    COMMAND
-      env GOPATH="${GO_PATH}"
-        go mod download -x
-  )
+  if (ARG_VENDORED)
+    add_custom_command(
+      TARGET
+        "${TARGET}"
+      WORKING_DIRECTORY
+        "${MOD_BUILD_DIR}"
+      COMMAND
+        ${CMAKE_COMMAND} -E copy_directory
+          "${CMAKE_CURRENT_SOURCE_DIR}/vendor"
+          "${MOD_BUILD_DIR}/vendor"
+    )
+  else()
+    add_custom_command(
+      TARGET
+        "${TARGET}"
+      WORKING_DIRECTORY
+        "${MOD_BUILD_DIR}"
+      COMMAND
+        env GOPATH="${GO_PATH}"
+          go mod download -x
+    )
+  endif()
 
   set_property(TARGET "${TARGET}" PROPERTY "MOD_BUILD_DIR" "${MOD_BUILD_DIR}")
   set_property(TARGET "${TARGET}" PROPERTY "GO_MOD_FILE" "${GO_MOD_FILE}")
@@ -91,16 +106,6 @@ function(build_go_package NAME MODULE)
       #    "${BUILD_DIR}"
     )
   endif()
-
-  add_custom_command(
-    TARGET
-      "${TARGET}"
-    WORKING_DIRECTORY
-      "${BUILD_DIR}"
-    COMMAND
-      env GOPATH="${GO_PATH}"
-        go get ./...
-  )
 
   if (ARG_BINARY)
     set(GO_BUILD_ARGS)
