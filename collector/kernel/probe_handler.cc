@@ -174,6 +174,7 @@ int ProbeHandler::register_tail_call(
     return -2;
   }
 
+  tail_calls_.emplace_back(prog_array_name, func_name, prog_fd, index);
   return prog_array.update_value(index, prog_fd).code();
 }
 
@@ -249,6 +250,7 @@ int ProbeHandler::start_probe(
   int attach_res = bpf_attach_kprobe(prog_fd, BPF_PROBE_ENTRY, p_name.c_str(), k_func_name.c_str(), 0, 0);
   if (attach_res == -1) {
     // we expect this to be triggered depending on kernel version
+    close(prog_fd);
     LOG::debug_in(AgentLogKind::BPF, "Unable to attach kprobe. funcname:{} k_func_name:{}", func_name, k_func_name);
     return -3;
   }
@@ -290,6 +292,7 @@ int ProbeHandler::start_kretprobe(
   std::string p_name = "r_" + k_func_name + event_id_suffix;
   int attach_res = bpf_attach_kprobe(prog_fd, BPF_PROBE_RETURN, p_name.c_str(), k_func_name.c_str(), 0, 0);
   if (attach_res == -1) {
+    close(prog_fd);
     // we expect this to be triggered depending on kernel version
     LOG::debug_in(AgentLogKind::BPF, "Unable to attach kretprobe. funcname:{} k_func_name:{}", func_name, k_func_name);
     return -3;
@@ -325,7 +328,27 @@ void ProbeHandler::cleanup_probes()
       LOG::debug_in(AgentLogKind::BPF, "Error when detaching, res={}", res);
     }
   }
+
   LOG::debug_in(AgentLogKind::BPF, "Done cleaning up probes");
+}
+
+void ProbeHandler::cleanup_tail_calls(ebpf::BPFModule &bpf_module)
+{
+  while (!tail_calls_.empty()) {
+    const auto &tc = tail_calls_.back();
+
+    LOG::debug_in(AgentLogKind::BPF, "cleanup tail call for {} from table {}", tc.func_, tc.table_);
+
+    ebpf::BPFProgTable prog_array = get_prog_table(bpf_module, tc.table_);
+    prog_array.remove_value(tc.index_);
+
+    int res = close(tc.fd_);
+    if (res != 0) {
+      LOG::debug_in(AgentLogKind::BPF, "Error when unloading prog, res={}", res);
+    }
+
+    tail_calls_.pop_back();
+  }
 }
 
 void ProbeHandler::cleanup_probe(std::string func_name)

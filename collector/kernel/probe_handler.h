@@ -76,6 +76,11 @@ public:
   void cleanup_probes();
 
   /**
+   * Clean up all the registered tail calls
+   */
+  void cleanup_tail_calls(ebpf::BPFModule &bpf_module);
+
+  /**
    * Cleans up a single probe
    */
   void cleanup_probe(std::string func_name);
@@ -99,8 +104,18 @@ protected:
   int setup_mmap(int cpu, int events_fd, PerfContainer &perf, bool is_data, u32 n_bytes, u32 n_watermark_bytes);
 
 private:
+  struct TailCallTuple {
+    TailCallTuple(const std::string &table, const std::string &func, int fd, int index)
+        : table_(table), func_(func), fd_(fd), index_(index)
+    {}
+    std::string table_;
+    std::string func_;
+    int fd_;
+    int index_;
+  };
   std::vector<int> fds_;
   std::vector<int> probes_;
+  std::vector<TailCallTuple> tail_calls_;
   std::vector<std::string> k_func_names_;
   size_t stack_trace_count_;
 };
