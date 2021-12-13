@@ -54,6 +54,7 @@ BPFHandler::BPFHandler(
 BPFHandler::~BPFHandler()
 {
   probe_handler_.cleanup_probes();
+  probe_handler_.cleanup_tail_calls(bpf_module_);
   buf_poller_.reset();
 }
 
