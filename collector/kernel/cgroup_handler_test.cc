@@ -384,14 +384,28 @@ const char *dummy_json_response_data = R"delim(
 }
 */
 
-TEST(cgroup_handler_test, HandleDockerResponse)
-{
-  uv_loop_t loop;
-  int res = uv_loop_init(&loop);
-  if (res != 0) {
-    throw std::runtime_error("uv_loop_init failed");
+class CgroupHandlerTest : public ::testing::Test {
+protected:
+  void SetUp() override { ASSERT_EQ(0, uv_loop_init(&loop)); }
+
+  void TearDown() override
+  {
+    // Clean up loop to avoid valgrind and asan complaints about memory leaks.  Based on MAKE_VALGRIND_HAPPY() in
+    // libuv/test/task.h
+    auto walk_cb = [](uv_handle_t *handle, void *arg) {
+      if (!uv_is_closing(handle))
+        uv_close(handle, NULL);
+    };
+    uv_walk(&loop, walk_cb, NULL);
+    uv_run(&loop, UV_RUN_DEFAULT);
+    ASSERT_EQ(0, uv_loop_close(&loop));
   }
 
+  uv_loop_t loop;
+};
+
+TEST_F(CgroupHandlerTest, HandleDockerResponse)
+{
   channel::StringStreamChannel test_channel;
   channel::BufferedWriter buffered_writer(test_channel, 1024);
   flowmill::ingest::OtlpLogEncoder encoder("host-not-used", "port-not-used");
