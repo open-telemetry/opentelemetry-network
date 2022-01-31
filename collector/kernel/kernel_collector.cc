@@ -142,7 +142,6 @@ KernelCollector::KernelCollector(
       cgroup_settings_(std::move(cgroup_settings)),
       cpu_mem_io_settings_(cpu_mem_io_settings),
       log_(writer_),
-      nic_poller_(writer_, log_),
       kernel_collector_restarter_(*this)
 {
   if (intake_config_.auth_method() == collector::AuthMethod::authz) {
@@ -251,7 +250,6 @@ void KernelCollector::polling_steady_state_slow(uv_timer_t *timer)
     return;
   }
   bpf_handler_->slow_poll();
-  nic_poller_.poll();
 
   ResourceUsageReporter::report(writer_);
   upstream_connection_.flush();
@@ -322,7 +320,6 @@ void KernelCollector::probe_holdoff_timeout(uv_timer_t *timer)
         upstream_connection_.buffered_writer(),
         boot_time_adjustment_,
         curl_engine_,
-        nic_poller_,
         socket_stats_interval_sec_,
         cgroup_settings_,
         cpu_mem_io_settings_,

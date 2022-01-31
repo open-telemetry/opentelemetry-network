@@ -38,14 +38,6 @@ SocketProber::SocketProber(
   // END
   // NOTE: Covers all protocols
   probe_handler.start_probe(bpf_module, "on_security_sk_free", "security_sk_free");
-  probe_handler.start_probe(bpf_module, "on_dev_queue_xmit", "dev_queue_xmit");
-  probe_handler.start_probe(bpf_module, "on_consume_skb", "consume_skb");
-#if DEBUG_NIC_STATS
-  probe_handler.start_probe(bpf_module, "on_kfree_skb", "kfree_skb");
-  probe_handler.start_probe(bpf_module, "on_netif_rx", "netif_rx");
-  probe_handler.start_probe(bpf_module, "on_netif_receive_skb", "netif_receive_skb");
-  probe_handler.start_probe(bpf_module, "on_net_dev_xmit", "net_dev_xmit");
-#endif
 
   // inet END
   probe_handler.start_probe(bpf_module, "on_inet_release", "inet_release");

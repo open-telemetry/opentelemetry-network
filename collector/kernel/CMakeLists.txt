@@ -78,7 +78,6 @@ add_library(
     cgroup_handler.cc
     nat_prober.cc
     nat_handler.cc
-    nic_poller.cc
     troubleshooting.cc
     tcp_data_handler.cc
     protocols/protocol_handler_base.cc

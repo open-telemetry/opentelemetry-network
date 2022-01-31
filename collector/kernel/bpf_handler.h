@@ -57,7 +57,6 @@ public:
       IBufferedWriter &buffered_writer,
       u64 boot_time_adjustment,
       CurlEngine &curl_engine,
-      NicPoller &nic_poller,
       u64 socket_stats_interval_sec,
       CgroupHandler::CgroupSettings const &cgroup_settings,
       ProcessHandler::CpuMemIoSettings const *cpu_mem_io_settings,

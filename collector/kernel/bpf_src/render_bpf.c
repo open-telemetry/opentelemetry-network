@@ -103,13 +103,6 @@ struct udp_open_socket_t {
   struct udp_stats_t stats[2];
 };
 
-struct nic_info {
-  u64 last_submit_ns;
-  u64 busy_start_ns;
-  u64 busy_ns;
-  u64 last_is_busy;
-};
-
 BPF_HASH(tgid_info_table, TGID, TGID, TABLE_SIZE__TGID_INFO);
 
 struct pid_info {
@@ -142,7 +135,6 @@ BPF_HASH(
 BPF_HASH(tcp_open_sockets, struct sock *, struct tcp_open_socket_t, TABLE_SIZE__TCP_OPEN_SOCKETS); /* information on live sks */
 BPF_HASH(udp_open_sockets, struct sock *, struct udp_open_socket_t, TABLE_SIZE__UDP_OPEN_SOCKETS);
 BPF_HASH(udp_get_port_hash, u64, struct sock *, TABLE_SIZE__UDP_GET_PORT_HASH);
-BPF_HASH(nic_info_table, struct net_device *, struct nic_info, TABLE_SIZE__NIC_INFO_TABLE);
 
 BEGIN_DECLARE_SAVED_ARGS(cgroup_exit)
 pid_t tgid;
@@ -1657,64 +1649,6 @@ int onret_inet_release(struct pt_regs *ctx)
   return 0;
 }
 
-#if DEBUG_NIC_STATS
-#define trace_netdev(fn) bpf_trace_printk(fn ": name %s, dev %llx, skb %llx\n", skb->dev->name, skb->dev, skb)
-#else
-#define trace_netdev(fn)                                                                                                       \
-  do {                                                                                                                         \
-  } while (0)
-#endif /* DEBUG_NIC_STATS */
-
-static bool skip_device(const char *name)
-{
-  bool is_empty = (name[0] == '\0');
-  bool is_loopback = (name[0] == 'l' && name[1] == 'o' && name[2] == '\0');
-  bool is_cali = (name[0] == 'c' && name[1] == 'a' && name[2] == 'l' && name[3] == 'i');
-
-  return is_empty || is_loopback || is_cali;
-}
-
-int on_dev_queue_xmit(struct pt_regs *ctx, struct sk_buff *skb)
-{
-  if (skip_device(skb->dev->name))
-    return 0;
-#if DEBUG_NIC_STATS
-  bpf_trace_printk("on_dev_queue_xmit cpuid %d\n", bpf_get_smp_processor_id());
-#endif
-  trace_netdev("on_dev_queue_xmit");
-  u64 now = get_timestamp();
-
-  struct net_device *dev = skb->dev;
-  struct nic_info *nic_info_p = nic_info_table.lookup(&dev);
-  if (nic_info_p == NULL) {
-    struct nic_info info = {
-        .last_submit_ns = now,
-        .busy_start_ns = now,
-        .busy_ns = 0,
-        .last_is_busy = 1,
-    };
-    int ret = nic_info_table.insert(&dev, &info);
-    if (ret == -E2BIG || ret == -ENOMEM || ret == -EINVAL) {
-#if DEBUG_OTHER_MAP_ERRORS
-      bpf_trace_printk("nic_info_table full\n");
-#endif
-      return 0;
-    } else if (ret == -EEXIST) {
-      // Permit duplicates in this table
-    } else if (ret != 0) {
-      bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, (u64)ret, 0, 0);
-      return 0;
-    }
-    return 0;
-  }
-
-  if (!nic_info_p->last_is_busy)
-    nic_info_p->busy_start_ns = now;
-  nic_info_p->last_is_busy = 1;
-
-  return 0;
-}
-
 // TCP reset
 static void handle_tcp_reset(struct pt_regs *ctx, struct sock *sk, u8 is_rx)
 {
@@ -1737,93 +1671,6 @@ int on_tcp_reset(struct pt_regs *ctx, struct sock *sk)
   handle_tcp_reset(ctx, sk, 1);
   return 0;
 }
-
-int on_consume_skb(struct pt_regs *ctx, struct sk_buff *skb)
-{
-  if (skip_device(skb->dev->name))
-    return 0;
-#if DEBUG_NIC_STATS
-  bpf_trace_printk("on_consume_skb cpuid %d\n", bpf_get_smp_processor_id());
-#endif
-  trace_netdev("on_consume_skb");
-  u64 now = get_timestamp();
-
-  struct net_device *dev = skb->dev;
-  struct nic_info *nic_info_p = nic_info_table.lookup(&dev);
-  if (nic_info_p == NULL) {
-    struct nic_info info = {
-        .last_submit_ns = now,
-        .busy_start_ns = now,
-        .busy_ns = 0,
-        .last_is_busy = 0,
-    };
-    int ret = nic_info_table.insert(&dev, &info);
-    if (ret == -E2BIG || ret == -ENOMEM || ret == -EINVAL) {
-#if DEBUG_OTHER_MAP_ERRORS
-      bpf_trace_printk("nic_info_table full\n");
-#endif
-      return 0;
-    } else if (ret == -EEXIST) {
-      // Permit duplicates in this table
-    } else if (ret != 0) {
-      bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, (u64)ret, 0, 0);
-      return 0;
-    }
-    return 0;
-  }
-
-  u64 busy_ns = now - nic_info_p->busy_start_ns;
-  nic_info_p->busy_start_ns = now;
-  nic_info_p->busy_ns += busy_ns;
-  nic_info_p->last_is_busy = 0;
-
-  if (now - nic_info_p->last_submit_ns >= FILTER_NS) {
-    nic_info_p->last_submit_ns = now;
-    busy_ns = nic_info_p->busy_ns;
-    nic_info_p->busy_ns = 0;
-    char if_name[16];
-    bpf_probe_read(&if_name, sizeof if_name, dev->name);
-    perf_submit_agent_internal__nic_queue_state(ctx, now, if_name, busy_ns);
-#if DEBUG_NIC_STATS
-    bpf_trace_printk("nic consume perf submit: name %s, busy %u\n", if_name, busy_ns);
-#endif
-  }
-  return 0;
-}
-
-#if DEBUG_NIC_STATS
-int on_kfree_skb(struct pt_regs *ctx, struct sk_buff *skb)
-{
-  if (skip_device(skb->dev->name))
-    return 0;
-  trace_netdev("on_kfree_skb");
-  return 0;
-}
-
-int on_netif_rx(struct pt_regs *ctx, struct sk_buff *skb)
-{
-  if (skip_device(skb->dev->name))
-    return 0;
-  trace_netdev("on_netif_rx");
-  return 0;
-}
-
-int on_netif_receive_skb(struct pt_regs *ctx, struct sk_buff *skb)
-{
-  if (skip_device(skb->dev->name))
-    return 0;
-  trace_netdev("on_netif_receive_skb");
-  return 0;
-}
-
-int on_net_dev_xmit(struct pt_regs *ctx, struct sk_buff *skb, int rc, struct net_device *dev, unsigned int skb_len)
-{
-  if (skip_device(skb->dev->name))
-    return 0;
-  trace_netdev("on_net_dev_xmit");
-  return 0;
-}
-#endif
 
 ////////////////////////////////////////////////////////////////////////////////////
 /* LIVE UDP */
@@ -2013,12 +1860,6 @@ int on_ip_send_skb(struct pt_regs *ctx, struct net *net, struct sk_buff *skb)
   struct sock *sk = skb->sk;
   struct iphdr *ip_hdr = (struct iphdr *)(skb->head + skb->network_header);
 
-#if DEBUG_NIC_STATS
-  if (skb->dev->name[0] != '\0') {
-    trace_netdev("on_ip_send_skb");
-  }
-#endif
-
   if (ip_hdr->protocol == IPPROTO_UDP) {
     struct udphdr *udp_hdr = (struct udphdr *)(skb->head + skb->transport_header);
 
@@ -2049,11 +1890,6 @@ int on_ip_send_skb(struct pt_regs *ctx, struct net *net, struct sk_buff *skb)
 
 int on_ip6_send_skb(struct pt_regs *ctx, struct sk_buff *skb)
 {
-#if DEBUG_NIC_STATS
-  if (skb->dev->name[0] != '\0') {
-    trace_netdev("on_ip6_send_skb");
-  }
-#endif
   struct sock *sk = skb->sk;
   struct ipv6hdr *ipv6_hdr = (struct ipv6hdr *)(skb->head + skb->network_header);
 
@@ -2183,12 +2019,6 @@ int on_tcp_rtt_estimator(struct pt_regs *ctx, struct sock *sk)
 
 int on_tcp_rcv_established(struct pt_regs *ctx, struct sock *sk, struct sk_buff *skb)
 {
-#if DEBUG_NIC_STATS
-  if (skb->dev->name[0] != '\0') {
-    trace_netdev("on_tcp_rcv_established");
-  }
-#endif
-
   struct tcp_open_socket_t *sk_info;
   sk_info = tcp_open_sockets.lookup(&sk);
   if (!sk_info) {

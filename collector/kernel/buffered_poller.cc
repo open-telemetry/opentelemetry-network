@@ -59,7 +59,6 @@ BufferedPoller::BufferedPoller(
     logging::Logger &log,
     ProbeHandler &probe_handler,
     ebpf::BPFModule &bpf_module,
-    NicPoller &nic_poller,
     u64 socket_stats_interval_sec,
     CgroupHandler::CgroupSettings const &cgroup_settings,
     ProcessHandler::CpuMemIoSettings const *cpu_mem_io_settings,
@@ -78,7 +77,6 @@ BufferedPoller::BufferedPoller(
       process_handler_(writer_, collector_index_, probe_handler_, bpf_module_, log_, cpu_mem_io_settings),
       cgroup_handler_(writer_, curl_engine, std::move(cgroup_settings), log),
       nat_handler_(writer_, log),
-      nic_poller_(nic_poller),
       tcp_socket_table_ever_full_(false),
       tslot_(socket_stats_interval_sec * 1e9, 16),
       tcp_socket_stats_(tslot_),
@@ -123,7 +121,6 @@ BufferedPoller::BufferedPoller(
     add_handler<bpf_log_message_metadata, &BufferedPoller::handle_bpf_log>();
     add_handler<stack_trace_message_metadata, &BufferedPoller::handle_stack_trace>();
     add_handler<tcp_data_message_metadata, &BufferedPoller::handle_tcp_data>();
-    add_handler<nic_queue_state_message_metadata, &BufferedPoller::handle_nic_queue_state>();
   }
 
   // Create a tcp data handler for the tcp_data message
@@ -1337,11 +1334,6 @@ void BufferedPoller::handle_tcp_data(message_metadata const &metadata, jb_agent_
       msg.offset,
       (STREAM_TYPE)msg.stream_type,
       (CLIENT_SERVER_TYPE)msg.client_server);
-}
-
-void BufferedPoller::handle_nic_queue_state(message_metadata const &metadata, jb_agent_internal__nic_queue_state &msg)
-{
-  nic_poller_.handle_nic_queue_state(metadata.timestamp, &msg);
 }
 
 void BufferedPoller::set_all_probes_loaded()

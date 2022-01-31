@@ -241,13 +241,7 @@ app agent_internal {
       5: u8 stream_type       // enum STREAM_TYPE { ST_SEND = 0, ST_RECV = 1 }
       6: u8 client_server     // enum CLIENT_SERVER_TYPE { SC_CLIENT = 0, SC_SERVER = 1 }
     }
-    25: log nic_queue_state {
-      description "nic queue state change"
-      severity 0
-      1: u8 if_name[16]
-      2: u64 busy_ns
-    }
-    26: log report_task_status {
+    25: log report_task_status {
       description "reports task status"
       severity 0
 
@@ -366,7 +360,7 @@ app agent_internal {
       27: u64 voluntary_context_switches
       28: u64 involuntary_context_switches
     }
-    27: log pid_exit {
+    26: log pid_exit {
       description "called when a thread exits"
       severity 0
 
@@ -375,7 +369,7 @@ app agent_internal {
 
       3: s32 exit_code
     }
-    28: log report_debug_event {
+    27: log report_debug_event {
       description "called when a bpf debug event is triggered - for debugging purposes"
       severity 0
 
@@ -385,7 +379,7 @@ app agent_internal {
       4: u64 arg3 // event dependent data
       5: u64 arg4 // event dependent data
     }
-    29: log tcp_reset {
+    28: log tcp_reset {
       description "tcp RST was sent/received"
       severity 0
       1: u64 sk

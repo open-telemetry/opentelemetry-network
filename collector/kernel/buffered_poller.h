@@ -29,7 +29,6 @@
 #include <collector/kernel/cgroup_handler.h>
 #include <collector/kernel/dns_requests.h>
 #include <collector/kernel/nat_handler.h>
-#include <collector/kernel/nic_poller.h>
 #include <collector/kernel/perf_poller.h>
 #include <collector/kernel/probe_handler.h>
 #include <collector/kernel/process_handler.h>
@@ -77,7 +76,6 @@ public:
       logging::Logger &log,
       ProbeHandler &probe_handler,
       ebpf::BPFModule &bpf_module,
-      NicPoller &nic_poller,
       u64 socket_stats_interval_sec,
       CgroupHandler::CgroupSettings const &cgroup_settings,
       ProcessHandler::CpuMemIoSettings const *cpu_mem_io_settings,
@@ -325,8 +323,6 @@ private:
   /*** TCP DATA ***/
   void handle_tcp_data(message_metadata const &metadata, jb_agent_internal__tcp_data &msg);
 
-  void handle_nic_queue_state(message_metadata const &metadata, jb_agent_internal__nic_queue_state &msg);
-
   /////////////////////////////////////////////////////////////////////////
 
   uv_loop_t &loop_;
@@ -356,7 +352,6 @@ private:
 
   CgroupHandler cgroup_handler_;
   NatHandler nat_handler_;
-  NicPoller &nic_poller_;
 
   /* TCP */
   typedef FixedHash<u64, tcp_socket_entry, tcp_socket_table_max_sockets, u64_hasher> TcpSocketTable;

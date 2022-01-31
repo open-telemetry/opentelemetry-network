@@ -23,7 +23,6 @@
 #include <collector/kernel/bpf_handler.h>
 #include <collector/kernel/entrypoint_error.h>
 #include <collector/kernel/kernel_collector_restarter.h>
-#include <collector/kernel/nic_poller.h>
 #include <collector/kernel/probe_handler.h>
 #include <common/host_info.h>
 #include <config/intake_config.h>
@@ -221,7 +220,6 @@ private:
 
   FileDescriptor bpf_dump_file_;
   logging::Logger log_;
-  NicPoller nic_poller_;
 
   KernelCollectorRestarter kernel_collector_restarter_;
 };
