@@ -60,7 +60,6 @@ public:
       bool enable_userland_tcp,
       u64 socket_stats_interval_sec,
       CgroupHandler::CgroupSettings cgroup_settings,
-      ProcessHandler::CpuMemIoSettings const *cpu_mem_io_settings,
       std::string const &bpf_dump_file,
       HostInfo host_info,
       EntrypointError error);
@@ -216,7 +215,6 @@ private:
   bool enable_userland_tcp_;
   u64 socket_stats_interval_sec_;
   CgroupHandler::CgroupSettings const cgroup_settings_;
-  ProcessHandler::CpuMemIoSettings const *cpu_mem_io_settings_;
 
   FileDescriptor bpf_dump_file_;
   logging::Logger log_;

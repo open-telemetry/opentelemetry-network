@@ -78,7 +78,6 @@ public:
       ebpf::BPFModule &bpf_module,
       u64 socket_stats_interval_sec,
       CgroupHandler::CgroupSettings const &cgroup_settings,
-      ProcessHandler::CpuMemIoSettings const *cpu_mem_io_settings,
       ::flowmill::ingest::Encoder *encoder,
       KernelCollectorRestarter &kernel_collector_restarter);
 
@@ -261,11 +260,6 @@ private:
    * Handler for process comm change
    */
   void handle_pid_set_comm(message_metadata const &metadata, jb_agent_internal__pid_set_comm &msg);
-
-  /**
-   * Handler for process cpu time
-   */
-  void handle_report_task_status(message_metadata const &metadata, jb_agent_internal__report_task_status &msg);
 
   /**
    * Handler for process exit

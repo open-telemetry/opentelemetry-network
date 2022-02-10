@@ -86,16 +86,6 @@ static constexpr auto FLOWMILL_SERVICE_OVERRIDE_VAR = "FLOWMILL_AGENT_SERVICE";
 static constexpr auto FLOWMILL_HOST_OVERRIDE_VAR = "FLOWMILL_AGENT_HOST";
 static constexpr auto FLOWMILL_ZONE_OVERRIDE_VAR = "FLOWMILL_AGENT_ZONE";
 
-/** CPU/Mem/IO */
-static constexpr auto ENABLE_EBPF_CPU_MEM_IO_VAR = "FLOWMILL_ENABLE_EBPF_CPU_MEM_IO";
-// default minimum and maximum cpu/mem/io batch size
-constexpr std::size_t CPU_MEM_IO_MIN_BATCH_SIZE = 1;
-constexpr std::size_t CPU_MEM_IO_MAX_BATCH_SIZE = 5;
-// default maximum time budget for cpu/mem/io per poll
-constexpr StopWatch<>::duration CPU_MEM_IO_POLL_BUDGET = 10us;
-// default poll count between cpu/mem/io batch chunks
-constexpr std::size_t CPU_MEM_IO_BATCH_POLL_COUNT_COOLDOWN = 3;
-
 static void refill_log_rate_limit_cb(uv_timer_t *timer)
 {
   LOG::refill_rate_limit_budget(200);
@@ -321,6 +311,7 @@ int main(int argc, char *argv[])
 
   auto disable_http_metrics = parser.add_env_flag(
       "disable-http-metrics", "Disable collection of HTTP metrics", FLOWMILL_DISABLE_HTTP_METRICS_VAR, false);
+
   // keeping "enable-http-metrics" around while we phase it out,
   // so that older deployments won't break
   // we're transitioning to opt-out (preferably always on)
@@ -333,20 +324,6 @@ int main(int argc, char *argv[])
   auto force_docker_metadata = parser.add_flag("force-docker-metadata", "Forces the use of docker metadata");
   auto dump_docker_metadata = parser.add_flag("dump-docker-metadata", "Dump docker metadata for debug purposes");
   auto disable_nomad_metadata = parser.add_flag("disable-nomad-metadata", "Disables detection and use of Nomad metadata");
-
-  args::Flag enable_cpu_mem_io_flag(*parser, "enable_cpu_mem_io", "Enable CPU/MEM/IO stats gathering", {"enable-cpu-mem-io"});
-
-  auto cpu_mem_io_min_batch = parser.add_arg<std::size_t>(
-      "cpu-mem-io-min-batch", "Minimum micro batch size for CPU/Mem/IO polling", nullptr, CPU_MEM_IO_MIN_BATCH_SIZE);
-  auto cpu_mem_io_max_batch = parser.add_arg<std::size_t>(
-      "cpu-mem-io-max-batch", "Maximum micro batch size for CPU/Mem/IO polling", nullptr, CPU_MEM_IO_MAX_BATCH_SIZE);
-  auto cpu_mem_io_poll_budget_us = parser.add_arg<StopWatch<>::duration::rep>(
-      "cpu-mem-io-poll-budget-us",
-      "Maximum time budget (us) per CPU/Mem/IO micro batch",
-      nullptr,
-      CPU_MEM_IO_POLL_BUDGET.count());
-  auto cpu_mem_io_cooldown = parser.add_arg<std::size_t>(
-      "cpu-mem-io-cooldown", "Poll count between CPU/Mem/IO micro batches", nullptr, CPU_MEM_IO_BATCH_POLL_COUNT_COOLDOWN);
 
   auto disable_intake_tls = parser.add_flag("disable-tls", "Disable TLS when connecting to intake");
 
@@ -445,10 +422,6 @@ int main(int argc, char *argv[])
   /* acknowledge userland tcp */
   bool const enable_userland_tcp = enable_userland_tcp_flag.Matched();
   LOG::info("Userland TCP: {}", enabled_disabled[enable_userland_tcp]);
-
-  /* CPU/Mem/IO */
-  bool const enable_cpu_mem_io = enable_cpu_mem_io_flag.Matched();
-  LOG::info("CPU/MEM/IO stat gathering: {}", enabled_disabled[enable_cpu_mem_io]);
 
   /* Auth method */
   LOG::info("Auth method for connecting to intake: {}", *auth_method);
@@ -573,8 +546,6 @@ int main(int argc, char *argv[])
     bpf_src = std::regex_replace(bpf_src, std::regex("FILTER_NS"), fmt::format("{}", args::get(filter_ns)));
     bpf_src = std::regex_replace(bpf_src, std::regex("MAX_PID"), *read_file_as_string(MAX_PID_PROC_PATH).try_raise());
     bpf_src = std::regex_replace(
-        bpf_src, std::regex("CPU_MEM_IO_ENABLED"), std::string(1, "01"[try_get_env_value<bool>(ENABLE_EBPF_CPU_MEM_IO_VAR)]));
-    bpf_src = std::regex_replace(
         bpf_src, std::regex("REPORT_DEBUG_EVENTS_PLACEHOLDER"), std::string(1, "01"[*report_bpf_debug_events]));
 
     if (std::string const out{try_get_env_var(FLOWMILL_EXPORT_BPF_SRC_FILE_VAR)}; !out.empty()) {
@@ -640,7 +611,6 @@ int main(int argc, char *argv[])
             .force_docker_metadata = *force_docker_metadata,
             .dump_docker_metadata = *dump_docker_metadata,
         },
-        nullptr,
         bpf_dump_file.Get(),
         host_info,
         *entrypoint_error};

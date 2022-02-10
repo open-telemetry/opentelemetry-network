@@ -102,7 +102,6 @@ KernelCollector::KernelCollector(
     bool enable_userland_tcp,
     u64 socket_stats_interval_sec,
     CgroupHandler::CgroupSettings cgroup_settings,
-    ProcessHandler::CpuMemIoSettings const *cpu_mem_io_settings,
     std::string const &bpf_dump_file,
     HostInfo host_info,
     EntrypointError entrypoint_error)
@@ -140,7 +139,6 @@ KernelCollector::KernelCollector(
       enable_userland_tcp_(enable_userland_tcp),
       socket_stats_interval_sec_(socket_stats_interval_sec),
       cgroup_settings_(std::move(cgroup_settings)),
-      cpu_mem_io_settings_(cpu_mem_io_settings),
       log_(writer_),
       kernel_collector_restarter_(*this)
 {
@@ -322,7 +320,6 @@ void KernelCollector::probe_holdoff_timeout(uv_timer_t *timer)
         curl_engine_,
         socket_stats_interval_sec_,
         cgroup_settings_,
-        cpu_mem_io_settings_,
         kernel_collector_restarter_);
 
     potential_troubleshoot_item = TroubleshootItem::bpf_load_probes_failed;

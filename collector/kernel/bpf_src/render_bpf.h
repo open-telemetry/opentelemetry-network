@@ -24,7 +24,6 @@
 
 #define BPF_MAX_CPUS 128              // Maximum number of CPUs to support
 #define TABLE_SIZE__TGID_INFO MAX_PID // Task (TGID) information
-#define TABLE_SIZE__PID_INFO MAX_PID  // Thread (PID) information
 #define TABLE_SIZE__SEEN_INODES                                                                                                \
   70000 // XXX: Is this even necessary? could this tracking be done in userland with non-limited tables?
 #define TABLE_SIZE__TCP_OPEN_SOCKETS (256 * 1024) // Was 4096, but should be larger to accommodate high traffic systems
@@ -36,8 +35,6 @@
 #define TABLE_SIZE__DEAD_GROUP_TASKS 512 // Should be no more than the number of cores, in theory
 #define TABLE_SIZE__STACK_TRACES 16384   // Number of stack traces to keep in the table
 #define TABLE_SIZE__NIC_INFO_TABLE 128   // Info per network interface
-
-#define CPU_MEM_IO_REPORT_PERIOD_NS (1 /*ns*/ * 1000 /*us*/ * 1000 /*ms*/ * 10 /*centisecond*/)
 
 #define WATERMARK_STACK_TRACES                                                                                                 \
   (TABLE_SIZE__STACK_TRACES - 256) // When to clear the table (unfortunately non-atomic, but that's a lot of stack traces...)

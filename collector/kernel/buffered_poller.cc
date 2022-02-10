@@ -61,7 +61,6 @@ BufferedPoller::BufferedPoller(
     ebpf::BPFModule &bpf_module,
     u64 socket_stats_interval_sec,
     CgroupHandler::CgroupSettings const &cgroup_settings,
-    ProcessHandler::CpuMemIoSettings const *cpu_mem_io_settings,
     ::flowmill::ingest::Encoder *encoder,
     KernelCollectorRestarter &kernel_collector_restarter)
     : PerfPoller(container),
@@ -74,7 +73,7 @@ BufferedPoller::BufferedPoller(
       bpf_module_(bpf_module),
       writer_(buffered_writer_, monotonic, time_adjustment, encoder),
       collector_index_({writer_}),
-      process_handler_(writer_, collector_index_, probe_handler_, bpf_module_, log_, cpu_mem_io_settings),
+      process_handler_(writer_, collector_index_, log_),
       cgroup_handler_(writer_, curl_engine, std::move(cgroup_settings), log),
       nat_handler_(writer_, log),
       tcp_socket_table_ever_full_(false),
@@ -109,7 +108,6 @@ BufferedPoller::BufferedPoller(
     add_handler<pid_info_message_metadata, &BufferedPoller::handle_pid_info>();
     add_handler<pid_close_message_metadata, &BufferedPoller::handle_pid_close>();
     add_handler<pid_set_comm_message_metadata, &BufferedPoller::handle_pid_set_comm>();
-    add_handler<report_task_status_message_metadata, &BufferedPoller::handle_report_task_status>();
     add_handler<pid_exit_message_metadata, &BufferedPoller::handle_pid_exit>();
     add_handler<kill_css_message_metadata, &BufferedPoller::handle_kill_css>();
     add_handler<css_populate_dir_message_metadata, &BufferedPoller::handle_css_populate_dir>();
@@ -143,7 +141,6 @@ void BufferedPoller::handle_event()
 void BufferedPoller::poll(void)
 {
   process_samples(false);
-  process_handler_.poll();
 }
 
 void BufferedPoller::process_samples(bool is_event)
@@ -573,7 +570,6 @@ void BufferedPoller::slow_poll()
 {
   u64 const t = monotonic() + time_adjustment_;
   process_dns_timeouts(t);
-  process_handler_.slow_poll(t);
 }
 
 void BufferedPoller::process_dns_timeouts(u64 t)
@@ -1087,13 +1083,6 @@ void BufferedPoller::handle_pid_set_comm(message_metadata const &metadata, jb_ag
 
   process_handler_.set_process_command(std::chrono::nanoseconds{metadata.timestamp}, msg);
   writer_.pid_set_comm_tstamp(metadata.timestamp, msg.pid, msg.comm);
-}
-
-void BufferedPoller::handle_report_task_status(message_metadata const &metadata, jb_agent_internal__report_task_status &msg)
-{
-  LOG::debug_in(AgentLogKind::PID, "{}: msg={}", __func__, msg);
-
-  process_handler_.report_task_status(std::chrono::nanoseconds{metadata.timestamp}, msg);
 }
 
 void BufferedPoller::handle_pid_exit(message_metadata const &metadata, jb_agent_internal__pid_exit &msg)

@@ -59,7 +59,6 @@ public:
       CurlEngine &curl_engine,
       u64 socket_stats_interval_sec,
       CgroupHandler::CgroupSettings const &cgroup_settings,
-      ProcessHandler::CpuMemIoSettings const *cpu_mem_io_settings,
       KernelCollectorRestarter &kernel_collector_restarter);
 
   /**

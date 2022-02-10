@@ -33,7 +33,7 @@
   X(PERF, 10)                                                                                                                  \
   X(PID, 11)                                                                                                                   \
   X(PROTOCOL, 12)                                                                                                              \
-  X(CPU_MEM_IO, 13)                                                                                                            \
+  X(TRACKED_PROCESS, 13)                                                                                                       \
   X(NOMAD, 14)                                                                                                                 \
   X(SOCKET, 15)
 #define ENUM_DEFAULT BPF

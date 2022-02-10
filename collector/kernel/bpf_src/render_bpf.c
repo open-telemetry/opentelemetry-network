@@ -32,7 +32,6 @@
 // Configuration
 #include "config.h"
 #include "render_bpf.h"
-
 // Perf events
 BPF_PERF_OUTPUT(events);
 #include "flowmill/agent_internal/bpf.h"
@@ -43,8 +42,6 @@ BPF_PERF_OUTPUT(events);
 
 // using constants for placeholders for readability after code dump
 #pragma passthrough on
-#define ENABLE_CPU_MEM_IO CPU_MEM_IO_ENABLED
-#define CPU_MEM_IO_REPORT_RATE_NS CPU_MEM_IO_REPORT_PERIOD_NS
 #define REPORT_DEBUG_EVENTS REPORT_DEBUG_EVENTS_PLACEHOLDER
 #pragma passthrough off
 
@@ -105,11 +102,6 @@ struct udp_open_socket_t {
 
 BPF_HASH(tgid_info_table, TGID, TGID, TABLE_SIZE__TGID_INFO);
 
-struct pid_info {
-  TIMESTAMP last_report_task_status_ns;
-};
-BPF_HASH(pid_info_table, PID, struct pid_info, TABLE_SIZE__PID_INFO);
-
 BPF_HASH(dead_group_tasks, struct task_struct *, struct task_struct *, TABLE_SIZE__DEAD_GROUP_TASKS);
 
 /* BPF_F_NO_PREALLOC was introduced in 6c9059817432, contained in
@@ -162,110 +154,6 @@ static int report_pid_exit(TIMESTAMP timestamp, struct pt_regs *ctx, struct task
   perf_submit_agent_internal__pid_exit(ctx, timestamp, task->tgid, task->pid, task->exit_code);
   return 1;
 }
-
-#if ENABLE_CPU_MEM_IO == 1
-static int report_task_status(TIMESTAMP timestamp, struct pt_regs *ctx, struct task_struct *task, u8 on_exit)
-{
-  struct task_group const *sched_task_group = task->sched_task_group;
-  struct task_delay_info const *delays = task->delays;
-  struct task_io_accounting const *io = &task->ioac;
-  struct signal_struct const *signal = task->signal;
-
-#pragma passthrough on
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 11, 0))
-  u64 const utime_ns = (NSEC_PER_SEC / HZ) * task->utime;
-  u64 const stime_ns = (NSEC_PER_SEC / HZ) * task->stime;
-#else
-  u64 const utime_ns = task->utime;
-  u64 const stime_ns = task->stime;
-#endif
-#pragma passthrough off
-
-  u64 const resident_pages_file_mapping = task->rss_stat.count[MM_FILEPAGES];
-  u64 const resident_pages_anonymous = task->rss_stat.count[MM_ANONPAGES];
-#pragma passthrough on
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 5, 0))
-  u64 const resident_pages_shared_memory = 0;
-#else
-  u64 const resident_pages_shared_memory = task->rss_stat.count[MM_SHMEMPAGES];
-#endif
-#pragma passthrough off
-
-#pragma passthrough on
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 20, 0))
-  u64 thrashing_page_delay_ns = 0;
-  u32 thrashing_page_delay_count = 0;
-#else
-  u64 thrashing_page_delay_ns = delays->thrashing_delay;
-  u32 thrashing_page_delay_count = delays->thrashing_count;
-#endif
-#pragma passthrough off
-
-  perf_submit_agent_internal__report_task_status(
-      ctx,
-      timestamp,
-      task->tgid,
-      task->pid,
-      on_exit,
-      utime_ns,
-      stime_ns,
-      signal->nr_threads,
-      resident_pages_file_mapping,
-      resident_pages_anonymous,
-      resident_pages_shared_memory,
-      task->min_flt,
-      task->maj_flt,
-      delays->blkio_delay,
-      delays->blkio_count,
-      delays->swapin_delay,
-      delays->swapin_count,
-      delays->freepages_delay,
-      delays->freepages_count,
-      thrashing_page_delay_ns,
-      thrashing_page_delay_count,
-      io->rchar,
-      io->wchar,
-      io->syscr,
-      io->syscw,
-      io->read_bytes,
-      io->write_bytes,
-      io->cancelled_write_bytes,
-      task->nvcsw,
-      task->nivcsw);
-
-  return 1;
-}
-
-static int report_task_status_if_time(struct pt_regs *ctx, struct task_struct *task)
-{
-  TGID tgid = task->tgid;
-
-  /* don't bother for tgids we're not tracking */
-  if (!tgid_info_table.lookup(&tgid)) {
-    return 0;
-  }
-
-  PID pid = task->pid;
-  struct pid_info local_info = {.last_report_task_status_ns = 0};
-
-  struct pid_info *info = pid_info_table.lookup_or_try_init(&pid, &local_info);
-  if (!info) {
-    return 0;
-  }
-
-  TIMESTAMP const now = get_timestamp();
-  if (now - info->last_report_task_status_ns < CPU_MEM_IO_REPORT_RATE_NS) {
-    return 0;
-  }
-
-  report_task_status(now, ctx, task, 0);
-
-  local_info.last_report_task_status_ns = now;
-  pid_info_table.update(&pid, &local_info);
-
-  return 1;
-}
-#endif // ENABLE_CPU_MEM_IO
 
 static int set_task_group_dead(struct pt_regs *ctx, struct task_struct *tsk)
 {
@@ -450,19 +338,6 @@ static int remove_tgid_info(struct pt_regs *ctx, TGID tgid)
 // used later by on_cgroup_exit handling
 int on_taskstats_exit(struct pt_regs *ctx, struct task_struct *tsk, int group_dead)
 {
-#if ENABLE_CPU_MEM_IO == 1
-  TGID tgid = tsk->tgid;
-  PID pid = tsk->pid;
-
-  if (tgid_info_table.lookup(&tgid)) {
-    TIMESTAMP const now = get_timestamp();
-    if (tgid) {
-      report_task_status(now, ctx, tsk, 1);
-      report_pid_exit(now, ctx, tsk);
-    }
-    pid_info_table.delete(&pid);
-  }
-#endif // ENABLE_CPU_MEM_IO
 
   if (group_dead) {
     set_task_group_dead(ctx, tsk);
@@ -619,15 +494,6 @@ int onret_get_pid_task(struct pt_regs *ctx)
   return 0;
 }
 
-int on_finish_task_switch(struct pt_regs *ctx, struct task_struct *prev)
-{
-#if ENABLE_CPU_MEM_IO == 1
-  if (prev->tgid) {
-    report_task_status_if_time(ctx, prev);
-  }
-#endif // ENABLE_CPU_MEM_IO
-  return 0;
-}
 
 ////////////////////////////////////////////////////////////////////////////////////
 /* TCP SOCKETS */
