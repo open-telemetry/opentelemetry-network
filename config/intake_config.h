@@ -98,9 +98,9 @@ public:
 
   collector::AuthMethod auth_method() const { return auth_method_; }
 
-  bool allow_compression() const { return encoder_ == IntakeEncoder::binary; }
+  virtual bool allow_compression() const { return encoder_ == IntakeEncoder::binary; }
 
-  std::unique_ptr<channel::NetworkChannel>
+  virtual std::unique_ptr<channel::NetworkChannel>
   make_channel(uv_loop_t &loop, std::string_view private_key = {}, std::string_view certificate = {}) const;
 
   std::unique_ptr<::flowmill::ingest::Encoder> make_encoder() const

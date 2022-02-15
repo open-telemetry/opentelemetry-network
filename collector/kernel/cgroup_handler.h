@@ -47,7 +47,7 @@ public:
   void handle_pid_info(u32 pid, u64 cgroup, uint8_t comm[16]);
 
 private:
-  friend class CgroupHandlerTest_HandleDockerResponse_Test;
+  friend class CgroupHandlerTest_handle_docker_response_Test;
 
   struct CgroupEntry {
     u64 cgroup_parent;

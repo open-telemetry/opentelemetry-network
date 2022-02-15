@@ -262,4 +262,5 @@ endif()
 
 # Unit Tests
 #
-add_unit_test(cgroup_handler LIBS agentlib stringstream_channel)
+add_unit_test(cgroup_handler LIBS agentlib test_channel)
+add_ebpf_unit_test(kernel_collector LIBS signal_handler agentlib agentxxdlib fastpass_util file_ops bcc-interface bcc-static config_file libuv-static system_ops static-executable test_channel)

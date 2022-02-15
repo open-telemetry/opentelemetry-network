@@ -24,7 +24,9 @@
 
 static void close_cb(uv_handle_t *const handle, void *const arg)
 {
-  uv_close(handle, nullptr);
+  if (!uv_is_closing(handle)) {
+    uv_close(handle, nullptr);
+  }
 }
 
 void close_uv_loop_cleanly(uv_loop_t *const loop)

@@ -125,8 +125,15 @@ target_link_libraries(
 )
 
 add_library(
-  stringstream_channel
+  test_channel
   STATIC
-    stringstream_channel.cc
+    test_channel.cc
 )
+target_link_libraries(
+  test_channel
+    render_pipeline
+    wire_msg_to_json
+    llvm
+)
+
 add_unit_test(buffered_writer LIBS buffered_writer element_queue_writer llvm)

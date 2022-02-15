@@ -41,6 +41,7 @@
 
 class KernelCollector {
   friend class KernelCollectorRestarter;
+  friend class KernelCollectorTest;
 
 public:
   /**

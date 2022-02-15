@@ -1,5 +1,5 @@
 #include <channel/buffered_writer.h>
-#include <channel/stringstream_channel.h>
+#include <channel/test_channel.h>
 #include <collector/kernel/cgroup_handler.h>
 #include <common/intake_encoder.h>
 #include <generated/flowmill/ingest/otlp_log_encoder.h>
@@ -386,32 +386,25 @@ const char *dummy_json_response_data = R"delim(
 
 class CgroupHandlerTest : public ::testing::Test {
 protected:
-  void SetUp() override { ASSERT_EQ(0, uv_loop_init(&loop)); }
+  void SetUp() override { ASSERT_EQ(0, uv_loop_init(&loop_)); }
 
   void TearDown() override
   {
-    // Clean up loop to avoid valgrind and asan complaints about memory leaks.  Based on MAKE_VALGRIND_HAPPY() in
-    // libuv/test/task.h
-    auto walk_cb = [](uv_handle_t *handle, void *arg) {
-      if (!uv_is_closing(handle))
-        uv_close(handle, NULL);
-    };
-    uv_walk(&loop, walk_cb, NULL);
-    uv_run(&loop, UV_RUN_DEFAULT);
-    ASSERT_EQ(0, uv_loop_close(&loop));
+    // Clean up loop_ to avoid valgrind and asan complaints about memory leaks.
+    close_uv_loop_cleanly(&loop_);
   }
 
-  uv_loop_t loop;
+  uv_loop_t loop_;
 };
 
-TEST_F(CgroupHandlerTest, HandleDockerResponse)
+TEST_F(CgroupHandlerTest, handle_docker_response)
 {
-  channel::StringStreamChannel test_channel;
+  channel::TestChannel test_channel(std::nullopt, IntakeEncoder::otlp_log);
   channel::BufferedWriter buffered_writer(test_channel, 1024);
   flowmill::ingest::OtlpLogEncoder encoder("host-not-used", "port-not-used");
   flowmill::ingest::Writer writer(buffered_writer, monotonic, 0, &encoder);
 
-  std::unique_ptr<CurlEngine> curl_engine = CurlEngine::create(&loop);
+  std::unique_ptr<CurlEngine> curl_engine = CurlEngine::create(&loop_);
 
   CgroupHandler::CgroupSettings cgroup_settings;
 
@@ -431,11 +424,12 @@ TEST_F(CgroupHandlerTest, HandleDockerResponse)
   // Pass the dummy response_data to CgroupHandler::handle_docker_response().
   cgroup_handler.handle_docker_response(1, dummy_json_response_object.dump());
 
-  LOG::debug("data in channel: {}", log_waive(test_channel.get()));
+  LOG::debug("data in channel: {}", log_waive(test_channel.get_ss().str()));
 
   // Validate that the writer gets the expected values.
   std::string line;
-  while (std::getline(test_channel.ss_, line)) {
+  std::stringstream &ss = test_channel.get_ss();
+  while (std::getline(ss, line)) {
     if (line.size() && line[0] == '{') {
       nlohmann::json const object = nlohmann::json::parse(line);
       for (auto const &rl : object["resourceLogs"]) {
