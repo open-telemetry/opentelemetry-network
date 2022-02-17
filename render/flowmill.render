@@ -854,65 +854,12 @@ app ingest {
                     // aws-collector: the http status code for api calls
     }
 
-    69: log nic_stats {
-      description "various NIC statistics"
-      severity 0
-      1: string if_name
-      2: u64 tx_bytes_total
-      3: u64 rx_bytes_total
-      4: u64 tx_bytes_rate
-      5: u64 rx_bytes_rate
-      6: u64 tx_errors
-      7: u64 rx_errors
-      8: u64 time_busy_ns
-      9: u64 time_free_ns
-    }
-
     70: log system_wide_process_settings {
       description "reports system-wide settings that matters for process stats"
       severity 0
 
       1: u64 clock_ticks_per_second
       2: u64 memory_page_bytes
-    }
-
-    71: log report_cpu_mem_io_polling_stats {
-      description "reports status about the collection of process data from /proc"
-      severity 0
-      pipeline_only
-
-      // the wall time from the start of a batch to the start of the next
-      1: u64 batch_period_ns
-      // the time taken to process the whole batch (time spent in poll/parse/send)
-      2: u64 batch_duration_ns
-      // how many batches were necessary to collect data for all processes
-      3: u64 batch_count
-      // how many processes in total on all batches
-      4: u64 total_batch_size
-      // how many processes in the smallest batch
-      5: u64 min_batch_size
-      // how many processes in the biggest batch
-      6: u64 max_batch_size
-
-      // counters for success/failures ow /proc/{pid}/stat parsing
-      7: u64 successful_proc_stat_reads
-      8: u64 failed_proc_stat_reads
-
-      // counters for success/failures ow /proc/{pid}/io parsing
-      9: u64 successful_proc_io_reads
-      10: u64 failed_proc_io_reads
-
-      // counters for success/failures ow /proc/{pid}/status parsing
-      11: u64 successful_proc_status_reads
-      12: u64 failed_proc_status_reads
-    }
-
-    82: log report_cpu_mem_io_parse_errors {
-      pipeline_only
-
-      1: u64 failed_proc_stat_parse
-      2: u64 failed_proc_io_parse
-      3: u64 failed_proc_status_parse
     }
 
     // use cases for this message:
