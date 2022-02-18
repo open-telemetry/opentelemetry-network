@@ -21,7 +21,6 @@
 #include <common/client_type.h>
 #include <config/config_file.h>
 #include <generated/flowmill/ingest/writer.h>
-#include <util/authz_fetcher.h>
 #include <util/aws_instance_metadata.h>
 #include <util/curl_engine.h>
 #include <util/gcp_instance_metadata.h>
@@ -36,8 +35,7 @@ namespace channel {
 // ConnectionCaretaker handles common tasks of agent->server connection.
 //
 // Current implementation does followings:
-//   1. Sends back initial metadata, including agent version, api key &
-//      configuration labels.
+//   1. Sends back initial metadata, including agent version, and configuration labels.
 //   2. Sends back heartbeat signal to server periodically.
 //
 // This class is NOT thread-safe.
@@ -55,7 +53,6 @@ public:
   ConnectionCaretaker(
       std::string_view hostname,
       ClientType client_type,
-      AuthzFetcher &authz_fetcher,
       config::ConfigFile::LabelsMap const &config_data,
       uv_loop_t *loop,
       flowmill::ingest::Writer &writer,
@@ -63,7 +60,7 @@ public:
       std::chrono::milliseconds heartbeat_interval,
       std::function<void()> flush_cb,
       std::function<void(bool)> set_compression_cb,
-      std::function<void()> on_authenticated_cb);
+      std::function<void()> on_connected_cb);
 
   ~ConnectionCaretaker();
 
@@ -77,13 +74,9 @@ public:
   // Sends one heartbeat. It is public so that timer callback can use it.
   void send_heartbeat();
 
-  // Forces a synchronous refresh of the authz token if it's expired or due to
-  // expire within the notice period.
-  void refresh_authz_token();
-
 private:
   // Sends following information:
-  //   agent verstion, api_key (including tenant) and any config labels.
+  //   agent version and any config labels.
   // TODO: Send agent type as well.
   void send_metadata_header();
   void start_heartbeat();
@@ -94,7 +87,6 @@ private:
   std::string_view const hostname_;
   ClientType const client_type_;
 
-  AuthzFetcher &authz_fetcher_;
   const config::ConfigFile::LabelsMap config_data_;
 
   uv_loop_t *loop_ = nullptr; // not owned
@@ -106,7 +98,7 @@ private:
 
   std::function<void()> flush_cb_;
   std::function<void(bool)> set_compression_cb_;
-  std::function<void()> on_authenticated_cb_;
+  std::function<void()> on_connected_cb_;
 
   uv_timer_t heartbeat_timer_;
 

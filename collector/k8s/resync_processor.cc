@@ -48,7 +48,6 @@ ResyncProcessor::ResyncProcessor(
     channel::ReconnectingChannel &reconnecting_channel,
     config::ConfigFile const &configuration_data,
     std::string_view hostname,
-    AuthzFetcher &authz_fetcher,
     std::chrono::milliseconds aws_metadata_timeout,
     std::chrono::seconds heartbeat_interval,
     std::size_t write_buffer_size)
@@ -60,7 +59,6 @@ ResyncProcessor::ResyncProcessor(
       caretaker_(
           hostname,
           ClientType::k8s,
-          authz_fetcher,
           configuration_data.labels(),
           &loop,
           writer_,
@@ -68,7 +66,7 @@ ResyncProcessor::ResyncProcessor(
           heartbeat_interval,
           std::bind(&channel::ReconnectingChannel::flush, &reconnecting_channel_),
           std::bind(&channel::ReconnectingChannel::set_compression, &reconnecting_channel_, std::placeholders::_1),
-          std::bind(&ResyncProcessor::on_authenticated, this)),
+          std::bind(&ResyncProcessor::on_connected, this)),
       active_resync_(0),
       dirty_(false)
 {
@@ -198,7 +196,7 @@ void ResyncProcessor::on_connect()
   caretaker_.set_connected();
 }
 
-void ResyncProcessor::on_authenticated()
+void ResyncProcessor::on_connected()
 {
   message_count_ = 0;
   if (dirty_) {

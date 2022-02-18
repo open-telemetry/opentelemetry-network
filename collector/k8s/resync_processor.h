@@ -42,7 +42,6 @@ public:
       channel::ReconnectingChannel &reconnecting_channel,
       config::ConfigFile const &configuration_data,
       std::string_view hostname,
-      AuthzFetcher &auth_fetcher,
       std::chrono::milliseconds aws_metadata_timeout,
       std::chrono::seconds heartbeat_interval,
       std::size_t write_buffer_size);
@@ -57,7 +56,7 @@ public:
   void on_connect() override;
 
 private:
-  void on_authenticated();
+  void on_connected();
 
   void send_metadata();
 

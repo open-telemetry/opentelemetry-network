@@ -29,7 +29,6 @@
 
 #include <common/constants.h>
 #include <config/intake_config.h>
-#include <util/authz_fetcher.h>
 #include <util/aws_instance_metadata.h>
 #include <util/environment_variables.h>
 #include <util/file_ops.h>
@@ -314,8 +313,6 @@ void SignalManager::upload_minidump()
   parameters["intake_host"] = intake_config.host();
   parameters["intake_port"] = intake_config.port();
 
-  parameters["authz_server"] = std::string{try_get_env_var(FLOWMILL_AUTH_SERVER_ENV_VAR)};
-
   parameters["proxy_host"] = proxy_config ? proxy_config->host() : "";
   parameters["proxy_port"] = proxy_config ? proxy_config->port() : "";
 
@@ -348,27 +345,6 @@ void SignalManager::upload_minidump()
   cleanup_directory(minidump_dir_.c_str(), MAX_MINIDUMP_DIR_SIZE_FILES, MAX_MINIDUMP_DIR_SIZE_BYTES);
 
   exit(!success);
-}
-
-SignalManager &SignalManager::add_auth(std::string_view key, std::string_view secret)
-{
-  std::ostringstream auth;
-
-  auth << "Authorization: Bearer " << key;
-
-  if (!secret.empty()) {
-    auth << ',' << secret;
-  }
-
-  headers_.emplace_back(auth.str());
-
-  return *this;
-}
-
-SignalManager &SignalManager::add_auth(collector::AuthMethod auth_method)
-{
-  headers_.emplace_back(fmt::format("Authorization: {}", auth_method));
-  return *this;
 }
 
 void SignalManager::handle_signals(std::initializer_list<int> signal_numbers, std::function<void()> on_signal)

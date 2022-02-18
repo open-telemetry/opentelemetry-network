@@ -16,7 +16,6 @@
 
 #include <channel/connection_caretaker.h>
 
-#include <collector/component.h>
 #include <common/cloud_platform.h>
 #include <common/constants.h>
 #include <util/boot_time.h>
@@ -40,7 +39,6 @@ void heartbeat_timer_cb(uv_timer_t *timer)
 ConnectionCaretaker::ConnectionCaretaker(
     std::string_view hostname,
     ClientType client_type,
-    AuthzFetcher &authz_fetcher,
     config::ConfigFile::LabelsMap const &config_data,
     uv_loop_t *loop,
     flowmill::ingest::Writer &writer,
@@ -48,16 +46,15 @@ ConnectionCaretaker::ConnectionCaretaker(
     std::chrono::milliseconds heartbeat_interval,
     std::function<void()> flush_cb,
     std::function<void(bool)> set_compression_cb,
-    std::function<void()> on_authenticated_cb)
+    std::function<void()> on_connected_cb)
     : hostname_(hostname),
       client_type_(client_type),
-      authz_fetcher_(authz_fetcher),
       config_data_(config_data),
       loop_(loop),
       heartbeat_interval_(heartbeat_interval),
       flush_cb_(std::move(flush_cb)),
       set_compression_cb_(std::move(set_compression_cb)),
-      on_authenticated_cb_(std::move(on_authenticated_cb)),
+      on_connected_cb_(std::move(on_connected_cb)),
       writer_(writer)
 {
   assert(loop != nullptr);
@@ -85,8 +82,6 @@ ConnectionCaretaker::ConnectionCaretaker(
     throw std::runtime_error("Cannot init heartbeat_timer");
   }
   heartbeat_timer_.data = this;
-
-  authz_fetcher_.auto_refresh(*loop);
 }
 
 ConnectionCaretaker::~ConnectionCaretaker()
@@ -98,18 +93,12 @@ ConnectionCaretaker::~ConnectionCaretaker()
 void ConnectionCaretaker::send_metadata_header()
 {
   set_compression_cb_(false);
-  LOG::info("initiating authentication of {} collector version {}", client_type_, versions::release);
+  LOG::info("initiating connection of {} collector version {}", client_type_, versions::release);
   writer_.version_info(versions::release.major(), versions::release.minor(), versions::release.build());
   flush();
   set_compression_cb_(true);
 
-  auto const &token = *authz_fetcher_.token();
-  LOG::info(
-      "sending authz token with {}s left until expiration (iat={}s exp={}s)",
-      token.time_left<std::chrono::seconds>(std::chrono::system_clock::now()).count(),
-      token.issued_at<std::chrono::seconds>().count(),
-      token.expiration<std::chrono::seconds>().count());
-  writer_.authz_authenticate(jb_blob(token.payload()), static_cast<u8>(client_type_), jb_blob(hostname_));
+  writer_.connect(static_cast<u8>(client_type_), jb_blob(hostname_));
 
   writer_.report_cpu_cores(std::thread::hardware_concurrency());
 
@@ -127,11 +116,10 @@ void ConnectionCaretaker::send_metadata_header()
   if (aws_metadata_) {
     writer_.cloud_platform(static_cast<u16>(CloudPlatform::aws));
     if (auto const &account_id = aws_metadata_->account_id()) {
-      LOG::trace_in(
-          std::make_tuple(CloudPlatform::aws, collector::Component::auth), "reporting aws account id: {}", account_id.value());
+      LOG::trace_in(CloudPlatform::aws, "reporting aws account id: {}", account_id.value());
       writer_.cloud_platform_account_info(jb_blob{account_id.value()});
     } else {
-      LOG::trace_in(std::make_tuple(CloudPlatform::aws, collector::Component::auth), "no aws account id to report");
+      LOG::trace_in(CloudPlatform::aws, "no aws account id to report");
     }
 
     auto id = aws_metadata_->id().value();
@@ -229,12 +217,7 @@ void ConnectionCaretaker::send_metadata_header()
   flush();
 #undef make_buf_from_field
 
-  on_authenticated_cb_();
-}
-
-void ConnectionCaretaker::refresh_authz_token()
-{
-  authz_fetcher_.sync_refresh();
+  on_connected_cb_();
 }
 
 void ConnectionCaretaker::flush()

@@ -8,7 +8,6 @@
 #include <generated/flowmill/ingest/otlp_log_encoder.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <util/authz_fetcher.h>
 #include <util/aws_instance_metadata.h>
 #include <util/boot_time.h>
 #include <util/curl_engine.h>
@@ -88,15 +87,8 @@ protected:
     bpf_src_ = std::regex_replace(bpf_src_, std::regex("CPU_MEM_IO_ENABLED"), std::string("0"));
     bpf_src_ = std::regex_replace(bpf_src_, std::regex("REPORT_DEBUG_EVENTS_PLACEHOLDER"), std::string("0"));
 
-    test_intake_config_ = TestIntakeConfig(
-        "",
-        "",
-        "",
-        std::nullopt,
-        {} /* record_output_path */,
-        true /* disable_tls */,
-        intake_encoder,
-        collector::AuthMethod::none);
+    test_intake_config_ =
+        TestIntakeConfig("", "", "", std::nullopt, {} /* record_output_path */, true /* disable_tls */, intake_encoder);
 
     auto const aws_metadata = AwsMetadata::fetch(1000ms);
 
@@ -105,8 +97,6 @@ protected:
     config::ConfigFile configuration_data(config::ConfigFile::YamlFormat(), "");
 
     std::unique_ptr<CurlEngine> curl_engine = CurlEngine::create(&loop_);
-
-    std::optional<AuthzFetcher> authz_fetcher;
 
     bool const enable_http_metrics = true;
 
@@ -154,7 +144,6 @@ protected:
         configuration_data.labels(),
         loop_,
         *curl_engine,
-        authz_fetcher,
         enable_http_metrics,
         enable_userland_tcp,
         socket_stats_interval_sec,

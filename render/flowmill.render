@@ -722,18 +722,8 @@ app ingest {
       severity 0
       pipeline_only
     }
-    46: log authz_authenticate {
-      description "called by the agent to authenticate itself with an authz token"
-      severity 0
-      no_authorization_needed
-      pipeline_only
-
-      1: string token
-      2: u8 collector_type // ClientType enum
-      3: string hostname
-    }
-    110: log no_auth_connect {
-      description "called by the agent to connect to intake without authentication"
+    110: log connect {
+      description "called by the agent to connect to intake"
       severity 0
       no_authorization_needed
       pipeline_only

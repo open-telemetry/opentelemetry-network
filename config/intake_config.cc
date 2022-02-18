@@ -63,24 +63,7 @@ IntakeConfig IntakeConfig::read_from_env()
       .proxy = config::HttpProxyConfig::read_from_env(),
       .record_output_path = std::string(try_get_env_var(INTAKE_RECORD_OUTPUT_PATH_VAR)),
       .disable_tls_ = try_get_env_value<bool>(INTAKE_DISABLE_TLS_VAR),
-      .encoder_ = try_get_env_value<IntakeEncoder>(INTAKE_INTAKE_ENCODER_VAR),
-      .auth_method_ = try_get_env_value<collector::AuthMethod>(INTAKE_AUTH_METHOD_VAR, collector::AuthMethod::authz)};
-
-  return intake;
-}
-
-IntakeConfig IntakeConfig::read_from_env_and_intake(std::string_view intake_name)
-{
-  LOG::trace_in(Utility::authz, "Got intake name from token: {}", intake_name);
-  IntakeConfig intake{
-      .name_ = std::string(try_get_env_var(INTAKE_NAME_VAR, intake_name)),
-      .host_ = get_env_var(INTAKE_HOST_VAR),
-      .port_ = get_env_var(INTAKE_PORT_VAR),
-      .proxy = config::HttpProxyConfig::read_from_env(),
-      .record_output_path = std::string(try_get_env_var(INTAKE_RECORD_OUTPUT_PATH_VAR)),
-      .disable_tls_ = try_get_env_value<bool>(INTAKE_DISABLE_TLS_VAR),
-      .encoder_ = try_get_env_value<IntakeEncoder>(INTAKE_INTAKE_ENCODER_VAR),
-      .auth_method_ = try_get_env_value<collector::AuthMethod>(INTAKE_AUTH_METHOD_VAR, collector::AuthMethod::authz)};
+      .encoder_ = try_get_env_value<IntakeEncoder>(INTAKE_INTAKE_ENCODER_VAR)};
 
   return intake;
 }
@@ -93,15 +76,6 @@ IntakeConfig::ArgsHandler::ArgsHandler(cli::ArgsParser &parser)
           INTAKE_INTAKE_ENCODER_VAR,
           IntakeEncoder::binary))
 {}
-
-IntakeConfig IntakeConfig::ArgsHandler::read_config(std::string_view intake_name)
-{
-  auto intake_config = config::IntakeConfig::read_from_env_and_intake(intake_name);
-
-  intake_config.encoder(*encoder_);
-
-  return intake_config;
-}
 
 IntakeConfig IntakeConfig::ArgsHandler::read_config()
 {

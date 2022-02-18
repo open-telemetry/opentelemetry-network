@@ -102,7 +102,7 @@ target_link_libraries(
     render_flowmill_kernel_collector
     agentdnslib
     yamlcpp
-    authz_fetcher
+    agent_id
     resource_usage_reporter
     scheduling
     libuv-interface

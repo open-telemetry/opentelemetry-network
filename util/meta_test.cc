@@ -33,7 +33,6 @@ TEST(flowmill_metadata, message_metadata_rpc_id)
 {
   EXPECT_EQ(301, pid_info_message_metadata::rpc_id);
   EXPECT_EQ(396, container_metadata_message_metadata::rpc_id);
-  EXPECT_EQ(404, authz_authenticate_message_metadata::rpc_id);
 }
 
 TEST(flowmill_metadata, field_type)
@@ -71,12 +70,6 @@ TEST(flowmill_metadata, message_metadata_for)
   EXPECT_TRUE((std::is_same_v<
                container_metadata_message_metadata,
                ingest_metadata::message_metadata_for<jsrv_ingest__container_metadata>>));
-  EXPECT_TRUE((std::is_same_v<
-               authz_authenticate_message_metadata,
-               ingest_metadata::message_metadata_for<jb_ingest__authz_authenticate>>));
-  EXPECT_TRUE((std::is_same_v<
-               authz_authenticate_message_metadata,
-               ingest_metadata::message_metadata_for<jsrv_ingest__authz_authenticate>>));
 }
 
 } // namespace flowmill::ingest

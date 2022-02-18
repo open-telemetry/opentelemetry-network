@@ -17,7 +17,6 @@
 #include <channel/component.h>
 #include <channel/reconnecting_channel.h>
 #include <channel/tls_channel.h>
-#include <collector/component.h>
 #include <collector/constants.h>
 #include <collector/k8s/kubernetes_rpc_server.h>
 #include <collector/k8s/resync_processor.h>
@@ -59,15 +58,6 @@ int main(int argc, char *argv[])
     throw std::runtime_error(::uv_strerror(error));
   }
 
-  // read settings from environment
-
-  auto const agent_key = AuthzFetcher::read_agent_key()
-                             .on_error([](auto &error) {
-                               LOG::critical("Authentication key error: {}", error);
-                               exit(-1);
-                             })
-                             .value();
-
   // args parsing
 
   cli::ArgsParser parser("Flowmill K8S relay service");
@@ -83,8 +73,6 @@ int main(int argc, char *argv[])
 
   args::ValueFlag<std::string> conf_file(*parser, "config_file", "The location of the custom config file", {"config-file"}, "");
 
-  auto &authz_server = AuthzFetcher::register_args_parser(parser);
-
   args::ValueFlag<u64> aws_metadata_timeout_ms(
       *parser, "milliseconds", "Milliseconds to wait for AWS instance metadata", {"aws-timeout"}, 1 * 1000);
   args::ValueFlag<u16> heartbeat_interval_sec(
@@ -95,14 +83,12 @@ int main(int argc, char *argv[])
       std::chrono::duration_cast<std::chrono::seconds>(HEARTBEAT_INTERVAL).count());
 
   parser.new_handler<LogWhitelistHandler<channel::Component>>("channel");
-  parser.new_handler<LogWhitelistHandler<collector::Component>>("component");
   parser.new_handler<LogWhitelistHandler<CloudPlatform>>("cloud-platform");
   parser.new_handler<LogWhitelistHandler<Utility>>("utility");
 
   auto &intake_config_handler = parser.new_handler<config::IntakeConfig::ArgsHandler>();
 
-  SignalManager &signal_manager =
-      parser.new_handler<SignalManager>(loop, "k8s-collector").add_auth(agent_key.key_id, agent_key.secret);
+  SignalManager &signal_manager = parser.new_handler<SignalManager>(loop, "k8s-collector");
 
   if (auto result = parser.process(argc, argv); !result.has_value()) {
     return result.error();
@@ -128,13 +114,7 @@ int main(int argc, char *argv[])
 
   auto curl_engine = CurlEngine::create(&loop);
 
-  // Fetch initial authz token and create intake_config
-  auto maybe_proxy_config = config::HttpProxyConfig::read_from_env();
-  auto proxy_config = maybe_proxy_config.has_value() ? &maybe_proxy_config.value() : nullptr;
-
-  AuthzFetcher authz_fetcher{*curl_engine, *authz_server, agent_key, agent_id, proxy_config};
-
-  auto intake_config = intake_config_handler.read_config(authz_fetcher.token()->intake());
+  auto intake_config = intake_config_handler.read_config();
 
   channel::ReconnectingChannel channel(std::move(intake_config), loop, WRITE_BUFFER_SIZE);
   collector::ResyncQueue queue;
@@ -145,7 +125,6 @@ int main(int argc, char *argv[])
       channel,
       configuration_data,
       hostname,
-      authz_fetcher,
       std::chrono::milliseconds(aws_metadata_timeout_ms.Get()),
       std::chrono::seconds(heartbeat_interval_sec.Get()),
       WRITE_BUFFER_SIZE};

@@ -17,7 +17,6 @@
 #include <collector/aws/collector.h>
 
 #include <channel/component.h>
-#include <collector/component.h>
 #include <collector/constants.h>
 #include <common/cloud_platform.h>
 #include <util/agent_id.h>
@@ -55,15 +54,6 @@ int main(int argc, char *argv[])
     throw std::runtime_error(::uv_strerror(error));
   }
 
-  // read config from environment
-
-  auto const agent_key = AuthzFetcher::read_agent_key()
-                             .on_error([](auto &error) {
-                               LOG::critical("Authentication key error: {}", error);
-                               exit(-1);
-                             })
-                             .value();
-
   // args parsing
 
   cli::ArgsParser parser("Flowmill AWS collector agent");
@@ -77,20 +67,16 @@ int main(int argc, char *argv[])
       {"ec2-poll-interval-ms"},
       std::chrono::milliseconds(1s).count());
 
-  auto &authz_server = AuthzFetcher::register_args_parser(parser);
-
   args::ValueFlag<u64> aws_metadata_timeout_ms(
       *parser, "milliseconds", "Milliseconds to wait for AWS instance metadata", {"aws-timeout"}, 1 * 1000);
 
   parser.new_handler<LogWhitelistHandler<channel::Component>>("channel");
-  parser.new_handler<LogWhitelistHandler<collector::Component>>("component");
   parser.new_handler<LogWhitelistHandler<CloudPlatform>>("cloud-platform");
   parser.new_handler<LogWhitelistHandler<Utility>>("utility");
 
   auto &intake_config_handler = parser.new_handler<config::IntakeConfig::ArgsHandler>();
 
-  SignalManager &signal_manager =
-      parser.new_handler<SignalManager>(loop, "aws-collector").add_auth(agent_key.key_id, agent_key.secret);
+  SignalManager &signal_manager = parser.new_handler<SignalManager>(loop, "aws-collector");
 
   if (auto result = parser.process(argc, argv); !result.has_value()) {
     return result.error();
@@ -111,12 +97,7 @@ int main(int argc, char *argv[])
 
   auto agent_id = gen_agent_id();
 
-  // Fetch initial authz token
-  auto maybe_proxy_config = config::HttpProxyConfig::read_from_env();
-  auto proxy_config = maybe_proxy_config.has_value() ? &maybe_proxy_config.value() : nullptr;
-  AuthzFetcher authz_fetcher{*curl_engine, *authz_server, agent_key, agent_id, proxy_config};
-
-  auto intake_config = intake_config_handler.read_config(authz_fetcher.token()->intake());
+  auto intake_config = intake_config_handler.read_config();
 
   LOG::info("AWS Collector version {} ({}) started on host {}", versions::release, release_mode_string, hostname);
   LOG::info("AWS Collector agent ID is {}", agent_id);
@@ -130,7 +111,6 @@ int main(int argc, char *argv[])
   collector::aws::AwsCollector collector{
       loop,
       hostname,
-      authz_fetcher,
       std::chrono::milliseconds(aws_metadata_timeout_ms.Get()),
       HEARTBEAT_INTERVAL,
       WRITE_BUFFER_SIZE,

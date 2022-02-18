@@ -60,7 +60,6 @@ const char *dummy_json_response_data = R"delim(
   "ExecIDs": null,
   "HostConfig": {
     "Binds": [
-      "/etc/flowmill/dev.pub:/etc/flowmill/authz-token-public.pem",
       "/home/vagrant/src/:/root/src",
       "/home/vagrant/out/:/root/out"
     ],
@@ -179,14 +178,6 @@ const char *dummy_json_response_data = R"delim(
   "Mounts": [
     {
       "Type": "bind",
-      "Source": "/etc/flowmill/dev.pub",
-      "Destination": "/etc/flowmill/authz-token-public.pem",
-      "Mode": "",
-      "RW": true,
-      "Propagation": "rprivate"
-    },
-    {
-      "Type": "bind",
       "Source": "/home/vagrant/src",
       "Destination": "/root/src",
       "Mode": "",
@@ -221,7 +212,6 @@ const char *dummy_json_response_data = R"delim(
     "Env": [
       "FLOWMILL_TENANT_ID=100001",
       "FLOWMILL_RUN_UNDER_GDB=",
-      "FLOWMILL_INGEST_ENABLE_NO_AUTH=true",
       "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
       "OPENSSL_CONF=/etc/openssl/openssl.cnf",
       "GEOIP_PATH=/usr/share/GeoIP"

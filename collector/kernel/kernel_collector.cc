@@ -18,7 +18,6 @@
 #include <collector/kernel/kernel_collector_restarter.h>
 
 #include <channel/tcp_channel.h>
-#include <collector/component.h>
 #include <collector/constants.h>
 #include <collector/kernel/troubleshooting.h>
 #include <collector/server_command.h>
@@ -97,7 +96,6 @@ KernelCollector::KernelCollector(
     std::map<std::string, std::string> configuration_data,
     uv_loop_t &loop,
     CurlEngine &curl_engine,
-    std::optional<AuthzFetcher> &authz_fetcher,
     bool enable_http_metrics,
     bool enable_userland_tcp,
     u64 socket_stats_interval_sec,
@@ -128,7 +126,6 @@ KernelCollector::KernelCollector(
       last_probe_monotonic_time_ns_(monotonic() - inter_probe_time_ns_),
       is_connected_(false),
       curl_engine_(curl_engine),
-      authz_fetcher_(authz_fetcher),
       heartbeat_sender_(
           loop_,
           [this] {
@@ -142,11 +139,6 @@ KernelCollector::KernelCollector(
       log_(writer_),
       kernel_collector_restarter_(*this)
 {
-  if (intake_config_.auth_method() == collector::AuthMethod::authz) {
-    assert(authz_fetcher_);
-    authz_token_ = authz_fetcher_->token().value();
-  }
-
   if (!bpf_dump_file.empty()) {
     auto const error = bpf_dump_file_.create(
         bpf_dump_file.c_str(),
@@ -271,14 +263,14 @@ void KernelCollector::on_upstream_connected()
   try {
     send_connection_metadata();
   } catch (std::exception &e) {
-    LOG::error("Exception thrown when sending authentication request and agent metadata: {}", e.what());
+    LOG::error("Exception thrown when sending connection request and agent metadata: {}", e.what());
     return;
   }
 }
 
-void KernelCollector::on_authenticated()
+void KernelCollector::on_connected()
 {
-  LOG::trace("Authenticated, entering probe hold-off");
+  LOG::trace("Connected, entering probe hold-off");
   enter_probe_holdoff();
 
   heartbeat_sender_.start(HEARTBEAT_INTERVAL, HEARTBEAT_INTERVAL);
@@ -368,27 +360,9 @@ void KernelCollector::send_connection_metadata()
   struct struct_name __##struct_name##__##buf_name2;                                                                           \
   char buf_name2[sizeof(__##struct_name##__##buf_name2.field2)] = {};
 
-  switch (intake_config_.auth_method()) {
-  case collector::AuthMethod::none:
-    if (intake_config_.encoder() == IntakeEncoder::binary) {
-      writer_.no_auth_connect(static_cast<u8>(ClientType::kernel), jb_blob{host_info_.hostname});
-      upstream_connection_.flush();
-    }
-    break;
-  case collector::AuthMethod::authz: {
-    assert(authz_token_);
-    auto const &token = authz_token_->payload();
-    LOG::info(
-        "sending authz token with {}s left until expiration (iat={}s exp={}s)",
-        authz_token_->time_left<std::chrono::seconds>(std::chrono::system_clock::now()).count(),
-        authz_token_->issued_at<std::chrono::seconds>().count(),
-        authz_token_->expiration<std::chrono::seconds>().count());
-    writer_.authz_authenticate(jb_blob{token}, static_cast<u8>(ClientType::kernel), jb_blob{host_info_.hostname});
+  if (intake_config_.encoder() == IntakeEncoder::binary) {
+    writer_.connect(static_cast<u8>(ClientType::kernel), jb_blob{host_info_.hostname});
     upstream_connection_.flush();
-  } break;
-  default:
-    throw std::runtime_error("invalid auth_method");
-    break;
   }
 
   writer_.os_info(
@@ -419,11 +393,10 @@ void KernelCollector::send_connection_metadata()
   if (aws_metadata_) {
     writer_.cloud_platform(static_cast<u16>(CloudPlatform::aws));
     if (auto const &account_id = aws_metadata_->account_id()) {
-      LOG::trace_in(
-          std::make_tuple(CloudPlatform::aws, collector::Component::auth), "reporting aws account id: {}", account_id.value());
+      LOG::trace_in(CloudPlatform::aws, "reporting aws account id: {}", account_id.value());
       writer_.cloud_platform_account_info(jb_blob{account_id.value()});
     } else {
-      LOG::trace_in(std::make_tuple(CloudPlatform::aws, collector::Component::auth), "no aws account id to report");
+      LOG::trace_in(CloudPlatform::aws, "no aws account id to report");
     }
 
     auto id = aws_metadata_->id().value();
@@ -481,10 +454,7 @@ void KernelCollector::send_connection_metadata()
   } else if (gcp_metadata_) {
     writer_.cloud_platform(static_cast<u16>(CloudPlatform::gcp));
     // TODO: obtain account_id for GCP and uncomment below
-    // LOG::trace_in(
-    //   std::make_tuple(CloudPlatform::gcp, collector::Component::auth),
-    //   "reporting gcp account id: {}", account_id.value()
-    // );
+    // LOG::trace_in(CloudPlatform::gcp), "reporting gcp account id: {}", account_id.value());
     // writer_.cloud_platform_account_info(jb_blob{account_id});
 
     writer_.set_node_info(
@@ -538,7 +508,7 @@ void KernelCollector::send_connection_metadata()
 
   upstream_connection_.flush();
 
-  on_authenticated();
+  on_connected();
 }
 
 void KernelCollector::on_error(int error)
@@ -631,16 +601,7 @@ void KernelCollector::Callbacks::on_error(int err)
 void KernelCollector::Callbacks::on_closed()
 {
   LOG::trace("closed upstream connection, will reconnect...");
-  StopWatch<> refresh_time;
-  if (collector_.intake_config_.auth_method() == collector::AuthMethod::authz) {
-    assert(collector_.authz_fetcher_);
-    if (auto const &current = collector_.authz_fetcher_->token();
-        !current || current->has_expired(std::chrono::system_clock::now())) {
-      LOG::trace("refreshing invalid or expired authz token before reconnecting...");
-      collector_.authz_fetcher_->sync_refresh();
-    }
-  }
-  collector_.enter_try_connecting(refresh_time.elapsed<std::chrono::milliseconds>());
+  collector_.enter_try_connecting();
 }
 
 void KernelCollector::Callbacks::on_connect()
@@ -733,15 +694,6 @@ void KernelCollector::stop_all_timers()
   uv_timer_stop(&probe_holdoff_timer_);
   uv_timer_stop(&polling_timer_);
   uv_timer_stop(&slow_timer_);
-}
-
-std::chrono::milliseconds KernelCollector::update_authz_token(AuthzToken const &token)
-{
-  assert(authz_token_);
-  auto const time_left = std::chrono::duration_cast<std::chrono::milliseconds>(
-      authz_token_->expiration() - std::chrono::system_clock::now().time_since_epoch());
-  authz_token_ = token;
-  return time_left;
 }
 
 #ifndef NDEBUG

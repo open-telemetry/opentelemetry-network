@@ -29,7 +29,6 @@
 #include <generated/flowmill/ingest/writer.h>
 #include <platform/platform.h>
 #include <scheduling/interval_scheduler.h>
-#include <util/authz_fetcher.h>
 #include <util/aws_instance_metadata.h>
 #include <util/curl_engine.h>
 #include <util/gcp_instance_metadata.h>
@@ -56,7 +55,6 @@ public:
       std::map<std::string, std::string> configuration_data,
       uv_loop_t &loop,
       CurlEngine &curl_engine,
-      std::optional<AuthzFetcher> &authz_fetcher,
       bool enable_http_metrics,
       bool enable_userland_tcp,
       u64 socket_stats_interval_sec,
@@ -102,9 +100,6 @@ public:
 
   /* called from callbacks given to uv_close */
   void on_close();
-
-  /* returns the time left until expiration of the old token */
-  std::chrono::milliseconds update_authz_token(AuthzToken const &token);
 
 #ifndef NDEBUG
   /* Debug code for internal development to simulate lost BPF samples (PERF_RECORD_LOST) in BufferedPoller. */
@@ -155,7 +150,7 @@ private:
   /* sends a heartbeat message to the server */
   void send_heartbeat();
 
-  void on_authenticated();
+  void on_connected();
   void on_error(int error);
 
   /* called to restart the KernelCollector */
@@ -206,8 +201,6 @@ private:
   bool is_connected_;
 
   CurlEngine &curl_engine_;
-  std::optional<AuthzFetcher> &authz_fetcher_;
-  std::optional<AuthzToken> authz_token_;
 
   scheduling::IntervalScheduler heartbeat_sender_;
 

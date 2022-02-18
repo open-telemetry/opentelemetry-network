@@ -112,7 +112,7 @@ add_library(
 )
 target_link_libraries(
   connection_caretaker
-    authz_fetcher
+    agent_id
     aws_instance_metadata
     gcp_instance_metadata
     intake_config

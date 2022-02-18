@@ -60,8 +60,6 @@ Running the Flowmill collector should be as easy as running a docker image:
 docker run -it --rm \
   --env FLOWMILL_INTAKE_PORT="${FLOWMILL_INTAKE_PORT}" \
   --env FLOWMILL_INTAKE_HOST="${FLOWMILL_INTAKE_HOST}" \
-  --env FLOWMILL_AUTH_KEY_ID="KFIIHR5SFKS3TQFPZWZK" \
-  --env FLOWMILL_AUTH_SECRET="DatfNxs42qP1v8u281G9lyNNmFvWLmehNwVHQ9LT" \
   --env FLOWMILL_INTAKE_NAME="oss" \
   --privileged \
   --pid host \
@@ -81,13 +79,9 @@ docker run -it --rm \
 
 Environment variables:
 
-- `FLOWMILL_AUTH_KEY_ID`: this is the agent key id used to authenticate with Flowmill
-- `FLOWMILL_AUTH_SECRET`: this is the agent secret used to authenticate with Flowmill
 - `FLOWMILL_INTAKE_NAME`: this is the name of the Flowmill intake server
 - `FLOWMILL_INTAKE_HOST`: this is the hostname or IP address of the Flowmill intake server
 - `FLOWMILL_INTAKE_PORT`: this is the port of the Flowmill intake server
-- `FLOWMILL_AUTHZ_SERVER`: this is the host:port of Flowmill auth server (default: app.flowmill.com)
-- `FLOWMILL_INTAKE_AUTH_METHOD`: this is the auth method to use when connecting to the intake, valid values are "authz" or "none", (default: "authz")
 
 Volumes:
 
@@ -188,8 +182,6 @@ docker run -it --rm \
   --env FLOWMILL_INTAKE_DISABLE_TLS=true \
   --env FLOWMILL_INTAKE_ENCODER="otlp_log" \
   --env FLOWMILL_INTAKE_NAME="oss" \
-  --env FLOWMILL_AUTH_KEY_ID="KFIIHR5SFKS3TQFPZWZK" \
-  --env FLOWMILL_AUTH_SECRET="DatfNxs42qP1v8u281G9lyNNmFvWLmehNwVHQ9LT" \
   --privileged \
   --pid host \
   --network host \

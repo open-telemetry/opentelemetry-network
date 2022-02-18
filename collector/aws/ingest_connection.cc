@@ -26,10 +26,9 @@ IngestConnection::IngestConnection(
     std::chrono::milliseconds aws_metadata_timeout,
     std::chrono::milliseconds heartbeat_interval,
     config::IntakeConfig intake_config,
-    AuthzFetcher &authz_fetcher,
     std::size_t buffer_size,
     channel::Callbacks &connection_callback,
-    std::function<void()> on_authenticated_cb)
+    std::function<void()> on_connected_cb)
     : curl_(CurlEngine::create(&loop)),
       channel_(std::move(intake_config), loop, buffer_size),
       connection_callback_(connection_callback),
@@ -38,7 +37,6 @@ IngestConnection::IngestConnection(
       caretaker_(
           hostname,
           ClientType::aws,
-          authz_fetcher,
           {},
           &loop,
           writer_,
@@ -46,7 +44,7 @@ IngestConnection::IngestConnection(
           heartbeat_interval,
           std::bind(&channel::ReconnectingChannel::flush, &channel_),
           std::bind(&channel::ReconnectingChannel::set_compression, &channel_, std::placeholders::_1),
-          std::move(on_authenticated_cb)),
+          std::move(on_connected_cb)),
       index_({writer_})
 {
   channel_.register_pipeline_observer(this);
@@ -54,7 +52,6 @@ IngestConnection::IngestConnection(
 
 void IngestConnection::connect()
 {
-  caretaker_.refresh_authz_token();
   channel_.start_connect();
 }
 

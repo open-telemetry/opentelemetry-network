@@ -126,17 +126,6 @@ target_link_libraries(
 )
 
 add_library(
-  authz_token
-  STATIC
-    authz_token.cc
-)
-target_link_libraries(
-  authz_token
-    json
-    logging
-)
-
-add_library(
   resource_usage_reporter
   STATIC
     resource_usage_reporter.cc
@@ -164,24 +153,6 @@ target_link_libraries(
 )
 
 add_library(
-  authz_fetcher
-  STATIC
-    authz_fetcher.cc
-    agent_id.cc
-)
-target_link_libraries(
-  authz_fetcher
-    authz_token
-    scheduling
-    restful
-    url
-    curl_engine
-    environment_variables
-    logging
-    libuv-interface
-)
-
-add_library(
   logging
   STATIC
     log.cc
@@ -191,6 +162,17 @@ target_link_libraries(
   logging
     environment_variables
     spdlog
+)
+
+add_library(
+  agent_id
+  STATIC
+    agent_id.cc
+)
+target_link_libraries(
+  agent_id
+    url
+    curl_engine
 )
 
 add_library(

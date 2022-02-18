@@ -17,11 +17,9 @@
 #pragma once
 
 #include <channel/network_channel.h>
-#include <collector/auth_method.h>
 #include <common/intake_encoder.h>
 #include <config/http_proxy_config.h>
 #include <util/args_parser.h>
-#include <util/authz_token.h>
 #include <util/file_ops.h>
 
 #include <generated/flowmill/ingest/encoder.h>
@@ -44,7 +42,6 @@ class IntakeConfig {
   static constexpr auto INTAKE_DISABLE_TLS_VAR = "FLOWMILL_INTAKE_DISABLE_TLS";
   static constexpr auto INTAKE_INTAKE_ENCODER_VAR = "FLOWMILL_INTAKE_ENCODER";
   static constexpr auto INTAKE_RECORD_OUTPUT_PATH_VAR = "FLOWMILL_RECORD_INTAKE_OUTPUT_PATH";
-  static constexpr auto INTAKE_AUTH_METHOD_VAR = "FLOWMILL_INTAKE_AUTH_METHOD";
 
 public:
   IntakeConfig() {}
@@ -64,16 +61,14 @@ public:
       std::optional<config::HttpProxyConfig> proxy = {},
       std::string record_output_path = {},
       bool disable_tls = false,
-      IntakeEncoder encoder = IntakeEncoder::binary,
-      collector::AuthMethod auth_method = collector::AuthMethod::authz)
+      IntakeEncoder encoder = IntakeEncoder::binary)
       : name_(std::move(name)),
         host_(std::move(host)),
         port_(std::move(port)),
         proxy_(std::move(proxy)),
         record_path_(std::move(record_output_path)),
         disable_tls_(disable_tls),
-        encoder_(encoder),
-        auth_method_(auth_method)
+        encoder_(encoder)
   {}
 
   std::string const &name() const { return name_; }
@@ -95,8 +90,6 @@ public:
 
   void encoder(IntakeEncoder encoder) { encoder_ = encoder; }
   IntakeEncoder encoder() const { return encoder_; }
-
-  collector::AuthMethod auth_method() const { return auth_method_; }
 
   virtual bool allow_compression() const { return encoder_ == IntakeEncoder::binary; }
 
@@ -123,17 +116,6 @@ public:
    */
   static IntakeConfig read_from_env();
 
-  /**
-   * Reads intake configuration from existing environment variables, an authz token, and a proxy config
-   *
-   * The intake_name is read from the authz token
-   *
-   * NOTE: this function reads environment variables so it's advisable to call it
-   * before any thread is created, given that reading/writing to environment
-   * variables is not thread safe and we can't control 3rd party libraries.
-   */
-  static IntakeConfig read_from_env_and_intake(std::string_view intake_name);
-
   template <typename Out> friend Out &&operator<<(Out &&out, IntakeConfig const &config)
   {
     constexpr char const *tls_label[2] = {"tls", "tcp"};
@@ -158,7 +140,6 @@ private:
   std::string record_path_;
   bool disable_tls_ = false;
   IntakeEncoder encoder_ = IntakeEncoder::binary;
-  collector::AuthMethod auth_method_ = collector::AuthMethod::authz;
 };
 
 struct IntakeConfig::ArgsHandler : cli::ArgsParser::Handler {

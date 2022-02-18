@@ -39,7 +39,6 @@ constexpr std::chrono::milliseconds RECONNECT_JITTER = 1s;
 AwsCollector::AwsCollector(
     ::uv_loop_t &loop,
     std::string_view hostname,
-    AuthzFetcher &authz_fetcher,
     std::chrono::milliseconds aws_metadata_timeout,
     std::chrono::milliseconds heartbeat_interval,
     std::size_t buffer_size,
@@ -52,10 +51,9 @@ AwsCollector::AwsCollector(
           aws_metadata_timeout,
           heartbeat_interval,
           std::move(intake_config),
-          authz_fetcher,
           buffer_size,
           *this,
-          std::bind(&AwsCollector::on_authenticated, this)),
+          std::bind(&AwsCollector::on_connected, this)),
       log_(connection_.writer()),
       enumerator_(log_, connection_.index(), connection_.writer()),
       scheduler_(loop_, std::bind(&AwsCollector::callback, this)),
@@ -93,7 +91,7 @@ void AwsCollector::on_error(int err)
   std::this_thread::sleep_for(add_jitter(RECONNECT_DELAY, -RECONNECT_JITTER, RECONNECT_JITTER));
 }
 
-void AwsCollector::on_authenticated()
+void AwsCollector::on_connected()
 {
   scheduler_.start(poll_interval_, poll_interval_);
 }

@@ -33,7 +33,6 @@ struct AwsCollector : channel::Callbacks {
   AwsCollector(
       ::uv_loop_t &loop,
       std::string_view hostname,
-      AuthzFetcher &authz_fetcher,
       std::chrono::milliseconds aws_metadata_timeout,
       std::chrono::milliseconds heartbeat_interval,
       std::size_t buffer_size,
@@ -50,7 +49,7 @@ private:
   scheduling::JobFollowUp callback();
 
   void on_error(int err);
-  void on_authenticated();
+  void on_connected();
 
   ::uv_loop_t &loop_;
   IngestConnection connection_;
