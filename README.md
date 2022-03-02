@@ -107,10 +107,10 @@ Flowmill collector can alternatively send telemetry to OpenTelemetry Collector
 
 ### Quick-start for the OpenTelemetry Collector ###
 
-A minimal config is included in `dev/otel-config.yaml`, and it is possible to run 
-the standard otel distribution docker image on port 8000 with:
+A minimal config is included in `dev/otel/otel-config.yaml`, and it is possible to run
+the standard otel distribution docker image with:
 ```
-docker run -v $PWD/dev/otel-config.yaml:/etc/otel/config.yaml -p 8000:8000 otel/opentelemetry-collector
+docker run -v $PWD/dev/otel/otel-config.yaml:/etc/otel/config.yaml -p 8000:4318 otel/opentelemetry-collector
 ```
 ### Configuring otel-col to receive telemetry ###
 

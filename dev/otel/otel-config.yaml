@@ -2,7 +2,6 @@ receivers:
   otlp:
     protocols:
       http:
-        endpoint: 0.0.0.0:8000
 
 processors:
   batch:
@@ -10,10 +9,12 @@ processors:
 exporters:
   logging:
     logLevel: debug
+  file:
+    path: /var/log/otel.log
 
 service:
   pipelines:
     logs:
       receivers: [otlp]
       processors: [batch]
-      exporters: [logging]
+      exporters: [logging,file]
