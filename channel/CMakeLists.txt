@@ -68,29 +68,6 @@ target_link_libraries(
 )
 
 add_library(
-  tls_channel
-  STATIC
-    tls_channel.cc
-    tls_handler.cc
-    tls_error.cc
-    tls_over_tcp_channel.cc
-    internal/private_key.cc
-    internal/certificate.cc
-    internal/ssl_context.cc
-    internal/tls_shim.cc
-)
-target_link_libraries(
-  tls_channel
-    tcp_channel
-    lz4_channel
-    buffered_writer
-    logging
-    error_handling
-    OpenSSL::SSL
-    OpenSSL::Crypto
-)
-
-add_library(
   reconnecting_channel
   STATIC
     reconnecting_channel.cc
