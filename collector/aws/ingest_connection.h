@@ -19,7 +19,6 @@
 #include <channel/callbacks.h>
 #include <channel/connection_caretaker.h>
 #include <channel/reconnecting_channel.h>
-#include <channel/tls_channel.h>
 #include <generated/flowmill/aws_collector/index.h>
 #include <generated/flowmill/ingest/writer.h>
 
@@ -55,7 +54,6 @@ private:
   void on_closed();
   void on_connect();
 
-  channel::TLSChannel::Initializer tls_guard_;
   std::unique_ptr<CurlEngine> curl_;
   channel::ReconnectingChannel channel_;
   channel::Callbacks &connection_callback_;

@@ -99,7 +99,6 @@ add_library(
 target_link_libraries(
   reconnecting_channel
     upstream_connection
-    tls_channel
     spdlog
     libuv-interface
     render_flowmill_artifacts
@@ -120,7 +119,7 @@ target_link_libraries(
     fastpass_util
     render_flowmill_artifacts
     logging
-    tls_channel
+    tcp_channel
     absl::strings
 )
 

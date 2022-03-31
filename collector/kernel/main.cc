@@ -15,7 +15,6 @@
 //
 
 #include <channel/component.h>
-#include <channel/tls_channel.h>
 #include <collector/agent_log.h>
 #include <collector/constants.h>
 #include <collector/kernel/cgroup_handler.h>
@@ -395,9 +394,6 @@ int main(int argc, char *argv[])
 
   /* Initialize curl */
   curlpp::initialize();
-
-  /* Initialize the TLS library */
-  channel::TLSChannel::Initializer tls_library_initialization_guard;
 
   std::chrono::microseconds const metadata_timeout(metadata_timeout_us.Get());
 

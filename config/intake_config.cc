@@ -17,7 +17,6 @@
 #include <config/intake_config.h>
 
 #include <channel/tcp_channel.h>
-#include <channel/tls_handler.h>
 #include <util/environment_variables.h>
 #include <util/log.h>
 
@@ -43,26 +42,18 @@ FileDescriptor IntakeConfig::create_output_record_file() const
   return fd;
 }
 
-std::unique_ptr<channel::NetworkChannel>
-IntakeConfig::make_channel(uv_loop_t &loop, std::string_view private_key, std::string_view certificate) const
+std::unique_ptr<channel::NetworkChannel> IntakeConfig::make_channel(uv_loop_t &loop) const
 {
-  if (disable_tls_) {
-    return std::make_unique<channel::TCPChannel>(loop, host_, port_, proxy_);
-  }
-
-  return std::make_unique<channel::TLSHandler>(
-      loop, host_, port_, std::string{private_key}, std::string{certificate}, name_, proxy_);
+  return std::make_unique<channel::TCPChannel>(loop, host_, port_, proxy_);
 }
 
 IntakeConfig IntakeConfig::read_from_env()
 {
   IntakeConfig intake{
-      .name_ = get_env_var(INTAKE_NAME_VAR),
       .host_ = get_env_var(INTAKE_HOST_VAR),
       .port_ = get_env_var(INTAKE_PORT_VAR),
       .proxy = config::HttpProxyConfig::read_from_env(),
       .record_output_path = std::string(try_get_env_var(INTAKE_RECORD_OUTPUT_PATH_VAR)),
-      .disable_tls_ = try_get_env_value<bool>(INTAKE_DISABLE_TLS_VAR),
       .encoder_ = try_get_env_value<IntakeEncoder>(INTAKE_INTAKE_ENCODER_VAR)};
 
   return intake;

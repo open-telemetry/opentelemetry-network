@@ -36,10 +36,8 @@ namespace config {
 
 class IntakeConfig {
   // environment variable names used by `read_from_env()`
-  static constexpr auto INTAKE_NAME_VAR = "FLOWMILL_INTAKE_NAME";
   static constexpr auto INTAKE_HOST_VAR = "FLOWMILL_INTAKE_HOST";
   static constexpr auto INTAKE_PORT_VAR = "FLOWMILL_INTAKE_PORT";
-  static constexpr auto INTAKE_DISABLE_TLS_VAR = "FLOWMILL_INTAKE_DISABLE_TLS";
   static constexpr auto INTAKE_INTAKE_ENCODER_VAR = "FLOWMILL_INTAKE_ENCODER";
   static constexpr auto INTAKE_RECORD_OUTPUT_PATH_VAR = "FLOWMILL_RECORD_INTAKE_OUTPUT_PATH";
 
@@ -49,29 +47,23 @@ public:
   /**
    * Constructs an intake config object.
    *
-   * name: the server name to use with SNI (https://en.wikipedia.org/wiki/Server_Name_Indication)
    * host: the host to connect to for intake
    * port: the port to connect to for intake
    * secondary_output: when given, path to a file into which to record all traffic sent upstream
    */
   IntakeConfig(
-      std::string name,
       std::string host,
       std::string port,
       std::optional<config::HttpProxyConfig> proxy = {},
       std::string record_output_path = {},
-      bool disable_tls = false,
       IntakeEncoder encoder = IntakeEncoder::binary)
-      : name_(std::move(name)),
-        host_(std::move(host)),
+      : host_(std::move(host)),
         port_(std::move(port)),
         proxy_(std::move(proxy)),
         record_path_(std::move(record_output_path)),
-        disable_tls_(disable_tls),
         encoder_(encoder)
   {}
 
-  std::string const &name() const { return name_; }
   std::string const &host() const { return host_; }
   std::string const &port() const { return port_; }
 
@@ -85,16 +77,12 @@ public:
    */
   FileDescriptor create_output_record_file() const;
 
-  void disable_tls(bool disable) { disable_tls_ = disable; }
-  bool disable_tls() const { return disable_tls_; }
-
   void encoder(IntakeEncoder encoder) { encoder_ = encoder; }
   IntakeEncoder encoder() const { return encoder_; }
 
   virtual bool allow_compression() const { return encoder_ == IntakeEncoder::binary; }
 
-  virtual std::unique_ptr<channel::NetworkChannel>
-  make_channel(uv_loop_t &loop, std::string_view private_key = {}, std::string_view certificate = {}) const;
+  virtual std::unique_ptr<channel::NetworkChannel> make_channel(uv_loop_t &loop) const;
 
   std::unique_ptr<::flowmill::ingest::Encoder> make_encoder() const
   {
@@ -118,10 +106,7 @@ public:
 
   template <typename Out> friend Out &&operator<<(Out &&out, IntakeConfig const &config)
   {
-    constexpr char const *tls_label[2] = {"tls", "tcp"};
-
-    out << config.name_ << " @ " << config.host_ << ':' << config.port_ << " (" << tls_label[config.disable_tls_] << ' '
-        << config.encoder_;
+    out << config.host_ << ':' << config.port_ << " (" << config.encoder_;
     if (config.proxy_) {
       out << " / proxy @ " << config.proxy_->host() << ':' << config.proxy_->port();
     }
@@ -133,12 +118,10 @@ public:
   struct ArgsHandler;
 
 private:
-  std::string name_;
   std::string host_;
   std::string port_;
   std::optional<config::HttpProxyConfig> proxy_;
   std::string record_path_;
-  bool disable_tls_ = false;
   IntakeEncoder encoder_ = IntakeEncoder::binary;
 };
 

@@ -16,7 +16,6 @@
 
 #include <channel/component.h>
 #include <channel/reconnecting_channel.h>
-#include <channel/tls_channel.h>
 #include <collector/constants.h>
 #include <collector/k8s/kubernetes_rpc_server.h>
 #include <collector/k8s/resync_processor.h>
@@ -105,9 +104,6 @@ int main(int argc, char *argv[])
   LOG::info("Kubernetes Collector agent ID is {}", agent_id);
 
   config::ConfigFile configuration_data(config::ConfigFile::YamlFormat(), conf_file.Get());
-
-  // Initialize the TLS library
-  channel::TLSChannel::Initializer tls_library_initialization_guard;
 
   signal_manager.handle_signals({SIGINT, SIGTERM} // TODO: close gracefully
   );

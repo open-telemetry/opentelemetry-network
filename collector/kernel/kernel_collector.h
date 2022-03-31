@@ -18,7 +18,6 @@
 
 #include <channel/callbacks.h>
 #include <channel/file_channel.h>
-#include <channel/tls_handler.h>
 #include <channel/upstream_connection.h>
 #include <collector/kernel/bpf_handler.h>
 #include <collector/kernel/entrypoint_error.h>

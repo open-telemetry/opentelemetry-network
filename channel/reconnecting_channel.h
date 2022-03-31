@@ -20,7 +20,6 @@
 
 #include <channel/callbacks.h>
 #include <channel/channel.h>
-#include <channel/tls_handler.h>
 #include <channel/upstream_connection.h>
 #include <config/intake_config.h>
 
@@ -30,8 +29,7 @@ namespace channel {
 
 // ReconnectingChannel manages the connection to a remote server.
 //
-// It maintains a TLS over TCP connection, and retries connection when
-// network error occurs.
+// Retries connection when network error occurs.
 //
 // Note that this class is NOT thread safe.
 class ReconnectingChannel : public Channel, public Callbacks {

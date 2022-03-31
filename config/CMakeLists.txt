@@ -30,7 +30,7 @@ add_library(
 target_link_libraries(
   intake_config
     render_flowmill_ingest_writer
-    tls_channel
+    tcp_channel
     libuv-interface
     http_proxy_config
     args_parser

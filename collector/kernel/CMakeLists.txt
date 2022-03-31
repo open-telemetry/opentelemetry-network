@@ -8,7 +8,6 @@ add_executable(
 target_link_libraries(
   kernel-collector
   PUBLIC
-    signal_handler
     agentlib
     agentxxdlib
     fastpass_util
@@ -20,6 +19,7 @@ target_link_libraries(
     args_parser
     system_ops
     spdlog
+    signal_handler
     static-executable
 )
 target_include_directories(
@@ -102,6 +102,7 @@ target_link_libraries(
     render_flowmill_kernel_collector
     agentdnslib
     yamlcpp
+    curl_engine
     agent_id
     resource_usage_reporter
     scheduling
@@ -116,7 +117,6 @@ target_link_libraries(
     nomad_metadata
     ip_address
     intake_config
-    tls_channel
     proc_ops
     system_ops
     time

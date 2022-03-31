@@ -309,7 +309,6 @@ void SignalManager::upload_minidump()
                         : gcp_metadata ? gcp_metadata->hostname() : "(unknown)";
   });
 
-  parameters["intake_name"] = intake_config.name();
   parameters["intake_host"] = intake_config.host();
   parameters["intake_port"] = intake_config.port();
 
