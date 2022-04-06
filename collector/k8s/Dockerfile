@@ -8,9 +8,6 @@ LABEL org.label-schema.name="flowmill/k8s-relay" \
 RUN apt-get update && apt-get install -y ca-certificates
 ENV SSL_CERT_DIR=/etc/ssl/certs
 
-# legacy stuff, we should get rid of references to `/etc/flowtune` at some point
-RUN ln -s /etc/flowtune /etc/flowmill
-
 ENTRYPOINT [ "/srv/entrypoint.sh" ]
 
 COPY srv /srv
