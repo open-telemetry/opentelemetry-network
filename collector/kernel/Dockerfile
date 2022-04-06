@@ -1,5 +1,3 @@
-FROM segment/chamber:2 AS chamber
-
 # TODO: find a good minimal base image; maybe bitnami/minideb:stretch?
 FROM bitnami/minideb:buster
 
@@ -27,7 +25,6 @@ RUN if [ "$BUILD_TYPE" = "Debug" ]; then \
       apt-get -y install --no-install-recommends cgdb gdb valgrind; \
     fi
 
-COPY --from=chamber /chamber /bin/chamber
 COPY srv /srv
 WORKDIR /srv
 RUN if [ ! -e /srv/kernel-collector ]; then \

@@ -1,5 +1,3 @@
-FROM segment/chamber:2 AS chamber
-
 FROM bitnami/minideb:buster
 
 LABEL org.label-schema.name="flowmill/k8s-relay" \
@@ -15,7 +13,6 @@ RUN ln -s /etc/flowtune /etc/flowmill
 
 ENTRYPOINT [ "/srv/entrypoint.sh" ]
 
-COPY --from=chamber /chamber /bin/chamber
 COPY srv /srv
 WORKDIR /srv
 RUN if [ ! -e /srv/k8s-relay ]; then \

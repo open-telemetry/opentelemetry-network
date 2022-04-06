@@ -3,12 +3,6 @@
 # shellcheck disable=SC1091
 [[ ! -e ./debug-info.conf ]] || source ./debug-info.conf
 
-# For customers using Segment.IO's Chamber, you should store agent keys in
-# a secret in chamber.  We will look up that key under $CHAMBER_SERVICE_NAME
-if [ -n "${CHAMBER_SERVICE_NAME}" ]; then
-    eval "$(/bin/chamber export --format dotenv "${CHAMBER_SERVICE_NAME}")"
-fi
-
 if [[ -n "${FLOWMILL_PROXY_HOST}" ]]; then
   export http_proxy="http://${FLOWMILL_PROXY_HOST}:${FLOWMILL_PROXY_PORT:-1080}"
   export HTTP_PROXY="${http_proxy}"

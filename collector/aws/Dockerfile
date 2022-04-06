@@ -1,5 +1,3 @@
-FROM segment/chamber:2 AS chamber
-
 FROM bitnami/minideb:buster
 
 LABEL org.label-schema.name="flowmill/aws-collector" \
@@ -12,7 +10,6 @@ ENV SSL_CERT_DIR=/etc/ssl/certs
 
 ENTRYPOINT [ "/srv/entrypoint.sh" ]
 
-COPY --from=chamber /chamber /bin/chamber
 COPY srv /srv
 WORKDIR /srv
 RUN if [ ! -e /srv/aws-collector ]; then \
