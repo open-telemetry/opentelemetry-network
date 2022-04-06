@@ -330,7 +330,7 @@ class WriterGenerator {
 					if constexpr (raw_message) {
 						__out << "{\"name\":\"«msg.name»\",\"timestamp\":\"" << __tstamp << "\",\"body\":{";
 					} else {
-						__out << "{\"resourceLogs\":[{\"instrumentationLibraryLogs\":[{\"logs\":["
+						__out << "{\"resourceLogs\":[{\"instrumentationLibraryLogs\":[{\"log_records\":["
 								"{\"name\":\"«msg.name»\",\"timeUnixNano\":\"" << __tstamp << "\",\"body\":"
 								"{\"kvlist_value\":{\"values\":[";
 					}
