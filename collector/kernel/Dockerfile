@@ -1,4 +1,3 @@
-# TODO: find a good minimal base image; maybe bitnami/minideb:stretch?
 FROM bitnami/minideb:buster
 
 LABEL org.label-schema.name="flowmill/agent" \

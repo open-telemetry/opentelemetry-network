@@ -1,4 +1,4 @@
-FROM bitnami/minideb:unstable
+FROM bitnami/minideb:buster
 
 COPY srv /srv
 
