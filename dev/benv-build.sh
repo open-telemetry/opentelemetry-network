@@ -36,6 +36,7 @@ Options:
   --dep-tree: produce a dot-file output of the build graph
   --list-targets: print the list of targets that can be built using cmake by passing target(s) to this build script
   --cicd: use preset settings for building in CI/CD
+  --otlp: build with otlp support
   -v | --verbose: verbose build output
 
 Targets:
@@ -112,6 +113,9 @@ while :; do
       ;;
     --upload-symbols)
       cmake_args+=(-DUPLOAD_DEBUG_SYMBOLS=ON)
+      ;;
+    --otlp)
+      cmake_args+=(-DBUILD_WITH_OTLP=ON)
       ;;
     -v | --verbose)
       make_args+=(VERBOSE=1)

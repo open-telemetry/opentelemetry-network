@@ -14,6 +14,8 @@
 // limitations under the License.
 //
 
+#include <config.h>
+
 #include <util/base64.h>
 
 #include <openssl/bio.h>
@@ -26,6 +28,7 @@
 std::string base64_encode(std::string_view input)
 {
   std::string buffer;
+#if !BUILD_WITH_OTLP // work around otlp development custom benv openssl issues
   buffer.resize(4 * std::ceil(static_cast<double>(input.size()) / 3) + 1);
 
   auto out = ::fmemopen(buffer.data(), buffer.size(), "w");
@@ -42,6 +45,6 @@ std::string base64_encode(std::string_view input)
   if (!buffer.empty() && buffer.back() == '\0') {
     buffer.pop_back();
   }
-
+#endif
   return buffer;
 }
