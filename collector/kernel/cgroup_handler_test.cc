@@ -337,7 +337,7 @@ const char *dummy_json_response_data = R"delim(
     {
       "instrumentationLibraryLogs": [
         {
-          "logs": [
+          "log_records": [
             {
               "name": "container_annotation",
               "timeUnixNano": "800022144477563",
@@ -424,7 +424,7 @@ TEST_F(CgroupHandlerTest, handle_docker_response)
       nlohmann::json const object = nlohmann::json::parse(line);
       for (auto const &rl : object["resourceLogs"]) {
         for (auto const &ill : rl["instrumentationLibraryLogs"]) {
-          for (auto const &log : ill["logs"]) {
+          for (auto const &log : ill["log_records"]) {
             std::string_view key;
             std::string_view value;
             for (auto const &kv : log["body"]["kvlist_value"]["values"]) {

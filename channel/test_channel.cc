@@ -84,13 +84,13 @@ std::error_code TestChannel::send(const u8 *data, int size)
         {
         "instrumentationLibraryLogs": [
         {
-        "logs": [
+        "log_records": [
         {
         "name": "nic_stats",
       */
       for (auto const &rl : object["resourceLogs"]) {
         for (auto const &ill : rl["instrumentationLibraryLogs"]) {
-          for (auto const &log : ill["logs"]) {
+          for (auto const &log : ill["log_records"]) {
             ++message_counts_[log["name"]];
             json_messages_.push_back(log);
           }
