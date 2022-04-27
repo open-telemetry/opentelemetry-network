@@ -45,6 +45,11 @@ public:
   template <typename Unit = duration> Unit elapsed() const { return std::chrono::duration_cast<Unit>(clock::now() - start_); }
 
   /**
+   * Computes elapsed time in nanoseconds since start to now without resetting the stop watch.
+   */
+  u64 elapsed_ns() const { return integer_time<std::chrono::nanoseconds>(elapsed<std::chrono::nanoseconds>()); }
+
+  /**
    * Tells whether the given duration has already been elapsed since start.
    */
   template <typename Duration> bool elapsed(Duration duration) const { return duration <= (clock::now() - start_); }

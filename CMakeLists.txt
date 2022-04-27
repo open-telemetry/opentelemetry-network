@@ -51,7 +51,6 @@ include_directories(
   ${CMAKE_INSTALL_PREFIX}/include
 )
 
-configure_file(config.h.cmake_in config.h)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 set(CONFIG_H_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
@@ -65,3 +64,5 @@ add_subdirectory(util)
 add_subdirectory(jitbuf)
 add_subdirectory(collector)
 add_subdirectory(otlp)
+
+configure_file(config.h.cmake_in config.h)

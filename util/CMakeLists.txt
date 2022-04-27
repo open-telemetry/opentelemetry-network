@@ -1,3 +1,6 @@
+option(ENABLE_CODE_TIMING "Enable code timing" ON)
+message(STATUS "time ENABLE_CODE_TIMING is ${ENABLE_CODE_TIMING}")
+
 add_library(
   lz4_decompressor
   STATIC
@@ -19,7 +22,12 @@ add_unit_test(string_view)
 add_library(
   time
   STATIC
+    code_timing.cc
     time.cc
+)
+target_link_libraries(
+  time
+    stdc++fs
 )
 add_unit_test(time LIBS time)
 

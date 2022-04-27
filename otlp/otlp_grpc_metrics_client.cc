@@ -17,29 +17,11 @@
 #include <opentelemetry/proto/metrics/v1/metrics.pb.h>
 
 #include <otlp/otlp_grpc_metrics_client.h>
+#include <util/code_timing.h>
 #include <util/json.h>
 #include <util/log.h>
 
 #include <ctime>
-
-static const std::set<std::string> attr_keys = {
-    "npm_daz",
-    "npm_dcontainer",
-    "npm_denv",
-    "npm_dns",
-    "npm_dprocess",
-    "npm_drole",
-    "npm_dtype",
-    "npm_dver",
-    "npm_saz",
-    "npm_scontainer",
-    "npm_senv",
-    "npm_sns",
-    "npm_sprocess",
-    "npm_srole",
-    "npm_stype",
-    "npm_sver",
-    "timestamp"};
 
 namespace otlp {
 
@@ -48,6 +30,8 @@ OtlpGrpcMetricsClient::OtlpGrpcMetricsClient(std::shared_ptr<grpc::Channel> chan
 
 void OtlpGrpcMetricsClient::FormatAndExport(std::string const &metric_string)
 {
+  SCOPED_TIMING(OtlpGrpcMetricsClientFormatAndExport);
+
   LOG::debug("OtlpGrpcMetricsClient:FormatAndExport() metric_string={}", metric_string);
 
   nlohmann::json metric_json;
@@ -78,13 +62,15 @@ void OtlpGrpcMetricsClient::FormatAndExport(std::string const &metric_string)
 
     opentelemetry::proto::metrics::v1::NumberDataPoint data_point;
 
-    for (auto const &key : attr_keys) {
-      if (metric_json.contains(key)) {
-        std::string value(metric_json[key]);
-        auto attribute = data_point.add_attributes();
-        attribute->set_key(key.data(), key.size());
-        attribute->mutable_value()->set_string_value(value.data(), value.size());
+    for (auto &[key, val] : metric_json.items()) {
+      if (key == "name" || key == "aggregation" || key == name) {
+        // skip non-attribute vey/value
+        continue;
       }
+      std::string value(metric_json[key]);
+      auto attribute = data_point.add_attributes();
+      attribute->set_key(key.data(), key.size());
+      attribute->mutable_value()->set_string_value(value.data(), value.size());
     }
 
     data_point.set_time_unix_nano(std::time(nullptr) * 1000000000);
@@ -103,12 +89,17 @@ void OtlpGrpcMetricsClient::FormatAndExport(std::string const &metric_string)
     return;
   }
 
+#define DEBUG_OTLP_JSON_PRINT 1
+#if DEBUG_OTLP_JSON_PRINT
+  START_TIMING(OtlpGrpcMetricsClientJsonPrint);
   std::string request_json_str;
   google::protobuf::util::JsonPrintOptions json_print_options;
   json_print_options.add_whitespace = true;
   json_print_options.always_print_primitive_fields = true;
   google::protobuf::util::MessageToJsonString(request, &request_json_str, json_print_options);
   LOG::trace("JSON view of ExportMetricsServiceRequest being sent: {}", request_json_str);
+  STOP_TIMING(OtlpGrpcMetricsClientJsonPrint);
+#endif
 
   auto status = Export(request);
   if (status.ok()) {
@@ -120,6 +111,8 @@ void OtlpGrpcMetricsClient::FormatAndExport(std::string const &metric_string)
 
 grpc::Status OtlpGrpcMetricsClient::Export(ExportMetricsServiceRequest const &request)
 {
+  SCOPED_TIMING(OtlpGrpcMetricsClientExport);
+
   ExportMetricsServiceResponse response;
   grpc::ClientContext context;
 

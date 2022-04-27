@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <util/preprocessor.h>
+
 #include <functional>
 
 // Defer is a convenience class for executing a function upon leaving scope
@@ -41,3 +43,14 @@ public:
 private:
   std::function<void()> cb_;
 };
+
+// DEFER is a convenience macro to declare a Defer class and associated callback function.
+//
+// Example usage:
+//
+// void do_something() {
+//   void* data = malloc(1234);
+//   DEFER([&] { free(data); });
+//   ...
+// }
+#define DEFER(cb) Defer PREPROC_CONCAT(defer_, __LINE__)(cb)

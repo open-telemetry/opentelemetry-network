@@ -160,7 +160,7 @@ namespace ENUM_NAMESPACE {
 constexpr inline std::string_view to_string(
     ENUM_NAME value,
 #ifdef ENUM_DEFAULT
-    std::string_view fallback = FLOWMILL_STRINGIZE(ENUM_DEFAULT)
+    std::string_view fallback = PREPROC_STRINGIZE(ENUM_DEFAULT)
 #else  // ENUM_DEFAULT
     std::string_view fallback = {}
 #endif // ENUM_DEFAULT

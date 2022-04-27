@@ -77,5 +77,6 @@ if (BUILD_WITH_OTLP)
   target_link_libraries(
     otlp_grpc_metrics_client
       otlp_grpc_proto
+      time
   )
 endif()
