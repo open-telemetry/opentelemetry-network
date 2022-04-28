@@ -17,6 +17,7 @@
 #include <collector/agent_log.h>
 #include <collector/kernel/bpf_src/render_bpf.h>
 #include <collector/kernel/buffered_poller.h>
+#include <collector/kernel/dns/ares.h>
 #include <collector/kernel/dns/dns.h>
 #include <collector/kernel/kernel_collector_restarter.h>
 #include <collector/kernel/perf_reader.h>
@@ -34,8 +35,6 @@
 
 #include <spdlog/common.h>
 #include <spdlog/fmt/bin_to_hex.h>
-
-#include <ares.h>
 
 #include <chrono>
 #include <iostream>

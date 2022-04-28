@@ -47,10 +47,6 @@ add_library(
     dns/ares_parse_a_aaaa_reply.c
     dns/ares_parse_query.c
 )
-target_link_libraries(
-  agentdnslib
-    c-ares-headers
-)
 add_dependencies(agentdnslib render_flowmill_artifacts)
 target_compile_options(agentdnslib PRIVATE -fPIC)
 
