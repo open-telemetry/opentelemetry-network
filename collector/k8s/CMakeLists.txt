@@ -92,11 +92,8 @@ target_link_libraries(
     system_ops
     spdlog
     static-executable
-    -Wl,-Bstatic
-    libgrpc++_unsecure.a
-    libgrpc_unsecure.a
-    libcares.a
-    -Wl,-Bdynamic
+    gRPC::grpc++_unsecure
+    gRPC::grpc_unsecure
 )
 
 set_target_properties(k8s-relay PROPERTIES LINK_SEARCH_START_STATIC 1)

@@ -67,7 +67,7 @@ protected:
     print_json_messages();
 
     ASSERT_EQ(false, timeout_exceeded_);
-    ASSERT_EQ(0, get_test_channel()->get_num_failed_sends());
+    ASSERT_EQ(0u, get_test_channel()->get_num_failed_sends());
   }
 
   void start_kernel_collector(

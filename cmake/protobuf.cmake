@@ -1,3 +1,11 @@
+find_package(Protobuf CONFIG REQUIRED)
+message(STATUS "Found Protobuf ${Protobuf_VERSION}")
+
+find_package(gRPC CONFIG REQUIRED)
+message(STATUS "Found gRPC ${gRPC_VERSION}")
+
+get_target_property(GRPC_CPP_PLUGIN_LOCATION gRPC::grpc_cpp_plugin LOCATION)
+
 set(GO_PROTOBUF_ANNOTATIONS_DIR /usr/local/go/src/github.com/grpc-ecosystem/grpc-gateway)
 set(GO_PROTOBUF_GOOGLEAPIS_DIR /usr/local/go/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis)
 
@@ -44,7 +52,7 @@ function (build_protobuf NAME)
       list(
         APPEND
         PROTOBUF_ARGS
-          --plugin=protoc-gen-grpc="/usr/local/bin/grpc_cpp_plugin"
+          --plugin=protoc-gen-grpc="${GRPC_CPP_PLUGIN_LOCATION}"
           --grpc_out="${CMAKE_CURRENT_BINARY_DIR}/generated"
       )
 

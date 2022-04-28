@@ -405,9 +405,9 @@ TEST_F(CgroupHandlerTest, handle_docker_response)
   nlohmann::json const dummy_json_response_object = nlohmann::json::parse(dummy_json_response_data);
 
   // Populate a map with expected key/value pairs to compare against results from cgroup_handler.handle_docker_response().
-  std::unordered_map<std::string_view, std::string_view> key_value_map;
+  std::unordered_map<std::string, std::string> key_value_map;
   for (auto item : dummy_json_response_object["Config"]["Labels"].items()) {
-    key_value_map[item.key()] = item.value();
+    key_value_map[item.key()] = item.value().get<std::string>();
   }
   ASSERT_NE(0UL, key_value_map.size());
 
@@ -425,8 +425,8 @@ TEST_F(CgroupHandlerTest, handle_docker_response)
       for (auto const &rl : object["resourceLogs"]) {
         for (auto const &ill : rl["instrumentationLibraryLogs"]) {
           for (auto const &log : ill["log_records"]) {
-            std::string_view key;
-            std::string_view value;
+            std::string key;
+            std::string value;
             for (auto const &kv : log["body"]["kvlist_value"]["values"]) {
               auto keyit = kv.find("key");
               if (keyit != kv.end()) {
