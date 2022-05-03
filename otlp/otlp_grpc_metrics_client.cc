@@ -51,8 +51,7 @@ void OtlpGrpcMetricsClient::FormatAndExport(std::string const &metric_string)
     opentelemetry::proto::metrics::v1::Metric metric;
 
     std::string name(metric_json["name"]);
-    std::string aggregation(metric_json["aggregation"]);
-    metric.set_name(name + "_" + aggregation);
+    metric.set_name(name);
     metric.set_unit("number");
 
     opentelemetry::proto::metrics::v1::Sum sum;
@@ -63,7 +62,7 @@ void OtlpGrpcMetricsClient::FormatAndExport(std::string const &metric_string)
     opentelemetry::proto::metrics::v1::NumberDataPoint data_point;
 
     for (auto &[key, val] : metric_json.items()) {
-      if (key == "name" || key == "aggregation" || key == name) {
+      if (key == "name" || key == name) {
         // skip non-attribute vey/value
         continue;
       }
