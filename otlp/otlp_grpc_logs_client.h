@@ -18,8 +18,6 @@
 
 #include <config.h>
 
-#if BUILD_WITH_OTLP
-
 #include <google/protobuf/util/json_util.h>
 #include <grpcpp/grpcpp.h>
 #include <opentelemetry/proto/collector/logs/v1/logs_service.grpc.pb.h>
@@ -41,5 +39,3 @@ private:
 };
 
 } /* namespace otlp */
-
-#endif

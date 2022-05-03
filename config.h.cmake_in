@@ -1,4 +1,3 @@
-#cmakedefine01 BUILD_WITH_OTLP
 #cmakedefine01 CONFIGURABLE_BPF
 #cmakedefine01 DEBUG_LOG
 #cmakedefine01 ENABLE_CODE_TIMING
