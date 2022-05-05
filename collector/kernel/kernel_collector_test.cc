@@ -36,8 +36,7 @@ class TestIntakeConfig : public config::IntakeConfig {
 
   bool allow_compression() const { return false; }
 
-  std::unique_ptr<channel::NetworkChannel>
-  make_channel(uv_loop_t &loop, std::string_view private_key, std::string_view certificate) const
+  std::unique_ptr<channel::NetworkChannel> make_channel(uv_loop_t &loop) const override
   {
     return std::make_unique<channel::TestChannel>(loop, encoder());
   }
@@ -62,12 +61,6 @@ protected:
   void TearDown() override
   {
     stop_workload();
-
-    print_message_counts();
-    print_json_messages();
-
-    ASSERT_EQ(false, timeout_exceeded_);
-    ASSERT_EQ(0u, get_test_channel()->get_num_failed_sends());
   }
 
   void start_kernel_collector(
@@ -159,7 +152,14 @@ protected:
   }
 
   void stop_kernel_collector() {
-    kernel_collector_->on_close();
+    print_json_messages();
+    print_message_counts();
+
+    ASSERT_EQ(0u, get_test_channel()->get_num_failed_sends());
+    ASSERT_EQ(false, timeout_exceeded_);
+
+    kernel_collector_.reset();
+
     uv_stop(&loop_);
   }
 
@@ -202,6 +202,7 @@ protected:
         return;
       }
 
+      LOG::trace("stop_test_check() stop_conditions have been met - calling stop_kernel_collector()");
       stop_kernel_collector();
     };
 
