@@ -56,8 +56,15 @@ public:
   using MessageCountsType = std::map<std::string, u64>; // map of message name to number sent
   MessageCountsType &get_message_counts();
 
-  using JsonMessagesType = std::vector<nlohmann::json>; // vector of messages sent in JSON format
+  using BinaryMessageType = std::vector<u8>;
+  using BinaryMessagesType = std::vector<BinaryMessageType>; // vector of messages sent in binary format
+  BinaryMessagesType &get_binary_messages();
+  void binary_messages_for_each(std::function<void(BinaryMessageType const &)> cb);
+
+  using JsonMessageType = nlohmann::json;
+  using JsonMessagesType = std::vector<JsonMessageType>; // vector of messages sent in JSON format
   JsonMessagesType &get_json_messages();
+  void json_messages_for_each(std::function<void(JsonMessageType const &)> cb);
 
 private:
   std::optional<std::reference_wrapper<uv_loop_t>> loop_;
@@ -68,7 +75,10 @@ private:
 
   IntakeEncoder encoder_;
   std::stringstream ss_;
+
   MessageCountsType message_counts_;
+
+  BinaryMessagesType binary_messages_;
   JsonMessagesType json_messages_;
 };
 

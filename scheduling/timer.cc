@@ -42,7 +42,9 @@ Timer::~Timer()
   if (is_active()) {
     stop();
   }
-  uv_close(reinterpret_cast<uv_handle_t *>(&handle_), nullptr);
+  if (!uv_is_closing(reinterpret_cast<uv_handle_t *>(&handle_))) {
+    uv_close(reinterpret_cast<uv_handle_t *>(&handle_), nullptr);
+  }
 }
 
 Expected<bool, uv_error_t> Timer::defer(TimerPeriod timeout)

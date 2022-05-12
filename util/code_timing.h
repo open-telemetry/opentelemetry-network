@@ -33,16 +33,21 @@ class CodeTiming {
 
 public:
   CodeTiming(std::string const &name, std::string const &filename, int line);
+  ~CodeTiming();
 
   void set(u64 duration_ns);
 
   void write_stats(std::stringstream &ss, u64 timestamp, std::string const &common_labels = "");
+
+  void print();
 
 private:
   const std::string name_;
   const std::string filename_;
   const int line_;
   data::Gauge<u64> gauge_;
+
+  std::string full_name();
 };
 
 class CodeTimingRegistry {
@@ -50,14 +55,21 @@ public:
   // Register a CodeTiming.
   void register_code_timing(std::string const &name, CodeTiming *timing);
 
+  // Unregister a CodeTiming.
+  void unregister_code_timing(std::string const &name);
+
   // Writes all registered code timings out as internal stats.
   void write_stats(std::stringstream &ss, u64 timestamp, std::string const &common_labels = "");
+
+  // Prints all registered code timings out via LOG::info().
+  void print();
 
 private:
   std::map<std::string, CodeTiming *> code_timings_;
 };
 
 extern thread_local CodeTimingRegistry code_timing_registry_;
+extern void print_code_timings();
 
 #define SCOPED_TIMING(name)                                                                                                    \
   static thread_local CodeTiming timing_##name(#name, __FILE__, __LINE__);                                                     \
