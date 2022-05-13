@@ -94,16 +94,13 @@ add_library(
   signal_handler
   STATIC
     signal_handler.cc
-    minidump_sender.cc
 )
 target_link_libraries(
   signal_handler
     aws_instance_metadata
     gcp_instance_metadata
     args_parser
-    intake_config
     logging
-    curl-cpp
     breakpad_client
     file_ops
     system_ops

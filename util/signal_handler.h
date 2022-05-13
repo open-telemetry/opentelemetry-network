@@ -41,7 +41,7 @@ private:
   ::uv_loop_t &loop() { return loop_; }
 
   void setup_breakpad();
-  void upload_minidump();
+  void handle_minidump();
 
   ::uv_loop_t &loop_;
 
@@ -58,8 +58,6 @@ private:
   cli::ArgsParser::FlagProxy crash_;
   cli::ArgsParser::ArgProxy<std::chrono::seconds::rep> schedule_crash_;
 #endif
-
-  std::list<std::string> headers_;
 
   struct SignalHandler {
     SignalHandler(SignalManager &manager, std::function<void()> on_signal, int signal_number);

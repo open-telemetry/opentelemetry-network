@@ -28,16 +28,13 @@
 #include <util/signal_handler.h>
 
 #include <common/constants.h>
-#include <config/intake_config.h>
 #include <util/aws_instance_metadata.h>
 #include <util/environment_variables.h>
 #include <util/file_ops.h>
 #include <util/gcp_instance_metadata.h>
 #include <util/log.h>
 #include <util/log_formatters.h>
-#include <util/minidump_sender.h>
 #include <util/system_ops.h>
-#include <util/url.h>
 
 #include <sys/utsname.h>
 #include <sys/wait.h>
@@ -45,28 +42,22 @@
 #include <chrono>
 #include <sstream>
 
-// Directory to which minidump files will be written by breakpad upon crash
+#define COLLECT_MINIDUMP_FLAG "collect-minidump"
 
 // The maximum number of files allowed in the minidump directory.
 static constexpr int MAX_MINIDUMP_DIR_SIZE_FILES = 3;
 
-#define COLLECT_MINIDUMP_FLAG "collect-minidump"
-
 //  The maximum aggregate size in bytes of files in the minidump directory.
 static constexpr int MAX_MINIDUMP_DIR_SIZE_BYTES = 15 << 20; // 15 MiB
 
-static constexpr auto FLOWMILL_CLUSTER_NAME_VAR = "FLOWMILL_CLUSTER_NAME";
-
+// Directory to which minidump files will be written by breakpad upon crash
 static constexpr auto FLOWMILL_MINIDUMP_DIR_VAR = "FLOWMILL_MINIDUMP_DIR";
 static constexpr std::string_view FLOWMILL_MINIDUMP_DIR = "/tmp/flowmill-minidump";
 
 static constexpr auto FLOWMILL_DEBUG_MODULE_NAME_VAR = "FLOWMILL_DEBUG_MODULE_NAME";
 static constexpr auto FLOWMILL_DEBUG_MODULE_ID_VAR = "FLOWMILL_DEBUG_MODULE_ID";
 
-static constexpr auto FLOWMILL_CRASH_COLLECTOR_HOST_VAR = "FLOWMILL_CRASH_COLLECTOR_HOST";
-static constexpr auto FLOWMILL_CRASH_COLLECTOR_HOST = "https://app.flowmill.com";
-static constexpr auto FLOWMILL_CRASH_COLLECTOR_PATH_VAR = "FLOWMILL_CRASH_COLLECTOR_PATH";
-static constexpr auto FLOWMILL_CRASH_COLLECTOR_PATH = "/api/v1/minidump/";
+static constexpr auto FLOWMILL_CLUSTER_NAME_VAR = "FLOWMILL_CLUSTER_NAME";
 
 static constexpr std::chrono::microseconds METADATA_TIMEOUT = 1s;
 
@@ -114,8 +105,7 @@ static bool breakpad_callback(const google_breakpad::MinidumpDescriptor &descrip
     puts("ERROR: could not fork to send error report");
   } else if (!pid) {
     /* child */
-    printf(
-        "executing crash minidump uploader `%s --" COLLECT_MINIDUMP_FLAG " %s`...\n", current_binary_path, descriptor.path());
+    printf("executing crash minidump handler `%s --" COLLECT_MINIDUMP_FLAG " %s`...\n", current_binary_path, descriptor.path());
 
     auto const exec_result = ::execl(
         current_binary_path,
@@ -132,13 +122,13 @@ static bool breakpad_callback(const google_breakpad::MinidumpDescriptor &descrip
       exit(-1);
     }
   } else {
-    printf("waiting for crash minidump uploader process (pid=%d)\n", pid);
+    printf("waiting for crash minidump handler process (pid=%d)\n", pid);
     int status = 0;
     ::waitpid(pid, &status, 0);
     if (WIFEXITED(status)) {
-      printf("crash minidump uploader process terminated normally with exit code %d\n", WEXITSTATUS(status));
+      printf("crash minidump handler process terminated normally with exit code %d\n", WEXITSTATUS(status));
     } else {
-      puts("crash minidump uploader process terminated abnormally\n");
+      puts("crash minidump handler process terminated abnormally\n");
     }
     /* exit with an error -- we had a crash. */
     exit(-1);
@@ -180,8 +170,8 @@ void SignalManager::handle()
     LOG::debug("setting up breakpad...");
     setup_breakpad();
   } else {
-    LOG::debug("uploading crash minidump...");
-    upload_minidump();
+    LOG::debug("handling crash minidump...");
+    handle_minidump();
   }
 
 #ifndef NDEBUG
@@ -225,41 +215,8 @@ void SignalManager::setup_breakpad()
   ::signal(SIGPIPE, SIG_IGN);
 }
 
-void SignalManager::upload_minidump()
+void SignalManager::handle_minidump()
 {
-  auto const minidump_url = format_url(
-      std::string{try_get_env_var(FLOWMILL_CRASH_COLLECTOR_HOST_VAR, FLOWMILL_CRASH_COLLECTOR_HOST)},
-      try_get_env_var(FLOWMILL_CRASH_COLLECTOR_PATH_VAR, FLOWMILL_CRASH_COLLECTOR_PATH));
-
-  if (minidump_url.empty()) {
-    LOG::error("no valid crash collection URL provided");
-    return;
-  }
-
-  LOG::warn("uploading crash minidump to '{}'...", minidump_url);
-
-  auto const intake_config = config::IntakeConfig::read_from_env();
-  auto const proxy_config = intake_config.proxy();
-  auto const proxy = [proxy_config]() -> std::string {
-    if (!proxy_config) {
-      return {};
-    }
-
-    std::string result = proxy_config->host();
-    assert(!result.empty());
-
-    if (!proxy_config->port().empty()) {
-      result.push_back(':');
-      result.append(proxy_config->port());
-    }
-
-    return result;
-  }();
-
-  if (!proxy.empty()) {
-    LOG::info("using proxy server {}", proxy);
-  }
-
   ////////////////
   // parameters //
   ////////////////
@@ -309,12 +266,6 @@ void SignalManager::upload_minidump()
                         : gcp_metadata ? gcp_metadata->hostname() : "(unknown)";
   });
 
-  parameters["intake_host"] = intake_config.host();
-  parameters["intake_port"] = intake_config.port();
-
-  parameters["proxy_host"] = proxy_config ? proxy_config->host() : "";
-  parameters["proxy_port"] = proxy_config ? proxy_config->port() : "";
-
   ///////////
   // files //
   ///////////
@@ -333,17 +284,11 @@ void SignalManager::upload_minidump()
   // submit //
   ////////////
 
-  bool success = false;
-  if (MinidumpSender sender; sender.send(minidump_url, headers_, parameters, files, proxy)) {
-    LOG::warn("successfully uploaded crash minidump to {}", minidump_url);
-    success = true;
-  } else {
-    LOG::error("unable to upload crash minidump: ({}) {}", sender.response_code(), sender.error_description());
-  }
+  // TODO: preserve minidump file, parameters and files in a tarball
 
   cleanup_directory(minidump_dir_.c_str(), MAX_MINIDUMP_DIR_SIZE_FILES, MAX_MINIDUMP_DIR_SIZE_BYTES);
 
-  exit(!success);
+  exit(0);
 }
 
 void SignalManager::handle_signals(std::initializer_list<int> signal_numbers, std::function<void()> on_signal)
