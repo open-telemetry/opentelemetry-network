@@ -32,10 +32,6 @@ class OtlpGrpcMetricsClient {
 public:
   OtlpGrpcMetricsClient(std::shared_ptr<grpc::Channel> channel);
 
-  // Temporary code to convert JsonTsdbFormatter format to OTLP gRPC metrics format before the work to convert directly from
-  // internal metrics format to OTLP gRPC metrics format is complete.
-  void FormatAndExport(std::string const &metric_string);
-
   grpc::Status Export(ExportMetricsServiceRequest const &request);
 
 private:
