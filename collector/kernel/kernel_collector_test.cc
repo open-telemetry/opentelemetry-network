@@ -14,6 +14,7 @@
 #include <util/aws_instance_metadata.h>
 #include <util/boot_time.h>
 #include <util/code_timing.h>
+#include <util/common_test.h>
 #include <util/curl_engine.h>
 #include <util/gcp_instance_metadata.h>
 #include <util/json.h>
@@ -28,8 +29,6 @@
 #include <string>
 
 #include <uv.h>
-
-static constexpr char GTEST_ENABLE_TRACE_LOGGING_VAR[] = "GTEST_ENABLE_TRACE_LOGGING";
 
 #define BPF_DUMP_FILE "/tmp/bpf-dump-file"
 #define INTAKE_DUMP_FILE "/tmp/intake-dump-file"
@@ -58,22 +57,12 @@ struct StopConditions {
   std::chrono::seconds timeout_sec;
 };
 
-class KernelCollectorTest : public ::testing::Test {
+class KernelCollectorTest : public CommonTest {
 
 protected:
   void SetUp() override
   {
-    LOG::init(true); // log to console
-
-    std::string enable_trace_logging("false");
-    if (auto val = std::getenv(GTEST_ENABLE_TRACE_LOGGING_VAR); (val != nullptr) && (strlen(val) > 0)) {
-      enable_trace_logging = std::string(val);
-    }
-    if (enable_trace_logging == "true") {
-      spdlog::set_level(spdlog::level::trace);
-    } else {
-      spdlog::set_level(spdlog::level::debug);
-    }
+    CommonTest::SetUp();
 
     ASSERT_EQ(0, uv_loop_init(&loop_));
   }
