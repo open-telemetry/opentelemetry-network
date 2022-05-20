@@ -28,6 +28,7 @@
 #include <util/signal_handler.h>
 
 #include <common/constants.h>
+
 #include <util/aws_instance_metadata.h>
 #include <util/environment_variables.h>
 #include <util/file_ops.h>
@@ -35,11 +36,14 @@
 #include <util/log.h>
 #include <util/log_formatters.h>
 #include <util/system_ops.h>
+#include <util/time.h>
 
 #include <sys/utsname.h>
 #include <sys/wait.h>
 
 #include <chrono>
+#include <filesystem>
+#include <fstream>
 #include <sstream>
 
 #define COLLECT_MINIDUMP_FLAG "collect-minidump"
@@ -49,6 +53,16 @@ static constexpr int MAX_MINIDUMP_DIR_SIZE_FILES = 3;
 
 //  The maximum aggregate size in bytes of files in the minidump directory.
 static constexpr int MAX_MINIDUMP_DIR_SIZE_BYTES = 15 << 20; // 15 MiB
+
+// Maximum number of crash report directories to leave in the minidump directory.
+static constexpr int MAX_CRASH_REPORTS = 3;
+// Maximum allowed aggregate size (in bytes) of files in crash report directories.
+static constexpr int MAX_CRASH_REPORTS_SIZE = 30 << 20; // 30 MiB
+
+// Directory name suffix that all crash report directories will have.
+static constexpr std::string_view CRASH_REPORT_DIR_SUFFIX = ".crash";
+// Name of the file in which the configuration parameters will be stored.
+static constexpr std::string_view PARAMETERS_FILE_NAME = "parameters.txt";
 
 // Directory to which minidump files will be written by breakpad upon crash
 static constexpr auto FLOWMILL_MINIDUMP_DIR_VAR = "FLOWMILL_MINIDUMP_DIR";
@@ -217,6 +231,22 @@ void SignalManager::setup_breakpad()
 
 void SignalManager::handle_minidump()
 {
+  auto const report_dir_name =
+      string_time(std::chrono::system_clock::now(), "%Y-%m-%d_%H-%M-%S") + std::string(CRASH_REPORT_DIR_SUFFIX);
+  auto const report_dir_path = std::filesystem::path(minidump_dir_) / report_dir_name;
+
+  // Create a new directory for this crash report.
+  std::error_code ec;
+  if (!std::filesystem::create_directory(report_dir_path, ec)) {
+    std::cerr << "creating directory " << report_dir_path << " failed with error " << ec << std::endl;
+    // We failed to create a crash report. Before we bomb out we have to make
+    // sure we're not filling the minidump directory with files.
+    cleanup_directory(minidump_dir_.c_str(), MAX_MINIDUMP_DIR_SIZE_FILES, MAX_MINIDUMP_DIR_SIZE_BYTES);
+    exit(1);
+  }
+
+  std::cout << "saving crash report to " << report_dir_path << std::endl;
+
   ////////////////
   // parameters //
   ////////////////
@@ -266,27 +296,36 @@ void SignalManager::handle_minidump()
                         : gcp_metadata ? gcp_metadata->hostname() : "(unknown)";
   });
 
+  // Save parameters to a file in the crash report directory.
+  if (std::ofstream file(report_dir_path / PARAMETERS_FILE_NAME, std::ofstream::out); file.is_open()) {
+    for (auto &[name, value] : parameters) {
+      file << name << ": " << value << std::endl;
+    }
+  } else {
+    std::cerr << "failed to create file " << report_dir_path / PARAMETERS_FILE_NAME << std::endl;
+  }
+
   ///////////
   // files //
   ///////////
 
-  std::map<std::string, std::string> files;
-
-  if (auto const path = *minidump_path_; file_exists(path.c_str(), {FileAccess::read})) {
-    files["minidump"] = path;
+  // Move minidump file to the crash report directory.
+  if (std::filesystem::path minidump_path = *minidump_path_; file_exists(minidump_path.c_str(), {FileAccess::read})) {
+    std::filesystem::rename(minidump_path, report_dir_path / minidump_path.filename());
   }
 
-  if (auto const log_path = LOG::log_file_path(); file_exists(log_path.data(), {FileAccess::read})) {
-    files["log_file"] = log_path;
+  // Copy log file into the crash report directory.
+  if (std::filesystem::path log_path = LOG::log_file_path(); file_exists(log_path.c_str(), {FileAccess::read})) {
+    std::filesystem::copy(log_path, report_dir_path);
   }
 
-  ////////////
-  // submit //
-  ////////////
+  /////////////
+  // cleanup //
+  /////////////
 
-  // TODO: preserve minidump file, parameters and files in a tarball
-
-  cleanup_directory(minidump_dir_.c_str(), MAX_MINIDUMP_DIR_SIZE_FILES, MAX_MINIDUMP_DIR_SIZE_BYTES);
+  // Remove old crash report directories.
+  // Since crash report directories are flat (they don't contain subdirs), we use zero for the max_depth parameter.
+  cleanup_directory_subdirs(minidump_dir_.c_str(), MAX_CRASH_REPORTS, MAX_CRASH_REPORTS_SIZE, 0, CRASH_REPORT_DIR_SUFFIX);
 
   exit(0);
 }

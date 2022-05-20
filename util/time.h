@@ -20,9 +20,11 @@
 
 #include <chrono>
 #include <ratio>
+#include <string>
 
 #include <cassert>
 #include <cstdint>
+#include <ctime>
 
 /**
  * Converts duration to desired unit and returns its value in integer form.
@@ -51,6 +53,29 @@ template <typename OutputDuration, typename Output = typename OutputDuration::re
 constexpr Output integer_time(std::chrono::time_point<C, D> time_point)
 {
   return integer_time<OutputDuration>(time_point.time_since_epoch());
+}
+
+/**
+ * Converts time point to a string according to the specified format.
+ *
+ * See the `strftime` man page for the format string specification:
+ * https://man7.org/linux/man-pages/man3/strftime.3.html
+ *
+ * Beware that the maximum length of the resulting text is 256 characters.
+ * If the conversion requires more space, the resulting text will be truncated.
+ */
+template <class Clock, typename Duration = typename Clock::duration>
+std::string string_time(std::chrono::time_point<Clock, Duration> time_point, char const *format)
+{
+  constexpr size_t strftime_buf_size = 256;
+
+  time_t time = Clock::to_time_t(time_point);
+
+  struct tm tm_buf;
+  char strftime_buf[strftime_buf_size];
+  size_t n = strftime(strftime_buf, sizeof(strftime_buf), format, gmtime_r(&time, &tm_buf));
+
+  return std::string(strftime_buf, n);
 }
 
 /**

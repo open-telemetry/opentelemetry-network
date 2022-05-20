@@ -57,6 +57,7 @@ target_link_libraries(
   file_ops
     fastpass_util
     logging
+    stdc++fs
 )
 
 add_library(
@@ -106,6 +107,7 @@ target_link_libraries(
     system_ops
     environment_variables
     libuv-interface
+    stdc++fs
 )
 
 add_library(

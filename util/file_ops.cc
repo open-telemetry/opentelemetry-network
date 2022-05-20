@@ -18,6 +18,7 @@
 
 #include <util/defer.h>
 #include <util/log.h>
+#include <util/string_view.h>
 
 #include <dirent.h>
 #include <fcntl.h>
@@ -25,6 +26,8 @@
 #include <sys/types.h>
 
 #include <algorithm>
+#include <deque>
+#include <filesystem>
 #include <string>
 #include <vector>
 
@@ -72,10 +75,16 @@ FileMeta FileMeta::from_stat(std::string path, const struct stat &statbuf)
   return info;
 }
 
-std::vector<FileMeta> list_directory_contents(char const *directory)
+DirMeta DirMeta::from_stat(std::string path, const struct stat &statbuf)
 {
-  std::vector<FileMeta> result;
+  DirMeta info;
+  info.path = std::move(path);
+  info.modify_nanotimestamp = statbuf.st_mtim.tv_sec * 1000000000LL + statbuf.st_mtim.tv_nsec;
+  return info;
+}
 
+void list_directory_contents(char const *directory, std::vector<FileMeta> *files, std::vector<DirMeta> *subdirs)
+{
   DIR *const dp = opendir(directory);
   DirectoryCloser closer = {dp};
 
@@ -98,21 +107,80 @@ std::vector<FileMeta> list_directory_contents(char const *directory)
         continue;
       }
 
-      // Only include regular files.
-      if ((statbuf.st_mode & S_IFREG) == 0)
+      switch (statbuf.st_mode & S_IFMT) {
+      case S_IFREG:
+        if (files) {
+          files->push_back(FileMeta::from_stat(std::move(full_path), statbuf));
+        }
+        break;
+      case S_IFDIR:
+        if (subdirs) {
+          if ((file_name != ".") && (file_name != "..")) {
+            subdirs->push_back(DirMeta::from_stat(std::move(full_path), statbuf));
+          }
+        }
+        break;
+      default:
         continue;
+      }
+    }
+  }
+}
 
-      result.push_back(FileMeta::from_stat(std::move(full_path), statbuf));
+std::vector<FileMeta> list_directory_files(char const *directory)
+{
+  std::vector<FileMeta> result;
+  list_directory_contents(directory, &result, nullptr);
+  return std::move(result);
+}
+
+std::vector<DirMeta> list_directory_subdirs(char const *directory)
+{
+  std::vector<DirMeta> result;
+  list_directory_contents(directory, nullptr, &result);
+  return std::move(result);
+}
+
+uint64_t calculate_directory_size(char const *directory, size_t max_depth)
+{
+  struct Dir {
+    std::string path;
+    size_t depth;
+  };
+
+  std::deque<Dir> dirs;
+  dirs.push_back({.path = directory, .depth = 0});
+
+  uint64_t total_size = 0;
+
+  while (!dirs.empty()) {
+    auto current = dirs.front();
+    dirs.pop_front();
+
+    std::vector<FileMeta> files;
+    std::vector<DirMeta> subdirs;
+    list_directory_contents(current.path.c_str(), &files, &subdirs);
+
+    for (auto const &file : files) {
+      if (file.size_bytes > 0) {
+        total_size += file.size_bytes;
+      }
+    }
+
+    if (current.depth < max_depth) {
+      for (auto const &subdir : subdirs) {
+        dirs.push_back({.path = subdir.path, .depth = current.depth + 1});
+      }
     }
   }
 
-  return result;
+  return total_size;
 }
 
 void cleanup_directory(char const *directory, const int64_t max_file_count, const int64_t max_total_size_bytes)
 {
   // Get the contents of dir in reverse chronological order.
-  std::vector<FileMeta> files = list_directory_contents(directory);
+  std::vector<FileMeta> files = list_directory_files(directory);
   std::sort(files.begin(), files.end(), [](const FileMeta &lhs, const FileMeta &rhs) {
     return lhs.modify_nanotimestamp > rhs.modify_nanotimestamp;
   });
@@ -137,6 +205,49 @@ void cleanup_directory(char const *directory, const int64_t max_file_count, cons
       LOG::info("Deleted file {}", file->path);
     } else {
       LOG::warn("Failed to delete file {} : {}", file->path, strerror(errno));
+    }
+  }
+}
+
+void cleanup_directory_subdirs(
+    char const *directory,
+    uint64_t const max_subdir_count,
+    uint64_t const max_total_size_bytes,
+    size_t max_depth,
+    std::string_view suffix)
+{
+  std::vector<DirMeta> subdirs = list_directory_subdirs(directory);
+
+  // Only consider subdirs that end with the specified suffix.
+  if (!suffix.empty()) {
+    auto filtered = std::remove_if(
+        std::begin(subdirs), std::end(subdirs), [suffix](auto &&subdir) { return !views::ends_with(subdir.path, suffix); });
+    subdirs.erase(filtered, std::end(subdirs));
+  }
+
+  // Sort subdirs in the reverse chronological order.
+  std::sort(subdirs.begin(), subdirs.end(), [](const DirMeta &lhs, const DirMeta &rhs) {
+    return lhs.modify_nanotimestamp > rhs.modify_nanotimestamp;
+  });
+
+  std::vector<const DirMeta *> subdirs_to_delete;
+  uint64_t subdir_count = 0;
+  uint64_t total_size_bytes = 0;
+  for (const DirMeta &subdir : subdirs) {
+    subdir_count += 1;
+    total_size_bytes += calculate_directory_size(subdir.path.c_str(), max_depth);
+
+    if (subdir_count > max_subdir_count || total_size_bytes > max_total_size_bytes) {
+      subdirs_to_delete.push_back(&subdir);
+    }
+  }
+
+  for (auto const *subdir : subdirs_to_delete) {
+    std::error_code ec;
+    if (std::filesystem::remove_all(subdir->path, ec)) {
+      LOG::info("Deleted directory {}", subdir->path);
+    } else {
+      LOG::warn("Failed to delete directory {} : {}", subdir->path, ec);
     }
   }
 }

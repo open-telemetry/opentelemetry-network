@@ -56,15 +56,56 @@ struct FileMeta {
   static FileMeta from_stat(std::string path, const struct stat &statbuf);
 };
 
-// Lists file contents of `dir`, with no guarantee of ordering. Will return an
-// empty list upon read failure.
-// TODO: Better error handling if it becomes significant.
-std::vector<FileMeta> list_directory_contents(char const *directory);
+// Struct containing directory metadata.
+struct DirMeta {
+  std::string path;
+  int64_t modify_nanotimestamp = 0;
+
+  // Constructs a DirMeta object from a stat result.
+  static DirMeta from_stat(std::string path, const struct stat &statbuf);
+};
+
+// Lists files and subdirectories of `directory`, with no guarantee of ordering.
+// Files and subdirectories are appended to `files` and `subdirs`, respectively.
+// Existing content of `files` and `subdirs` will not be touched.
+// Special directory entries `.` and `..` will not be included in the list.
+// Does not throw on failure.
+void list_directory_contents(char const *directory, std::vector<FileMeta> *files, std::vector<DirMeta> *subdirs);
+
+// Lists file contents of `directory`.
+std::vector<FileMeta> list_directory_files(char const *directory);
+
+// Lists subdirectories `directory`.
+std::vector<DirMeta> list_directory_subdirs(char const *directory);
+
+// Calculates the total directory size by summing up files sizes.
+// Descends into subdirectories up to `max_depth` levels (does not descend into
+// subdirectories if `max_depth` is 0).
+uint64_t calculate_directory_size(char const *directory, size_t max_depth);
 
 // Cleans up the contents of `dir` such that it contains no more than
 // `max_file_count` files and a total size less than `max_total_size_bytes`.
 // Removes older files first.
 void cleanup_directory(char const *directory, int64_t max_file_count, int64_t max_total_size_bytes);
+
+// Cleans up the contents of `directory` such that it contains no more than
+// `max_subdir_count` subdirectories, and that subdirectories take no more than
+// `max_total_size_bytes` of space.
+//
+// The `max_depth` parameter controls the depth to which subdirectories are
+// descendend into when their sizes are calculated
+// (see `calculate_directory_size` function).
+//
+// If `suffix` is specified, then only subdirectories that end with that suffix
+// are considered.
+//
+// Removes older subdirectories first.
+void cleanup_directory_subdirs(
+    char const *directory,
+    uint64_t max_subdir_count,
+    uint64_t max_total_size_bytes,
+    size_t max_depth,
+    std::string_view suffix = {});
 
 // reads the contents of given file - no decoding is performed
 // returns the file contents on success, or the error information otherwise
