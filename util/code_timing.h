@@ -37,7 +37,8 @@ public:
 
   void set(u64 duration_ns);
 
-  void write_stats(std::stringstream &ss, u64 timestamp, std::string const &common_labels = "");
+  void write_stats(
+      std::stringstream &ss, u64 timestamp, std::string_view internal_stats_prefix, std::string const &common_labels = "");
 
   void print();
 
@@ -59,7 +60,8 @@ public:
   void unregister_code_timing(std::string const &name);
 
   // Writes all registered code timings out as internal stats.
-  void write_stats(std::stringstream &ss, u64 timestamp, std::string const &common_labels = "");
+  void write_stats(
+      std::stringstream &ss, u64 timestamp, std::string_view internal_stats_prefix, std::string const &common_labels = "");
 
   // Prints all registered code timings out via LOG::info().
   void print();
