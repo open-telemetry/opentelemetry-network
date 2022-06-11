@@ -37,26 +37,25 @@ void CodeTiming::set(u64 duration_ns)
   gauge_ += duration_ns;
 }
 
-void CodeTiming::write_stats(
-    std::stringstream &ss, u64 timestamp, std::string_view internal_stats_prefix, std::string const &common_labels)
+void CodeTiming::write_stats(std::stringstream &ss, u64 timestamp, std::string const &common_labels)
 {
   if (!gauge_.count()) {
     return;
   }
 
-  ss << internal_stats_prefix << "codetiming_count"
+  ss << "codetiming_count"
      << "{name=\"" << name_ << "\",filename=\"" << filename_ << "\",line=\"" << line_ << "\"," << common_labels << "} "
      << gauge_.count() << " " << timestamp << "\n";
-  ss << internal_stats_prefix << "codetiming_avg_ns"
+  ss << "codetiming_avg_ns"
      << "{name=\"" << name_ << "\",filename=\"" << filename_ << "\",line=\"" << line_ << "\"," << common_labels << "} "
      << gauge_.average<u64>() << " " << timestamp << "\n";
-  ss << internal_stats_prefix << "codetiming_min_ns"
+  ss << "codetiming_min_ns"
      << "{name=\"" << name_ << "\",filename=\"" << filename_ << "\",line=\"" << line_ << "\"," << common_labels << "} "
      << gauge_.min() << " " << timestamp << "\n";
-  ss << internal_stats_prefix << "codetiming_max_ns"
+  ss << "codetiming_max_ns"
      << "{name=\"" << name_ << "\",filename=\"" << filename_ << "\",line=\"" << line_ << "\"," << common_labels << "} "
      << gauge_.max() << " " << timestamp << "\n";
-  ss << internal_stats_prefix << "codetiming_sum_ns"
+  ss << "codetiming_sum_ns"
      << "{name=\"" << name_ << "\",filename=\"" << filename_ << "\",line=\"" << line_ << "\"," << common_labels << "} "
      << gauge_.sum() << " " << timestamp << "\n";
 
@@ -99,11 +98,10 @@ void CodeTimingRegistry::unregister_code_timing(std::string const &name)
   code_timings_.erase(name);
 }
 
-void CodeTimingRegistry::write_stats(
-    std::stringstream &ss, u64 timestamp, std::string_view internal_stats_prefix, std::string const &common_labels)
+void CodeTimingRegistry::write_stats(std::stringstream &ss, u64 timestamp, std::string const &common_labels)
 {
   for (auto const &[name, timing] : code_timings_) {
-    timing->write_stats(ss, timestamp, internal_stats_prefix, common_labels);
+    timing->write_stats(ss, timestamp, common_labels);
   }
 }
 
