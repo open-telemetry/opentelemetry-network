@@ -62,6 +62,11 @@ void CodeTiming::write_stats(std::stringstream &ss, u64 timestamp, std::string c
   gauge_.reset();
 }
 
+void CodeTiming::visit(std::function<void(std::string_view, std::string_view, int, data::Gauge<u64>)> func) const
+{
+  func(name_, filename_, line_, gauge_);
+}
+
 void CodeTiming::print()
 {
   LOG::info("  {} ({}:{}) {}", name_, filename_, line_, *this);
@@ -102,6 +107,13 @@ void CodeTimingRegistry::write_stats(std::stringstream &ss, u64 timestamp, std::
 {
   for (auto const &[name, timing] : code_timings_) {
     timing->write_stats(ss, timestamp, common_labels);
+  }
+}
+
+void CodeTimingRegistry::visit(std::function<void(std::string_view, std::string_view, int, data::Gauge<u64>)> func) const
+{
+  for (auto const &[name, timing] : code_timings_) {
+    timing->visit(func);
   }
 }
 
