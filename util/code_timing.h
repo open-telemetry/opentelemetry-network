@@ -38,6 +38,7 @@ public:
   void set(u64 duration_ns);
 
   void write_stats(std::stringstream &ss, u64 timestamp, std::string const &common_labels = "");
+  void visit(std::function<void(std::string_view, std::string_view, int, data::Gauge<u64>)> func) const;
 
   void print();
 
@@ -60,6 +61,7 @@ public:
 
   // Writes all registered code timings out as internal stats.
   void write_stats(std::stringstream &ss, u64 timestamp, std::string const &common_labels = "");
+  void visit(std::function<void(std::string_view, std::string_view, int, data::Gauge<u64>)> func) const;
 
   // Prints all registered code timings out via LOG::info().
   void print();
