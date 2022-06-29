@@ -16,11 +16,11 @@
 
 #include <opentelemetry/proto/logs/v1/logs.pb.h>
 
-#include <otlp/otlp_grpc_logs_client.h>
+#include "otlp_grpc_logs_client.h"
 
 #include <ctime>
 
-namespace otlp {
+namespace otlp_client {
 
 OtlpGrpcLogsClient::OtlpGrpcLogsClient(std::shared_ptr<grpc::Channel> channel) : stub_(LogsService::NewStub(channel)) {}
 
@@ -32,4 +32,4 @@ grpc::Status OtlpGrpcLogsClient::Export(ExportLogsServiceRequest const &request)
   return stub_->Export(&context, request, &response);
 }
 
-} /* namespace otlp */
+} /* namespace otlp_client */
