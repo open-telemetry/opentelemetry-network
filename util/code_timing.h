@@ -32,13 +32,14 @@ class CodeTiming {
   friend std::ostream &operator<<(std::ostream &os, CodeTiming const &timing);
 
 public:
+  using VisitCallback = std::function<void(std::string_view, std::string_view, int, u64, data::Gauge<u64> &)>;
+
   CodeTiming(std::string const &name, std::string const &filename, int line);
   ~CodeTiming();
 
   void set(u64 duration_ns);
 
-  void write_stats(std::stringstream &ss, u64 timestamp, std::string const &common_labels = "");
-  void visit(std::function<void(std::string_view, std::string_view, int, data::Gauge<u64>)> func) const;
+  void visit(VisitCallback func);
 
   void print();
 
@@ -46,9 +47,10 @@ private:
   const std::string name_;
   const std::string filename_;
   const int line_;
+  static u64 next_index_;
+  const u64 index_; // to make sure CodeTimings in templated functions have a unique key for the CodeTimingRegistry
+  const std::string full_name_;
   data::Gauge<u64> gauge_;
-
-  std::string full_name();
 };
 
 class CodeTimingRegistry {
@@ -59,9 +61,7 @@ public:
   // Unregister a CodeTiming.
   void unregister_code_timing(std::string const &name);
 
-  // Writes all registered code timings out as internal stats.
-  void write_stats(std::stringstream &ss, u64 timestamp, std::string const &common_labels = "");
-  void visit(std::function<void(std::string_view, std::string_view, int, data::Gauge<u64>)> func) const;
+  void visit(CodeTiming::VisitCallback func);
 
   // Prints all registered code timings out via LOG::info().
   void print();

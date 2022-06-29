@@ -21,15 +21,21 @@
 
 #if ENABLE_CODE_TIMING
 
+u64 CodeTiming::next_index_ = 0;
+
 CodeTiming::CodeTiming(std::string const &name, std::string const &filename, int line)
-    : name_(name), filename_(std::filesystem::path(filename).filename().string()), line_(line)
+    : name_(name),
+      filename_(std::filesystem::path(filename).filename().string()),
+      line_(line),
+      index_(next_index_++),
+      full_name_(fmt::format("{}:{}:{}:{}", name_, filename_, line_, index_))
 {
-  code_timing_registry_.register_code_timing(full_name(), this);
+  code_timing_registry_.register_code_timing(full_name_, this);
 }
 
 CodeTiming::~CodeTiming()
 {
-  code_timing_registry_.unregister_code_timing(full_name());
+  code_timing_registry_.unregister_code_timing(full_name_);
 }
 
 void CodeTiming::set(u64 duration_ns)
@@ -37,44 +43,14 @@ void CodeTiming::set(u64 duration_ns)
   gauge_ += duration_ns;
 }
 
-void CodeTiming::write_stats(std::stringstream &ss, u64 timestamp, std::string const &common_labels)
+void CodeTiming::visit(VisitCallback func)
 {
-  if (!gauge_.count()) {
-    return;
-  }
-
-  ss << "codetiming_count"
-     << "{name=\"" << name_ << "\",filename=\"" << filename_ << "\",line=\"" << line_ << "\"," << common_labels << "} "
-     << gauge_.count() << " " << timestamp << "\n";
-  ss << "codetiming_avg_ns"
-     << "{name=\"" << name_ << "\",filename=\"" << filename_ << "\",line=\"" << line_ << "\"," << common_labels << "} "
-     << gauge_.average<u64>() << " " << timestamp << "\n";
-  ss << "codetiming_min_ns"
-     << "{name=\"" << name_ << "\",filename=\"" << filename_ << "\",line=\"" << line_ << "\"," << common_labels << "} "
-     << gauge_.min() << " " << timestamp << "\n";
-  ss << "codetiming_max_ns"
-     << "{name=\"" << name_ << "\",filename=\"" << filename_ << "\",line=\"" << line_ << "\"," << common_labels << "} "
-     << gauge_.max() << " " << timestamp << "\n";
-  ss << "codetiming_sum_ns"
-     << "{name=\"" << name_ << "\",filename=\"" << filename_ << "\",line=\"" << line_ << "\"," << common_labels << "} "
-     << gauge_.sum() << " " << timestamp << "\n";
-
-  gauge_.reset();
-}
-
-void CodeTiming::visit(std::function<void(std::string_view, std::string_view, int, data::Gauge<u64>)> func) const
-{
-  func(name_, filename_, line_, gauge_);
+  func(name_, filename_, line_, index_, gauge_);
 }
 
 void CodeTiming::print()
 {
-  LOG::info("  {} ({}:{}) {}", name_, filename_, line_, *this);
-}
-
-std::string CodeTiming::full_name()
-{
-  return std::string(name_ + ":" + filename_ + ":" + std::to_string(line_));
+  LOG::info("  {} [{}:{} ({})] {}", name_, filename_, line_, index_, *this);
 }
 
 std::ostream &operator<<(std::ostream &os, CodeTiming const &timing)
@@ -103,14 +79,7 @@ void CodeTimingRegistry::unregister_code_timing(std::string const &name)
   code_timings_.erase(name);
 }
 
-void CodeTimingRegistry::write_stats(std::stringstream &ss, u64 timestamp, std::string const &common_labels)
-{
-  for (auto const &[name, timing] : code_timings_) {
-    timing->write_stats(ss, timestamp, common_labels);
-  }
-}
-
-void CodeTimingRegistry::visit(std::function<void(std::string_view, std::string_view, int, data::Gauge<u64>)> func) const
+void CodeTimingRegistry::visit(CodeTiming::VisitCallback func)
 {
   for (auto const &[name, timing] : code_timings_) {
     timing->visit(func);
