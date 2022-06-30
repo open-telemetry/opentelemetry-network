@@ -108,6 +108,7 @@ target_link_libraries(
     environment_variables
     libuv-interface
     stdc++fs
+    otlp_grpc_metrics_client
 )
 
 add_library(

@@ -29,6 +29,10 @@
 
 #include <common/constants.h>
 
+#include <otlp/otlp_emitter.h>
+#include <otlp/otlp_grpc_metrics_client.h>
+#include <otlp/otlp_request_builder.h>
+
 #include <util/aws_instance_metadata.h>
 #include <util/environment_variables.h>
 #include <util/file_ops.h>
@@ -72,6 +76,11 @@ static constexpr auto FLOWMILL_DEBUG_MODULE_NAME_VAR = "FLOWMILL_DEBUG_MODULE_NA
 static constexpr auto FLOWMILL_DEBUG_MODULE_ID_VAR = "FLOWMILL_DEBUG_MODULE_ID";
 
 static constexpr auto FLOWMILL_CLUSTER_NAME_VAR = "FLOWMILL_CLUSTER_NAME";
+
+static constexpr auto FLOWMILL_CRASH_METRIC_HOST_VAR = "FLOWMILL_CRASH_METRIC_HOST";
+static constexpr auto FLOWMILL_CRASH_METRIC_PORT_VAR = "FLOWMILL_CRASH_METRIC_PORT";
+
+static constexpr std::string_view CRASH_METRIC_NAME = "ebpf_net.program_crash";
 
 static constexpr std::chrono::microseconds METADATA_TIMEOUT = 1s;
 
@@ -161,6 +170,7 @@ SignalManager::SignalManager(cli::ArgsParser &parser, ::uv_loop_t &loop, std::st
       minidump_dir_{try_get_env_var(FLOWMILL_MINIDUMP_DIR_VAR, FLOWMILL_MINIDUMP_DIR)},
       minidump_path_(parser.add_arg<std::string>(COLLECT_MINIDUMP_FLAG, "internal crash reporting")),
       breakpad_descriptor_(minidump_dir_)
+
 #ifndef NDEBUG
       ,
       crash_(parser.add_flag("crash", "internal development - force a SIGSEGV")),
@@ -177,6 +187,20 @@ static void cause_crash()
   *a = 1;
 }
 #endif
+
+void emit_crash_metric(std::map<std::string, std::string> parameters, std::string_view host, std::string_view port)
+{
+  if (host.empty()) {
+    return;
+  }
+
+  auto now = std::chrono::system_clock::now();
+  auto timestamp_ns = std::chrono::nanoseconds(now.time_since_epoch());
+  std::string uri = std::string(host) + ":" + std::string(port);
+
+  otlp_client::OtlpEmitter emitter(uri);
+  emitter(otlp_client::OtlpRequestBuilder().metric(CRASH_METRIC_NAME).sum().number_data_point(1u, parameters, timestamp_ns));
+}
 
 void SignalManager::handle()
 {
@@ -318,6 +342,9 @@ void SignalManager::handle_minidump()
   if (std::filesystem::path log_path = LOG::log_file_path(); file_exists(log_path.c_str(), {FileAccess::read})) {
     std::filesystem::copy(log_path, report_dir_path);
   }
+
+  emit_crash_metric(
+      parameters, try_get_env_var(FLOWMILL_CRASH_METRIC_HOST_VAR), try_get_env_var(FLOWMILL_CRASH_METRIC_PORT_VAR, "4317"));
 
   /////////////
   // cleanup //
