@@ -77,6 +77,7 @@ static constexpr auto FLOWMILL_DEBUG_MODULE_ID_VAR = "FLOWMILL_DEBUG_MODULE_ID";
 
 static constexpr auto FLOWMILL_CLUSTER_NAME_VAR = "FLOWMILL_CLUSTER_NAME";
 
+// NB: not defining the crash metric host will disable the crash metric feature
 static constexpr auto FLOWMILL_CRASH_METRIC_HOST_VAR = "FLOWMILL_CRASH_METRIC_HOST";
 static constexpr auto FLOWMILL_CRASH_METRIC_PORT_VAR = "FLOWMILL_CRASH_METRIC_PORT";
 
@@ -191,6 +192,7 @@ static void cause_crash()
 void emit_crash_metric(std::map<std::string, std::string> parameters, std::string_view host, std::string_view port)
 {
   if (host.empty()) {
+    std::cerr << "No host specified to emit a crash metric. Skipping sending a crash metric." << std::endl;
     return;
   }
 
@@ -343,8 +345,6 @@ void SignalManager::handle_minidump()
     std::filesystem::copy(log_path, report_dir_path);
   }
 
-  emit_crash_metric(
-      parameters, try_get_env_var(FLOWMILL_CRASH_METRIC_HOST_VAR), try_get_env_var(FLOWMILL_CRASH_METRIC_PORT_VAR, "4317"));
 
   /////////////
   // cleanup //
@@ -353,6 +353,12 @@ void SignalManager::handle_minidump()
   // Remove old crash report directories.
   // Since crash report directories are flat (they don't contain subdirs), we use zero for the max_depth parameter.
   cleanup_directory_subdirs(minidump_dir_.c_str(), MAX_CRASH_REPORTS, MAX_CRASH_REPORTS_SIZE, 0, CRASH_REPORT_DIR_SUFFIX);
+
+  ////////////////
+  // emit crash //
+  ////////////////
+  emit_crash_metric(
+      parameters, try_get_env_var(FLOWMILL_CRASH_METRIC_HOST_VAR), try_get_env_var(FLOWMILL_CRASH_METRIC_PORT_VAR, "4317"));
 
   exit(0);
 }

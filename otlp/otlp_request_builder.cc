@@ -3,6 +3,8 @@
 #include <util/overloaded_visitor.h>
 #include <util/time.h>
 
+#include <cassert>
+
 namespace otlp_client {
 OtlpRequestBuilder::OtlpRequestBuilder()
     : resource_metrics_(request_.add_resource_metrics()),
@@ -15,6 +17,7 @@ OtlpRequestBuilder &OtlpRequestBuilder::metric(std::string_view metric_name)
 {
   current_metric_ = scope_metrics_->add_metrics();
   current_metric_->set_name(metric_name.data(), metric_name.size());
+  current_sum_ = nullptr;
   return *this;
 }
 
@@ -22,6 +25,8 @@ OtlpRequestBuilder &
 OtlpRequestBuilder::sum(opentelemetry::proto::metrics::v1::AggregationTemporality temporality, bool is_monotonic)
 {
   if (current_metric_ == nullptr) {
+    // This is a programming error.  You must first allocate a metric via metric()
+    assert(false);
     return *this;
   }
 
@@ -36,6 +41,8 @@ OtlpRequestBuilder::sum(opentelemetry::proto::metrics::v1::AggregationTemporalit
 OtlpRequestBuilder &OtlpRequestBuilder::number_data_point(value_t value, labels_t labels, timestamp_t timestamp_ns)
 {
   if (current_metric_ == nullptr) {
+    // This is a programming error.  You must first allocate a metric via metric()
+    assert(false);
     return *this;
   }
 
@@ -54,12 +61,20 @@ OtlpRequestBuilder &OtlpRequestBuilder::number_data_point(value_t value, labels_
   case opentelemetry::proto::metrics::v1::Metric::DataCase::kSum: {
     auto *sum = current_metric_->mutable_sum();
     if (sum == nullptr) {
+      // This is a programming error.  You must first allocate a sum via sum()
+      assert(false);
       return *this;
     }
 
     *sum->add_data_points() = std::move(data_point);
   } break;
+
+    // FUTURE: case gauge
+
   default:
+    // Programming error:
+    // perhaps an unsupported type for number_data_point?
+    assert(false);
     break;
   }
 
