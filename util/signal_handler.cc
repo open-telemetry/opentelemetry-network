@@ -81,7 +81,7 @@ static constexpr auto FLOWMILL_CLUSTER_NAME_VAR = "FLOWMILL_CLUSTER_NAME";
 static constexpr auto FLOWMILL_CRASH_METRIC_HOST_VAR = "FLOWMILL_CRASH_METRIC_HOST";
 static constexpr auto FLOWMILL_CRASH_METRIC_PORT_VAR = "FLOWMILL_CRASH_METRIC_PORT";
 
-static constexpr std::string_view CRASH_METRIC_NAME = "ebpf_net.program_crash";
+static constexpr std::string_view CRASH_METRIC_NAME = "ebpf_net.unplanned_exit";
 
 static constexpr std::chrono::microseconds METADATA_TIMEOUT = 1s;
 
