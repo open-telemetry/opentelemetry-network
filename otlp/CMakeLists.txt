@@ -59,7 +59,9 @@ target_link_libraries(
 add_library(
   otlp_grpc_metrics_client
   STATIC
+    otlp_emitter.cc
     otlp_grpc_metrics_client.cc
+    otlp_request_builder.cc
 )
 target_link_libraries(
   otlp_grpc_metrics_client

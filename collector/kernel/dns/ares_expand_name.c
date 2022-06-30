@@ -29,7 +29,7 @@
 ** unsigned size_t to signed long
 */
 #define CARES_MASK_SLONG 0x7FFFFFFFL
-long aresx_uztosl(size_t uznum)
+long _aresx_uztosl(size_t uznum)
 {
 #ifdef __INTEL_COMPILER
 #pragma warning(push)
@@ -78,7 +78,7 @@ void dns_expand_name(const unsigned char *encoded, const unsigned char *abuf, in
   while (*p) {
     if ((*p & INDIR_MASK) == INDIR_MASK) {
       if (!indir) {
-        *enclen = aresx_uztosl(p + 2U - encoded);
+        *enclen = _aresx_uztosl(p + 2U - encoded);
         indir = 1;
       }
       p = abuf + ((*p & ~INDIR_MASK) << 8 | *(p + 1));
@@ -95,7 +95,7 @@ void dns_expand_name(const unsigned char *encoded, const unsigned char *abuf, in
     }
   }
   if (!indir)
-    *enclen = aresx_uztosl(p + 1U - encoded);
+    *enclen = _aresx_uztosl(p + 1U - encoded);
 
   /* Nuke the trailing period if we wrote one. */
   if (q > expanded_name)

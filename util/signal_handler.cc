@@ -29,6 +29,10 @@
 
 #include <common/constants.h>
 
+#include <otlp/otlp_emitter.h>
+#include <otlp/otlp_grpc_metrics_client.h>
+#include <otlp/otlp_request_builder.h>
+
 #include <util/aws_instance_metadata.h>
 #include <util/environment_variables.h>
 #include <util/file_ops.h>
@@ -72,6 +76,12 @@ static constexpr auto FLOWMILL_DEBUG_MODULE_NAME_VAR = "FLOWMILL_DEBUG_MODULE_NA
 static constexpr auto FLOWMILL_DEBUG_MODULE_ID_VAR = "FLOWMILL_DEBUG_MODULE_ID";
 
 static constexpr auto FLOWMILL_CLUSTER_NAME_VAR = "FLOWMILL_CLUSTER_NAME";
+
+// NB: not defining the crash metric host will disable the crash metric feature
+static constexpr auto FLOWMILL_CRASH_METRIC_HOST_VAR = "FLOWMILL_CRASH_METRIC_HOST";
+static constexpr auto FLOWMILL_CRASH_METRIC_PORT_VAR = "FLOWMILL_CRASH_METRIC_PORT";
+
+static constexpr std::string_view CRASH_METRIC_NAME = "ebpf_net.unplanned_exit";
 
 static constexpr std::chrono::microseconds METADATA_TIMEOUT = 1s;
 
@@ -161,6 +171,7 @@ SignalManager::SignalManager(cli::ArgsParser &parser, ::uv_loop_t &loop, std::st
       minidump_dir_{try_get_env_var(FLOWMILL_MINIDUMP_DIR_VAR, FLOWMILL_MINIDUMP_DIR)},
       minidump_path_(parser.add_arg<std::string>(COLLECT_MINIDUMP_FLAG, "internal crash reporting")),
       breakpad_descriptor_(minidump_dir_)
+
 #ifndef NDEBUG
       ,
       crash_(parser.add_flag("crash", "internal development - force a SIGSEGV")),
@@ -177,6 +188,21 @@ static void cause_crash()
   *a = 1;
 }
 #endif
+
+void emit_crash_metric(std::map<std::string, std::string> parameters, std::string_view host, std::string_view port)
+{
+  if (host.empty()) {
+    std::cerr << "No host specified to emit a crash metric. Skipping sending a crash metric." << std::endl;
+    return;
+  }
+
+  auto now = std::chrono::system_clock::now();
+  auto timestamp_ns = std::chrono::nanoseconds(now.time_since_epoch());
+  std::string uri = std::string(host) + ":" + std::string(port);
+
+  otlp_client::OtlpEmitter emitter(uri);
+  emitter(otlp_client::OtlpRequestBuilder().metric(CRASH_METRIC_NAME).sum().number_data_point(1u, parameters, timestamp_ns));
+}
 
 void SignalManager::handle()
 {
@@ -319,6 +345,7 @@ void SignalManager::handle_minidump()
     std::filesystem::copy(log_path, report_dir_path);
   }
 
+
   /////////////
   // cleanup //
   /////////////
@@ -326,6 +353,12 @@ void SignalManager::handle_minidump()
   // Remove old crash report directories.
   // Since crash report directories are flat (they don't contain subdirs), we use zero for the max_depth parameter.
   cleanup_directory_subdirs(minidump_dir_.c_str(), MAX_CRASH_REPORTS, MAX_CRASH_REPORTS_SIZE, 0, CRASH_REPORT_DIR_SUFFIX);
+
+  ////////////////
+  // emit crash //
+  ////////////////
+  emit_crash_metric(
+      parameters, try_get_env_var(FLOWMILL_CRASH_METRIC_HOST_VAR), try_get_env_var(FLOWMILL_CRASH_METRIC_PORT_VAR, "4317"));
 
   exit(0);
 }
