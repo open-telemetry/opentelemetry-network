@@ -18,7 +18,6 @@
 
 #include <channel/callbacks.h>
 #include <channel/network_channel.h>
-#include <config/http_proxy_config.h>
 #include <platform/platform.h>
 
 #include <uv.h>
@@ -58,7 +57,7 @@ public:
   /**
    * c'tor -- leaves socket ready for connect()
    */
-  TCPChannel(uv_loop_t &loop, std::string addr, std::string port, std::optional<config::HttpProxyConfig> proxy = {});
+  TCPChannel(uv_loop_t &loop, std::string addr, std::string port);
 
   /**
    * d'tor
@@ -145,7 +144,6 @@ private:
   Callbacks *callbacks_ = nullptr;
   std::string addr_;
   std::string port_;
-  std::optional<config::HttpProxyConfig> proxy_;
   std::unique_ptr<Callbacks> callback_wrapper_;
 
   uv_tcp_t conn_;

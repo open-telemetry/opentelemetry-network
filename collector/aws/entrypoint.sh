@@ -3,13 +3,6 @@
 # shellcheck disable=SC1091
 [[ ! -e ./debug-info.conf ]] || source ./debug-info.conf
 
-if [[ -n "${FLOWMILL_PROXY_HOST}" ]]; then
-  export http_proxy="http://${FLOWMILL_PROXY_HOST}:${FLOWMILL_PROXY_PORT:-1080}"
-  export HTTP_PROXY="${http_proxy}"
-  export https_proxy="${http_proxy}"
-  export HTTPS_PROXY="${http_proxy}"
-fi
-
 # to run the collector under gdb, set `FLOWMILL_RUN_UNDER_GDB` to the flavor of gdb
 # you want (e.g.: `cgdb` or `gdb`) - this is intended for development purposes
 if [[ -n "${FLOWMILL_RUN_UNDER_GDB}" ]]; then

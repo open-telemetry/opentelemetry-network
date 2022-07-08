@@ -44,7 +44,7 @@ FileDescriptor IntakeConfig::create_output_record_file() const
 
 std::unique_ptr<channel::NetworkChannel> IntakeConfig::make_channel(uv_loop_t &loop) const
 {
-  return std::make_unique<channel::TCPChannel>(loop, host_, port_, proxy_);
+  return std::make_unique<channel::TCPChannel>(loop, host_, port_);
 }
 
 IntakeConfig IntakeConfig::read_from_env()
@@ -52,7 +52,6 @@ IntakeConfig IntakeConfig::read_from_env()
   IntakeConfig intake{
       .host_ = get_env_var(INTAKE_HOST_VAR),
       .port_ = get_env_var(INTAKE_PORT_VAR),
-      .proxy = config::HttpProxyConfig::read_from_env(),
       .record_output_path = std::string(try_get_env_var(INTAKE_RECORD_OUTPUT_PATH_VAR)),
       .encoder_ = try_get_env_value<IntakeEncoder>(INTAKE_INTAKE_ENCODER_VAR)};
 

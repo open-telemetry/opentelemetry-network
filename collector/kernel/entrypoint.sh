@@ -13,13 +13,6 @@ if [[ "${FLOWMILL_DEBUG_MODE}" == true ]]; then
   echo "==========================================================="
 fi
 
-if [[ -n "${FLOWMILL_PROXY_HOST}" ]]; then
-  export http_proxy="http://${FLOWMILL_PROXY_HOST}:${FLOWMILL_PROXY_PORT:-1080}"
-  export HTTP_PROXY="${http_proxy}"
-  export https_proxy="${http_proxy}"
-  export HTTPS_PROXY="${http_proxy}"
-fi
-
 flowmill_install_dir=${FLOWMILL_INSTALL_DIR:-/srv}
 
 flowmill_data_dir="/var/run/flowmill"

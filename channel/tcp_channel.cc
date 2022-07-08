@@ -168,8 +168,7 @@ TCPChannel::TCPChannel(uv_loop_t &loop)
   reinit(&loop);
 }
 
-TCPChannel::TCPChannel(uv_loop_t &loop, std::string addr, std::string port, std::optional<config::HttpProxyConfig> proxy)
-    : addr_(std::move(addr)), port_(std::move(port)), proxy_(std::move(proxy))
+TCPChannel::TCPChannel(uv_loop_t &loop, std::string addr, std::string port) : addr_(std::move(addr)), port_(std::move(port))
 {
   reinit(&loop);
 }
@@ -184,10 +183,6 @@ void TCPChannel::connect(Callbacks &callbacks)
 {
   LOG::trace_in(channel::Component::tcp, "TCPChannel::{}()", __func__);
 
-  if (proxy_) {
-    callback_wrapper_ = proxy_->make_callback(addr_, port_, *this, callbacks);
-  }
-
   callbacks_ = callback_wrapper_ ? callback_wrapper_.get() : &callbacks;
 
   struct addrinfo hints;
@@ -196,10 +191,8 @@ void TCPChannel::connect(Callbacks &callbacks)
   hints.ai_socktype = SOCK_STREAM;
 
   struct addrinfo *res = nullptr;
-  auto const addr = proxy_ ? proxy_->host().c_str() : addr_.c_str();
-  auto const port = proxy_ ? proxy_->port().c_str() : port_.c_str();
-  LOG::debug("TCPChannel::{}: Connecting to {} @ {}:{}", __func__, proxy_ ? "proxy" : "intake", addr, port);
-  int status = getaddrinfo(addr, port, &hints, &res);
+  LOG::debug("TCPChannel::{}: Connecting to intake @ {}:{}", __func__, addr_, port_);
+  int status = getaddrinfo(addr_.c_str(), port_.c_str(), &hints, &res);
 
   if (status != 0) {
     LOG::critical("getaddrinfo failed: {} - calling abort", static_cast<std::errc>(status));
@@ -216,7 +209,7 @@ void TCPChannel::connect(Callbacks &callbacks)
   }
 
   if (auto const error = ::uv_tcp_connect(&connect_req_, &conn_, res->ai_addr, &conn_connect_cb)) {
-    LOG::error("TCPChannel::{}: failed to establish connection to {}:{}: {}", __func__, addr, port, uv_error_t{error});
+    LOG::error("TCPChannel::{}: failed to establish connection to {}:{}: {}", __func__, addr_, port_, uv_error_t{error});
     callbacks_->on_error(error);
   }
 }

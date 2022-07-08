@@ -36,7 +36,6 @@ add_library(
 )
 target_link_libraries(
   tcp_channel
-    http_proxy_config
     error_handling
     uv_helpers
     libuv-interface

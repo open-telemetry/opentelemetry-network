@@ -18,7 +18,6 @@
 
 #include <channel/network_channel.h>
 #include <common/intake_encoder.h>
-#include <config/http_proxy_config.h>
 #include <util/args_parser.h>
 #include <util/file_ops.h>
 
@@ -54,20 +53,16 @@ public:
   IntakeConfig(
       std::string host,
       std::string port,
-      std::optional<config::HttpProxyConfig> proxy = {},
       std::string record_output_path = {},
       IntakeEncoder encoder = IntakeEncoder::binary)
       : host_(std::move(host)),
         port_(std::move(port)),
-        proxy_(std::move(proxy)),
         record_path_(std::move(record_output_path)),
         encoder_(encoder)
   {}
 
   std::string const &host() const { return host_; }
   std::string const &port() const { return port_; }
-
-  config::HttpProxyConfig const *proxy() const { return proxy_ ? &*proxy_ : nullptr; }
 
   /**
    * If a secondary output has been set, opens or creates the output file and
@@ -106,11 +101,7 @@ public:
 
   template <typename Out> friend Out &&operator<<(Out &&out, IntakeConfig const &config)
   {
-    out << config.host_ << ':' << config.port_ << " (" << config.encoder_;
-    if (config.proxy_) {
-      out << " / proxy @ " << config.proxy_->host() << ':' << config.proxy_->port();
-    }
-    out << ')';
+    out << config.host_ << ':' << config.port_ << " (" << config.encoder_ << ')';
 
     return std::forward<Out>(out);
   }
@@ -120,7 +111,6 @@ public:
 private:
   std::string host_;
   std::string port_;
-  std::optional<config::HttpProxyConfig> proxy_;
   std::string record_path_;
   IntakeEncoder encoder_ = IntakeEncoder::binary;
 };

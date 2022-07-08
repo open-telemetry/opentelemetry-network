@@ -90,7 +90,7 @@ protected:
     bpf_src_ = std::regex_replace(bpf_src_, std::regex("CPU_MEM_IO_ENABLED"), std::string("0"));
     bpf_src_ = std::regex_replace(bpf_src_, std::regex("REPORT_DEBUG_EVENTS_PLACEHOLDER"), std::string("0"));
 
-    test_intake_config_ = TestIntakeConfig("", "", std::nullopt, INTAKE_DUMP_FILE, intake_encoder);
+    test_intake_config_ = TestIntakeConfig("", "", INTAKE_DUMP_FILE, intake_encoder);
 
     auto const aws_metadata = AwsMetadata::fetch(1000ms);
 
