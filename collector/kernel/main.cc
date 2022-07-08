@@ -70,11 +70,6 @@ static constexpr auto FLOWMILL_EXPORT_BPF_SRC_FILE_VAR = "FLOWMILL_EXPORT_BPF_SR
 
 static constexpr auto FLOWMILL_DISABLE_HTTP_METRICS_VAR = "FLOWMILL_DISABLE_HTTP_METRICS";
 
-static constexpr auto FLOWMILL_LABEL_CLUSTER_DEPRECATED_VAR = "FLOWMILL_AGENT_LABELS_ENVIRONMENT";
-static constexpr auto FLOWMILL_LABEL_SERVICE_DEPRECATED_VAR = "FLOWMILL_AGENT_LABELS_SERVICE";
-static constexpr auto FLOWMILL_LABEL_HOST_DEPRECATED_VAR = "FLOWMILL_AGENT_LABELS_HOST";
-static constexpr auto FLOWMILL_LABEL_ZONE_DEPRECATED_VAR = "FLOWMILL_AGENT_LABELS_ZONE";
-
 static constexpr auto FLOWMILL_NAMESPACE_OVERRIDE_VAR = "FLOWMILL_AGENT_NAMESPACE";
 static constexpr auto FLOWMILL_CLUSTER_OVERRIDE_VAR = "FLOWMILL_AGENT_CLUSTER";
 static constexpr auto FLOWMILL_SERVICE_OVERRIDE_VAR = "FLOWMILL_AGENT_SERVICE";
@@ -418,14 +413,10 @@ int main(int argc, char *argv[])
 
   /* read label overrides from environment if present */
   auto override_agent_namespace = std::string{try_get_env_var(FLOWMILL_NAMESPACE_OVERRIDE_VAR)};
-  auto override_agent_cluster =
-      std::string{try_get_env_var(FLOWMILL_CLUSTER_OVERRIDE_VAR, try_get_env_var(FLOWMILL_LABEL_CLUSTER_DEPRECATED_VAR))};
-  auto override_agent_zone =
-      std::string{try_get_env_var(FLOWMILL_ZONE_OVERRIDE_VAR, try_get_env_var(FLOWMILL_LABEL_ZONE_DEPRECATED_VAR))};
-  auto override_agent_service =
-      std::string{try_get_env_var(FLOWMILL_SERVICE_OVERRIDE_VAR, try_get_env_var(FLOWMILL_LABEL_SERVICE_DEPRECATED_VAR))};
-  auto override_agent_host =
-      std::string{try_get_env_var(FLOWMILL_HOST_OVERRIDE_VAR, try_get_env_var(FLOWMILL_LABEL_HOST_DEPRECATED_VAR))};
+  auto override_agent_cluster = std::string{try_get_env_var(FLOWMILL_CLUSTER_OVERRIDE_VAR)};
+  auto override_agent_zone = std::string{try_get_env_var(FLOWMILL_ZONE_OVERRIDE_VAR)};
+  auto override_agent_service = std::string{try_get_env_var(FLOWMILL_SERVICE_OVERRIDE_VAR)};
+  auto override_agent_host = std::string{try_get_env_var(FLOWMILL_HOST_OVERRIDE_VAR)};
 
   /* Nomad metadata */
   if (!disable_nomad_metadata) {
