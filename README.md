@@ -60,7 +60,6 @@ Running the Flowmill collector should be as easy as running a docker image:
 docker run -it --rm \
   --env FLOWMILL_INTAKE_PORT="${FLOWMILL_INTAKE_PORT}" \
   --env FLOWMILL_INTAKE_HOST="${FLOWMILL_INTAKE_HOST}" \
-  --env FLOWMILL_INTAKE_NAME="oss" \
   --privileged \
   --pid host \
   --network host \
@@ -79,7 +78,6 @@ docker run -it --rm \
 
 Environment variables:
 
-- `FLOWMILL_INTAKE_NAME`: this is the name of the Flowmill intake server
 - `FLOWMILL_INTAKE_HOST`: this is the hostname or IP address of the Flowmill intake server
 - `FLOWMILL_INTAKE_PORT`: this is the port of the Flowmill intake server
 
@@ -168,9 +166,7 @@ present in the `docker run` command below):
 ```
 export FLOWMILL_INTAKE_HOST=127.0.0.1    # host
 export FLOWMILL_INTAKE_PORT=8000         # port
-export FLOWMILL_INTAKE_DISABLE_TLS=true  # TLS
 export FLOWMILL_INTAKE_ENCODER=otlp_log  # encoder
-export FLOWMILL_INTAKE_NAME=oss          # name for [TLS SNI](https://en.wikipedia.org/wiki/Server_Name_Indication)
 ```
 
 Here's an example:
@@ -179,9 +175,7 @@ Here's an example:
 docker run -it --rm \
   --env FLOWMILL_INTAKE_HOST="127.0.0.1" \
   --env FLOWMILL_INTAKE_PORT="8000" \
-  --env FLOWMILL_INTAKE_DISABLE_TLS=true \
   --env FLOWMILL_INTAKE_ENCODER="otlp_log" \
-  --env FLOWMILL_INTAKE_NAME="oss" \
   --privileged \
   --pid host \
   --network host \

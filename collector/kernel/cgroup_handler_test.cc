@@ -210,7 +210,6 @@ const char *dummy_json_response_data = R"delim(
     "OpenStdin": false,
     "StdinOnce": false,
     "Env": [
-      "FLOWMILL_TENANT_ID=100001",
       "FLOWMILL_RUN_UNDER_GDB=",
       "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
       "OPENSSL_CONF=/etc/openssl/openssl.cnf",
