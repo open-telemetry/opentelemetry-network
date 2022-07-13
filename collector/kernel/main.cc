@@ -289,20 +289,12 @@ int main(int argc, char *argv[])
   auto disable_http_metrics =
       parser.add_env_flag("disable-http-metrics", "Disable collection of HTTP metrics", DISABLE_HTTP_METRICS_VAR, false);
 
-  // keeping "enable-http-metrics" around while we phase it out,
-  // so that older deployments won't break
-  // we're transitioning to opt-out (preferably always on)
-  args::Flag enable_http_metrics_deprecated(
-      *parser, "http_metrics", "Enable collection of HTTP metrics (deprecated)", {"enable-http-metrics"});
-
   args::Flag enable_userland_tcp_flag(
       *parser, "userland_tcp", "Enable userland tcp processing (experimental)", {"enable-userland-tcp"});
 
   auto force_docker_metadata = parser.add_flag("force-docker-metadata", "Forces the use of docker metadata");
   auto dump_docker_metadata = parser.add_flag("dump-docker-metadata", "Dump docker metadata for debug purposes");
   auto disable_nomad_metadata = parser.add_flag("disable-nomad-metadata", "Disables detection and use of Nomad metadata");
-
-  auto disable_intake_tls = parser.add_flag("disable-tls", "Disable TLS when connecting to intake");
 
   args::ValueFlag<std::string> bpf_dump_file(
       *parser, "bpf-dump-file", "If set, dumps the stream of eBPF messages to the file given by this flag", {"bpf-dump-file"});
