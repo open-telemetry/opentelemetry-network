@@ -69,17 +69,17 @@ static constexpr std::string_view CRASH_REPORT_DIR_SUFFIX = ".crash";
 static constexpr std::string_view PARAMETERS_FILE_NAME = "parameters.txt";
 
 // Directory to which minidump files will be written by breakpad upon crash
-static constexpr auto FLOWMILL_MINIDUMP_DIR_VAR = "FLOWMILL_MINIDUMP_DIR";
-static constexpr std::string_view FLOWMILL_MINIDUMP_DIR = "/tmp/flowmill-minidump";
+static constexpr auto MINIDUMP_DIR_VAR = "EBPF_NET_MINIDUMP_DIR";
+static constexpr std::string_view MINIDUMP_DIR_DEFAULT = "/tmp/flowmill-minidump";
 
-static constexpr auto FLOWMILL_DEBUG_MODULE_NAME_VAR = "FLOWMILL_DEBUG_MODULE_NAME";
-static constexpr auto FLOWMILL_DEBUG_MODULE_ID_VAR = "FLOWMILL_DEBUG_MODULE_ID";
+static constexpr auto DEBUG_MODULE_NAME_VAR = "EBPF_NET_DEBUG_MODULE_NAME";
+static constexpr auto DEBUG_MODULE_ID_VAR = "EBPF_NET_DEBUG_MODULE_ID";
 
-static constexpr auto FLOWMILL_CLUSTER_NAME_VAR = "FLOWMILL_CLUSTER_NAME";
+static constexpr auto CLUSTER_NAME_VAR = "EBPF_NET_CLUSTER_NAME";
 
 // NB: not defining the crash metric host will disable the crash metric feature
-static constexpr auto FLOWMILL_CRASH_METRIC_HOST_VAR = "FLOWMILL_CRASH_METRIC_HOST";
-static constexpr auto FLOWMILL_CRASH_METRIC_PORT_VAR = "FLOWMILL_CRASH_METRIC_PORT";
+static constexpr auto CRASH_METRIC_HOST_VAR = "EBPF_NET_CRASH_METRIC_HOST";
+static constexpr auto CRASH_METRIC_PORT_VAR = "EBPF_NET_CRASH_METRIC_PORT";
 
 static constexpr std::string_view CRASH_METRIC_NAME = "ebpf_net.unplanned_exit";
 
@@ -165,10 +165,10 @@ static bool breakpad_callback(const google_breakpad::MinidumpDescriptor &descrip
 SignalManager::SignalManager(cli::ArgsParser &parser, ::uv_loop_t &loop, std::string_view product)
     : loop_(loop),
       product_(product),
-      module_name_(try_get_env_var(FLOWMILL_DEBUG_MODULE_NAME_VAR, product_)),
-      module_id_(try_get_env_var(FLOWMILL_DEBUG_MODULE_ID_VAR)),
+      module_name_(try_get_env_var(DEBUG_MODULE_NAME_VAR, product_)),
+      module_id_(try_get_env_var(DEBUG_MODULE_ID_VAR)),
       disable_crash_report_(parser.add_flag("disable-crash-report", "disables minidump / crash reporter")),
-      minidump_dir_{try_get_env_var(FLOWMILL_MINIDUMP_DIR_VAR, FLOWMILL_MINIDUMP_DIR)},
+      minidump_dir_{try_get_env_var(MINIDUMP_DIR_VAR, MINIDUMP_DIR_DEFAULT)},
       minidump_path_(parser.add_arg<std::string>(COLLECT_MINIDUMP_FLAG, "internal crash reporting")),
       breakpad_descriptor_(minidump_dir_)
 
@@ -279,7 +279,7 @@ void SignalManager::handle_minidump()
 
   std::map<std::string, std::string> parameters;
 
-  parameters["cluster_name"] = std::string{try_get_env_var(FLOWMILL_CLUSTER_NAME_VAR)};
+  parameters["cluster_name"] = std::string{try_get_env_var(CLUSTER_NAME_VAR)};
 
   parameters["product"] = product_;
 
@@ -357,8 +357,7 @@ void SignalManager::handle_minidump()
   ////////////////
   // emit crash //
   ////////////////
-  emit_crash_metric(
-      parameters, try_get_env_var(FLOWMILL_CRASH_METRIC_HOST_VAR), try_get_env_var(FLOWMILL_CRASH_METRIC_PORT_VAR, "4317"));
+  emit_crash_metric(parameters, try_get_env_var(CRASH_METRIC_HOST_VAR), try_get_env_var(CRASH_METRIC_PORT_VAR, "4317"));
 
   exit(0);
 }

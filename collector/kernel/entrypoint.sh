@@ -3,7 +3,7 @@
 # shellcheck disable=SC1091
 [[ ! -e ./debug-info.conf ]] || source ./debug-info.conf
 
-if [[ "${FLOWMILL_DEBUG_MODE}" == true ]]; then
+if [[ "${EBPF_NET_DEBUG_MODE}" == true ]]; then
   echo "===================== /etc/os-release ====================="
   [[ ! -e /etc/os-release ]] || cat /etc/os-release
   echo "========================= uname -a ========================"
@@ -13,7 +13,7 @@ if [[ "${FLOWMILL_DEBUG_MODE}" == true ]]; then
   echo "==========================================================="
 fi
 
-flowmill_install_dir=${FLOWMILL_INSTALL_DIR:-/srv}
+flowmill_install_dir=${EBPF_NET_INSTALL_DIR:-/srv}
 
 flowmill_data_dir="/var/run/flowmill"
 flowmill_dump_dir="${flowmill_data_dir}/dump"
@@ -59,24 +59,24 @@ if [[ -n "${entrypoint_error}" ]]; then
 fi
 
 echo "launching kernel collector..."
-# on Debug (non-production) images, Flowmill devs can run in local mode by setting
-# `FLOWMILL_RUN_LOCAL` to non-empty.
-if [[ -n "${FLOWMILL_RUN_LOCAL}" ]]; then
+# on Debug (non-production) images, devs can run in local mode by setting
+# `EBPF_NET_RUN_LOCAL` to non-empty.
+if [[ -n "${EBPF_NET_RUN_LOCAL}" ]]; then
   # shellcheck disable=SC1091
   source /srv/local.sh
   cmd_args+=("${local_cmd_args[@]}")
 fi
 
-# to run the collector under gdb, set `FLOWMILL_RUN_UNDER_GDB` to the flavor of gdb
+# to run the collector under gdb, set `EBPF_NET_RUN_UNDER_GDB` to the flavor of gdb
 # you want (e.g.: `cgdb` or `gdb`) - this is intended for development purposes
-if [[ -n "${FLOWMILL_RUN_UNDER_GDB}" ]]; then
+if [[ -n "${EBPF_NET_RUN_UNDER_GDB}" ]]; then
   apt-get update -y
-  apt-get install -y --no-install-recommends "${FLOWMILL_RUN_UNDER_GDB}"
+  apt-get install -y --no-install-recommends "${EBPF_NET_RUN_UNDER_GDB}"
 
-  if [[ "${#FLOWMILL_GDB_COMMANDS[@]}" -lt 1 ]]; then
+  if [[ "${#EBPF_NET_GDB_COMMANDS[@]}" -lt 1 ]]; then
     # default behavior is to run the agent, print a stack trace after it exits
     # and exit gdb without confirmation
-    FLOWMILL_GDB_COMMANDS=( \
+    EBPF_NET_GDB_COMMANDS=( \
       'set pagination off'
       'handle SIGPIPE nostop pass'
       'handle SIGUSR1 nostop pass'
@@ -88,15 +88,15 @@ if [[ -n "${FLOWMILL_RUN_UNDER_GDB}" ]]; then
   fi
 
   GDB_ARGS=()
-  for gdb_cmd in "${FLOWMILL_GDB_COMMANDS[@]}"; do
+  for gdb_cmd in "${EBPF_NET_GDB_COMMANDS[@]}"; do
     GDB_ARGS+=(-ex "${gdb_cmd}")
   done
 
-  (set -x; exec "${FLOWMILL_RUN_UNDER_GDB}" -q "${GDB_ARGS[@]}" \
+  (set -x; exec "${EBPF_NET_RUN_UNDER_GDB}" -q "${GDB_ARGS[@]}" \
     --args "${flowmill_install_dir}/kernel-collector" "${cmd_args[@]}" "$@" \
   )
-elif [[ -n "${FLOWMILL_RUN_UNDER_VALGRIND}" ]]; then
-  # to run the collector under valgrind, set `FLOWMILL_RUN_UNDER_VALGRIND` to the options to pass to valgrind,
+elif [[ -n "${EBPF_NET_RUN_UNDER_VALGRIND}" ]]; then
+  # to run the collector under valgrind, set `EBPF_NET_RUN_UNDER_VALGRIND` to the options to pass to valgrind,
   # including at minimum the tool you want, for example:
   # "--tool=memcheck", or
   # "--tool=memcheck --leak-check=full --show-leak-kinds=all --track-origins=yes", or
@@ -106,7 +106,7 @@ elif [[ -n "${FLOWMILL_RUN_UNDER_VALGRIND}" ]]; then
   apt install -y valgrind
 
   # shellcheck disable=SC2086
-  (set -x; exec /usr/bin/valgrind ${FLOWMILL_RUN_UNDER_VALGRIND} "${flowmill_install_dir}/kernel-collector" "${cmd_args[@]}" "$@")
+  (set -x; exec /usr/bin/valgrind ${EBPF_NET_RUN_UNDER_VALGRIND} "${flowmill_install_dir}/kernel-collector" "${cmd_args[@]}" "$@")
 else
   (set -x; exec "${flowmill_install_dir}/kernel-collector" "${cmd_args[@]}" "$@")
 fi

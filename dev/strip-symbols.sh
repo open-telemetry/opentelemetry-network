@@ -62,8 +62,8 @@ symbol_dir="${module_name}/${module_id}"
 symbol_path="symbols/${symbol_dir}/${symbol_file}"
 
 cat > "debug-info.conf" <<EOF
-export FLOWMILL_DEBUG_MODULE_NAME="${module_name}"
-export FLOWMILL_DEBUG_MODULE_ID="${module_id}"
+export EBPF_NET_DEBUG_MODULE_NAME="${module_name}"
+export EBPF_NET_DEBUG_MODULE_ID="${module_id}"
 EOF
 
 echo "stripping debug symbols from '${binary_file}' into '${stripped_file}'..." >&2

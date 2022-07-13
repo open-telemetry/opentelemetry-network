@@ -66,15 +66,15 @@ extern char agent_bpf_c[];
 extern unsigned int agent_bpf_c_len;
 } // extern "C"
 
-static constexpr auto FLOWMILL_EXPORT_BPF_SRC_FILE_VAR = "FLOWMILL_EXPORT_BPF_SRC_FILE";
+static constexpr auto EXPORT_BPF_SRC_FILE_VAR = "EBPF_NET_EXPORT_BPF_SRC_FILE";
 
-static constexpr auto FLOWMILL_DISABLE_HTTP_METRICS_VAR = "FLOWMILL_DISABLE_HTTP_METRICS";
+static constexpr auto DISABLE_HTTP_METRICS_VAR = "EBPF_NET_DISABLE_HTTP_METRICS";
 
-static constexpr auto FLOWMILL_NAMESPACE_OVERRIDE_VAR = "FLOWMILL_AGENT_NAMESPACE";
-static constexpr auto FLOWMILL_CLUSTER_OVERRIDE_VAR = "FLOWMILL_AGENT_CLUSTER";
-static constexpr auto FLOWMILL_SERVICE_OVERRIDE_VAR = "FLOWMILL_AGENT_SERVICE";
-static constexpr auto FLOWMILL_HOST_OVERRIDE_VAR = "FLOWMILL_AGENT_HOST";
-static constexpr auto FLOWMILL_ZONE_OVERRIDE_VAR = "FLOWMILL_AGENT_ZONE";
+static constexpr auto NAMESPACE_OVERRIDE_VAR = "EBPF_NET_AGENT_NAMESPACE";
+static constexpr auto CLUSTER_OVERRIDE_VAR = "EBPF_NET_AGENT_CLUSTER";
+static constexpr auto SERVICE_OVERRIDE_VAR = "EBPF_NET_AGENT_SERVICE";
+static constexpr auto HOST_OVERRIDE_VAR = "EBPF_NET_AGENT_HOST";
+static constexpr auto ZONE_OVERRIDE_VAR = "EBPF_NET_AGENT_ZONE";
 
 static void refill_log_rate_limit_cb(uv_timer_t *timer)
 {
@@ -286,8 +286,8 @@ int main(int argc, char *argv[])
   args::ValueFlag<std::string> docker_ns_label(
       *parser, "label", "Docker label to be used as namespace", {"docker-ns-label"}, "");
 
-  auto disable_http_metrics = parser.add_env_flag(
-      "disable-http-metrics", "Disable collection of HTTP metrics", FLOWMILL_DISABLE_HTTP_METRICS_VAR, false);
+  auto disable_http_metrics =
+      parser.add_env_flag("disable-http-metrics", "Disable collection of HTTP metrics", DISABLE_HTTP_METRICS_VAR, false);
 
   // keeping "enable-http-metrics" around while we phase it out,
   // so that older deployments won't break
@@ -412,11 +412,11 @@ int main(int argc, char *argv[])
   }
 
   /* read label overrides from environment if present */
-  auto override_agent_namespace = std::string{try_get_env_var(FLOWMILL_NAMESPACE_OVERRIDE_VAR)};
-  auto override_agent_cluster = std::string{try_get_env_var(FLOWMILL_CLUSTER_OVERRIDE_VAR)};
-  auto override_agent_zone = std::string{try_get_env_var(FLOWMILL_ZONE_OVERRIDE_VAR)};
-  auto override_agent_service = std::string{try_get_env_var(FLOWMILL_SERVICE_OVERRIDE_VAR)};
-  auto override_agent_host = std::string{try_get_env_var(FLOWMILL_HOST_OVERRIDE_VAR)};
+  auto override_agent_namespace = std::string{try_get_env_var(NAMESPACE_OVERRIDE_VAR)};
+  auto override_agent_cluster = std::string{try_get_env_var(CLUSTER_OVERRIDE_VAR)};
+  auto override_agent_zone = std::string{try_get_env_var(ZONE_OVERRIDE_VAR)};
+  auto override_agent_service = std::string{try_get_env_var(SERVICE_OVERRIDE_VAR)};
+  auto override_agent_host = std::string{try_get_env_var(HOST_OVERRIDE_VAR)};
 
   /* Nomad metadata */
   if (!disable_nomad_metadata) {
@@ -502,7 +502,7 @@ int main(int argc, char *argv[])
     bpf_src = std::regex_replace(
         bpf_src, std::regex("REPORT_DEBUG_EVENTS_PLACEHOLDER"), std::string(1, "01"[*report_bpf_debug_events]));
 
-    if (std::string const out{try_get_env_var(FLOWMILL_EXPORT_BPF_SRC_FILE_VAR)}; !out.empty()) {
+    if (std::string const out{try_get_env_var(EXPORT_BPF_SRC_FILE_VAR)}; !out.empty()) {
       if (auto const error = write_file(out.c_str(), bpf_src)) {
         LOG::error("ERROR: unable to write BPF source to '{}': {}", out, error);
       }

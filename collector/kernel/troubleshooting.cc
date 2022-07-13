@@ -112,16 +112,16 @@ In order to allow it, follow the instructions below:
       agent:
         installKernelHeaders: true
 
-  - for deployments using Docker, set environment variable `FLOWMILL_KERNEL_HEADERS_AUTO_FETCH`
+  - for deployments using Docker, set environment variable `EBPF_NET_KERNEL_HEADERS_AUTO_FETCH`
     to `true` by passing these additional command line flags to Docker:
 
-      --env "FLOWMILL_KERNEL_HEADERS_AUTO_FETCH=true"
+      --env "EBPF_NET_KERNEL_HEADERS_AUTO_FETCH=true"
 
-  - for ECS deployments, ensure that environment variable `FLOWMILL_KERNEL_HEADERS_AUTO_FETCH`
+  - for ECS deployments, ensure that environment variable `EBPF_NET_KERNEL_HEADERS_AUTO_FETCH`
     is set to `true` in the Agent's task definitions;
 
   - for any other deployments, ensure that Flowmill Kernel Collector container will be started
-    with environment variable `FLOWMILL_KERNEL_HEADERS_AUTO_FETCH` set to `true`.
+    with environment variable `EBPF_NET_KERNEL_HEADERS_AUTO_FETCH` set to `true`.
 )TROUBLESHOOTING",
                      static_cast<LinuxDistro>(info.os_flavor))
               << std::endl
@@ -170,7 +170,7 @@ the problem.
   }
   }
 
-  std::cout << std::endl << FLOWMILL_CONTACT_INFO_MESSAGE << std::endl;
+  std::cout << std::endl << CONTACT_INFO_MESSAGE << std::endl;
   std::cout.flush();
 
   if (flush_and_close) {
@@ -287,7 +287,7 @@ the problem.
   }
   }
 
-  std::cout << std::endl << FLOWMILL_CONTACT_INFO_MESSAGE << std::endl;
+  std::cout << std::endl << CONTACT_INFO_MESSAGE << std::endl;
   std::cout.flush();
 
   close_agent(-1, flush_and_close, exit_sleep_sec);

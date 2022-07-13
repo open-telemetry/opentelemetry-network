@@ -210,7 +210,7 @@ const char *dummy_json_response_data = R"delim(
     "OpenStdin": false,
     "StdinOnce": false,
     "Env": [
-      "FLOWMILL_RUN_UNDER_GDB=",
+      "EBPF_NET_RUN_UNDER_GDB=",
       "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
       "OPENSSL_CONF=/etc/openssl/openssl.cnf",
       "GEOIP_PATH=/usr/share/GeoIP"

@@ -58,8 +58,8 @@ Running the Flowmill collector should be as easy as running a docker image:
 
 ```
 docker run -it --rm \
-  --env FLOWMILL_INTAKE_PORT="${FLOWMILL_INTAKE_PORT}" \
-  --env FLOWMILL_INTAKE_HOST="${FLOWMILL_INTAKE_HOST}" \
+  --env EBPF_NET_INTAKE_PORT="${EBPF_NET_INTAKE_PORT}" \
+  --env EBPF_NET_INTAKE_HOST="${EBPF_NET_INTAKE_HOST}" \
   --privileged \
   --pid host \
   --network host \
@@ -78,8 +78,8 @@ docker run -it --rm \
 
 Environment variables:
 
-- `FLOWMILL_INTAKE_HOST`: this is the hostname or IP address of the Flowmill intake server
-- `FLOWMILL_INTAKE_PORT`: this is the port of the Flowmill intake server
+- `EBPF_NET_INTAKE_HOST`: this is the hostname or IP address of the Flowmill intake server
+- `EBPF_NET_INTAKE_PORT`: this is the port of the Flowmill intake server
 
 Volumes:
 
@@ -164,18 +164,18 @@ argument). Below is a list of settings along with the name of the environment
 variable and suggested values for a proof-of-concept (note that these are already 
 present in the `docker run` command below):
 ```
-export FLOWMILL_INTAKE_HOST=127.0.0.1    # host
-export FLOWMILL_INTAKE_PORT=8000         # port
-export FLOWMILL_INTAKE_ENCODER=otlp_log  # encoder
+export EBPF_NET_INTAKE_HOST=127.0.0.1    # host
+export EBPF_NET_INTAKE_PORT=8000         # port
+export EBPF_NET_INTAKE_ENCODER=otlp_log  # encoder
 ```
 
 Here's an example:
 
 ```
 docker run -it --rm \
-  --env FLOWMILL_INTAKE_HOST="127.0.0.1" \
-  --env FLOWMILL_INTAKE_PORT="8000" \
-  --env FLOWMILL_INTAKE_ENCODER="otlp_log" \
+  --env EBPF_NET_INTAKE_HOST="127.0.0.1" \
+  --env EBPF_NET_INTAKE_PORT="8000" \
+  --env EBPF_NET_INTAKE_ENCODER="otlp_log" \
   --privileged \
   --pid host \
   --network host \

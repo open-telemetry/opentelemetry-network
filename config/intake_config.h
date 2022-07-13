@@ -35,10 +35,10 @@ namespace config {
 
 class IntakeConfig {
   // environment variable names used by `read_from_env()`
-  static constexpr auto INTAKE_HOST_VAR = "FLOWMILL_INTAKE_HOST";
-  static constexpr auto INTAKE_PORT_VAR = "FLOWMILL_INTAKE_PORT";
-  static constexpr auto INTAKE_INTAKE_ENCODER_VAR = "FLOWMILL_INTAKE_ENCODER";
-  static constexpr auto INTAKE_RECORD_OUTPUT_PATH_VAR = "FLOWMILL_RECORD_INTAKE_OUTPUT_PATH";
+  static constexpr auto INTAKE_HOST_VAR = "EBPF_NET_INTAKE_HOST";
+  static constexpr auto INTAKE_PORT_VAR = "EBPF_NET_INTAKE_PORT";
+  static constexpr auto INTAKE_INTAKE_ENCODER_VAR = "EBPF_NET_INTAKE_ENCODER";
+  static constexpr auto INTAKE_RECORD_OUTPUT_PATH_VAR = "EBPF_NET_RECORD_INTAKE_OUTPUT_PATH";
 
 public:
   IntakeConfig() {}

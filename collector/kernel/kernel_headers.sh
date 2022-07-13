@@ -7,7 +7,7 @@ kernel_version="$(uname -r)"
 kernel_headers_usr_src_base_path="/usr/src"
 kernel_headers_lib_modules_base_path="/lib/modules"
 
-host_dir="${FLOWMILL_HOST_DIR:-/var/run/flowmill/host}"
+host_dir="${EBPF_NET_HOST_DIR:-/var/run/flowmill/host}"
 host_etc_dir="${host_dir}/etc"
 host_yum_vars_dir="${host_etc_dir}/yum/vars"
 host_cache_dir="${host_dir}/cache/flowmill"
@@ -430,7 +430,7 @@ function resolve_kernel_headers {
     kernel_headers_source="pre_installed"
   elif use_cached_kernel_headers; then
     kernel_headers_source="pre_fetched"
-  elif [[ "${FLOWMILL_KERNEL_HEADERS_AUTO_FETCH}" == "false" ]]; then
+  elif [[ "${EBPF_NET_KERNEL_HEADERS_AUTO_FETCH}" == "false" ]]; then
     kernel_headers_source="dont_fetch"
     entrypoint_error="kernel_headers_fetch_refuse"
     echo "no kernel headers found, not auto-fetching as requested"

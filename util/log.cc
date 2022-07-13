@@ -37,8 +37,8 @@ constexpr unsigned int MAX_FILE_SIZE = 1024 * 1024;
 constexpr unsigned int MAX_NUM_FILES = 5;
 constexpr auto FLUSH_INTERVAL = 5s;
 
-constexpr std::string_view FLOWMILL_LOG_FILE_VAR = "FLOWMILL_LOG_FILE_PATH";
-constexpr std::string_view FLOWMILL_LOG_FILE_PATH = "/var/log/flowmill.log";
+constexpr std::string_view LOG_FILE_VAR = "EBPF_NET_LOG_FILE_PATH";
+constexpr std::string_view LOG_FILE_DEFAULT = "/var/log/flowmill.log";
 } // namespace
 
 // TODO: move the rate limit mechanism into a spdlog sink (inside its lock),
@@ -84,7 +84,7 @@ void LOG::init(bool console, std::string const *filename)
 
 std::string_view LOG::log_file_path()
 {
-  return try_get_env_var(FLOWMILL_LOG_FILE_VAR.data(), FLOWMILL_LOG_FILE_PATH);
+  return try_get_env_var(LOG_FILE_VAR.data(), LOG_FILE_DEFAULT);
 }
 
 void LOG::enable_rate_limit(int64_t initial_budget)

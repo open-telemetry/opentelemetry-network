@@ -23,7 +23,7 @@
 
 #include <string_view>
 
-constexpr std::string_view FLOWMILL_CONTACT_INFO_MESSAGE = R"SUPPORT(
+constexpr std::string_view CONTACT_INFO_MESSAGE = R"SUPPORT(
 To reach Flowmill customer support, please choose one of the contact methods below:
 
 - the shared Slack channel that has been setup between your company and `flowmill.slack.com`;

@@ -10,8 +10,8 @@ ARG EXTRA_PKGS=""
 RUN apt-get update && apt-get install -y ca-certificates
 ENV SSL_CERT_DIR=/etc/ssl/certs
 
-ENV FLOWMILL_INSTALL_DIR=/srv
-ENV FLOWMILL_HOST_DIR=/var/run/flowmill/host
+ENV EBPF_NET_INSTALL_DIR=/srv
+ENV EBPF_NET_HOST_DIR=/var/run/flowmill/host
 
 ENTRYPOINT [ "/srv/entrypoint.sh" ]
 
