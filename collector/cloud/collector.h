@@ -16,8 +16,8 @@
 
 #pragma once
 
-#include <collector/aws/enumerator.h>
-#include <collector/aws/ingest_connection.h>
+#include <collector/cloud/enumerator.h>
+#include <collector/cloud/ingest_connection.h>
 
 #include <channel/callbacks.h>
 #include <scheduling/interval_scheduler.h>
@@ -27,10 +27,10 @@
 #include <chrono>
 #include <string>
 
-namespace collector::aws {
+namespace collector::cloud {
 
-struct AwsCollector : channel::Callbacks {
-  AwsCollector(
+struct CloudCollector : channel::Callbacks {
+  CloudCollector(
       ::uv_loop_t &loop,
       std::string_view hostname,
       std::chrono::milliseconds aws_metadata_timeout,
@@ -39,7 +39,7 @@ struct AwsCollector : channel::Callbacks {
       config::IntakeConfig intake_config,
       std::chrono::milliseconds poll_interval);
 
-  ~AwsCollector();
+  ~CloudCollector();
 
   void run_loop();
 
@@ -59,4 +59,4 @@ private:
   std::chrono::milliseconds const poll_interval_;
 };
 
-} // namespace collector::aws
+} // namespace collector::cloud

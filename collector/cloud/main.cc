@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-#include <collector/aws/collector.h>
+#include <collector/cloud/collector.h>
 
 #include <channel/component.h>
 #include <collector/constants.h>
@@ -35,7 +35,7 @@
 #include <csignal>
 
 /**
- * AWS Collector Agent
+ * Cloud Collector Agent
  *
  * Requires AWS Access Key ID and Secret Access Key to be set up in the
  * environment:
@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
 
   // args parsing
 
-  cli::ArgsParser parser("Flowmill AWS collector agent");
+  cli::ArgsParser parser("Cloud Collector Agent");
 
   args::HelpFlag help(*parser, "help", "Display this help menu", {'h', "help"});
 
@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
 
   auto &intake_config_handler = parser.new_handler<config::IntakeConfig::ArgsHandler>();
 
-  SignalManager &signal_manager = parser.new_handler<SignalManager>(loop, "aws-collector");
+  SignalManager &signal_manager = parser.new_handler<SignalManager>(loop, "cloud-collector");
 
   if (auto result = parser.process(argc, argv); !result.has_value()) {
     return result.error();
@@ -99,8 +99,8 @@ int main(int argc, char *argv[])
 
   auto intake_config = intake_config_handler.read_config();
 
-  LOG::info("AWS Collector version {} ({}) started on host {}", versions::release, release_mode_string, hostname);
-  LOG::info("AWS Collector agent ID is {}", agent_id);
+  LOG::info("Cloud Collector version {} ({}) started on host {}", versions::release, release_mode_string, hostname);
+  LOG::info("Cloud Collector agent ID is {}", agent_id);
 
   // aws sdk init
 
@@ -108,7 +108,7 @@ int main(int argc, char *argv[])
 
   // main
 
-  collector::aws::AwsCollector collector{
+  collector::cloud::CloudCollector collector{
       loop,
       hostname,
       std::chrono::milliseconds(aws_metadata_timeout_ms.Get()),

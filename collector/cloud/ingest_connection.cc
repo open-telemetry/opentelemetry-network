@@ -14,11 +14,11 @@
 // limitations under the License.
 //
 
-#include <collector/aws/ingest_connection.h>
+#include <collector/cloud/ingest_connection.h>
 
 #include <util/boot_time.h>
 
-namespace collector::aws {
+namespace collector::cloud {
 
 IngestConnection::IngestConnection(
     std::string_view hostname,
@@ -36,7 +36,7 @@ IngestConnection::IngestConnection(
       writer_(channel_.buffered_writer(), monotonic, get_boot_time(), encoder_.get()),
       caretaker_(
           hostname,
-          ClientType::aws,
+          ClientType::cloud,
           {},
           &loop,
           writer_,
@@ -84,4 +84,4 @@ void IngestConnection::on_connect()
   connection_callback_.on_connect();
 }
 
-} // namespace collector::aws
+} // namespace collector::cloud

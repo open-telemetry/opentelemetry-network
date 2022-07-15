@@ -15,7 +15,7 @@ render_compile(
   APPS
     agent_internal
     kernel_collector
-    aws_collector
+    cloud_collector
     ingest
   COMPILER
     ${RENDER_COMPILER}

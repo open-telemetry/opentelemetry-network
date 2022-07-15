@@ -1,24 +1,24 @@
 add_executable(
-  aws-collector
+  cloud-collector
     main.cc
     collector.cc
     enumerator.cc
     ingest_connection.cc
 )
-harden_executable(aws-collector)
+harden_executable(cloud-collector)
 
-add_dependencies(collectors aws-collector)
+add_dependencies(collectors cloud-collector)
 
 target_compile_options(
-  aws-collector
+  cloud-collector
   PRIVATE
     ${CXX_ERROR_LIMIT_FLAG}=1
 )
 
 target_link_libraries(
-  aws-collector
+  cloud-collector
   PUBLIC
-    render_flowmill_aws_collector
+    render_flowmill_cloud_collector
     render_flowmill_ingest_writer
     signal_handler
     aws-sdk-cpp
@@ -37,27 +37,27 @@ target_link_libraries(
 )
 
 set_target_properties(
-  aws-collector
+  cloud-collector
   PROPERTIES LINK_FLAGS "-pthread"
 )
 
-strip_binary(aws-collector)
+strip_binary(cloud-collector)
 
 lint_shell_script_bundle(
-  aws-collector-scripts
+  cloud-collector-scripts
   SOURCES
     entrypoint.sh
 )
 
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
   build_custom_docker_image(
-    aws-collector
+    cloud-collector
     OUT_DIR srv
     ARTIFACTS_OF
-      aws-collector
+      cloud-collector
     OUTPUT_OF
-      aws-collector-scripts
-      aws-collector-stripped
+      cloud-collector-scripts
+      cloud-collector-stripped
     BINARIES
       debug-info.conf
     FILES
@@ -68,11 +68,11 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
   )
 else()
   build_custom_docker_image(
-    aws-collector
+    cloud-collector
     OUT_DIR srv
     OUTPUT_OF
-      aws-collector-scripts
-      aws-collector-stripped
+      cloud-collector-scripts
+      cloud-collector-stripped
     BINARIES
       debug-info.conf
     FILES

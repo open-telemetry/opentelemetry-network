@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-#include <collector/aws/collector.h>
+#include <collector/cloud/collector.h>
 
 #include <scheduling/interval_scheduler.h>
 
@@ -26,7 +26,7 @@
 #include <stdexcept>
 #include <thread>
 
-namespace collector::aws {
+namespace collector::cloud {
 
 namespace {
 
@@ -36,7 +36,7 @@ constexpr std::chrono::milliseconds RECONNECT_JITTER = 1s;
 
 } // namespace
 
-AwsCollector::AwsCollector(
+CloudCollector::CloudCollector(
     ::uv_loop_t &loop,
     std::string_view hostname,
     std::chrono::milliseconds aws_metadata_timeout,
@@ -53,19 +53,19 @@ AwsCollector::AwsCollector(
           std::move(intake_config),
           buffer_size,
           *this,
-          std::bind(&AwsCollector::on_connected, this)),
+          std::bind(&CloudCollector::on_connected, this)),
       log_(connection_.writer()),
       enumerator_(log_, connection_.index(), connection_.writer()),
-      scheduler_(loop_, std::bind(&AwsCollector::callback, this)),
+      scheduler_(loop_, std::bind(&CloudCollector::callback, this)),
       poll_interval_(poll_interval)
 {}
 
-AwsCollector::~AwsCollector()
+CloudCollector::~CloudCollector()
 {
   ::uv_loop_close(&loop_);
 }
 
-void AwsCollector::run_loop()
+void CloudCollector::run_loop()
 {
   connection_.connect();
 
@@ -75,14 +75,14 @@ void AwsCollector::run_loop()
   scheduler_.stop();
 }
 
-scheduling::JobFollowUp AwsCollector::callback()
+scheduling::JobFollowUp CloudCollector::callback()
 {
   auto result = enumerator_.enumerate();
   connection_.flush();
   return result;
 }
 
-void AwsCollector::on_error(int err)
+void CloudCollector::on_error(int err)
 {
   scheduler_.stop();
 
@@ -91,9 +91,9 @@ void AwsCollector::on_error(int err)
   std::this_thread::sleep_for(add_jitter(RECONNECT_DELAY, -RECONNECT_JITTER, RECONNECT_JITTER));
 }
 
-void AwsCollector::on_connected()
+void CloudCollector::on_connected()
 {
   scheduler_.start(poll_interval_, poll_interval_);
 }
 
-} // namespace collector::aws
+} // namespace collector::cloud

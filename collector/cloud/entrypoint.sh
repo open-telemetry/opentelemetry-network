@@ -29,8 +29,8 @@ if [[ -n "${EBPF_NET_RUN_UNDER_GDB}" ]]; then
   done
 
   (set -x; exec "${EBPF_NET_RUN_UNDER_GDB}" -q "${GDB_ARGS[@]}" \
-    --args /srv/aws-collector "$@" \
+    --args /srv/cloud-collector "$@" \
   )
 else
-  (set -x; exec /srv/aws-collector "$@")
+  (set -x; exec /srv/cloud-collector "$@")
 fi

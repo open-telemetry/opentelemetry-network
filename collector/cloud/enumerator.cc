@@ -14,14 +14,14 @@
 // limitations under the License.
 //
 
-#include <collector/aws/enumerator.h>
+#include <collector/cloud/enumerator.h>
 
 #include <aws/ec2/model/DescribeNetworkInterfacesRequest.h>
 #include <aws/ec2/model/DescribeNetworkInterfacesResponse.h>
 #include <aws/ec2/model/DescribeRegionsRequest.h>
 #include <aws/ec2/model/DescribeRegionsResponse.h>
 
-#include <generated/flowmill/aws_collector/index.h>
+#include <generated/flowmill/cloud_collector/index.h>
 #include <generated/flowmill/ingest.wire_message.h>
 
 #include <util/ip_address.h>
@@ -36,10 +36,10 @@
 
 #include <cstdint>
 
-namespace collector::aws {
+namespace collector::cloud {
 
 NetworkInterfacesEnumerator::NetworkInterfacesEnumerator(
-    logging::Logger &log, flowmill::aws_collector::Index &index, flowmill::ingest::Writer &writer)
+    logging::Logger &log, flowmill::cloud_collector::Index &index, flowmill::ingest::Writer &writer)
     : index_(index), writer_(writer), log_(log)
 {}
 
@@ -48,7 +48,7 @@ NetworkInterfacesEnumerator::~NetworkInterfacesEnumerator()
   free_handles();
 }
 
-void NetworkInterfacesEnumerator::set_handles(std::vector<flowmill::aws_collector::handles::aws_network_interface> handles)
+void NetworkInterfacesEnumerator::set_handles(std::vector<flowmill::cloud_collector::handles::aws_network_interface> handles)
 {
   free_handles();
   handles_ = std::move(handles);
@@ -64,9 +64,9 @@ void NetworkInterfacesEnumerator::free_handles()
 }
 
 void translate_interfaces_to_spans(
-    flowmill::aws_collector::Index &index,
+    flowmill::cloud_collector::Index &index,
     Aws::Vector<Aws::EC2::Model::NetworkInterface> const &interfaces,
-    std::vector<flowmill::aws_collector::handles::aws_network_interface> &handles)
+    std::vector<flowmill::cloud_collector::handles::aws_network_interface> &handles)
 {
   for (auto const &interface : interfaces) {
     auto const &attachment = interface.GetAttachment();
@@ -178,7 +178,7 @@ scheduling::JobFollowUp NetworkInterfacesEnumerator::enumerate()
     return scheduling::JobFollowUp::backoff;
   }
 
-  std::vector<flowmill::aws_collector::handles::aws_network_interface> handles;
+  std::vector<flowmill::cloud_collector::handles::aws_network_interface> handles;
   auto result = scheduling::JobFollowUp::ok;
 
   LOG::trace("starting AWS network interfaces enumeration");
@@ -219,4 +219,4 @@ scheduling::JobFollowUp NetworkInterfacesEnumerator::enumerate()
   return result;
 }
 
-} // namespace collector::aws
+} // namespace collector::cloud

@@ -11,7 +11,7 @@ namespace {
   ingest: 301-310,321-330,341,350-360,390-420,491-520,531-550
   agent_internal: 331-340,361-380
   kernel_collector: 521-530
-  aws_collector: 441-450
+  cloud_collector: 441-450
 }
 
 app agent_internal {
@@ -841,7 +841,7 @@ app ingest {
 
       1: u16 status // CollectorStatus enum in `common/collector_status.h`
       2: u16 detail // extended info about the collector's status
-                    // aws-collector: the http status code for api calls
+                    // cloud-collector: the http status code for api calls
     }
 
     70: log system_wide_process_settings {
@@ -1029,10 +1029,10 @@ app kernel_collector {
   }
 } /* app kernel_collector */
 
-app aws_collector {
+app cloud_collector {
   span aws_network_interface
-    impl "flowmill::aws_collector::AwsNetworkInterfaceSpanBase"
-    include "<flowmill/aws_collector/span_base.h>"
+    impl "flowmill::cloud_collector::AwsNetworkInterfaceSpanBase"
+    include "<flowmill/cloud_collector/span_base.h>"
   {
     pool_size 60000
     index (ip)
@@ -1041,4 +1041,4 @@ app aws_collector {
 
     u128 ip
   }
-} /* app aws_collector */
+} /* app cloud_collector */

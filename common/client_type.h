@@ -23,7 +23,7 @@
 #define ENUM_ELEMENTS(X)                                                                                                       \
   X(unknown, 0)                                                                                                                \
   X(kernel, 1)                                                                                                                 \
-  X(aws, 2)                                                                                                                    \
+  X(cloud, 2)                                                                                                                  \
   X(k8s, 3)                                                                                                                    \
   X(ingest, 4)                                                                                                                 \
   X(matching, 5)                                                                                                               \
