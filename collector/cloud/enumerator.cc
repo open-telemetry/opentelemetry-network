@@ -151,7 +151,7 @@ void NetworkInterfacesEnumerator::handle_ec2_error(
 
   auto const http_status = static_cast<std::underlying_type_t<Aws::Http::HttpResponseCode>>(error.GetResponseCode());
 
-  LOG::trace("reporting aws collector as unhealthy (status={} detail={})", status, http_status);
+  LOG::trace("reporting cloud collector as unhealthy (status={} detail={})", status, http_status);
   writer_.collector_health(integer_value(status), http_status);
 
   if (http_status >= 400 && http_status < 500) {
@@ -212,7 +212,7 @@ scheduling::JobFollowUp NetworkInterfacesEnumerator::enumerate()
   LOG::trace("network interface live span count: {}", handles_.size());
 
   if (result == scheduling::JobFollowUp::ok) {
-    LOG::trace("reporting aws collector as healthy");
+    LOG::trace("reporting cloud collector as healthy");
     writer_.collector_health(integer_value(CollectorStatus::healthy), 0);
   }
 
