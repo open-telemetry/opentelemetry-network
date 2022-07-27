@@ -1,5 +1,5 @@
 
-if(FLOWMILL_SUBPROJECT)
+if(EBPF_NET_SUBPROJECT)
   return()
 endif()
 

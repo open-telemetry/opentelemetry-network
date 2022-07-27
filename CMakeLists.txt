@@ -13,9 +13,14 @@ list(
 
 include(FindPkgConfig)
 
+if(NOT CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+  # Building as a subproject (submodule).
+  set(EBPF_NET_SUBPROJECT TRUE)
+endif()
+
 # Custom modules
 #
-if(NOT FLOWMILL_SUBPROJECT)
+if(NOT EBPF_NET_SUBPROJECT)
 include(cpp-compiler)
 include(ccache)
 include(docker-utils)
@@ -42,11 +47,12 @@ include(breakpad)
 include(abseil)
 include(yamlcpp)
 include(render)
-endif(NOT FLOWMILL_SUBPROJECT)
+endif(NOT EBPF_NET_SUBPROJECT)
 
 include_directories(
   ${PROJECT_SOURCE_DIR}
   ${CMAKE_BINARY_DIR}
+  ${CMAKE_INSTALL_PREFIX}
   ${CMAKE_INSTALL_PREFIX}/include
 )
 
