@@ -20,13 +20,13 @@ message(STATUS "C++ compiler native version string: ${CXX_COMPILER_NATIVE_VERSIO
 # most expressive debugging, and some optimization
 # also, disabling -Wno-stringop-truncation where necessary given that it warns about
 #   behavior we intend to get out of strncpy
-set(FLOWMILL_COMMON_COMPILE_FLAGS "-ggdb3 -Wall -Werror -fno-omit-frame-pointer -Wno-stringop-truncation ${CXX_ERROR_LIMIT_FLAG}=1 -pthread")
-set(FLOWMILL_COMMON_C_FLAGS "${FLOWMILL_COMMON_COMPILE_FLAGS}")
-set(FLOWMILL_COMMON_CXX_FLAGS "${FLOWMILL_COMMON_COMPILE_FLAGS}")
+set(EBPF_NET_COMMON_COMPILE_FLAGS "-ggdb3 -Wall -Werror -fno-omit-frame-pointer -Wno-stringop-truncation ${CXX_ERROR_LIMIT_FLAG}=1 -pthread")
+set(EBPF_NET_COMMON_C_FLAGS "${EBPF_NET_COMMON_COMPILE_FLAGS}")
+set(EBPF_NET_COMMON_CXX_FLAGS "${EBPF_NET_COMMON_COMPILE_FLAGS}")
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${FLOWMILL_COMMON_C_FLAGS}")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${FLOWMILL_COMMON_CXX_FLAGS}")
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${FLOWMILL_COMMON_LINKER_FLAGS} -static-libgcc -static-libstdc++ -pthread")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${EBPF_NET_COMMON_C_FLAGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${EBPF_NET_COMMON_CXX_FLAGS}")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${EBPF_NET_COMMON_LINKER_FLAGS} -static-libgcc -static-libstdc++ -pthread")
 
 if(OPTIMIZE)
   set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O2")
