@@ -20,8 +20,8 @@ docker run \
   -it --rm \
   --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
   --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/root/src,readonly" \
-  --env FLOWMILL_SRC=/root/src \
-  --env FLOWMILL_OUT_DIR=/root/out \
+  --env EBPF_NET_SRC=/root/src \
+  --env EBPF_NET_OUT_DIR=/root/out \
   --workdir=/root/out \
   build-env \
     ../build.sh docker
@@ -32,7 +32,7 @@ name `kernel-collector`.
 
 The images can also be automatically pushed to a docker registry after they're built.
 By default, they're pushed to a local docker registry at `localhost:5000`. The registry
-can be changed by setting the environment variable `FLOWMILL_DOCKER_REGISTRY` in the
+can be changed by setting the environment variable `EBPF_NET_DOCKER_REGISTRY` in the
 build image, as so:
 
 ```
@@ -40,9 +40,9 @@ docker run \
   -it --rm \
   --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
   --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/root/src,readonly" \
-  --env FLOWMILL_SRC=/root/src \
-  --env FLOWMILL_OUT_DIR=/root/out \
-  --env FLOWMILL_DOCKER_REGISTRY="localhost:5000" \
+  --env EBPF_NET_SRC=/root/src \
+  --env EBPF_NET_OUT_DIR=/root/out \
+  --env EBPF_NET_DOCKER_REGISTRY="localhost:5000" \
   --workdir=/root/out \
   build-env \
     ../build.sh docker-registry

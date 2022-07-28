@@ -3,9 +3,9 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-export FLOWMILL_SRC="${FLOWMILL_SRC:-$(git rev-parse --show-toplevel)}"
+export EBPF_NET_SRC="${EBPF_NET_SRC:-$(git rev-parse --show-toplevel)}"
 
-source "${FLOWMILL_SRC}/dev/script/docker-registry-lib.sh"
+source "${EBPF_NET_SRC}/dev/script/docker-registry-lib.sh"
 
 if [ "$#" -lt 1 ]; then
   echo "usage: $0 [options...] registry..."
@@ -14,7 +14,7 @@ if [ "$#" -lt 1 ]; then
   echo "  ecr: log in to ECR"
   echo "  gcr: log in to GCR"
   echo "  okta: login through the okta plugin"
-  echo "  env: log in to the docker registry auto-detected off the env var FLOWMILL_DOCKER_REGISTRY"
+  echo "  env: log in to the docker registry auto-detected off the env var EBPF_NET_DOCKER_REGISTRY"
   echo "       if the variable is unset, no login attempts are made"
   echo "  the docker registry URL can also be given, in which case its type will be auto-detected"
   echo
@@ -33,27 +33,27 @@ function auto_detected_login {
       ;;
 
     local)
-      echo "no login needed for local docker registry '${FLOWMILL_DOCKER_REGISTRY}'"
+      echo "no login needed for local docker registry '${EBPF_NET_DOCKER_REGISTRY}'"
       ;;
 
     ecr)
-      echo "ECR detected at '${FLOWMILL_DOCKER_REGISTRY}'"
+      echo "ECR detected at '${EBPF_NET_DOCKER_REGISTRY}'"
       ecr_login "${use_vault}"
       ;;
 
     gcr)
-      echo "GCR detected at '${FLOWMILL_DOCKER_REGISTRY}'"
+      echo "GCR detected at '${EBPF_NET_DOCKER_REGISTRY}'"
       gcr_login
       ;;
 
     okta)
-      echo "okta detected at '${FLOWMILL_DOCKER_REGISTRY}'"
+      echo "okta detected at '${EBPF_NET_DOCKER_REGISTRY}'"
       okta_login
       ;;
 
 
     *)
-      echo "ERROR: unrecognized docker registry '${FLOWMILL_DOCKER_REGISTRY}'"
+      echo "ERROR: unrecognized docker registry '${EBPF_NET_DOCKER_REGISTRY}'"
       return 1
       ;;
   esac
@@ -80,7 +80,7 @@ while [ "$#" -gt 0 ]; do
       ;;
 
     env)
-      auto_detected_login "${FLOWMILL_DOCKER_REGISTRY}"
+      auto_detected_login "${EBPF_NET_DOCKER_REGISTRY}"
       ;;
 
     *)

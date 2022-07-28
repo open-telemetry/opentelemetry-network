@@ -8,8 +8,8 @@ set -e
 # -----
 # Major and minor versions influence customer vetting processes and level
 # of perceived trust in an implementation -- please discuss before bumping these.
-export FLOWMILL_MAJOR_VERSION='0'
-export FLOWMILL_MINOR_VERSION='9'
+export EBPF_NET_MAJOR_VERSION='0'
+export EBPF_NET_MINOR_VERSION='9'
 
 # -----
 # Build number is incremented automatically, so we can release directly from
@@ -25,7 +25,7 @@ COLLECTOR_BUILD_NUMBER_BASE="3598385a6f5288ced0f7bbe9150837c4497d6bc8"
 GIT_REVISION="HEAD"
 
 # build number is the number of commits since the latest tag
-FLOWMILL_COLLECTOR_BUILD_NUMBER="$(git rev-list --count "${COLLECTOR_BUILD_NUMBER_BASE}..${GIT_REVISION}")"
+EBPF_NET_COLLECTOR_BUILD_NUMBER="$(git rev-list --count "${COLLECTOR_BUILD_NUMBER_BASE}..${GIT_REVISION}")"
 # adjust build number to keep the increasing order
-FLOWMILL_COLLECTOR_BUILD_NUMBER="$(($FLOWMILL_COLLECTOR_BUILD_NUMBER + 4000))"
-export FLOWMILL_COLLECTOR_BUILD_NUMBER
+EBPF_NET_COLLECTOR_BUILD_NUMBER="$(($EBPF_NET_COLLECTOR_BUILD_NUMBER + 4000))"
+export EBPF_NET_COLLECTOR_BUILD_NUMBER
