@@ -1,3 +1,6 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
 setup_go_module(collector "flowmill.net" VENDORED)
 
 build_protobuf(collector GO collector CPP GRPC)

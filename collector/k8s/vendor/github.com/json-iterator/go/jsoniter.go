@@ -1,3 +1,6 @@
+// Copyright The OpenTelemetry Authors
+// SPDX-License-Identifier: Apache-2.0
+
 // Package jsoniter implements encoding and decoding of JSON as defined in
 // RFC 4627 and provides interfaces with identical syntax of standard lib encoding/json.
 // Converting from encoding/json to jsoniter is no more than replacing the package with jsoniter

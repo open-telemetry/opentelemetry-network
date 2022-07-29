@@ -1,4 +1,7 @@
 #!/usr/bin/python3
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
 
 import os
 import sys

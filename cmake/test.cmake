@@ -1,3 +1,6 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
 enable_testing()
 
 link_directories("${CMAKE_INSTALL_PREFIX}/lib")

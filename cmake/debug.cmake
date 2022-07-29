@@ -1,3 +1,6 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
 option(UPLOAD_DEBUG_SYMBOLS "When set, debug symbols will be uploaded to our symbol server" OFF)
 option(EXPORT_DEBUG_SYMBOLS "When set, debug symbols will be exported even if not being uploaded to our symbol server" OFF)
 

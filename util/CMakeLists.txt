@@ -1,3 +1,6 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
 option(ENABLE_CODE_TIMING "Enable code timing" ON)
 message(STATUS "time ENABLE_CODE_TIMING is ${ENABLE_CODE_TIMING}")
 

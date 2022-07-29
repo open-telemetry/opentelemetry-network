@@ -1,3 +1,6 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
 find_path(LZ4_INCLUDE_DIR lz4.h)
 find_library(LZ4_LIBRARY NAMES "liblz4.a")
 find_package_handle_standard_args(LZ4 DEFAULT_MSG LZ4_LIBRARY LZ4_INCLUDE_DIR)

@@ -1,4 +1,7 @@
 #!/bin/bash -x
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
 
 # Defaults
 dirty="false"

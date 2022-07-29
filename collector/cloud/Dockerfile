@@ -1,3 +1,6 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
 FROM bitnami/minideb:buster
 
 LABEL org.label-schema.name="flowmill/cloud-collector" \

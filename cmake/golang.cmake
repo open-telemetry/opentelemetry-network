@@ -1,3 +1,6 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
 option(GO_STATIC_LINK "statically link go binaries" OFF)
 
 set(GO_PATH "${CMAKE_BINARY_DIR}/go-path")

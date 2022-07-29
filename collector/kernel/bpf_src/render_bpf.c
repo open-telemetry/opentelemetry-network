@@ -1,3 +1,8 @@
+/*
+ * Copyright The OpenTelemetry Authors
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #include <uapi/linux/ptrace.h>
 #define KBUILD_MODNAME "latency_trace_bpf"
 

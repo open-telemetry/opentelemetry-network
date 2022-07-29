@@ -1,4 +1,7 @@
 #!/bin/bash
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
 
 if [[ `uname -a` = *"Darwin"* ]]; then
   echo "It seems you are running on Mac. This script does not work on Mac. See https://github.com/grpc/grpc-go/issues/2047"

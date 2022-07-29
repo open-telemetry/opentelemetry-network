@@ -1,3 +1,6 @@
+// Copyright The OpenTelemetry Authors
+// SPDX-License-Identifier: Apache-2.0
+
 #include "otlp_request_builder.h"
 
 #include <util/overloaded_visitor.h>

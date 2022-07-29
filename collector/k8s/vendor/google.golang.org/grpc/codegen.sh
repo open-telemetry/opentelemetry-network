@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
 
 # This script serves as an example to demonstrate how to generate the gRPC-Go
 # interface and the related messages from .proto file.

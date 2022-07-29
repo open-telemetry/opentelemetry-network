@@ -1,3 +1,8 @@
+/*
+ * Copyright The OpenTelemetry Authors
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #include <util/perf_ring.h>
 
 int pr_init_contig(struct perf_ring *eq, void *data, u32 n_pages, u64 page_size)

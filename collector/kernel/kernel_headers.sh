@@ -1,4 +1,7 @@
 #!/bin/bash
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
 set -xe
 
 kernel_headers_info_path="$1"

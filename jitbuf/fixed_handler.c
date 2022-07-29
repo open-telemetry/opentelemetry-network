@@ -1,3 +1,8 @@
+/*
+ * Copyright The OpenTelemetry Authors
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #include <jitbuf/fixed_handler.h>
 
 #include <platform/platform.h>

@@ -1,4 +1,7 @@
 #!/bin/bash -e
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
 
 export FLOWMILL_SRC="${FLOWMILL_SRC:-$(git rev-parse --show-toplevel)}"
 

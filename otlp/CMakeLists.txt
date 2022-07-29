@@ -1,3 +1,6 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
 # Protobuf and gRPC related cmake statements from https://github.com/grpc/grpc/blob/master/examples/cpp/cmake/common.cmake
 
 # Find Protobuf installation

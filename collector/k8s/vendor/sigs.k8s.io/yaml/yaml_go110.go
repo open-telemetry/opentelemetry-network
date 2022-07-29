@@ -1,3 +1,6 @@
+// Copyright The OpenTelemetry Authors
+// SPDX-License-Identifier: Apache-2.0
+
 // This file contains changes that are only compatible with go 1.10 and onwards.
 
 // +build go1.10

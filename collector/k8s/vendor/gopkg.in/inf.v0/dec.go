@@ -1,3 +1,6 @@
+// Copyright The OpenTelemetry Authors
+// SPDX-License-Identifier: Apache-2.0
+
 // Package inf (type inf.Dec) implements "infinite-precision" decimal
 // arithmetic.
 // "Infinite precision" describes two characteristics: practically unlimited

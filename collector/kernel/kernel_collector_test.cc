@@ -1,3 +1,6 @@
+// Copyright The OpenTelemetry Authors
+// SPDX-License-Identifier: Apache-2.0
+
 #include <channel/test_channel.h>
 #include <collector/kernel/cgroup_handler.h>
 #include <collector/kernel/kernel_collector.h>

@@ -1,3 +1,6 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
 find_path(CURLPP_INCLUDE_DIR NAMES curlpp/cURLpp.hpp)
 find_library(CURLPP_STATIC_LIBRARY NAMES libcurlpp.a)
 message(STATUS "curlpp static library: ${CURLPP_STATIC_LIBRARY}")

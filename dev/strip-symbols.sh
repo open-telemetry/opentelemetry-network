@@ -1,4 +1,7 @@
 #!/bin/bash -e
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
 
 function print_help {
   echo "usage: $0 binary-file [out-dir]" >&2

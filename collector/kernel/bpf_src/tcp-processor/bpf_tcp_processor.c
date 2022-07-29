@@ -1,3 +1,8 @@
+/*
+ * Copyright The OpenTelemetry Authors
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #ifdef STANDALONE_TCP_PROCESSOR
 
 #define KBUILD_MODNAME "bpf_http"

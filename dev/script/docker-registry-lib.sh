@@ -1,3 +1,6 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
 function ecr_login {
   login_command=(aws ecr get-login --no-include-email)
 

@@ -1,4 +1,7 @@
 #!/bin/bash
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
 
 TMP=$(mktemp -d /tmp/sdk.XXX) \
 && curl -o $TMP.zip "https://storage.googleapis.com/appengine-sdks/featured/go_appengine_sdk_linux_amd64-1.9.68.zip" \

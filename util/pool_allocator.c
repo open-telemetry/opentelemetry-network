@@ -1,3 +1,8 @@
+/*
+ * Copyright The OpenTelemetry Authors
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #include <util/pool_allocator.h>
 
 int pool_allocator_init(struct pool_allocator *map, void *pool, u32 elem_size, u32 n_elems)
