@@ -1,14 +1,14 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package net.flowmill.render.extensions
+package io.opentelemetry.render.extensions
 
-import net.flowmill.render.render.Message
-import net.flowmill.render.render.MessageType
-import net.flowmill.render.render.Span
+import io.opentelemetry.render.render.Message
+import io.opentelemetry.render.render.MessageType
+import io.opentelemetry.render.render.Span
 
-import static extension net.flowmill.render.extensions.FieldExtensions.arraySuffix
-import static extension net.flowmill.render.extensions.FieldTypeExtensions.parsedCType
+import static extension io.opentelemetry.render.extensions.FieldExtensions.arraySuffix
+import static extension io.opentelemetry.render.extensions.FieldTypeExtensions.parsedCType
 
 class MessageExtensions {
 	static def _prepend_comma_if_not_empty(String s) {

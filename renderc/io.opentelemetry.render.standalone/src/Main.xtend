@@ -1,7 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package net.flowmill.render.standalone
+package io.opentelemetry.render.standalone
 
 import com.google.common.collect.ImmutableList
 import com.google.common.collect.ImmutableSet
@@ -73,7 +73,7 @@ class Main {
 		}
 		
 		override String getSetup() {
-			"net.flowmill.render.RenderStandaloneSetup"
+			"io.opentelemetry.render.RenderStandaloneSetup"
 		}
 		
 		override Set<OutputConfiguration> getOutputConfigurations() {

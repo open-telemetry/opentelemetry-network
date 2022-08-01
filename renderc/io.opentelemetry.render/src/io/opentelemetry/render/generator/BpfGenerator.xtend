@@ -1,14 +1,14 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package net.flowmill.render.generator
+package io.opentelemetry.render.generator
 
-import net.flowmill.render.render.FieldTypeEnum
-import net.flowmill.render.render.App
-import net.flowmill.render.render.Message
+import io.opentelemetry.render.render.FieldTypeEnum
+import io.opentelemetry.render.render.App
+import io.opentelemetry.render.render.Message
 
-import static extension net.flowmill.render.extensions.FieldExtensions.*
-import static extension net.flowmill.render.extensions.MessageExtensions.*
+import static extension io.opentelemetry.render.extensions.FieldExtensions.*
+import static extension io.opentelemetry.render.extensions.MessageExtensions.*
 
 class BpfGenerator {
 	static def generateBpfH(App app)

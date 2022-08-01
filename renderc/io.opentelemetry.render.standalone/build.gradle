@@ -4,7 +4,7 @@ plugins {
 }
 
 application {
-  mainClassName = 'net.flowmill.render.standalone.Main'
+  mainClassName = 'io.opentelemetry.render.standalone.Main'
 }
 
 apply plugin: 'com.github.johnrengelman.shadow'
@@ -13,7 +13,7 @@ shadowJar {
 }
 
 dependencies {
-  implementation project(':net.flowmill.render')
+  implementation project(':io.opentelemetry.render')
   implementation "org.eclipse.xtext:org.eclipse.xtext.builder.standalone:${xtextVersion}"
   implementation "args4j:args4j:2.33"
 }

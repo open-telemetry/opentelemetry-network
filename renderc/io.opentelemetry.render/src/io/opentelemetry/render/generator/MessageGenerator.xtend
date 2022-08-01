@@ -1,15 +1,15 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package net.flowmill.render.generator
+package io.opentelemetry.render.generator
 
 import java.util.Collections
-import net.flowmill.render.render.App
+import io.opentelemetry.render.render.App
 import org.eclipse.emf.ecore.resource.Resource
 import org.eclipse.xtext.generator.IFileSystemAccess2
 
-import static extension net.flowmill.render.extensions.XPackedMessageExtensions.*
-import static extension net.flowmill.render.extensions.FieldExtensions.*
+import static extension io.opentelemetry.render.extensions.XPackedMessageExtensions.*
+import static extension io.opentelemetry.render.extensions.FieldExtensions.*
 
 /**
  * Generates message-related code (previously "jitbuf")

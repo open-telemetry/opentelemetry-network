@@ -1,22 +1,22 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package net.flowmill.render.generator
+package io.opentelemetry.render.generator
 
-import net.flowmill.render.render.Span
-import net.flowmill.render.render.Definition
+import io.opentelemetry.render.render.Span
+import io.opentelemetry.render.render.Definition
 import java.util.Set
 import java.util.Map
-import net.flowmill.render.render.Reference
+import io.opentelemetry.render.render.Reference
 import java.util.List
 import java.util.HashMap
 import java.util.HashSet
 import java.util.Vector
-import net.flowmill.render.render.ReferenceBindingRoot
-import net.flowmill.render.render.ReferenceBindingValue
-import net.flowmill.render.render.ReferenceBindingRef
+import io.opentelemetry.render.render.ReferenceBindingRoot
+import io.opentelemetry.render.render.ReferenceBindingValue
+import io.opentelemetry.render.render.ReferenceBindingRef
 import java.util.LinkedList
-import net.flowmill.render.render.Field
+import io.opentelemetry.render.render.Field
 import com.google.common.collect.Sets
 
 class SpanAutoDependencies {

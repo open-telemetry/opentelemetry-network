@@ -1,23 +1,23 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package net.flowmill.render.generator
+package io.opentelemetry.render.generator
 
 import java.util.LinkedList
 import java.util.Vector
-import net.flowmill.render.render.Document
-import net.flowmill.render.render.Field
-import net.flowmill.render.render.FieldTypeEnum
-import net.flowmill.render.render.Message
-import net.flowmill.render.render.MessageType
-import net.flowmill.render.render.App
-import net.flowmill.render.render.XPackedMessage
-import net.flowmill.render.render.impl.RenderFactoryImpl
+import io.opentelemetry.render.render.Document
+import io.opentelemetry.render.render.Field
+import io.opentelemetry.render.render.FieldTypeEnum
+import io.opentelemetry.render.render.Message
+import io.opentelemetry.render.render.MessageType
+import io.opentelemetry.render.render.App
+import io.opentelemetry.render.render.XPackedMessage
+import io.opentelemetry.render.render.impl.RenderFactoryImpl
 import org.eclipse.xtend.lib.annotations.Accessors
 import org.eclipse.emf.ecore.util.EcoreUtil
-import static extension net.flowmill.render.extensions.MessageExtensions.*
-import static extension net.flowmill.render.extensions.FieldExtensions.*
-import static extension net.flowmill.render.extensions.FieldTypeExtensions.*
+import static extension io.opentelemetry.render.extensions.MessageExtensions.*
+import static extension io.opentelemetry.render.extensions.FieldExtensions.*
+import static extension io.opentelemetry.render.extensions.FieldTypeExtensions.*
 
 /**
  * Represents a message together with field placement

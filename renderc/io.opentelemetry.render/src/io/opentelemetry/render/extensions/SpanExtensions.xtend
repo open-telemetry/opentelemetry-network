@@ -1,13 +1,13 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package net.flowmill.render.extensions
+package io.opentelemetry.render.extensions
 
-import net.flowmill.render.render.Span
-import net.flowmill.render.render.App
-import net.flowmill.render.render.MessageType
+import io.opentelemetry.render.render.Span
+import io.opentelemetry.render.render.App
+import io.opentelemetry.render.render.MessageType
 
-import static extension net.flowmill.render.extensions.UtilityExtensions.toCamelCase
+import static extension io.opentelemetry.render.extensions.UtilityExtensions.toCamelCase
 
 class SpanExtensions {
 

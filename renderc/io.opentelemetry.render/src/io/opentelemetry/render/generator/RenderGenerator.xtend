@@ -1,22 +1,22 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package net.flowmill.render.generator
+package io.opentelemetry.render.generator
 
-import net.flowmill.render.render.AggregationMethod
-import net.flowmill.render.render.Field
-import net.flowmill.render.render.Metric
-import net.flowmill.render.render.MetricField
-import net.flowmill.render.render.PackageDefinition
+import io.opentelemetry.render.render.AggregationMethod
+import io.opentelemetry.render.render.Field
+import io.opentelemetry.render.render.Metric
+import io.opentelemetry.render.render.MetricField
+import io.opentelemetry.render.render.PackageDefinition
 import org.eclipse.emf.ecore.resource.Resource
 import org.eclipse.xtext.generator.AbstractGenerator
 import org.eclipse.xtext.generator.IFileSystemAccess2
 import org.eclipse.xtext.generator.IGeneratorContext
-import net.flowmill.render.render.FieldTypeEnum
-import net.flowmill.render.render.App
+import io.opentelemetry.render.render.FieldTypeEnum
+import io.opentelemetry.render.render.App
 import java.io.ByteArrayOutputStream
 import org.eclipse.xtext.resource.SaveOptions
-import static extension net.flowmill.render.extensions.MetricFieldExtensions.*
+import static extension io.opentelemetry.render.extensions.MetricFieldExtensions.*
 
 /**
  * Generates code from your model files on save.

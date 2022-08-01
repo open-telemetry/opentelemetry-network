@@ -1,11 +1,11 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package net.flowmill.render.extensions
+package io.opentelemetry.render.extensions
 
-import static extension net.flowmill.render.extensions.UtilityExtensions.toCamelCase
-import net.flowmill.render.render.App
-import net.flowmill.render.render.Document
+import static extension io.opentelemetry.render.extensions.UtilityExtensions.toCamelCase
+import io.opentelemetry.render.render.App
+import io.opentelemetry.render.render.Document
 
 class AppExtensions {
 	static def connName(App app) {

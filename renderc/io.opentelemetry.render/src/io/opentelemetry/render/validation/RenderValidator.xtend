@@ -1,20 +1,20 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package net.flowmill.render.validation
+package io.opentelemetry.render.validation
 
 import org.eclipse.xtext.validation.Check
-import net.flowmill.render.render.Field
-import net.flowmill.render.render.FieldTypeEnum
-import net.flowmill.render.render.Reference
-import net.flowmill.render.render.Span
-import net.flowmill.render.render.RenderPackage
-import net.flowmill.render.render.Message
-import net.flowmill.render.render.MessageType
-import net.flowmill.render.render.RpcIdRange
-import static net.flowmill.render.generator.AppPacker.rpcIdRangeMin
-import static net.flowmill.render.generator.AppPacker.rpcIdRangeMax
-import static extension net.flowmill.render.extensions.MessageExtensions.span
+import io.opentelemetry.render.render.Field
+import io.opentelemetry.render.render.FieldTypeEnum
+import io.opentelemetry.render.render.Reference
+import io.opentelemetry.render.render.Span
+import io.opentelemetry.render.render.RenderPackage
+import io.opentelemetry.render.render.Message
+import io.opentelemetry.render.render.MessageType
+import io.opentelemetry.render.render.RpcIdRange
+import static io.opentelemetry.render.generator.AppPacker.rpcIdRangeMin
+import static io.opentelemetry.render.generator.AppPacker.rpcIdRangeMax
+import static extension io.opentelemetry.render.extensions.MessageExtensions.span
 
 /**
  * This class contains custom validation rules.

@@ -1,10 +1,10 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package net.flowmill.render.extensions
+package io.opentelemetry.render.extensions
 
-import net.flowmill.render.render.FieldType
-import net.flowmill.render.render.FieldTypeEnum
+import io.opentelemetry.render.render.FieldType
+import io.opentelemetry.render.render.FieldTypeEnum
 
 class FieldTypeExtensions {
 

@@ -1,9 +1,9 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: net.flowmill.render
+Bundle-Name: io.opentelemetry.render
 Bundle-Vendor: Flowmill
 Bundle-Version: 1.0.0.qualifier
-Bundle-SymbolicName: net.flowmill.render; singleton:=true
+Bundle-SymbolicName: io.opentelemetry.render; singleton:=true
 Bundle-ActivationPolicy: lazy
 Require-Bundle: org.eclipse.xtext,
  org.eclipse.xtext.xbase,
@@ -15,15 +15,15 @@ Require-Bundle: org.eclipse.xtext,
  org.eclipse.emf.common,
  org.eclipse.xtend.lib;bundle-version="2.13.0"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
-Export-Package: net.flowmill.render,
- net.flowmill.render.generator,
- net.flowmill.render.render,
- net.flowmill.render.services,
- net.flowmill.render.scoping,
- net.flowmill.render.render.impl,
- net.flowmill.render.parser.antlr.internal,
- net.flowmill.render.parser.antlr,
- net.flowmill.render.serializer,
- net.flowmill.render.validation,
- net.flowmill.render.render.util
+Export-Package: io.opentelemetry.render,
+ io.opentelemetry.render.generator,
+ io.opentelemetry.render.render,
+ io.opentelemetry.render.services,
+ io.opentelemetry.render.scoping,
+ io.opentelemetry.render.render.impl,
+ io.opentelemetry.render.parser.antlr.internal,
+ io.opentelemetry.render.parser.antlr,
+ io.opentelemetry.render.serializer,
+ io.opentelemetry.render.validation,
+ io.opentelemetry.render.render.util
 Import-Package: org.apache.log4j

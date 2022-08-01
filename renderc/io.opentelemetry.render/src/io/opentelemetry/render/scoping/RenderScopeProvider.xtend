@@ -1,21 +1,21 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package net.flowmill.render.scoping
+package io.opentelemetry.render.scoping
 
-import net.flowmill.render.render.Span
-import net.flowmill.render.render.Field
-import net.flowmill.render.render.Reference
-import net.flowmill.render.render.ReferenceBinding
-import net.flowmill.render.render.ReferenceBindingRoot
-import net.flowmill.render.render.ReferenceBindingValue
-import net.flowmill.render.render.RenderPackage
+import io.opentelemetry.render.render.Span
+import io.opentelemetry.render.render.Field
+import io.opentelemetry.render.render.Reference
+import io.opentelemetry.render.render.ReferenceBinding
+import io.opentelemetry.render.render.ReferenceBindingRoot
+import io.opentelemetry.render.render.ReferenceBindingValue
+import io.opentelemetry.render.render.RenderPackage
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.emf.ecore.EReference
 import org.eclipse.xtext.scoping.IScope
 import org.eclipse.xtext.scoping.Scopes
 import org.eclipse.xtext.scoping.impl.AbstractDeclarativeScopeProvider
-import net.flowmill.render.render.AggregationUpdate
+import io.opentelemetry.render.render.AggregationUpdate
 
 /**
  * This class contains custom scoping description.

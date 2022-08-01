@@ -1,7 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package net.flowmill.render.extensions
+package io.opentelemetry.render.extensions
 
 import com.google.common.base.CaseFormat
 

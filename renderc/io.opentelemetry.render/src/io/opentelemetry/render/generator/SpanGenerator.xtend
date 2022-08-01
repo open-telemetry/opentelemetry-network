@@ -1,30 +1,30 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package net.flowmill.render.generator
+package io.opentelemetry.render.generator
 
-import net.flowmill.render.render.AggregationMethod
-import net.flowmill.render.render.Field
-import net.flowmill.render.render.Metric
-import net.flowmill.render.render.Reference
-import net.flowmill.render.render.ReferenceBindingRef
-import net.flowmill.render.render.ReferenceBindingRoot
-import net.flowmill.render.render.ReferenceBindingValue
-import net.flowmill.render.render.Span
-import net.flowmill.render.render.App
-import net.flowmill.render.render.Aggregation
-import net.flowmill.render.render.Message;
+import io.opentelemetry.render.render.AggregationMethod
+import io.opentelemetry.render.render.Field
+import io.opentelemetry.render.render.Metric
+import io.opentelemetry.render.render.Reference
+import io.opentelemetry.render.render.ReferenceBindingRef
+import io.opentelemetry.render.render.ReferenceBindingRoot
+import io.opentelemetry.render.render.ReferenceBindingValue
+import io.opentelemetry.render.render.Span
+import io.opentelemetry.render.render.App
+import io.opentelemetry.render.render.Aggregation
+import io.opentelemetry.render.render.Message;
 import org.eclipse.emf.ecore.resource.Resource
-import net.flowmill.render.render.FieldTypeEnum
+import io.opentelemetry.render.render.FieldTypeEnum
 import java.util.Arrays
 
-import static net.flowmill.render.generator.AppPacker.pulseMessageName
+import static io.opentelemetry.render.generator.AppPacker.pulseMessageName
 
-import static extension net.flowmill.render.extensions.AppExtensions.*
-import static extension net.flowmill.render.extensions.FieldExtensions.*
-import static extension net.flowmill.render.extensions.SpanExtensions.*
-import static extension net.flowmill.render.extensions.MessageExtensions.*
-import static extension net.flowmill.render.extensions.XPackedMessageExtensions.*
+import static extension io.opentelemetry.render.extensions.AppExtensions.*
+import static extension io.opentelemetry.render.extensions.FieldExtensions.*
+import static extension io.opentelemetry.render.extensions.SpanExtensions.*
+import static extension io.opentelemetry.render.extensions.MessageExtensions.*
+import static extension io.opentelemetry.render.extensions.XPackedMessageExtensions.*
 
 /**
  * Generates code from your model files on save.

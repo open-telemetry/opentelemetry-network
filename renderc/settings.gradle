@@ -1,2 +1,2 @@
-include 'net.flowmill.render'
-include 'net.flowmill.render.standalone'
+include 'io.opentelemetry.render'
+include 'io.opentelemetry.render.standalone'

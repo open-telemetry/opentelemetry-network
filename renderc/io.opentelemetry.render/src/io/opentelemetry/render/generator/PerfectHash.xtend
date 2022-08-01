@@ -1,7 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package net.flowmill.render.generator
+package io.opentelemetry.render.generator
 
 import com.google.common.collect.ImmutableList
 import java.util.Collections
@@ -12,7 +12,7 @@ import java.util.Map
 import java.util.Set
 import java.util.TreeMap
 import java.util.stream.LongStream
-import net.flowmill.render.render.App
+import io.opentelemetry.render.render.App
 
 class PerfectHash {
 

@@ -1,15 +1,15 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package net.flowmill.render.generator
+package io.opentelemetry.render.generator
 
-import net.flowmill.render.render.App
-import static extension net.flowmill.render.extensions.AppExtensions.*
-import static extension net.flowmill.render.extensions.SpanExtensions.*
-import static extension net.flowmill.render.extensions.FieldExtensions.*
-import static extension net.flowmill.render.extensions.MessageExtensions.*
-import net.flowmill.render.render.Message
-import net.flowmill.render.render.FieldTypeEnum
+import io.opentelemetry.render.render.App
+import static extension io.opentelemetry.render.extensions.AppExtensions.*
+import static extension io.opentelemetry.render.extensions.SpanExtensions.*
+import static extension io.opentelemetry.render.extensions.FieldExtensions.*
+import static extension io.opentelemetry.render.extensions.MessageExtensions.*
+import io.opentelemetry.render.render.Message
+import io.opentelemetry.render.render.FieldTypeEnum
 
 class TransformBuilderGenerator {
 

@@ -1,10 +1,10 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package net.flowmill.render.extensions
+package io.opentelemetry.render.extensions
 
-import net.flowmill.render.render.MetricField
-import static extension net.flowmill.render.extensions.FieldTypeExtensions.*
+import io.opentelemetry.render.render.MetricField
+import static extension io.opentelemetry.render.extensions.FieldTypeExtensions.*
 
 class MetricFieldExtensions {
 

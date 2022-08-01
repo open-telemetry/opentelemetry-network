@@ -1,13 +1,13 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package net.flowmill.render.generator
+package io.opentelemetry.render.generator
 
 import com.google.inject.Provider
-import net.flowmill.render.render.Field
-import net.flowmill.render.render.Message
-import net.flowmill.render.render.AppRpcMap
-import net.flowmill.render.render.ReferenceBindingValue
+import io.opentelemetry.render.render.Field
+import io.opentelemetry.render.render.Message
+import io.opentelemetry.render.render.AppRpcMap
+import io.opentelemetry.render.render.ReferenceBindingValue
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.xtext.formatting2.AbstractFormatter2
 import org.eclipse.xtext.formatting2.IFormattableDocument

@@ -1,17 +1,17 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package net.flowmill.render.generator
+package io.opentelemetry.render.generator
 
-import net.flowmill.render.render.App
-import static extension net.flowmill.render.extensions.AppExtensions.*
-import static extension net.flowmill.render.extensions.SpanExtensions.*
-import static extension net.flowmill.render.extensions.MessageExtensions.*
-import static extension net.flowmill.render.extensions.FieldTypeExtensions.*
-import net.flowmill.render.render.Field
-import net.flowmill.render.render.Span
-import net.flowmill.render.render.Message
-import net.flowmill.render.render.MessageType
+import io.opentelemetry.render.render.App
+import static extension io.opentelemetry.render.extensions.AppExtensions.*
+import static extension io.opentelemetry.render.extensions.SpanExtensions.*
+import static extension io.opentelemetry.render.extensions.MessageExtensions.*
+import static extension io.opentelemetry.render.extensions.FieldTypeExtensions.*
+import io.opentelemetry.render.render.Field
+import io.opentelemetry.render.render.Span
+import io.opentelemetry.render.render.Message
+import io.opentelemetry.render.render.MessageType
 
 class ConnectionGenerator {
 	static def generateConnectionH(App app)

@@ -16,10 +16,10 @@ dependencies {
 task generateXtextLanguage(type: JavaExec) {
 	main = 'org.eclipse.emf.mwe2.launch.runtime.Mwe2Launcher'
 	classpath = configurations.mwe2
-	inputs.file "src/net/flowmill/render/GenerateRender.mwe2"
-	inputs.file "src/net/flowmill/render/Render.xtext"
+	inputs.file "src/io/opentelemetry/render/GenerateRender.mwe2"
+	inputs.file "src/io/opentelemetry/render/Render.xtext"
 	outputs.dir "src-gen"
-	args += "src/net/flowmill/render/GenerateRender.mwe2"
+	args += "src/io/opentelemetry/render/GenerateRender.mwe2"
 	args += "-p"
 	args += "rootPath=/${projectDir}/.."
 }

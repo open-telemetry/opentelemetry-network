@@ -1,10 +1,10 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package net.flowmill.render.generator
+package io.opentelemetry.render.generator
 
-import net.flowmill.render.render.App
-import static extension net.flowmill.render.extensions.AppExtensions.*
+import io.opentelemetry.render.render.App
+import static extension io.opentelemetry.render.extensions.AppExtensions.*
 
 class ProtocolGenerator {
 

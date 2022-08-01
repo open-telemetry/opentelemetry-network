@@ -15,7 +15,7 @@ subprojects {
 	apply plugin: 'eclipse'
 	apply plugin: 'idea'
 	
-	group = 'net.flowmill.render'
+	group = 'io.opentelemetry.render'
 	version = '1.0.0-SNAPSHOT'
 	
 	sourceCompatibility = '1.8'
