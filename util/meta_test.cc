@@ -5,7 +5,7 @@
 
 #include <gtest/gtest.h>
 
-#include <generated/flowmill/ingest/meta.h>
+#include <generated/ebpf_net/ingest/meta.h>
 
 #include <jitbuf/jb.h>
 #include <spdlog/fmt/fmt.h>
@@ -14,7 +14,7 @@
 
 #include <cstring>
 
-namespace flowmill::ingest {
+namespace ebpf_net::ingest {
 
 TEST(flowmill_metadata, message_metadata_rpc_id)
 {
@@ -59,7 +59,7 @@ TEST(flowmill_metadata, message_metadata_for)
                ingest_metadata::message_metadata_for<jsrv_ingest__container_metadata>>));
 }
 
-} // namespace flowmill::ingest
+} // namespace ebpf_net::ingest
 
 template <typename... T> void test_foreach()
 {

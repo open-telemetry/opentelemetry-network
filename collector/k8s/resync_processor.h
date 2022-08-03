@@ -13,7 +13,7 @@
 #include <channel/callbacks.h>
 #include <channel/connection_caretaker.h>
 #include <config/config_file.h>
-#include <generated/flowmill/ingest/writer.h>
+#include <generated/ebpf_net/ingest/writer.h>
 #include <util/curl_engine.h>
 
 namespace channel {
@@ -62,8 +62,8 @@ private:
   std::unique_ptr<CurlEngine> curl_engine_;
 
   channel::ReconnectingChannel &reconnecting_channel_; // not owned
-  std::unique_ptr<::flowmill::ingest::Encoder> encoder_;
-  flowmill::ingest::Writer writer_;
+  std::unique_ptr<::ebpf_net::ingest::Encoder> encoder_;
+  ebpf_net::ingest::Writer writer_;
   channel::ConnectionCaretaker caretaker_;
 
   // The minimal resync count with which the packet can be sent back to

@@ -12,7 +12,7 @@
 
 constexpr auto SIZEOF_STRUCT_NF_CONNTRACK_TUPLE_HASH = 56;
 
-NatHandler::NatHandler(::flowmill::ingest::Writer &writer, logging::Logger &log) : writer_(writer), log_(log) {}
+NatHandler::NatHandler(::ebpf_net::ingest::Writer &writer, logging::Logger &log) : writer_(writer), log_(log) {}
 
 /* END */
 void NatHandler::handle_nf_nat_cleanup_conntrack(u64 timestamp, struct jb_agent_internal__nf_nat_cleanup_conntrack *msg)

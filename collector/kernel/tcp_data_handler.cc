@@ -27,7 +27,7 @@ bool TCPDataHandler::tcp_control_key_t_comparator::operator()(const tcp_control_
 TCPDataHandler::TCPDataHandler(
     uv_loop_t &loop,
     ebpf::BPFModule &bpf_module,
-    ::flowmill::ingest::Writer &writer,
+    ::ebpf_net::ingest::Writer &writer,
     PerfContainer &container,
     logging::Logger &log)
     : loop_(loop), bpf_module_(bpf_module), writer_(writer), container_(container), log_(log)

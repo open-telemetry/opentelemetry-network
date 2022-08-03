@@ -14,7 +14,7 @@ get_target_property(
 render_compile(
   ${CMAKE_CURRENT_SOURCE_DIR}
   PACKAGE
-    flowmill
+    ebpf_net
   APPS
     agent_internal
     kernel_collector

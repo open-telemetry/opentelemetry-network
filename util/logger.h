@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <generated/flowmill/ingest/writer.h>
+#include <generated/ebpf_net/ingest/writer.h>
 #include <util/log.h>
 
 #include <spdlog/fmt/fmt.h>
@@ -17,7 +17,7 @@ namespace logging {
 
 class Logger {
 public:
-  explicit Logger(::flowmill::ingest::Writer &writer) : writer_(writer) {}
+  explicit Logger(::ebpf_net::ingest::Writer &writer) : writer_(writer) {}
 
   Logger(const Logger &) = delete;
   Logger &operator=(const Logger &) = delete;
@@ -55,7 +55,7 @@ private:
     return message;
   }
 
-  ::flowmill::ingest::Writer &writer_;
+  ::ebpf_net::ingest::Writer &writer_;
 };
 
 } // namespace logging

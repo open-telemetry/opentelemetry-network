@@ -23,10 +23,10 @@
 #include <collector/kernel/process_handler.h>
 #include <collector/kernel/socket_table.h>
 #include <collector/kernel/tcp_data_handler.h>
-#include <generated/flowmill/agent_internal/hash.h>
-#include <generated/flowmill/ingest/encoder.h>
-#include <generated/flowmill/ingest/writer.h>
-#include <generated/flowmill/kernel_collector/index.h>
+#include <generated/ebpf_net/agent_internal/hash.h>
+#include <generated/ebpf_net/ingest/encoder.h>
+#include <generated/ebpf_net/ingest/writer.h>
+#include <generated/ebpf_net/kernel_collector/index.h>
 
 #include <memory>
 
@@ -67,7 +67,7 @@ public:
       ebpf::BPFModule &bpf_module,
       u64 socket_stats_interval_sec,
       CgroupHandler::CgroupSettings const &cgroup_settings,
-      ::flowmill::ingest::Encoder *encoder,
+      ::ebpf_net::ingest::Encoder *encoder,
       KernelCollectorRestarter &kernel_collector_restarter);
 
   /**
@@ -316,9 +316,9 @@ private:
   IBufferedWriter &buffered_writer_;
   ProbeHandler &probe_handler_;
   ebpf::BPFModule &bpf_module_;
-  ::flowmill::ingest::Writer writer_;
+  ::ebpf_net::ingest::Writer writer_;
   std::unique_ptr<TCPDataHandler> tcp_data_handler_;
-  ::flowmill::kernel_collector::Index collector_index_;
+  ::ebpf_net::kernel_collector::Index collector_index_;
   ProcessHandler process_handler_;
   u64 lost_count_ = 0;
   u32 pid_count_ = 0;

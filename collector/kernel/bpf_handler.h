@@ -9,7 +9,7 @@
 
 #include <collector/kernel/buffered_poller.h>
 #include <collector/kernel/probe_handler.h>
-#include <generated/flowmill/ingest/encoder.h>
+#include <generated/ebpf_net/ingest/encoder.h>
 #include <util/curl_engine.h>
 #include <util/logger.h>
 #include <uv.h>
@@ -32,7 +32,7 @@ public:
       bool enable_userland_tcp,
       FileDescriptor &bpf_dump_file,
       logging::Logger &log,
-      ::flowmill::ingest::Encoder *encoder);
+      ::ebpf_net::ingest::Encoder *encoder);
 
   /**
    * d'tor
@@ -54,7 +54,7 @@ public:
    * Loads BPF probes. Takes writer to send out steady_state msgs
    * where necessary.
    */
-  void load_probes(::flowmill::ingest::Writer &writer);
+  void load_probes(::ebpf_net::ingest::Writer &writer);
 
   /**
    * Calls start(interval_useconds, n_intervals) on buf_poller_
@@ -88,7 +88,7 @@ private:
   ProbeHandler probe_handler_;
   ebpf::BPFModule bpf_module_;
   PerfContainer perf_;
-  ::flowmill::ingest::Encoder *encoder_;
+  ::ebpf_net::ingest::Encoder *encoder_;
   std::unique_ptr<BufferedPoller> buf_poller_;
   bool enable_http_metrics_;
   bool enable_userland_tcp_;

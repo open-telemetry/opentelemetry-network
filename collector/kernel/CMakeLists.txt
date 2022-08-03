@@ -50,7 +50,7 @@ add_library(
     dns/ares_parse_a_aaaa_reply.c
     dns/ares_parse_query.c
 )
-add_dependencies(agentdnslib render_flowmill_artifacts)
+add_dependencies(agentdnslib render_ebpf_net_artifacts)
 target_compile_options(agentdnslib PRIVATE -fPIC)
 
 # Agent library
@@ -96,9 +96,9 @@ target_link_libraries(
   agentlib
   PUBLIC
     bcc-interface
-    render_flowmill_agent_internal_hash
-    render_flowmill_ingest_writer
-    render_flowmill_kernel_collector
+    render_ebpf_net_agent_internal_hash
+    render_ebpf_net_ingest_writer
+    render_ebpf_net_kernel_collector
     agentdnslib
     yamlcpp
     curl_engine
@@ -151,10 +151,10 @@ set(BPF_DEPENDENCIES
   "${CMAKE_CURRENT_SOURCE_DIR}/bpf_src/tcp-processor/bpf_tcp_send_recv.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/bpf_src/tcp-processor/bpf_tcp_socket.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/bpf_src/tcp-processor/bpf_types.h"
-  "${CMAKE_BINARY_DIR}/generated/flowmill/agent_internal.wire_message.h"
-  "${CMAKE_BINARY_DIR}/generated/flowmill/agent_internal/bpf.h"
+  "${CMAKE_BINARY_DIR}/generated/ebpf_net/agent_internal.wire_message.h"
+  "${CMAKE_BINARY_DIR}/generated/ebpf_net/agent_internal/bpf.h"
   "${PROJECT_SOURCE_DIR}/jitbuf/jb.h"
-  render_compile_flowmill
+  render_compile_ebpf_net
 )
 
 # bpf_preprocess.py <infile> <outfile> <debugfile>
@@ -179,7 +179,7 @@ add_custom_command(
     -I "${CMAKE_BINARY_DIR}/generated"
     -I "${CMAKE_BINARY_DIR}/generated/bpf"
     -I "${CMAKE_BINARY_DIR}/generated/flowmill"
-    -I "${CMAKE_BINARY_DIR}/generated/flowmill/agent_internal"
+    -I "${CMAKE_BINARY_DIR}/generated/ebpf_net/agent_internal"
     -I "${CMAKE_BINARY_DIR}/generated/bpf/bpf_src"
     -I "${CMAKE_BINARY_DIR}/generated/bpf/bpf_src/tcp-processor"
   DEPENDS "${BPF_DEPENDENCIES}"

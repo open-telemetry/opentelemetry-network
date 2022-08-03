@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package flowmill
+package ebpf_net
 
 /* RPC ID ranges.
  *
@@ -1021,8 +1021,8 @@ app ingest {
 
 app kernel_collector {
   span tracked_process
-    impl "flowmill::kernel_collector::TrackedProcessSpanBase"
-    include "<flowmill/kernel_collector/span_base.h>"
+    impl "ebpf_net::kernel_collector::TrackedProcessSpanBase"
+    include "<generated/ebpf_net/kernel_collector/span_base.h>"
   {
     pool_size 600000
     index (cgroup, tgid)
@@ -1036,8 +1036,8 @@ app kernel_collector {
 
 app cloud_collector {
   span aws_network_interface
-    impl "flowmill::cloud_collector::AwsNetworkInterfaceSpanBase"
-    include "<flowmill/cloud_collector/span_base.h>"
+    impl "ebpf_net::cloud_collector::AwsNetworkInterfaceSpanBase"
+    include "<generated/ebpf_net/cloud_collector/span_base.h>"
   {
     pool_size 60000
     index (ip)

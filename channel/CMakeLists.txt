@@ -80,7 +80,7 @@ target_link_libraries(
     upstream_connection
     spdlog
     libuv-interface
-    render_flowmill_artifacts
+    render_ebpf_net_artifacts
 )
 
 add_library(
@@ -96,7 +96,7 @@ target_link_libraries(
     intake_config
     element_queue_writer
     fastpass_util
-    render_flowmill_artifacts
+    render_ebpf_net_artifacts
     logging
     tcp_channel
     absl::strings

@@ -8,8 +8,8 @@
 #include <aws/ec2/model/DescribeRegionsRequest.h>
 #include <aws/ec2/model/DescribeRegionsResponse.h>
 
-#include <generated/flowmill/cloud_collector/index.h>
-#include <generated/flowmill/ingest.wire_message.h>
+#include <generated/ebpf_net/cloud_collector/index.h>
+#include <generated/ebpf_net/ingest.wire_message.h>
 
 #include <util/ip_address.h>
 #include <util/log.h>
@@ -26,7 +26,7 @@
 namespace collector::cloud {
 
 NetworkInterfacesEnumerator::NetworkInterfacesEnumerator(
-    logging::Logger &log, flowmill::cloud_collector::Index &index, flowmill::ingest::Writer &writer)
+    logging::Logger &log, ebpf_net::cloud_collector::Index &index, ebpf_net::ingest::Writer &writer)
     : index_(index), writer_(writer), log_(log)
 {}
 
@@ -35,7 +35,7 @@ NetworkInterfacesEnumerator::~NetworkInterfacesEnumerator()
   free_handles();
 }
 
-void NetworkInterfacesEnumerator::set_handles(std::vector<flowmill::cloud_collector::handles::aws_network_interface> handles)
+void NetworkInterfacesEnumerator::set_handles(std::vector<ebpf_net::cloud_collector::handles::aws_network_interface> handles)
 {
   free_handles();
   handles_ = std::move(handles);
@@ -51,9 +51,9 @@ void NetworkInterfacesEnumerator::free_handles()
 }
 
 void translate_interfaces_to_spans(
-    flowmill::cloud_collector::Index &index,
+    ebpf_net::cloud_collector::Index &index,
     Aws::Vector<Aws::EC2::Model::NetworkInterface> const &interfaces,
-    std::vector<flowmill::cloud_collector::handles::aws_network_interface> &handles)
+    std::vector<ebpf_net::cloud_collector::handles::aws_network_interface> &handles)
 {
   for (auto const &interface : interfaces) {
     auto const &attachment = interface.GetAttachment();
@@ -165,7 +165,7 @@ scheduling::JobFollowUp NetworkInterfacesEnumerator::enumerate()
     return scheduling::JobFollowUp::backoff;
   }
 
-  std::vector<flowmill::cloud_collector::handles::aws_network_interface> handles;
+  std::vector<ebpf_net::cloud_collector::handles::aws_network_interface> handles;
   auto result = scheduling::JobFollowUp::ok;
 
   LOG::trace("starting AWS network interfaces enumeration");

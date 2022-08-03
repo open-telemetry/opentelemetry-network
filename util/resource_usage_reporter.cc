@@ -16,7 +16,7 @@ using namespace std::literals::chrono_literals;
 
 constexpr auto REPORT_INTERVAL = 1s;
 
-ResourceUsageReporter::ResourceUsageReporter(uv_loop_t &loop, ::flowmill::ingest::Writer &writer)
+ResourceUsageReporter::ResourceUsageReporter(uv_loop_t &loop, ::ebpf_net::ingest::Writer &writer)
     : last_check_(monotonic_clock::now()), writer_(writer), scheduler_(loop, [this] {
         this->collect();
         return scheduling::JobFollowUp::ok;
@@ -64,7 +64,7 @@ void ResourceUsageReporter::collect()
   }
 }
 
-void ResourceUsageReporter::report(::flowmill::ingest::Writer &writer)
+void ResourceUsageReporter::report(::ebpf_net::ingest::Writer &writer)
 {
   if (auto const info = get_resource_usage()) {
     writer.agent_resource_usage(

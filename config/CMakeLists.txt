@@ -19,7 +19,7 @@ add_library(
 )
 target_link_libraries(
   intake_config
-    render_flowmill_ingest_writer
+    render_ebpf_net_ingest_writer
     tcp_channel
     libuv-interface
     args_parser

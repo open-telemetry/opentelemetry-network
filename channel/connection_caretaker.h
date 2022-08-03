@@ -9,7 +9,7 @@
 #include <channel/channel.h>
 #include <common/client_type.h>
 #include <config/config_file.h>
-#include <generated/flowmill/ingest/writer.h>
+#include <generated/ebpf_net/ingest/writer.h>
 #include <util/aws_instance_metadata.h>
 #include <util/curl_engine.h>
 #include <util/gcp_instance_metadata.h>
@@ -44,7 +44,7 @@ public:
       ClientType client_type,
       config::ConfigFile::LabelsMap const &config_data,
       uv_loop_t *loop,
-      flowmill::ingest::Writer &writer,
+      ebpf_net::ingest::Writer &writer,
       std::chrono::milliseconds metadata_timeout,
       std::chrono::milliseconds heartbeat_interval,
       std::function<void()> flush_cb,
@@ -91,7 +91,7 @@ private:
 
   uv_timer_t heartbeat_timer_;
 
-  flowmill::ingest::Writer &writer_;
+  ebpf_net::ingest::Writer &writer_;
 };
 
 } // namespace channel

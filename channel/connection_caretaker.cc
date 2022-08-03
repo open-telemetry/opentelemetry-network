@@ -28,7 +28,7 @@ ConnectionCaretaker::ConnectionCaretaker(
     ClientType client_type,
     config::ConfigFile::LabelsMap const &config_data,
     uv_loop_t *loop,
-    flowmill::ingest::Writer &writer,
+    ebpf_net::ingest::Writer &writer,
     std::chrono::milliseconds metadata_timeout,
     std::chrono::milliseconds heartbeat_interval,
     std::function<void()> flush_cb,

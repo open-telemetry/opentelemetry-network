@@ -39,7 +39,7 @@
 #include "render_bpf.h"
 // Perf events
 BPF_PERF_OUTPUT(events);
-#include "flowmill/agent_internal/bpf.h"
+#include "ebpf_net/agent_internal/bpf.h"
 
 // Common utility functions
 #include "tcp-processor/bpf_debug.h"

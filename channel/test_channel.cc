@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <channel/test_channel.h>
-#include <generated/flowmill/ingest/meta.h>
+#include <generated/ebpf_net/ingest/meta.h>
 #include <jitbuf/jb.h>
 #include <tools/json_converter.h>
 
@@ -28,7 +28,7 @@ std::error_code TestChannel::send(const u8 *data, int size)
 
       std::stringstream ss;
       llvm::LLVMContext llvm;
-      json_converter::WireToJsonConverter<flowmill::ingest_metadata> converter(ss, llvm);
+      json_converter::WireToJsonConverter<ebpf_net::ingest_metadata> converter(ss, llvm);
 
       if (auto const handled = converter.process(reinterpret_cast<char const *>(data), size); !handled) {
         if (handled.error().value() == EAGAIN) {

@@ -9,8 +9,8 @@
 #include <util/logger.h>
 #include <util/stop_watch.h>
 
-#include <generated/flowmill/kernel_collector/handles.h>
-#include <generated/flowmill/kernel_collector/index.h>
+#include <generated/ebpf_net/kernel_collector/handles.h>
+#include <generated/ebpf_net/kernel_collector/index.h>
 
 #include <absl/container/flat_hash_map.h>
 #include <absl/container/flat_hash_set.h>
@@ -29,7 +29,7 @@
 class ProcessHandler {
 public:
   ProcessHandler(
-      ::flowmill::ingest::Writer &writer, ::flowmill::kernel_collector::Index &collector_index, logging::Logger &log);
+      ::ebpf_net::ingest::Writer &writer, ::ebpf_net::kernel_collector::Index &collector_index, logging::Logger &log);
 
   ~ProcessHandler();
 
@@ -49,7 +49,7 @@ public:
 
 private:
   struct ThreadGroupData {
-    flowmill::kernel_collector::handles::tracked_process handle;
+    ebpf_net::kernel_collector::handles::tracked_process handle;
 #ifdef DEBUG_TGID
     std::chrono::nanoseconds timestamp;
     u64 cgroup;
@@ -58,8 +58,8 @@ private:
   };
 
   // rpc components
-  ::flowmill::ingest::Writer &writer_;
-  ::flowmill::kernel_collector::Index &collector_index_;
+  ::ebpf_net::ingest::Writer &writer_;
+  ::ebpf_net::kernel_collector::Index &collector_index_;
 
   // process data
   absl::flat_hash_map<u32, ThreadGroupData> processes_;

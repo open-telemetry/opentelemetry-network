@@ -13,7 +13,7 @@
 #include <util/log.h>
 #include <util/nomad_metadata.h>
 
-#include <generated/flowmill/agent_internal.wire_message.h>
+#include <generated/ebpf_net/agent_internal.wire_message.h>
 
 #include <nlohmann/json.hpp>
 
@@ -30,7 +30,7 @@ inline std::string make_docker_query_url(std::string const &container_name)
 std::string CgroupHandler::docker_ns_label_field;
 
 CgroupHandler::CgroupHandler(
-    ::flowmill::ingest::Writer &writer, CurlEngine &curl_engine, CgroupSettings const &settings, logging::Logger &log)
+    ::ebpf_net::ingest::Writer &writer, CurlEngine &curl_engine, CgroupSettings const &settings, logging::Logger &log)
     : writer_(writer), curl_engine_(curl_engine), settings_(settings), log_(log)
 {}
 

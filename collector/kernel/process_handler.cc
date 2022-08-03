@@ -9,12 +9,12 @@
 #include <util/log_formatters.h>
 #include <util/system_ops.h>
 
-#include <generated/flowmill/agent_internal.wire_message.h>
+#include <generated/ebpf_net/agent_internal.wire_message.h>
 
 #include <cassert>
 
 ProcessHandler::ProcessHandler(
-    ::flowmill::ingest::Writer &writer, ::flowmill::kernel_collector::Index &collector_index, logging::Logger &log)
+    ::ebpf_net::ingest::Writer &writer, ::ebpf_net::kernel_collector::Index &collector_index, logging::Logger &log)
     : writer_(writer), collector_index_(collector_index), log_(log), memory_page_bytes_(memory_page_size().try_raise().value())
 {
   LOG::trace_in(

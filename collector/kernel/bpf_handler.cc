@@ -17,7 +17,7 @@ BPFHandler::BPFHandler(
     bool enable_userland_tcp,
     FileDescriptor &bpf_dump_file,
     logging::Logger &log,
-    ::flowmill::ingest::Encoder *encoder)
+    ::ebpf_net::ingest::Encoder *encoder)
     : loop_(loop),
       bpf_module_(0),
       perf_(),
@@ -71,7 +71,7 @@ void BPFHandler::load_buffered_poller(
   last_lost_count_ = serv_lost_count();
 }
 
-void BPFHandler::load_probes(::flowmill::ingest::Writer &writer)
+void BPFHandler::load_probes(::ebpf_net::ingest::Writer &writer)
 {
   CgroupProber cgroup_prober(
       probe_handler_,

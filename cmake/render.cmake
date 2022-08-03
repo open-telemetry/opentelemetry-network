@@ -13,7 +13,7 @@ function(render_compile INPUT_DIR)
   if(DEFINED ARG_PACKAGE)
     set(PACKAGE ${ARG_PACKAGE})
   else()
-    set(PACKAGE "flowmill")
+    set(PACKAGE "default")
   endif()
 
   if(DEFINED ARG_COMPILER)

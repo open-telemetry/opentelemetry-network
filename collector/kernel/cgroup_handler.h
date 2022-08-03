@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <generated/flowmill/ingest/writer.h>
+#include <generated/ebpf_net/ingest/writer.h>
 #include <util/curl_engine.h>
 #include <util/logger.h>
 #include <util/lookup3_hasher.h>
@@ -26,7 +26,7 @@ public:
   static std::string docker_ns_label_field;
 
   CgroupHandler(
-      ::flowmill::ingest::Writer &writer, CurlEngine &curl_engine, CgroupSettings const &settings, logging::Logger &log);
+      ::ebpf_net::ingest::Writer &writer, CurlEngine &curl_engine, CgroupSettings const &settings, logging::Logger &log);
   ~CgroupHandler();
 
   void kill_css(u64 timestamp, struct jb_agent_internal__kill_css *msg);
@@ -48,7 +48,7 @@ private:
     std::string response;
   };
 
-  ::flowmill::ingest::Writer &writer_;
+  ::ebpf_net::ingest::Writer &writer_;
   CurlEngine &curl_engine_;
   CgroupSettings const &settings_;
   logging::Logger &log_;

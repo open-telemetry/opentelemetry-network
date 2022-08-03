@@ -8,8 +8,8 @@
 #include <channel/callbacks.h>
 #include <channel/connection_caretaker.h>
 #include <channel/reconnecting_channel.h>
-#include <generated/flowmill/cloud_collector/index.h>
-#include <generated/flowmill/ingest/writer.h>
+#include <generated/ebpf_net/cloud_collector/index.h>
+#include <generated/ebpf_net/ingest/writer.h>
 
 #include <uv.h>
 
@@ -33,9 +33,9 @@ public:
   void connect();
   void flush();
 
-  flowmill::ingest::Writer &writer() { return writer_; }
+  ebpf_net::ingest::Writer &writer() { return writer_; }
 
-  flowmill::cloud_collector::Index &index() { return index_; }
+  ebpf_net::cloud_collector::Index &index() { return index_; }
 
 private:
   u32 received_data(const u8 *data, int data_len);
@@ -46,10 +46,10 @@ private:
   std::unique_ptr<CurlEngine> curl_;
   channel::ReconnectingChannel channel_;
   channel::Callbacks &connection_callback_;
-  std::unique_ptr<::flowmill::ingest::Encoder> encoder_;
-  flowmill::ingest::Writer writer_;
+  std::unique_ptr<::ebpf_net::ingest::Encoder> encoder_;
+  ebpf_net::ingest::Writer writer_;
   channel::ConnectionCaretaker caretaker_;
-  flowmill::cloud_collector::Index index_;
+  ebpf_net::cloud_collector::Index index_;
 };
 
 } // namespace collector::cloud

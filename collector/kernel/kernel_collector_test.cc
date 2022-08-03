@@ -8,8 +8,8 @@
 #include <common/intake_encoder.h>
 #include <config/config_file.h>
 #include <config/intake_config.h>
-#include <generated/flowmill/ingest/meta.h>
-#include <generated/flowmill/ingest/otlp_log_encoder.h>
+#include <generated/ebpf_net/ingest/meta.h>
+#include <generated/ebpf_net/ingest/otlp_log_encoder.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <jitbuf/jb.h>
@@ -320,7 +320,7 @@ protected:
 
       std::stringstream ss;
       llvm::LLVMContext llvm;
-      json_converter::WireToJsonConverter<flowmill::ingest_metadata> converter(ss, llvm);
+      json_converter::WireToJsonConverter<ebpf_net::ingest_metadata> converter(ss, llvm);
 
       converter.process(reinterpret_cast<char const *>(msg.data()), msg.size());
       std::string str = "[" + ss.str() + "]";

@@ -16,9 +16,9 @@
 #include <util/lookup3.h>
 
 #include <generated/agent_bpf_debug.inc>
-#include <generated/flowmill/agent_internal.wire_message.h>
-#include <generated/flowmill/agent_internal/meta.h>
-#include <generated/flowmill/ingest.wire_message.h>
+#include <generated/ebpf_net/agent_internal.wire_message.h>
+#include <generated/ebpf_net/agent_internal/meta.h>
+#include <generated/ebpf_net/ingest.wire_message.h>
 
 #include <spdlog/common.h>
 #include <spdlog/fmt/bin_to_hex.h>
@@ -47,7 +47,7 @@ BufferedPoller::BufferedPoller(
     ebpf::BPFModule &bpf_module,
     u64 socket_stats_interval_sec,
     CgroupHandler::CgroupSettings const &cgroup_settings,
-    ::flowmill::ingest::Encoder *encoder,
+    ::ebpf_net::ingest::Encoder *encoder,
     KernelCollectorRestarter &kernel_collector_restarter)
     : PerfPoller(container),
       loop_(loop),
@@ -75,7 +75,7 @@ BufferedPoller::BufferedPoller(
   }
 
   {
-    using namespace flowmill::agent_internal;
+    using namespace ebpf_net::agent_internal;
 
     memset(handlers_, 0, sizeof(handlers_));
     add_handler<dns_packet_message_metadata, &BufferedPoller::handle_dns_message, DNS_MAX_PACKET_LEN + 16>();

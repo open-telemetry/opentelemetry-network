@@ -12,7 +12,7 @@
 #include <vector>
 
 #include "channel/buffered_writer.h"
-#include "generated/flowmill/ingest/writer.h"
+#include "generated/ebpf_net/ingest/writer.h"
 #include "generated/kubernetes_info.pb.h"
 #include "kubernetes_owner_kind.h"
 #include "platform/types.h"
@@ -35,7 +35,7 @@ namespace {
 class K8sHandler {
 public:
   // Does not take ownership of |writer|
-  explicit K8sHandler(flowmill::ingest::Writer *writer) : writer_(writer) {}
+  explicit K8sHandler(ebpf_net::ingest::Writer *writer) : writer_(writer) {}
 
   ~K8sHandler() {}
 
@@ -90,7 +90,7 @@ private:
   ReplicaSetStore replica_sets_;
   PodStore pods_;
 
-  flowmill::ingest::Writer *writer_;
+  ebpf_net::ingest::Writer *writer_;
 };
 
 bool K8sHandler::need_restart() const
@@ -367,7 +367,7 @@ Status KubernetesRpcServer::Collect(ServerContext *context, ServerReaderWriter<R
 
   channel::BufferedWriter buffered_writer(*resync_channel, collect_buffer_size_);
 
-  flowmill::ingest::Writer writer(buffered_writer, monotonic, get_boot_time());
+  ebpf_net::ingest::Writer writer(buffered_writer, monotonic, get_boot_time());
 
   K8sHandler handler(&writer);
   Info info;

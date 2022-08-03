@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <generated/flowmill/ingest.wire_message.h>
+#include <generated/ebpf_net/ingest.wire_message.h>
 
 #ifdef __cplusplus
 extern "C" {

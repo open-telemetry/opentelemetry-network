@@ -17,7 +17,7 @@ add_library(
 )
 target_link_libraries(
   kubernetes_owner_kind
-    render_flowmill_artifacts
+    render_ebpf_net_artifacts
 )
 
 add_library(
@@ -27,7 +27,7 @@ add_library(
 )
 target_link_libraries(
   resync_channel
-    render_flowmill_artifacts
+    render_ebpf_net_artifacts
 )
 
 add_library(
@@ -41,7 +41,7 @@ target_link_libraries(
     kubernetes_info-cpp-protobuf
     yamlcpp
     fastpass_util
-    render_flowmill_artifacts
+    render_ebpf_net_artifacts
 )
 
 add_library(
@@ -51,7 +51,7 @@ add_library(
 )
 target_link_libraries(
   resync_queue
-    render_flowmill_artifacts
+    render_ebpf_net_artifacts
 )
 
 add_library(
@@ -65,7 +65,7 @@ target_link_libraries(
     libuv-interface
     spdlog
     fastpass_util
-    render_flowmill_artifacts
+    render_ebpf_net_artifacts
 )
 
 add_executable(
@@ -87,8 +87,8 @@ target_link_libraries(
     kubernetes_owner_kind
     connection_caretaker
     resource_usage_reporter
-    render_flowmill_artifacts
-    render_flowmill_ingest_writer
+    render_ebpf_net_artifacts
+    render_ebpf_net_ingest_writer
     config_file
     libuv-static
     args_parser

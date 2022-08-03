@@ -7,8 +7,8 @@
 
 #include <collector/kernel/hostport_tuple.h>
 
-#include <generated/flowmill/agent_internal.wire_message.h>
-#include <generated/flowmill/ingest/writer.h>
+#include <generated/ebpf_net/agent_internal.wire_message.h>
+#include <generated/ebpf_net/ingest/writer.h>
 #include <platform/platform.h>
 #include <util/logger.h>
 
@@ -19,7 +19,7 @@ public:
   /**
    * c'tor
    */
-  NatHandler(::flowmill::ingest::Writer &writer, logging::Logger &log);
+  NatHandler(::ebpf_net::ingest::Writer &writer, logging::Logger &log);
 
   // end
   void handle_nf_nat_cleanup_conntrack(u64 timestamp, struct jb_agent_internal__nf_nat_cleanup_conntrack *msg);
@@ -57,7 +57,7 @@ private:
   // A reverse index of our existing_sk_table_ so that we can do cleanup later.
   absl::flat_hash_map<u64, hostport_tuple> existing_sk_table_rev_;
 
-  ::flowmill::ingest::Writer &writer_;
+  ::ebpf_net::ingest::Writer &writer_;
   logging::Logger &log_;
 
   // Adds the mapping between a socket and its (local,remote) tuple.

@@ -143,7 +143,7 @@ add_library(
 )
 target_link_libraries(
   resource_usage_reporter
-    render_flowmill_artifacts
+    render_ebpf_net_artifacts
     scheduling
     system_ops
     logging
@@ -253,7 +253,7 @@ add_library(
 target_link_libraries(
   ip_address
     logging
-    render_flowmill_artifacts
+    render_ebpf_net_artifacts
 )
 add_unit_test(ip_address LIBS ip_address absl::str_format)
 
@@ -342,7 +342,7 @@ target_link_libraries(
 add_unit_test(log_modifiers LIBS logging)
 add_unit_test(expected)
 add_unit_test(enum)
-add_unit_test(meta LIBS render_flowmill_artifacts llvm logging)
+add_unit_test(meta LIBS render_ebpf_net_artifacts llvm logging)
 add_unit_test(lookup3_hasher LIBS fastpass_util)
 add_unit_test(jitter)
 add_unit_test(bits)

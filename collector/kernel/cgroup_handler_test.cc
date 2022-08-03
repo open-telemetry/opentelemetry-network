@@ -5,7 +5,7 @@
 #include <channel/test_channel.h>
 #include <collector/kernel/cgroup_handler.h>
 #include <common/intake_encoder.h>
-#include <generated/flowmill/ingest/otlp_log_encoder.h>
+#include <generated/ebpf_net/ingest/otlp_log_encoder.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <util/curl_engine.h>
@@ -393,8 +393,8 @@ TEST_F(CgroupHandlerTest, handle_docker_response)
 {
   channel::TestChannel test_channel(std::nullopt, IntakeEncoder::otlp_log);
   channel::BufferedWriter buffered_writer(test_channel, 1024);
-  flowmill::ingest::OtlpLogEncoder encoder("host-not-used", "port-not-used");
-  flowmill::ingest::Writer writer(buffered_writer, monotonic, 0, &encoder);
+  ebpf_net::ingest::OtlpLogEncoder encoder("host-not-used", "port-not-used");
+  ebpf_net::ingest::Writer writer(buffered_writer, monotonic, 0, &encoder);
 
   std::unique_ptr<CurlEngine> curl_engine = CurlEngine::create(&loop_);
 

@@ -21,8 +21,8 @@ target_compile_options(
 target_link_libraries(
   cloud-collector
   PUBLIC
-    render_flowmill_cloud_collector
-    render_flowmill_ingest_writer
+    render_ebpf_net_cloud_collector
+    render_ebpf_net_ingest_writer
     signal_handler
     aws-sdk-cpp
     reconnecting_channel

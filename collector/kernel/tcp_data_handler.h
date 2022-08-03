@@ -14,7 +14,7 @@
 
 #include <uv.h>
 
-#include <generated/flowmill/ingest/writer.h>
+#include <generated/ebpf_net/ingest/writer.h>
 #include <platform/platform.h>
 #include <util/logger.h>
 
@@ -31,7 +31,7 @@ public:
   TCPDataHandler(
       uv_loop_t &loop,
       ebpf::BPFModule &bpf_module,
-      ::flowmill::ingest::Writer &writer,
+      ::ebpf_net::ingest::Writer &writer,
       PerfContainer &container,
       logging::Logger &log);
 
@@ -54,7 +54,7 @@ public:
   void handle_close_socket(u64 sk);
 
   // Output
-  inline ::flowmill::ingest::Writer &writer() { return writer_; }
+  inline ::ebpf_net::ingest::Writer &writer() { return writer_; }
 
   // tcp kernel->userland throttling control backchannel
   void enable_stream(const tcp_control_key_t &key, STREAM_TYPE stream_type, bool enable);
@@ -74,7 +74,7 @@ protected:
 protected:
   uv_loop_t &loop_;
   ebpf::BPFModule &bpf_module_;
-  ::flowmill::ingest::Writer &writer_;
+  ::ebpf_net::ingest::Writer &writer_;
   PerfContainer &container_;
   u64 lost_record_total_count_ = 0;
   std::map<tcp_control_key_t, std::shared_ptr<ProtocolHandlerBase>, tcp_control_key_t_comparator> protocol_handlers_;

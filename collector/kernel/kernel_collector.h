@@ -14,7 +14,7 @@
 #include <collector/kernel/probe_handler.h>
 #include <common/host_info.h>
 #include <config/intake_config.h>
-#include <generated/flowmill/ingest/writer.h>
+#include <generated/ebpf_net/ingest/writer.h>
 #include <platform/platform.h>
 #include <scheduling/interval_scheduler.h>
 #include <util/aws_instance_metadata.h>
@@ -175,13 +175,13 @@ private:
   uv_timer_t slow_timer_;
 
   u64 last_lost_count_;
-  std::unique_ptr<::flowmill::ingest::Encoder> encoder_;
+  std::unique_ptr<::ebpf_net::ingest::Encoder> encoder_;
   std::optional<BPFHandler> bpf_handler_;
   Callbacks callbacks_;
   std::unique_ptr<channel::NetworkChannel> primary_channel_;
   channel::FileChannel secondary_channel_;
   channel::UpstreamConnection upstream_connection_;
-  ::flowmill::ingest::Writer writer_;
+  ::ebpf_net::ingest::Writer writer_;
 
   u64 last_probe_monotonic_time_ns_;
 

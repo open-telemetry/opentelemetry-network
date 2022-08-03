@@ -10,8 +10,8 @@
 #include <util/args_parser.h>
 #include <util/file_ops.h>
 
-#include <generated/flowmill/ingest/encoder.h>
-#include <generated/flowmill/ingest/otlp_log_encoder.h>
+#include <generated/ebpf_net/ingest/encoder.h>
+#include <generated/ebpf_net/ingest/otlp_log_encoder.h>
 
 #include <uv.h>
 
@@ -68,11 +68,11 @@ public:
 
   virtual std::unique_ptr<channel::NetworkChannel> make_channel(uv_loop_t &loop) const;
 
-  std::unique_ptr<::flowmill::ingest::Encoder> make_encoder() const
+  std::unique_ptr<::ebpf_net::ingest::Encoder> make_encoder() const
   {
     switch (encoder_) {
     case IntakeEncoder::otlp_log:
-      return std::make_unique<::flowmill::ingest::OtlpLogEncoder>(host_, port_);
+      return std::make_unique<::ebpf_net::ingest::OtlpLogEncoder>(host_, port_);
 
     default:
       return nullptr;
