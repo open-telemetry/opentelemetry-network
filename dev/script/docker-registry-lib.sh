@@ -41,7 +41,7 @@ function okta_login {
   echo -e "done\\n"
 }
 
-function flowmill_detect_docker_registry {
+function detect_docker_registry {
   docker_registry="$1"; shift
   if [ -z "${docker_registry}" ]; then
     echo 'none'

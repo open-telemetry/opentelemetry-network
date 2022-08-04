@@ -3,8 +3,8 @@
 
 FROM bitnami/minideb:buster
 
-LABEL org.label-schema.name="flowmill/cloud-collector" \
-      org.label-schema.description="Flowmill Cloud Metadata Collector" \
+LABEL org.label-schema.name="network-explorer/cloud-collector" \
+      org.label-schema.description="Cloud metadata collector" \
       org.label-schema.schema-version="1.0"
 
 # ca-certificates are required by libcurl

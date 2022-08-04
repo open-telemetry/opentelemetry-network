@@ -78,8 +78,8 @@ docker run -it --rm \
 
 Environment variables:
 
-- `EBPF_NET_INTAKE_HOST`: this is the hostname or IP address of the Flowmill intake server
-- `EBPF_NET_INTAKE_PORT`: this is the port of the Flowmill intake server
+- `EBPF_NET_INTAKE_HOST`: this is the hostname or IP address of the intake server
+- `EBPF_NET_INTAKE_PORT`: this is the port of the intake server
 
 Volumes:
 
@@ -155,8 +155,8 @@ documentation](https://github.com/open-telemetry/opentelemetry-collector/blob/ma
 
 The flowmill collector needs to know a few things in order to connect to
 otel-col's receiver as its intake. The difference between connecting to the
-standard Flowmill intake vs connecting to otel-col's receiver is the intake
-encoding. For otel-col's receiver the encoding must be set to `otlp_log`.
+standard intake vs connecting to otel-col's receiver is the intake encoding.
+For otel-col's receiver the encoding must be set to `otlp_log`.
 
 Intake settings are controlled by environment variables set on Flowmill
 Collector's container (e.g.: can be set with `docker`'s --env command line

@@ -27,7 +27,7 @@ fi
 use_vault=true
 
 function auto_detected_login {
-  case "$(flowmill_detect_docker_registry "$1")" in
+  case "$(detect_docker_registry "$1")" in
     none)
       echo "no docker registry configured, skipping login"
       ;;

@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
 
   // args parsing
 
-  cli::ArgsParser parser("Flowmill K8S relay service");
+  cli::ArgsParser parser("Kubernetes Collector relay service");
 
   args::HelpFlag help(*parser, "help", "Display this help menu", {'h', "help"});
 

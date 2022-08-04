@@ -3,8 +3,8 @@
 
 FROM bitnami/minideb:buster
 
-LABEL org.label-schema.name="flowmill/k8s-relay" \
-      org.label-schema.description="Relays Kubernetes Metadata from k8s-collector to Flowmill" \
+LABEL org.label-schema.name="network-explorer/k8s-relay" \
+      org.label-schema.description="Kubernetes metadata collector relay service" \
       org.label-schema.schema-version="1.0"
 
 # ca-certificates are required by libcurl

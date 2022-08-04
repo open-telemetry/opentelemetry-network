@@ -16,7 +16,7 @@ namespace collector {
 // KubernetesRpcServer implements Collector::Service gRpc server.
 //
 // It recieves the client-side streaming gRpc from Kubernetes Reader, and
-// extracts related information and forwards to Flowmill pipeline server.
+// extracts related information and forwards to the reducer.
 class KubernetesRpcServer : public Collector::Service {
 public:
   // Does not take ownership of |chanel_factory|

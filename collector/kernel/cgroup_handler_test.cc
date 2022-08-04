@@ -230,7 +230,7 @@ const char *dummy_json_response_data = R"delim(
       "--log-console",
       "--debug"
     ],
-    "Image": "localhost:5000/pipeline-server",
+    "Image": "localhost:5000/reducer",
     "Volumes": null,
     "WorkingDir": "",
     "Entrypoint": [
@@ -238,12 +238,10 @@ const char *dummy_json_response_data = R"delim(
     ],
     "OnBuild": null,
     "Labels": {
-      "org.label-schema.description": "Flowtune telemetry server",
-      "org.label-schema.name": "flowtune/flowtune-server",
+      "org.label-schema.description": "Network Explorer reducer",
+      "org.label-schema.name": "network-explorer/reducer",
       "org.label-schema.schema-version": "1.0",
-      "org.label-schema.usage": "./README.md",
-      "org.label-schema.vcs-url": "https://review.prod.flowtune.io/deploy/flowtune-server-docker/",
-      "org.label-schema.vendor": "Flowmill, Inc"
+      "org.label-schema.usage": "./README.md"
     }
   },
   "NetworkSettings": {

@@ -144,8 +144,8 @@ void NetworkInterfacesEnumerator::handle_ec2_error(
   if (http_status >= 400 && http_status < 500) {
     log_.error(
         "{} -  API call failed with http status {}. Double check that AWS credentials are"
-        " properly set up for this pod. Check Flowmill setup instructions for more"
-        " information. Error message from AWS: {}",
+        " properly set up for this pod. Check setup instructions for more information."
+        " Error message from AWS: {}",
         status,
         http_status,
         error.GetMessage());

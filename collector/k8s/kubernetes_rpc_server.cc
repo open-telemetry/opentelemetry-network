@@ -31,7 +31,7 @@ using ::grpc::WriteOptions;
 namespace {
 // K8sHandler maintain keeps track of the state of Pod & ReplicaSet.
 // It consumes the Pod & ReplicaSet events sent back by k8s-watcher, and
-// decides whether & what messages to be sent back to Flowmill server.
+// decides whether & what messages to be sent back to the reducer.
 class K8sHandler {
 public:
   // Does not take ownership of |writer|

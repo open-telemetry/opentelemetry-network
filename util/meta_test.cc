@@ -16,25 +16,25 @@
 
 namespace ebpf_net::ingest {
 
-TEST(flowmill_metadata, message_metadata_rpc_id)
+TEST(metadata, message_metadata_rpc_id)
 {
   EXPECT_EQ(301, pid_info_message_metadata::rpc_id);
   EXPECT_EQ(396, container_metadata_message_metadata::rpc_id);
 }
 
-TEST(flowmill_metadata, field_type)
+TEST(metadata, field_type)
 {
   EXPECT_TRUE((std::is_same_v<std::uint32_t, pid_info_message_metadata::field_pid::type>));
   EXPECT_TRUE((std::is_same_v<std::uint8_t[16], pid_info_message_metadata::field_comm::type>));
 }
 
-TEST(flowmill_metadata, field_name)
+TEST(metadata, field_name)
 {
   EXPECT_EQ("pid", pid_info_message_metadata::field_pid::name);
   EXPECT_EQ("comm", pid_info_message_metadata::field_comm::name);
 }
 
-TEST(flowmill_metadata, field_get)
+TEST(metadata, field_get)
 {
   jsrv_ingest__pid_info message;
   message.pid = 12345;
@@ -47,7 +47,7 @@ TEST(flowmill_metadata, field_get)
           "abcdef123456789", reinterpret_cast<char const *>(pid_info_message_metadata::field_comm::get(&message)), 16));
 }
 
-TEST(flowmill_metadata, message_metadata_for)
+TEST(metadata, message_metadata_for)
 {
   EXPECT_TRUE((std::is_same_v<pid_info_message_metadata, ingest_metadata::message_metadata_for<jb_ingest__pid_info>>));
   EXPECT_TRUE((std::is_same_v<pid_info_message_metadata, ingest_metadata::message_metadata_for<jsrv_ingest__pid_info>>));

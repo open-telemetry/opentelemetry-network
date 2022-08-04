@@ -10,7 +10,7 @@ function(strip_binary TARGET)
   if (UPLOAD_DEBUG_SYMBOLS)
     list(APPEND STRIP_ARGS "--export")
     list(APPEND STRIP_ARGS "--upload")
-    list(APPEND STRIP_ARGS "flowmill-debug-symbols")
+    list(APPEND STRIP_ARGS "network-explorer-debug-symbols")
   endif()
 
   add_custom_target(

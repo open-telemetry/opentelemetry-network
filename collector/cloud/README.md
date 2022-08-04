@@ -1,7 +1,7 @@
 # Cloud Collector
 
-The `cloud-collector` collects cloud information that cannot be otherwise collected by our flowmill
-agent, and feeds that information to the reducer.
+The `cloud-collector` collects cloud information that cannot be otherwise collected by our kernel
+collector, and feeds that information to the reducer.
 
 The collector is comprised of two components:
 - the agent that periodically queries AWS and pushes the information to the pipeline server;

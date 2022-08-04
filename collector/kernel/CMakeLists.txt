@@ -178,7 +178,6 @@ add_custom_command(
     -I "${CMAKE_CURRENT_BINARY_DIR}"
     -I "${CMAKE_BINARY_DIR}/generated"
     -I "${CMAKE_BINARY_DIR}/generated/bpf"
-    -I "${CMAKE_BINARY_DIR}/generated/flowmill"
     -I "${CMAKE_BINARY_DIR}/generated/ebpf_net/agent_internal"
     -I "${CMAKE_BINARY_DIR}/generated/bpf/bpf_src"
     -I "${CMAKE_BINARY_DIR}/generated/bpf/bpf_src/tcp-processor"

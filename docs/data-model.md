@@ -34,7 +34,7 @@ This is also true for Logging and Tracing: it is possible to have high fidelity 
 
 ## Available data
 
-Flowmill gets data on:
+Data is collected on:
 
 * Containers, from the cgroup subsystem
 * Processes and threads, with container and parent process context

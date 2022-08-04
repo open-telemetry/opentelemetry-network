@@ -3,8 +3,8 @@
 
 FROM bitnami/minideb:buster
 
-LABEL org.label-schema.name="flowmill/agent" \
-      org.label-schema.description="Flowmill eBPF Kernel Collector" \
+LABEL org.label-schema.name="network-explorer/kernel-collector" \
+      org.label-schema.description="eBPF kernel information collector" \
       org.label-schema.schema-version="1.0"
 
 ARG EXTRA_PKGS=""

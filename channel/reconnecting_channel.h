@@ -114,8 +114,7 @@ private:
   // Observers interested in the status of the pipeline.
   std::set<Callbacks *> pipeline_observers_;
 
-  // Number of bytes this channel has sent, or is about to send, back to
-  // flowmill pipeline server.
+  // Number of bytes this channel has sent, or is about to send.
   u64 num_bytes_sent_ = 0;
 };
 

@@ -16,16 +16,16 @@ if [[ "${EBPF_NET_DEBUG_MODE}" == true ]]; then
   echo "==========================================================="
 fi
 
-flowmill_install_dir=${EBPF_NET_INSTALL_DIR:-/srv}
+install_dir=${EBPF_NET_INSTALL_DIR:-/srv}
 
-flowmill_data_dir="/var/run/flowmill"
-flowmill_dump_dir="${flowmill_data_dir}/dump"
-mkdir -p "${flowmill_data_dir}" "${flowmill_dump_dir}"
+data_dir="/var/run/flowmill"
+dump_dir="${data_dir}/dump"
+mkdir -p "${data_dir}" "${dump_dir}"
 
-kernel_headers_info_path="${flowmill_data_dir}/kernel_headers.cfg"
-kernel_headers_log_path="${flowmill_data_dir}/kernel_headers.log"
+kernel_headers_info_path="${data_dir}/kernel_headers.cfg"
+kernel_headers_log_path="${data_dir}/kernel_headers.log"
 echo "resolving kernel headers..."
-if "${flowmill_install_dir}/kernel_headers.sh" "${kernel_headers_info_path}" \
+if "${install_dir}/kernel_headers.sh" "${kernel_headers_info_path}" \
   > "${kernel_headers_log_path}" 2>&1
 then
   # shellcheck disable=SC1090
@@ -34,13 +34,13 @@ else
   entrypoint_error="unknown"
 fi
 
-# cleanup kprobes previously created by Flowmill agent
+# cleanup kprobes previously created by the kernel collector
 if [[ -f /sys/kernel/debug/tracing/kprobe_events ]]; then
-  FLOWMILL_TMPFILE="${flowmill_data_dir}/flowmill_kprobes"
+  tmpfile="${data_dir}/flowmill_kprobes"
   grep flowmill /sys/kernel/debug/tracing/kprobe_events \
-    | cut -d: -f2 | sed -e 's/^/-:/' > "$FLOWMILL_TMPFILE"
-  cat "$FLOWMILL_TMPFILE" >> /sys/kernel/debug/tracing/kprobe_events
-  rm -f "$FLOWMILL_TMPFILE"
+    | cut -d: -f2 | sed -e 's/^/-:/' > "$tmpfile"
+  cat "$tmpfile" >> /sys/kernel/debug/tracing/kprobe_events
+  rm -f "$tmpfile"
 fi
 
 cmd_args=( \
@@ -96,7 +96,7 @@ if [[ -n "${EBPF_NET_RUN_UNDER_GDB}" ]]; then
   done
 
   (set -x; exec "${EBPF_NET_RUN_UNDER_GDB}" -q "${GDB_ARGS[@]}" \
-    --args "${flowmill_install_dir}/kernel-collector" "${cmd_args[@]}" "$@" \
+    --args "${install_dir}/kernel-collector" "${cmd_args[@]}" "$@" \
   )
 elif [[ -n "${EBPF_NET_RUN_UNDER_VALGRIND}" ]]; then
   # to run the collector under valgrind, set `EBPF_NET_RUN_UNDER_VALGRIND` to the options to pass to valgrind,
@@ -109,7 +109,7 @@ elif [[ -n "${EBPF_NET_RUN_UNDER_VALGRIND}" ]]; then
   apt install -y valgrind
 
   # shellcheck disable=SC2086
-  (set -x; exec /usr/bin/valgrind ${EBPF_NET_RUN_UNDER_VALGRIND} "${flowmill_install_dir}/kernel-collector" "${cmd_args[@]}" "$@")
+  (set -x; exec /usr/bin/valgrind ${EBPF_NET_RUN_UNDER_VALGRIND} "${install_dir}/kernel-collector" "${cmd_args[@]}" "$@")
 else
-  (set -x; exec "${flowmill_install_dir}/kernel-collector" "${cmd_args[@]}" "$@")
+  (set -x; exec "${install_dir}/kernel-collector" "${cmd_args[@]}" "$@")
 fi

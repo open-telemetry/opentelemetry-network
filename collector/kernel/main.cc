@@ -241,7 +241,7 @@ int main(int argc, char *argv[])
 
   // args parsing
 
-  cli::ArgsParser parser("Flowmill agent.");
+  cli::ArgsParser parser("Kernel Collector.");
   args::HelpFlag help(*parser, "help", "Display this help menu", {'h', "help"});
   args::ValueFlag<u64> filter_ns(*parser, "nanoseconds", "Gap between subsequent reports", {"filter-ns"}, 10 * 1000 * 1000ull);
   args::ValueFlag<u64> socket_stats_interval_sec(
@@ -343,7 +343,7 @@ int main(int argc, char *argv[])
   auto agent_id = gen_agent_id();
 
   /* log agent version */
-  LOG::info("Starting Flowmill Agent version {} ({})", versions::release, release_mode_string);
+  LOG::info("Starting Kernel Collector version {} ({})", versions::release, release_mode_string);
   LOG::info("Kernel Collector agent ID is {}", agent_id);
 
   /* get kernel version */

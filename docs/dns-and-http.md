@@ -4,7 +4,7 @@
 
 ### DNS Collection and Enrichment
 
-This document describes how DNS collection and enrichment works in the Flowmill pipeline.
+This document describes how DNS collection and enrichment works.
 
 ### Agent
 
@@ -33,7 +33,7 @@ The collected http response code is sent to the pipeline server. It is the actua
 
 ### Collector internal messages
 
-The following message is used to communicate between kernel space and user space in the Flowmill agent:
+The following message is used to communicate between kernel space and user space in the Kernel Collector:
 
 ```text
 `http_response` {

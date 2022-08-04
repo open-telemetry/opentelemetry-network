@@ -1,7 +1,6 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: io.opentelemetry.render
-Bundle-Vendor: Flowmill
 Bundle-Version: 1.0.0.qualifier
 Bundle-SymbolicName: io.opentelemetry.render; singleton:=true
 Bundle-ActivationPolicy: lazy

@@ -79,7 +79,7 @@ protected:
   void start_kernel_collector(
       IntakeEncoder intake_encoder, StopConditions const &stop_conditions, std::string const &bpf_dump_file = "")
   {
-    // This mostly duplicates the KernelCollector setup done in flowmill-collector/collector/kernel/main.cc.
+    // This mostly duplicates the KernelCollector setup done in collector/kernel/main.cc.
 
     /* Read our BPF program*/
     /* resolve includes */
