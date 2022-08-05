@@ -37,7 +37,7 @@ function gcr_login {
 
 function okta_login {
   echo "logging in to okta ..."
-  okta-docker-login
+  okta-artifactory-login
   echo -e "done\\n"
 }
 
