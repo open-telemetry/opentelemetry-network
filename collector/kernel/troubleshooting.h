@@ -10,19 +10,6 @@
 #include <common/host_info.h>
 #include <util/logger.h>
 
-#include <string_view>
-
-constexpr std::string_view CONTACT_INFO_MESSAGE = R"SUPPORT(
-To reach Flowmill customer support, please choose one of the contact methods below:
-
-- the shared Slack channel that has been setup between your company and `flowmill.slack.com`;
-
-- email `support@flowmill.com`, prefixing the subject with "Kernel Collector Issue: ".
-
-If possible, please include these logs in the message, along with a description of the problem
-you're encountering so we can better support you.
-)SUPPORT";
-
 /**
  * Prints a troubleshooting message for the error contained in the given
  * entrypoint info.

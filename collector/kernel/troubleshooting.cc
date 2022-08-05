@@ -10,6 +10,7 @@
 #include <spdlog/fmt/ostr.h>
 
 #include <iostream>
+#include <string_view>
 #include <thread>
 
 #include <cstdlib>
@@ -19,7 +20,7 @@ static constexpr auto EXIT_SLEEP_FOREVER = std::chrono::seconds::max();
 
 constexpr std::string_view KERNEL_HEADERS_MANUAL_INSTALL_INSTRUCTIONS = R"INSTRUCTIONS(
 In the meantime, please install kernel headers manually on each host before running
-Flowmill Kernel Collector.
+the Kernel Collector.
 
 To manually install kernel headers, follow the instructions below:
 
@@ -63,7 +64,7 @@ void print_troubleshooting_message_and_exit(
 Automatically fetching kernel headers for the Linux distro '{}' is currently unsupported.
 
 We're regularly adding kernel headers fetching support for popular Linux distros so if
-you're using a well known distro, please reach out to Flowmill so we can better support
+you're using a well known distro, please reach out to support so we can better support
 your use case.
 )TROUBLESHOOTING",
                      static_cast<LinuxDistro>(info.os_flavor))
@@ -77,7 +78,7 @@ your use case.
                      R"TROUBLESHOOTING(
 Problem while installing kernel headers for the host's Linux distro '{}'.
 
-Please reach out to Flowmill and include this log in its entirety so we can diagnose and fix
+Please reach out to support and include this log in its entirety so we can diagnose and fix
 the problem.
 )TROUBLESHOOTING",
                      static_cast<LinuxDistro>(info.os_flavor))
@@ -107,7 +108,7 @@ In order to allow it, follow the instructions below:
   - for ECS deployments, ensure that environment variable `EBPF_NET_KERNEL_HEADERS_AUTO_FETCH`
     is set to `true` in the Agent's task definitions;
 
-  - for any other deployments, ensure that Flowmill Kernel Collector container will be started
+  - for any other deployments, ensure that the Kernel Collector container will be started
     with environment variable `EBPF_NET_KERNEL_HEADERS_AUTO_FETCH` set to `true`.
 )TROUBLESHOOTING",
                      static_cast<LinuxDistro>(info.os_flavor))
@@ -122,7 +123,7 @@ In order to allow it, follow the instructions below:
 Unable to locate the configuration for the host's package manager in order to automatically
 install kernel headers for the Linux distro '{}'.
 
-Please reach out to Flowmill and include this log in its entirety so we can diagnose and fix
+Please reach out to support and include this log in its entirety so we can diagnose and fix
 the problem.
 )TROUBLESHOOTING",
                      static_cast<LinuxDistro>(info.os_flavor))
@@ -137,7 +138,7 @@ the problem.
 Unable to use the host's package manager configuration to automatically install kernel headers
 for the Linux distro '{}'.
 
-Please reach out to Flowmill and include this log in its entirety so we can diagnose and fix
+Please reach out to support and include this log in its entirety so we can diagnose and fix
 the problem.
 )TROUBLESHOOTING",
                      static_cast<LinuxDistro>(info.os_flavor))
@@ -148,16 +149,16 @@ the problem.
 
   default: {
     std::cout << R"TROUBLESHOOTING(
-Unknown error happened during boot up of the Flowmill Kernel Collector.
+Unknown error happened during boot up of the Kernel Collector.
 
-Please reach out to Flowmill and include this log in its entirety so we can diagnose and fix
+Please reach out to support and include this log in its entirety so we can diagnose and fix
 the problem.
 )TROUBLESHOOTING";
     break;
   }
   }
 
-  std::cout << std::endl << CONTACT_INFO_MESSAGE << std::endl;
+  std::cout << std::endl;
   std::cout.flush();
 
   if (flush_and_close) {
@@ -203,7 +204,7 @@ Failed to compile eBPF code for the Linux distro '{}' running kernel version {}.
 
 This usually means that kernel headers weren't installed correctly.
 
-Please reach out to Flowmill and include this log in its entirety so we can diagnose and fix
+Please reach out to support and include this log in its entirety so we can diagnose and fix
 the problem.
 )TROUBLESHOOTING",
                      static_cast<LinuxDistro>(info.os_flavor),
@@ -221,7 +222,7 @@ Failed to load eBPF probes for the Linux distro '{}' running kernel version {}.
 
 {}
 
-Please reach out to Flowmill and include this log in its entirety so we can diagnose and fix
+Please reach out to support and include this log in its entirety so we can diagnose and fix
 the problem.
 )TROUBLESHOOTING",
         static_cast<LinuxDistro>(info.os_flavor),
@@ -242,7 +243,7 @@ Make sure to run as privileged user, and/or with --privileged flag or equivalant
 
 Blocking to avoid failure retry loop.
 
-Please reach out to Flowmill and include this log in its entirety so we can diagnose and fix
+Please reach out to support and include this log in its entirety so we can diagnose and fix
 the problem.
 )TROUBLESHOOTING",
         item_fmt);
@@ -256,7 +257,7 @@ Unexpected exception.
 
 {}
 
-Please reach out to Flowmill and include this log in its entirety so we can diagnose and fix
+Please reach out to support and include this log in its entirety so we can diagnose and fix
 the problem.
 )TROUBLESHOOTING",
         item_fmt);
@@ -265,16 +266,16 @@ the problem.
 
   default: {
     std::cout << R"TROUBLESHOOTING(
-Unknown error happened in Flowmill Kernel Collector.
+Unknown error happened in the Kernel Collector.
 
-Please reach out to Flowmill and include this log in its entirety so we can diagnose and fix
+Please reach out to support and include this log in its entirety so we can diagnose and fix
 the problem.
 )TROUBLESHOOTING";
     break;
   }
   }
 
-  std::cout << std::endl << CONTACT_INFO_MESSAGE << std::endl;
+  std::cout << std::endl;
   std::cout.flush();
 
   close_agent(-1, flush_and_close, exit_sleep_sec);
