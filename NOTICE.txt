@@ -1,7 +1,7 @@
-Flowmill Collector
-==================
+Network Explorer
+================
 
-https://github.com/Flowmill/flowmill-collector
+https://github.com/Flowmill/network-explorer
 
 Copyright 2021 Splunk Inc.
 

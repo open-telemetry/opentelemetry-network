@@ -20,7 +20,7 @@ export EBPF_NET_MINOR_VERSION='9'
 # to reset the build number, change this. Make sure this also happens together with
 # bumping the major or minor versions, so there is no ambiguity with previously
 # built versions.
-# The commit hash must be a valid git hash in the flowmill-collector repository.
+# The commit hash must be a valid git hash in the network-explorer repository.
 COLLECTOR_BUILD_NUMBER_BASE="3598385a6f5288ced0f7bbe9150837c4497d6bc8"
 GIT_REVISION="HEAD"
 

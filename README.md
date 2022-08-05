@@ -1,6 +1,6 @@
-# Flowmill telemetry collector #
+# Network Explorer #
 
-Flowmill telemetry collector is an agent that can collect low level telemetry
+Network Explorer kernel collector is an agent that can collect low level telemetry
 straight from the Linux Kernel using the [eBPF technology](https://ebpf.io/).
 It does so with negligible overhead towards compute and network resources.
 
@@ -54,7 +54,7 @@ https://github.com/Flowmill/flowmill-build-env).
 
 ## Running the collector ##
 
-Running the Flowmill collector should be as easy as running a docker image:
+Running the kernel collector should be as easy as running a docker image:
 
 ```
 docker run -it --rm \
@@ -100,7 +100,7 @@ Linux kernel, therefore these settings need to be passed to docker: `--privilege
 
 ## Integration with OpenTelemetry Collector ##
 
-Flowmill collector can alternatively send telemetry to OpenTelemetry Collector
+Kernel collector can alternatively send telemetry to OpenTelemetry Collector
 (otel-col) in the form of Log entries.
 
 ### Quick-start for the OpenTelemetry Collector ###
@@ -145,21 +145,21 @@ service:
 ```
 
 By making sure the Log Service is enabled in otel-col and receiving HTTP
-requests in OTLP format, now Flowmill collector is able to send telemetry to
+requests in OTLP format, now kernel collector is able to send telemetry to
 otel-col on port `8000`.
 
 For more information on the OTLP receiver, refer to [otel-col's
 documentation](https://github.com/open-telemetry/opentelemetry-collector/blob/main/receiver/otlpreceiver/README.md).
 
-### Configuring Flowmill collector to send telemetry to otel-col ###
+### Configuring kernel collector to send telemetry to otel-col ###
 
-The flowmill collector needs to know a few things in order to connect to
+The kernel collector needs to know a few things in order to connect to
 otel-col's receiver as its intake. The difference between connecting to the
 standard intake vs connecting to otel-col's receiver is the intake encoding.
 For otel-col's receiver the encoding must be set to `otlp_log`.
 
-Intake settings are controlled by environment variables set on Flowmill
-Collector's container (e.g.: can be set with `docker`'s --env command line
+Intake settings are controlled by environment variables set on kernel
+collector's container (e.g.: can be set with `docker`'s --env command line
 argument). Below is a list of settings along with the name of the environment
 variable and suggested values for a proof-of-concept (note that these are already 
 present in the `docker run` command below):

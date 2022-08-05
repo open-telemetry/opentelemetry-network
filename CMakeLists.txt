@@ -4,7 +4,7 @@
 cmake_minimum_required(VERSION 3.12)
 
 project(
-  flowmill-collector
+  network-explorer
     VERSION 0.9.0
 )
 
