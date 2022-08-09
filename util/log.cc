@@ -25,7 +25,7 @@ constexpr unsigned int MAX_NUM_FILES = 5;
 constexpr auto FLUSH_INTERVAL = 5s;
 
 constexpr std::string_view LOG_FILE_VAR = "EBPF_NET_LOG_FILE_PATH";
-constexpr std::string_view LOG_FILE_DEFAULT = "/var/log/flowmill.log";
+constexpr std::string_view LOG_FILE_DEFAULT = "/var/log/ebpf_net.log";
 } // namespace
 
 // TODO: move the rate limit mechanism into a spdlog sink (inside its lock),

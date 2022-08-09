@@ -57,7 +57,7 @@ static constexpr std::string_view PARAMETERS_FILE_NAME = "parameters.txt";
 
 // Directory to which minidump files will be written by breakpad upon crash
 static constexpr auto MINIDUMP_DIR_VAR = "EBPF_NET_MINIDUMP_DIR";
-static constexpr std::string_view MINIDUMP_DIR_DEFAULT = "/tmp/flowmill-minidump";
+static constexpr std::string_view MINIDUMP_DIR_DEFAULT = "/tmp/ebpf_net_minidump";
 
 static constexpr auto DEBUG_MODULE_NAME_VAR = "EBPF_NET_DEBUG_MODULE_NAME";
 static constexpr auto DEBUG_MODULE_ID_VAR = "EBPF_NET_DEBUG_MODULE_ID";
