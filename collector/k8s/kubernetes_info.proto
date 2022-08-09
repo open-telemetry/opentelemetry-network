@@ -3,7 +3,7 @@
 
 syntax = "proto3";
 
-option go_package = "flowmill.net/collector";
+option go_package = "ebpf.net/collector";
 
 package collector;
 

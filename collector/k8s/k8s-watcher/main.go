@@ -14,7 +14,8 @@ import (
 	"strings"
 	"time"
 
-	"flowmill.net/collector"
+	"ebpf.net/collector"
+
 	"google.golang.org/grpc"
 
 	appsv1 "k8s.io/api/apps/v1"

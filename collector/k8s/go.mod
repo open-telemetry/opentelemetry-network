@@ -1,4 +1,4 @@
-module flowmill.net/collector
+module ebpf.net/collector
 
 go 1.14
 
