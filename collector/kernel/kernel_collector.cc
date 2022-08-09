@@ -485,14 +485,6 @@ void KernelCollector::send_connection_metadata()
   /* Finished sending metadata */
   writer_.metadata_complete(0);
 
-  // Fake DNS entry to classify Flowmill traffic
-  if (auto const connected_address = upstream_connection_.connected_address()) {
-    writer_.dns_response_fake(
-        /*total_dn_len=*/8,
-        /*ips=*/jb_blob{(char *)(&(connected_address)), (u16)(sizeof(in_addr_t))},
-        /*dn=*/jb_blob{"flowmill", 8});
-  }
-
   upstream_connection_.flush();
 
   on_connected();
