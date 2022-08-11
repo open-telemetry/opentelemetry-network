@@ -19,11 +19,11 @@
 #define ENUM_NAME CurlEngineStatus
 #define ENUM_TYPE std::uint8_t
 #define ENUM_ELEMENTS(X)                                                                                                       \
-  X(OK, 0)                                                                                                                     \
-  X(TIMEOUT, 1)                                                                                                                \
-  X(ERROR, 2)                                                                                                                  \
-  X(CANCELED, 3)                                                                                                               \
-  X(SCHEDULE_ERROR, 4)
+  X(OK, 0, "")                                                                                                                 \
+  X(TIMEOUT, 1, "")                                                                                                            \
+  X(ERROR, 2, "")                                                                                                              \
+  X(CANCELED, 3, "")                                                                                                           \
+  X(SCHEDULE_ERROR, 4, "")
 #define ENUM_DEFAULT ERROR
 #include <util/enum_operators.inl>
 

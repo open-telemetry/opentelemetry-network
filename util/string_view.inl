@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#include <algorithm>
 #include <cassert>
 #include <climits>
 
@@ -147,6 +148,25 @@ inline bool ends_with(std::string_view view, std::string_view suffix)
   }
 
   return view.substr(view.length() - suffix.length()) == suffix;
+}
+
+inline std::string_view ltrim_ws(std::string_view s)
+{
+  s.remove_prefix(std::distance(s.cbegin(), std::find_if(s.cbegin(), s.cend(), [](int c) { return !std::isspace(c); })));
+
+  return s;
+}
+
+inline std::string_view rtrim_ws(std::string_view s)
+{
+  s.remove_suffix(std::distance(s.crbegin(), std::find_if(s.crbegin(), s.crend(), [](int c) { return !std::isspace(c); })));
+
+  return s;
+}
+
+inline std::string_view trim_ws(std::string_view s)
+{
+  return ltrim_ws(rtrim_ws(s));
 }
 
 template <typename T> constexpr T NumberView<T>::value(T fallback) const

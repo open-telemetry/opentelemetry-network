@@ -19,12 +19,21 @@
 // #define ENUM_NAME Foobar
 // #define ENUM_TYPE uint32_t
 // #define ENUM_ELEMENTS(X) \.
-//            X(key_a, 0)   \.
-//            X(key_b, 1)   \.
-//            X(key_c, 2)   \.
+//            X(key_a, 0, "")           \.
+//            X(key_b, 1, "custom_b")   \.
+//            X(key_c, 2, "")           \.
 //            ...
 // #define ENUM_DEFAULT key_a
 // #include <util/enum_operators.inl>
+//
+// When defining the elements, the third argument specifies the string for
+// the string conversion utilities.  An empty string causes a default
+// conversion using the enum element name.
+// In the example above, to_string(key_a) will return "key_a",
+// but to_string(key_c) will return "custom_b".
+// Similarly, try_enum_from_string("key_a") will return Foobar::key_a,
+// but try_enum_from_string("key_b") would fail - it expects "custom_b".
+// try_enum_from_string("custom_b") would return Foobar::key_b.
 //
 // There is no need to #undef these macros as they are #undef'd in this file
 //
@@ -51,7 +60,7 @@ namespace ENUM_NAMESPACE {
 #endif // ENUM_NAMESPACE
 
 // Declare the enum itself
-#define ENUM_ELEMENT(K, V) K = V,
+#define ENUM_ELEMENT(K, V, S) K = V,
 enum class ENUM_NAME : ENUM_TYPE { ENUM_ELEMENTS(ENUM_ELEMENT) };
 #undef ENUM_ELEMENT
 
@@ -78,7 +87,7 @@ template <> struct enum_traits<ENUM_FULLY_QUALIFIED_NAME> {
   static constexpr type min()
   {
     constexpr std::initializer_list<type> values = {
-#define LIST_ENUM_VALUES(K, V) type::K,
+#define LIST_ENUM_VALUES(K, V, S) type::K,
         ENUM_ELEMENTS(LIST_ENUM_VALUES)
 #undef LIST_ENUM_VALUES
     };
@@ -88,7 +97,7 @@ template <> struct enum_traits<ENUM_FULLY_QUALIFIED_NAME> {
   static constexpr type max()
   {
     constexpr std::initializer_list<type> values = {
-#define LIST_ENUM_VALUES(K, V) type::K,
+#define LIST_ENUM_VALUES(K, V, S) type::K,
         ENUM_ELEMENTS(LIST_ENUM_VALUES)
 #undef LIST_ENUM_VALUES
     };
@@ -97,7 +106,7 @@ template <> struct enum_traits<ENUM_FULLY_QUALIFIED_NAME> {
 
   static constexpr int_type count = [] {
     return
-#define COUNT_ENUM_VALUES(K, V) 1 +
+#define COUNT_ENUM_VALUES(K, V, S) 1 +
         ENUM_ELEMENTS(COUNT_ENUM_VALUES)
 #undef COUNT_ENUM_VALUES
             0;
@@ -106,7 +115,7 @@ template <> struct enum_traits<ENUM_FULLY_QUALIFIED_NAME> {
   static constexpr bool is_valid(type value)
   {
     switch (value) {
-#define SWITCH_ENUM_TYPES(K, V)                                                                                                \
+#define SWITCH_ENUM_TYPES(K, V, S)                                                                                             \
   case type::K:                                                                                                                \
     return true;
       ENUM_ELEMENTS(SWITCH_ENUM_TYPES)
@@ -116,7 +125,7 @@ template <> struct enum_traits<ENUM_FULLY_QUALIFIED_NAME> {
   }
 
   static constexpr std::array<type, count> values{
-#define LIST_ENUM_VALUES(K, V) type::K,
+#define LIST_ENUM_VALUES(K, V, S) type::K,
       ENUM_ELEMENTS(LIST_ENUM_VALUES)
 #undef LIST_ENUM_VALUES
   };
@@ -154,9 +163,9 @@ constexpr inline std::string_view to_string(
 )
 {
   switch (value) {
-#define SWITCH_ENUM_TYPES(K, V)                                                                                                \
+#define SWITCH_ENUM_TYPES(K, V, S)                                                                                             \
   case ENUM_NAME::K:                                                                                                           \
-    return #K;
+    return (std::string_view(S).empty()) ? #K : S;
     ENUM_ELEMENTS(SWITCH_ENUM_TYPES)
 #undef SWITCH_ENUM_TYPES
   }
@@ -165,10 +174,17 @@ constexpr inline std::string_view to_string(
 
 constexpr inline bool enum_from_string(std::string_view s, ENUM_NAME &out)
 {
-#define IF_ENUM_TYPES(K, V)                                                                                                    \
-  if (s == #K) {                                                                                                               \
-    out = ENUM_NAME::K;                                                                                                        \
-    return true;                                                                                                               \
+#define IF_ENUM_TYPES(K, V, S)                                                                                                 \
+  if (std::string_view(S).empty()) {                                                                                           \
+    if (s == #K) {                                                                                                             \
+      out = ENUM_NAME::K;                                                                                                      \
+      return true;                                                                                                             \
+    }                                                                                                                          \
+  } else {                                                                                                                     \
+    if (s == S) {                                                                                                              \
+      out = ENUM_NAME::K;                                                                                                      \
+      return true;                                                                                                             \
+    }                                                                                                                          \
   }
   ENUM_ELEMENTS(IF_ENUM_TYPES)
 #undef IF_ENUM_TYPES
