@@ -176,6 +176,22 @@ std::string_view slice_suffix(std::string_view view, std::size_t size);
 bool ends_with(std::string_view view, std::string_view suffix);
 
 /**
+ * Convenience function to remove leading whitespace.
+ */
+std::string_view ltrim_ws(std::string_view s);
+
+/**
+ * Convenience function to remove trailing whitespace.
+ */
+std::string_view rtrim_ws(std::string_view s);
+
+/**
+ * Convenience function to remove both leading and trailing
+ * whitespace.
+ */
+std::string_view trim_ws(std::string_view s);
+
+/**
  * A helper to lazily convert a string view to a number.
  *
  * `T` must be either an integer or a floating point type.

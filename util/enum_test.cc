@@ -11,34 +11,46 @@
 #define ENUM_NAME DenseEnum
 #define ENUM_TYPE std::uint8_t
 #define ENUM_ELEMENTS(X)                                                                                                       \
-  X(a, 0)                                                                                                                      \
-  X(b, 1)                                                                                                                      \
-  X(c, 2)                                                                                                                      \
-  X(d, 3)                                                                                                                      \
-  X(e, 4)
+  X(a, 0, "")                                                                                                                  \
+  X(b, 1, "")                                                                                                                  \
+  X(c, 2, "")                                                                                                                  \
+  X(d, 3, "")                                                                                                                  \
+  X(e, 4, "")
 #define ENUM_DEFAULT a
 #include <util/enum_operators.inl>
 
 #define ENUM_NAME DenseEnum1Base
 #define ENUM_TYPE std::uint8_t
 #define ENUM_ELEMENTS(X)                                                                                                       \
-  X(a, 1)                                                                                                                      \
-  X(b, 2)                                                                                                                      \
-  X(c, 3)                                                                                                                      \
-  X(d, 4)                                                                                                                      \
-  X(e, 5)
+  X(a, 1, "")                                                                                                                  \
+  X(b, 2, "")                                                                                                                  \
+  X(c, 3, "")                                                                                                                  \
+  X(d, 4, "")                                                                                                                  \
+  X(e, 5, "")
 #define ENUM_DEFAULT a
 #include <util/enum_operators.inl>
 
 #define ENUM_NAME SparseEnum
 #define ENUM_TYPE std::int8_t
 #define ENUM_ELEMENTS(X)                                                                                                       \
-  X(a, -20)                                                                                                                    \
-  X(b, -17)                                                                                                                    \
-  X(c, 0)                                                                                                                      \
-  X(d, 1)                                                                                                                      \
-  X(e, 18)                                                                                                                     \
-  X(f, 90)
+  X(a, -20, "")                                                                                                                \
+  X(b, -17, "")                                                                                                                \
+  X(c, 0, "")                                                                                                                  \
+  X(d, 1, "")                                                                                                                  \
+  X(e, 18, "")                                                                                                                 \
+  X(f, 90, "")
+#define ENUM_DEFAULT a
+#include <util/enum_operators.inl>
+
+#define ENUM_NAME EnumWithStringVal
+#define ENUM_TYPE std::uint8_t
+#define ENUM_ELEMENTS(X)                                                                                                       \
+  X(a, 0, "")                                                                                                                  \
+  X(b, 0x1, "custom_b")                                                                                                        \
+  X(c, 0x2, "")                                                                                                                \
+  X(d, 0x4, "d")                                                                                                               \
+  X(e, 0x8, "")                                                                                                                \
+  X(f, 0x10, "f_str")
 #define ENUM_DEFAULT a
 #include <util/enum_operators.inl>
 
@@ -186,6 +198,16 @@ TEST(enum_test, to_string)
   EXPECT_EQ("f", to_string(SparseEnum::f));
   EXPECT_EQ("a", to_string(static_cast<SparseEnum>(9999)));
   EXPECT_EQ("invalid", to_string(static_cast<SparseEnum>(9999), "invalid"));
+}
+
+TEST(enum_test, to_string_custom)
+{
+  EXPECT_EQ("a", to_string(EnumWithStringVal::a));
+  EXPECT_EQ("custom_b", to_string(EnumWithStringVal::b));
+  EXPECT_EQ("c", to_string(EnumWithStringVal::c));
+  EXPECT_EQ("d", to_string(EnumWithStringVal::d));
+  EXPECT_EQ("e", to_string(EnumWithStringVal::e));
+  EXPECT_EQ("f_str", to_string(EnumWithStringVal::f));
 }
 
 TEST(enum_traits_test, is_valid)
