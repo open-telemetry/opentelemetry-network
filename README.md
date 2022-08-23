@@ -66,10 +66,10 @@ docker run -it --rm \
   --log-console \
   --volume /var/run/docker.sock:/var/run/docker.sock \
   --volume /sys/fs/cgroup:/hostfs/sys/fs/cgroup \
-  --volume /etc:/var/run/flowmill/host/etc \
-  --volume /var/cache:/var/run/flowmill/host/cache \
-  --volume /usr/src:/var/run/flowmill/host/usr/src \
-  --volume /lib/modules:/var/run/flowmill/host/lib/modules \
+  --volume /etc:/hostfs/etc \
+  --volume /var/cache:/hostfs/cache \
+  --volume /usr/src:/hostfs/usr/src \
+  --volume /lib/modules:/hostfs/lib/modules \
   kernel-collector \
     --log-console
 ```
@@ -181,10 +181,10 @@ docker run -it --rm \
   --network host \
   --volume /var/run/docker.sock:/var/run/docker.sock \
   --volume /sys/fs/cgroup:/hostfs/sys/fs/cgroup \
-  --volume /etc:/var/run/flowmill/host/etc \
-  --volume /var/cache:/var/run/flowmill/host/cache \
-  --volume /usr/src:/var/run/flowmill/host/usr/src \
-  --volume /lib/modules:/var/run/flowmill/host/lib/modules \
+  --volume /etc:/hostfs/etc \
+  --volume /var/cache:/hostfs/cache \
+  --volume /usr/src:/hostfs/usr/src \
+  --volume /lib/modules:/hostfs/lib/modules \
   kernel-collector \
     --log-console
 ```

@@ -10,7 +10,7 @@ kernel_version="$(uname -r)"
 kernel_headers_usr_src_base_path="/usr/src"
 kernel_headers_lib_modules_base_path="/lib/modules"
 
-host_dir="${EBPF_NET_HOST_DIR:-/var/run/flowmill/host}"
+host_dir="${EBPF_NET_HOST_DIR:-/hostfs}"
 host_etc_dir="${host_dir}/etc"
 host_yum_vars_dir="${host_etc_dir}/yum/vars"
 host_cache_dir="${host_dir}/cache/flowmill"

@@ -14,7 +14,7 @@ RUN apt-get update && apt-get install -y ca-certificates
 ENV SSL_CERT_DIR=/etc/ssl/certs
 
 ENV EBPF_NET_INSTALL_DIR=/srv
-ENV EBPF_NET_HOST_DIR=/var/run/flowmill/host
+ENV EBPF_NET_HOST_DIR=/hostfs
 
 ENTRYPOINT [ "/srv/entrypoint.sh" ]
 
