@@ -17,8 +17,6 @@
 
 #include <nlohmann/json.hpp>
 
-#define DUMP_DOCKER_METADATA_BASE_PATH "/var/run/flowmill/dump"
-
 using json = nlohmann::json;
 
 inline std::string make_docker_query_url(std::string const &container_name)
@@ -353,9 +351,10 @@ void CgroupHandler::handle_docker_response(u64 cgroup, std::string const &respon
   std::optional<NomadMetadata> nomad_metadata;
   std::optional<K8sMetadata> k8s_metadata;
 
-  if (settings_.dump_docker_metadata) {
+  if (settings_.docker_metadata_dump_dir) {
     auto const dump_filename = fmt::format(
-        DUMP_DOCKER_METADATA_BASE_PATH "/docker-inspect.{}.{}.json",
+        "{}/docker-inspect.{}.{}.json",
+        *settings_.docker_metadata_dump_dir,
         cgroup,
         std::chrono::system_clock::now().time_since_epoch().count());
 

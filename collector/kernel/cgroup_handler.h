@@ -10,6 +10,7 @@
 #include <util/logger.h>
 #include <util/lookup3_hasher.h>
 
+#include <optional>
 #include <unordered_map>
 
 static constexpr std::string_view UNIX_SOCKET_PATH = "/var/run/docker.sock";
@@ -18,7 +19,7 @@ class CgroupHandler {
 public:
   struct CgroupSettings {
     bool force_docker_metadata = false;
-    bool dump_docker_metadata = false;
+    std::optional<std::string> docker_metadata_dump_dir;
   };
 
   // When set, specifies the name of the docker label that will be used for

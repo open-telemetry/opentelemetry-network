@@ -280,8 +280,13 @@ int main(int argc, char *argv[])
       *parser, "userland_tcp", "Enable userland tcp processing (experimental)", {"enable-userland-tcp"});
 
   auto force_docker_metadata = parser.add_flag("force-docker-metadata", "Forces the use of docker metadata");
-  auto dump_docker_metadata = parser.add_flag("dump-docker-metadata", "Dump docker metadata for debug purposes");
   auto disable_nomad_metadata = parser.add_flag("disable-nomad-metadata", "Disables detection and use of Nomad metadata");
+
+  args::ValueFlag<std::string> docker_metadata_dump_dir(
+      *parser,
+      "docker-metadata-dump-dir",
+      "If set, dump docker metadata to this directory (for debug purposes)",
+      {"docker-metadata-dump-dir"});
 
   args::ValueFlag<std::string> bpf_dump_file(
       *parser, "bpf-dump-file", "If set, dumps the stream of eBPF messages to the file given by this flag", {"bpf-dump-file"});
@@ -525,7 +530,7 @@ int main(int argc, char *argv[])
         socket_stats_interval_sec.Get(),
         CgroupHandler::CgroupSettings{
             .force_docker_metadata = *force_docker_metadata,
-            .dump_docker_metadata = *dump_docker_metadata,
+            .docker_metadata_dump_dir = docker_metadata_dump_dir ? std::optional(docker_metadata_dump_dir.Get()) : std::nullopt,
         },
         bpf_dump_file.Get(),
         host_info,
