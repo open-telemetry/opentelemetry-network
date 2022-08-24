@@ -18,7 +18,7 @@ fi
 
 install_dir=${EBPF_NET_INSTALL_DIR:-/srv}
 
-data_dir="/var/run/flowmill"
+data_dir=${EBPF_NET_DATA_DIR:-/var/run/ebpf_net}
 dump_dir="${data_dir}/dump"
 mkdir -p "${data_dir}" "${dump_dir}"
 

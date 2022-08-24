@@ -15,6 +15,7 @@ ENV SSL_CERT_DIR=/etc/ssl/certs
 
 ENV EBPF_NET_INSTALL_DIR=/srv
 ENV EBPF_NET_HOST_DIR=/hostfs
+ENV EBPF_NET_DATA_DIR=/var/run/ebpf_net
 
 ENTRYPOINT [ "/srv/entrypoint.sh" ]
 
