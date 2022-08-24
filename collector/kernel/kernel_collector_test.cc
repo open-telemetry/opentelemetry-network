@@ -152,7 +152,7 @@ protected:
         enable_http_metrics,
         enable_userland_tcp,
         socket_stats_interval_sec,
-        CgroupHandler::CgroupSettings{false, false},
+        CgroupHandler::CgroupSettings{false, std::nullopt},
         bpf_dump_file,
         host_info,
         EntrypointError::none);
