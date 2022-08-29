@@ -233,7 +233,7 @@ int ProbeHandler::start_probe(
   }
 
   /* attach the probe */
-  std::string p_name = "p_" + k_func_name + event_id_suffix;
+  std::string p_name = "ebpf_net_p_" + k_func_name + event_id_suffix;
   int attach_res = bpf_attach_kprobe(prog_fd, BPF_PROBE_ENTRY, p_name.c_str(), k_func_name.c_str(), 0, 0);
   if (attach_res == -1) {
     // we expect this to be triggered depending on kernel version
@@ -276,7 +276,7 @@ int ProbeHandler::start_kretprobe(
   }
 
   /* attach the probe */
-  std::string p_name = "r_" + k_func_name + event_id_suffix;
+  std::string p_name = "ebpf_net_r_" + k_func_name + event_id_suffix;
   int attach_res = bpf_attach_kprobe(prog_fd, BPF_PROBE_RETURN, p_name.c_str(), k_func_name.c_str(), 0, 0);
   if (attach_res == -1) {
     close(prog_fd);

@@ -36,8 +36,8 @@ fi
 
 # cleanup kprobes previously created by the kernel collector
 if [[ -f /sys/kernel/debug/tracing/kprobe_events ]]; then
-  tmpfile="${data_dir}/flowmill_kprobes"
-  grep flowmill /sys/kernel/debug/tracing/kprobe_events \
+  tmpfile="${data_dir}/ebpf_net_kprobes"
+  grep "ebpf_net_" /sys/kernel/debug/tracing/kprobe_events \
     | cut -d: -f2 | sed -e 's/^/-:/' > "$tmpfile"
   cat "$tmpfile" >> /sys/kernel/debug/tracing/kprobe_events
   rm -f "$tmpfile"
