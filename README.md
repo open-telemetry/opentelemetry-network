@@ -1,12 +1,12 @@
 # OpenTelemetry eBPF #
 
 The OpenTelemetry eBPF project develops components that collect and analyze
-telemetry from the operating system, cloud, and orchestrators. Its initial focus
+telemetry from the operating system, cloud, and container orchestrators. Its initial focus
 is on collecting network data to enable users to gain insight into their distributed 
 applications.
 
 The _kernel collector_ gathers low level telemetry straight from the Linux
-Kernel using the [eBPF](https://ebpf.io/). It does so with negligible compute and 
+kernel using [eBPF](https://ebpf.io/). It does so with negligible compute and 
 network overheads. The _kubernetes collector_ and _cloud collector_ gather workload
 metadata.
 
