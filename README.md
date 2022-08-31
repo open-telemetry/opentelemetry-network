@@ -1,13 +1,19 @@
-# Network Explorer #
+# OpenTelemetry eBPF #
 
-Network Explorer kernel collector is an agent that can collect low level telemetry
-straight from the Linux Kernel using the [eBPF technology](https://ebpf.io/).
-It does so with negligible overhead towards compute and network resources.
+The OpenTelemetry eBPF project develops components that collect and analyze
+telemetry from the operating system, cloud, and orchestrators. Its initial focus
+is on collecting network data to enable users to gain insight into their distributed 
+applications.
 
-This telemetry is then sent to a pipeline that can enrich it and provide
-invaluable insight about you distributed application.
+The _kernel collector_ gathers low level telemetry straight from the Linux
+Kernel using the [eBPF](https://ebpf.io/). It does so with negligible compute and 
+network overheads. The _kubernetes collector_ and _cloud collector_ gather workload
+metadata.
 
-## Building the collector ##
+This telemetry is then sent to the _reducer_, which enriches and aggregates it.
+The reducer outputs metrics into the OpenTelemetry collector.
+
+## Building the collectors ##
 
 There's a docker build image provided with all dependencies pre-installed,
 ready to build the collectors.
@@ -188,3 +194,11 @@ docker run -it --rm \
   kernel-collector \
     --log-console
 ```
+
+## Contributing ##
+
+Maintainers ([@open-telemetry/ebpf-maintainers](https://github.com/orgs/open-telemetry/teams/ebpf-maintainers)):
+
+- [Jonathan Perry](https://github.com/yonch), Splunk
+
+Learn more about roles in the [community repository](https://github.com/open-telemetry/community/blob/main/community-membership.md).
