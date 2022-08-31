@@ -199,6 +199,8 @@ docker run -it --rm \
 
 Maintainers ([@open-telemetry/ebpf-maintainers](https://github.com/orgs/open-telemetry/teams/ebpf-maintainers)):
 
+- [Borko Jandras](https://github.com/bjandras), Splunk
+- [Jim Wilson](https://github.com/jimwsplk), Splunk
 - [Jonathan Perry](https://github.com/yonch), Splunk
 
 Learn more about roles in the [community repository](https://github.com/open-telemetry/community/blob/main/community-membership.md).
