@@ -11,7 +11,7 @@ network overheads. The _kubernetes collector_ and _cloud collector_ gather workl
 metadata.
 
 This telemetry is then sent to the _reducer_, which enriches and aggregates it.
-The reducer outputs metrics into the OpenTelemetry collector.
+The reducer outputs metrics to the OpenTelemetry collector.
 
 ## Building the collectors ##
 
