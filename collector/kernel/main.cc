@@ -68,6 +68,47 @@ static void refill_log_rate_limit_cb(uv_timer_t *timer)
   LOG::refill_rate_limit_budget(200);
 }
 
+/**
+ * Check whether the binary has sufficient privileges and permissions.
+ * If so, return.
+ * If not, throw an exception with the appropriate errno.
+ *
+ * It can be difficult to directly determine privileges and permissions of a running binary.  For example, containers may run
+ * with root as the default user, but unless the container is run with --privileged or equivalent then not all root priviliges
+ * are available. As another example, within a container it may not be possible to determine SELinux status.  It may appear to
+ * be disabled when queried in the container, but if enabled on the host it will prevent certain operations even if the
+ * container is running with --privileged or equivalent.
+ *
+ * Instead, attempt to indirectly determine privileges and permissions by running bcc_create_map() as a test operation.  Note
+ * that it is intentionally called with invalid parameters so a map isn't actually created.  Typical errors from this test
+ * operation are:
+ * EPERM: container is not running with --privileged or equivalent
+ * EACCES: SELinux policy is preventing eBPF operations
+ * EINVAL: privileges and permissions are sufficient - the test operation made it to where the invalid parameters were detected
+ */
+void check_permissions()
+{
+  int fd = bcc_create_map(BPF_MAP_TYPE_ARRAY, "", 0, 0, 0, 0);
+
+  if (fd == -1) {
+    switch (errno) {
+    case EPERM:
+    case EACCES: {
+      std::string failstr = fmt::format("Test bcc_create_map() operation failed with errno {}", errno);
+      throw std::system_error(errno, std::generic_category(), failstr);
+      break;
+    }
+    case EINVAL:
+      return;
+      break;
+    default:
+      LOG::warn("Unexpected error checking for sufficient privileges and permissions errno {}: {}", errno, strerror(errno));
+      return;
+      break;
+    }
+  }
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 void mount_debugfs_if_required()
 {
@@ -466,6 +507,8 @@ int main(int argc, char *argv[])
       .hostname = hostname};
 
   try {
+    check_permissions();
+
     /* mount debugfs if it is not mounted */
     mount_debugfs_if_required();
 
@@ -564,11 +607,17 @@ int main(int argc, char *argv[])
     LOG::debug("starting event loop...");
     uv_run(&loop, UV_RUN_DEFAULT);
   } catch (std::system_error &e) {
-    if (e.code().value() == EPERM) {
+    switch (e.code().value()) {
+    case EPERM:
       print_troubleshooting_message_and_exit(host_info, TroubleshootItem::operation_not_permitted, e);
-      return 1;
+      break;
+    case EACCES:
+      print_troubleshooting_message_and_exit(host_info, TroubleshootItem::permission_denied, e);
+      break;
+    default:
+      print_troubleshooting_message_and_exit(host_info, TroubleshootItem::unexpected_exception, e);
+      break;
     }
-    print_troubleshooting_message_and_exit(host_info, TroubleshootItem::unexpected_exception, e);
     return 1;
   } catch (std::exception &e) {
     print_troubleshooting_message_and_exit(host_info, TroubleshootItem::unexpected_exception, e);

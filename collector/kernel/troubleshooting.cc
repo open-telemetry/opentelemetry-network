@@ -250,6 +250,25 @@ the problem.
     break;
   }
 
+  case TroubleshootItem::permission_denied: {
+    exit_sleep_sec = EXIT_SLEEP_FOREVER;
+    std::cout << fmt::format(
+        R"TROUBLESHOOTING(
+Operation failed with permission denied.
+This can occur due to SELinux policy enforcement.  If SELinux is enabled, make sure to first run
+the provided script to apply an SELinux policy allowing eBPF operations.
+
+{}
+
+Blocking to avoid failure retry loop.
+
+Please reach out to support and include this log in its entirety so we can diagnose and fix
+the problem.
+)TROUBLESHOOTING",
+        item_fmt);
+    break;
+  }
+
   case TroubleshootItem::unexpected_exception: {
     std::cout << fmt::format(
         R"TROUBLESHOOTING(

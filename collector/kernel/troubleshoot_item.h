@@ -14,6 +14,7 @@
   X(bpf_compilation_failed, 1, "")                                                                                             \
   X(bpf_load_probes_failed, 2, "")                                                                                             \
   X(operation_not_permitted, 3, "")                                                                                            \
-  X(unexpected_exception, 4, "")
+  X(permission_denied, 4, "")                                                                                                  \
+  X(unexpected_exception, 5, "")
 #define ENUM_DEFAULT none
 #include <util/enum_operators.inl>
