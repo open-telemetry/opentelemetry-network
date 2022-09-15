@@ -6,7 +6,7 @@ buildscript {
 }
 
 subprojects {
-	ext.xtextVersion = '2.20.0'
+	ext.xtextVersion = '2.28.0'
 
 	apply plugin: 'java'
 	apply plugin: 'org.xtext.xtend'
