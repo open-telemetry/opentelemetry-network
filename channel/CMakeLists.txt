@@ -109,9 +109,10 @@ add_library(
 )
 target_link_libraries(
   test_channel
-    render_pipeline
-    wire_msg_to_json
+    render_ebpf_net_ingest
+    json
     llvm
+    logging
 )
 
 add_unit_test(buffered_writer LIBS buffered_writer element_queue_writer llvm)
