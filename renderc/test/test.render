@@ -1,0 +1,52 @@
+/*
+ * Copyright The OpenTelemetry Authors
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+package test
+
+namespace {
+  app1: 0-99
+}
+
+app app1 {
+
+  span simple_span {
+    u32 number
+  }
+
+  span indexed_span {
+    index (number)
+    u32 number
+  }
+
+  span metrics_span {
+    aggregate metrics (root type some_metrics interval 1 slots 1)
+  }
+
+  span span_with_manual_reference {
+    reference<simple_span> manual_reference
+  }
+
+  span span_with_auto_reference {
+    u32 number
+
+    reference<indexed_span> auto_reference auto {
+      number = number
+    }
+  }
+
+  span span_with_cached_reference {
+    u32 number
+
+    reference<indexed_span> cached_reference cached {
+      number = number
+    }
+  }
+
+} // app app1
+
+metric some_metrics {
+  u32 active
+  u32 total
+}

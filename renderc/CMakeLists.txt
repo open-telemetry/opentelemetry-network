@@ -121,3 +121,5 @@ set_target_properties(
   PROPERTIES
     LOCATION ${RENDER_COMPILER}
 )
+
+add_subdirectory(test)
