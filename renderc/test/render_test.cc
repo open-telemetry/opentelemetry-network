@@ -115,6 +115,11 @@ TEST(RenderTest, MetricStore)
 
   test::app1::Index index;
 
+  test::metrics::some_metrics_point input_metrics{
+      .active = 55,
+      .total = 100,
+  };
+
   {
     auto span = index.metrics_span.alloc();
     ASSERT_TRUE(span.valid());
@@ -122,11 +127,7 @@ TEST(RenderTest, MetricStore)
     ASSERT_EQ(index.metrics_span.size(), 1);
     ASSERT_EQ(span.refcount(), 1);
 
-    test::metrics::some_metrics_point metrics{
-        .active = 55,
-        .total = 100,
-    };
-    span.metrics_update(time_now, metrics);
+    span.metrics_update(time_now, input_metrics);
 
     ASSERT_EQ(index.metrics_span.size(), 1);
 
@@ -137,6 +138,9 @@ TEST(RenderTest, MetricStore)
   // Metric store is keeping the span allocated.
   ASSERT_EQ(index.metrics_span.size(), 1);
 
+  // Metric slot should not be ready yet.
+  ASSERT_FALSE(index.metrics_span.metrics_ready(time_now));
+
   // Advance the current time.
   time_now += 2 * timeslot_duration;
 
@@ -145,11 +149,19 @@ TEST(RenderTest, MetricStore)
 
   // Get the metrics from the current slot.
   int metric_counter{0};
-  metrics_visitor_t on_metric = [&metric_counter](u64 timestamp, auto span, auto metrics, u64 interval) { ++metric_counter; };
+  test::metrics::some_metrics slot_metrics{0};
+  metrics_visitor_t on_metric = [&metric_counter, &slot_metrics](u64 timestamp, auto span, auto metrics, u64 interval) {
+    ++metric_counter;
+    slot_metrics = metrics;
+  };
   index.metrics_span.metrics_foreach(time_now, on_metric);
 
   // Only one metrics slot.
   ASSERT_EQ(metric_counter, 1);
+
+  // Output metrics match input metrics.
+  ASSERT_EQ(slot_metrics.active, input_metrics.active);
+  ASSERT_EQ(slot_metrics.total, input_metrics.total);
 
   // Metrics store should be cleared out.
   ASSERT_TRUE(index.metrics_span.metrics.current_queue().empty());
@@ -241,6 +253,12 @@ TEST(RenderTest, AutoReference)
 
   // Those two are the same indexed_span instance (indexed_span{key_one}).
   ASSERT_EQ(indexed.loc(), span.auto_reference().loc());
+
+  // Release the handle.
+  indexed.put();
+
+  // The auto-reference is keeping the span allocated.
+  ASSERT_EQ(index.indexed_span.size(), 1);
 }
 
 TEST(RenderTest, CachedReference)
@@ -294,4 +312,10 @@ TEST(RenderTest, CachedReference)
 
   // Those are two same indexed_span instances (indexed_span{key_one}).
   ASSERT_EQ(indexed.loc(), span.cached_reference().loc());
+
+  // Release the handle.
+  indexed.put();
+
+  // The cached reference is keeping the span allocated.
+  ASSERT_EQ(index.indexed_span.size(), 1);
 }
