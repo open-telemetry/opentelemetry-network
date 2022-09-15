@@ -4,7 +4,8 @@
 #include <channel/test_channel.h>
 #include <generated/ebpf_net/ingest/meta.h>
 #include <jitbuf/jb.h>
-#include <tools/json_converter.h>
+
+#include <util/json_converter.h>
 
 namespace channel {
 

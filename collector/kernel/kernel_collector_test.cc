@@ -13,7 +13,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <jitbuf/jb.h>
-#include <tools/json_converter.h>
+#include <util/json_converter.h>
 #include <util/aws_instance_metadata.h>
 #include <util/boot_time.h>
 #include <util/code_timing.h>
