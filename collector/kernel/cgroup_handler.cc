@@ -301,7 +301,9 @@ void CgroupHandler::fetch_done_cb(CurlEngineStatus status, long responseCode, st
     return;
   }
 
-  handle_docker_response(cgroup, response_data);
+  if (responseCode == 200) {
+    handle_docker_response(cgroup, response_data);
+  }
 
   LOG::debug_in(AgentLogKind::DOCKER, "\tqueries_.size(): {}", queries_.size());
 }
