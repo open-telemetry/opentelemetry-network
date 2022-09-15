@@ -301,11 +301,11 @@ void CgroupHandler::fetch_done_cb(CurlEngineStatus status, long responseCode, st
     return;
   }
 
-  if (responseCode >= 200 && responseCode <= 299) {
+  if ((responseCode >= 200) && (responseCode <= 299)) {
     // success
     handle_docker_response(cgroup, response_data);
   }
-  else if (responseCode >= 500 && responseCode <= 599) { 
+  else if ((responseCode >= 500) && (responseCode <= 599)) { 
     // server error
     log_.error("docker fetch failed with response {}", responseCode);
   }
