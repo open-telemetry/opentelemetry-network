@@ -318,7 +318,8 @@ class ConnectionGenerator {
 			/* cleanup fixed hashes */
 			«FOR span : app.spans.filter[conn_hash]»
 				for (auto handle_loc : «fixedHashName(span)».allocated()) {
-					«FOR msg : span.messages.filter[type == MessageType.END && reference_field.name == "_ref"]»
+					«IF span.impl !== null»
+						«FOR msg : span.messages.filter[type == MessageType.END && reference_field.name == "_ref"]»
 						{
 							struct «msg.parsed_msg.struct_name» msg = {
 								._rpc_id = «msg.wire_msg.rpc_id»,
@@ -327,7 +328,8 @@ class ConnectionGenerator {
 							auto span_ref = «fixedHashName(span)»[handle_loc].access(index_);
 							span_ref.impl().«msg.name»(span_ref, 0, &msg);
 						}
-					«ENDFOR»
+						«ENDFOR»
+					«ENDIF»
 					«fixedHashName(span)»[handle_loc].put(index_);
 				}
 			«ENDFOR»
