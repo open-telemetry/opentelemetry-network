@@ -31,12 +31,12 @@ TEST(RenderTest, AutoHandle)
 
     ASSERT_EQ(index.simple_span.size(), 1);
 
-    // manually put the reference
+    // Manually put the reference
     span.put();
-    // put() should make the handle invalid to make later accesses fail, and facilitate debugging
+    // `put()` should make the handle invalid to make later accesses fail, and facilitate debugging
     ASSERT_FALSE(span.valid());
 
-    // the span should be freed after put even though the auto handle is still in scope
+    // The span should be freed after put even though the auto handle is still in scope
     ASSERT_EQ(index.simple_span.size(), 0);
   }
 }
@@ -82,7 +82,7 @@ TEST(RenderTest, IndexedSpan)
   test::app1::Index index;
 
   {
-    // allocate a span
+    // Allocate a span
     auto ahandle = index.indexed_span.by_key(key);
     ASSERT_TRUE(ahandle.valid());
     ASSERT_EQ(ahandle.number(), key);
