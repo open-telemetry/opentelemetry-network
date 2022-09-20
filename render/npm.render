@@ -15,12 +15,21 @@ package ebpf_net
 namespace {
   ingest: 301-310,321-330,341,350-360,390-420,491-520,531-550
   agent_internal: 331-340,361-380
+  matching: 421-440,471-490
   kernel_collector: 521-530
   cloud_collector: 441-450
+  aggregation: 451-470
+  logging: 600-699
 }
 
+/******************************************************************************
+ * APP SPANS
+ ******************************************************************************/
 app agent_internal {
-  span agent_internal {
+  span agent_internal
+    impl "ebpf_net::agent_internal::AgentInternalSpanBase"
+    include "<generated/ebpf_net/agent_internal/span_base.h>"
+  {
     pool_size 1
     singleton
     0: log dns_packet {
@@ -277,7 +286,17 @@ app agent_internal {
 app ingest {
   jit
 
-  span process {
+  span process impl "server::ingest::ProcessSpan" include "<server/ingest/process_span.h>" {
+    pool_size 10000000
+
+    string<16> comm
+
+    reference<cgroup> cgroup
+    reference<service> service
+
+    // userspace proxy hack: cgroup of the target process
+    reference<cgroup> cgroup_override
+
     0: start pid_info ref pid {
       description "new process info"
       severity 0
@@ -329,7 +348,12 @@ app ingest {
   // processes proxied by the kernel collector
   // transitional span so we can migrate from the non-proxied version
   // gradually without breaking existing functionality
-  span tracked_process {
+  span tracked_process
+    impl "ebpf_net::ingest::TrackedProcessSpanBase"
+    include "<generated/ebpf_net/ingest/span_base.h>"
+  {
+    pool_size 10000000
+
     72: msg _start {}
     73: msg _end {}
 
@@ -352,7 +376,7 @@ app ingest {
     }
 
     89: msg pid_exit {
-      description "pid exit"
+      description "pid_exit"
       severity 0
 
       // the TGID this PID belongs to
@@ -364,10 +388,28 @@ app ingest {
       // the exit code of the PID when it finished execution
       3: s32 exit_code
     }
-
   } /* span tracked_process_span */
 
-  span cgroup {
+  span cgroup impl "server::ingest::CgroupSpan" include "<server/ingest/cgroup_span.h>" {
+    pool_size 800000
+
+    // cgroup name prefix
+    string<64> name
+
+    // if this cgroup is a pod
+    u8 pod_uid_suffix[64]
+    u64 pod_uid_hash
+
+    u16 cpu_soft_limit // cpu shares in kernel lingo: https://elixir.bootlin.com/linux/v5.8-rc3/source/kernel/sched/fair.c#L3122
+    u32 cpu_hard_quota
+    u32 cpu_hard_period
+
+    reference<cgroup> parent
+
+    reference<service> service
+
+    reference<container> container
+
     36: start cgroup_create ref cgroup {
       description "cgroup created"
       severity 0
@@ -460,7 +502,11 @@ app ingest {
     }
   } /* span cgroup */
 
-  span socket {
+  span socket impl "server::ingest::SocketSpan" include "<server/ingest/socket_span.h>" {
+    pool_size 5000000
+
+    reference<process> process
+
     1: start new_sock_info ref sk {
       description "new socket info"
       severity 0
@@ -533,9 +579,9 @@ app ingest {
     }
   } /* span socket */
 
-  span agent {
+  span agent impl "server::ingest::AgentSpan" include "<server/ingest/agent_span.h>" {
+    pool_size 512 /* See core.h CONN_POOL_SIZE */
     singleton
-
     6: log process_steady_state {
       description "sent when we reach steady state for processes"
       severity 0
@@ -892,8 +938,14 @@ app ingest {
 
   } /* span agent */
 
-  span aws_network_interface {
+  span aws_network_interface
+    impl "server::collector::cloud::AwsNetworkInterfaceSpan"
+    include "<server/ingest/aws_network_interface_span.h>"
+  {
+    pool_size 60000 // arbitrary number, we need a better estimate
     index (ip)
+
+    proxy matching.aws_enrichment
 
     u128 ip
 
@@ -931,7 +983,11 @@ app ingest {
     }
   } /* span aws_network_interface */
 
-  span udp_socket {
+  span udp_socket impl "server::ingest::UdpSocketSpan" include "<server/ingest/udp_socket_span.h>" {
+    pool_size 120000
+
+    reference<process> process
+
     17: start udp_new_socket ref sk_id {
       description "new udp socket was initialized"
       severity 0
@@ -1017,7 +1073,594 @@ app ingest {
     }
   } /* span udp_socket */
 
+  /**
+   * An k8s_pod
+   */
+  span k8s_pod impl "server::ingest::K8sPodSpan" include "<server/ingest/k8s_pod_span.h>" {
+    pool_size 220000
+    index (uid_suffix, uid_hash)
+    proxy matching.k8s_pod
+
+    // can be obtained from docker label `io.kubernetes.pod.uid`
+    u8 uid_suffix[64]
+    // since uid's can theoretically be unbounded in length, we will use the
+    // the last 64 bytes of the uid, with the addition of a u64 which provides
+    // extra reduction in collisions
+    u64 uid_hash
+
+    // can be obtained from docker label `io.kubernetes.pod.name`??
+    string<64> owner_name   // name of the Deployment, DaemonSet, ReplicaSet or StatefulSet owning the pod
+
+    // can be obtained from docker label `io.kubernetes.pod.namespace`
+    string<64> ns
+
+    // can be obtained from docker label ``??
+    string<64> version
+  }
+
+  span k8s_container {
+    pool_size 600000
+    index (uid_suffix, uid_hash)
+    proxy matching.k8s_container
+
+    u8 uid_suffix[64]
+    u64 uid_hash
+
+    // can be obtained from docker label `io.kubernetes.container.name`
+    string<64> name
+
+    // can be obtained from docker label ``??
+    string<64> image
+  }
+
+  span container {
+    pool_size 500000
+    index (id)
+    string<64> id
+    string<64> name // i.e. ECS or k&s container name
+    string<80> role
+    string<64> version
+    string<64> ns
+    string<64> pod_name
+    u8 node_type // as in `NodeResolutionType`, either `K8S_CONTAINER`, `CONTAINER` or `NOMAD`
+    u32 update_count // incremented each time one or more fields are modified
+  }
+
+  span service {
+    pool_size 500000
+    index (name)
+    string<64> name
+  }
+
+  span flow {
+    pool_size 4200000
+    index (addr1, port1, addr2, port2)
+    proxy matching.flow shard_by (addr1, port1, addr2, port2)
+
+    u128 addr1
+    u16 port1
+    u128 addr2
+    u16 port2
+
+    reference<process> process1
+    reference<process> process2
+    u32 is_connector
+
+    reference<container> container1 cached {
+      id = process1.cgroup.container.id
+    }
+    reference<container> container2 cached {
+      id = process2.cgroup.container.id
+    }
+
+    // userspace proxy hack: container from process' overridden cgroup
+    //
+    reference<container> container1_override cached {
+      id = process1.cgroup_override.container.id
+    }
+    reference<container> container2_override cached {
+      id = process2.cgroup_override.container.id
+    }
+  }
+
+  span logger {
+    proxy logging.logger
+  }
 } /* app ingest */
+
+app matching {
+  jit
+
+  span flow impl "server::matching::FlowSpan" include "<server/matching/flow_span.h>" {
+    pool_size 4200000
+    index (addr1, port1, addr2, port2)
+
+    aggregate tcp_a_to_b (root type tcp_metrics interval 30 slots 4)
+    aggregate tcp_b_to_a (root type tcp_metrics interval 30 slots 4)
+    aggregate http_a_to_b (root type http_metrics interval 30 slots 4)
+    aggregate http_b_to_a (root type http_metrics interval 30 slots 4)
+    aggregate udp_a_to_b (root type udp_metrics interval 30 slots 4)
+    aggregate udp_b_to_a (root type udp_metrics interval 30 slots 4)
+    aggregate dns_a_to_b (root type dns_metrics interval 30 slots 4)
+    aggregate dns_b_to_a (root type dns_metrics interval 30 slots 4)
+
+    u128 addr1
+    u16 port1
+    u128 addr2
+    u16 port2
+
+    reference<agg_root> agg_root
+
+    // the pods for either side, if enriched with pod info.
+    reference<k8s_pod> k8s_pod1
+    reference<k8s_pod> k8s_pod2
+
+    0: msg _start {}
+    1: msg _end {}
+    2: msg agent_info {
+      1: u8 side
+      2: string id
+      3: string az
+      4: string env
+      5: string role
+      6: string ns
+    }
+    3: msg task_info {
+      1: u8 side
+      2: string comm
+      3: string cgroup_name
+    }
+    4: msg socket_info {
+      1: u8 side
+      2: u8 local_addr[16]
+      3: u16 local_port
+      4: u8 remote_addr[16]
+      5: u16 remote_port
+      6: u8 is_connector
+      8: string remote_dns_name
+    }
+    5: msg k8s_info {
+      1: u8 side
+      2: u8 pod_uid_suffix[64]
+      3: u64 pod_uid_hash
+    }
+    6: msg tcp_update {
+      1: u8 side
+      2: u8 is_rx
+      3: u32 active_sockets
+      4: u32 sum_retrans
+      5: u64 sum_bytes
+      6: u64 sum_srtt
+      7: u64 sum_delivered
+      8: u32 active_rtts
+      9: u32 syn_timeouts
+     10: u32 new_sockets
+     11: u32 tcp_resets
+    }
+    7: msg udp_update {
+      1: u8 side
+      2: u8 is_rx
+      3: u32 active_sockets
+      4: u32 addr_changes
+      5: u32 packets
+      6: u64 bytes
+      7: u32 drops
+    }
+    8: msg http_update {
+      1: u8 side
+      2: u8 client_server
+
+      // Fields below are aliases of those in http_metrics
+      3: u32 active_sockets
+      4: u32 sum_code_200
+      5: u32 sum_code_400
+      6: u32 sum_code_500
+      7: u32 sum_code_other
+      8: u64 sum_total_time_ns
+      9: u64 sum_processing_time_ns
+    }
+    9: msg dns_update {
+      1: u8 side
+      2: u8 client_server
+
+      // Fields below are aliases of those in dns_metrics
+      3: u32 active_sockets
+      4: u32 requests_a
+      5: u32 requests_aaaa
+      6: u32 responses
+      7: u32 timeouts
+      8: u64 sum_total_time_ns
+      9: u64 sum_processing_time_ns
+    }
+    13: msg container_info {
+      1: u8 side
+      2: string name
+      3: string pod
+      4: string role
+      5: string version
+      6: string ns
+      7: u8 node_type // as in `NodeResolutionType`, either `CONTAINER` or `NOMAD`
+    }
+    14: msg service_info {
+      1: u8 side
+      2: string name
+    }
+  }
+
+  span aws_enrichment
+    impl "server::matching::AwsEnrichmentSpan"
+    include "<server/matching/aws_enrichment_span.h>"
+  {
+    pool_size 60000 // arbitrary number, we need a better estimate
+    index (ip)
+
+    u128 ip
+
+    10: msg _start {}
+    11: msg _end {}
+
+    12: msg aws_enrichment {
+      description "enrichment from cloud-collector / aws node resolution"
+      severity 0
+      1: string role
+      2: string az
+      3: string id
+    }
+  } /* span aws_enrichment */
+
+  span agg_root {
+    pool_size 4800000
+    proxy aggregation.agg_root shard_by (role1, az1, role2, az2)
+    string<80> role1
+    string<80> role2
+    string<32> az1
+    string<32> az2
+  }
+
+  span k8s_pod impl "server::matching::K8sPodSpan" include "<server/matching/k8s_pod_span.h>" {
+    pool_size 220000
+    index (uid_suffix, uid_hash)
+
+    u8 uid_suffix[64]
+
+    // since uid's can theoretically be unbounded in length, we will use the
+    // the last 64 bytes of the uid, with the addition of a u64 which provides
+    // extra reduction in collisions
+    u64 uid_hash
+
+    string<64> owner_name   // name of the Deployment, DaemonSet, ReplicaSet or StatefulSet owning the pod
+    string<64> pod_name
+    string<64> ns
+    string<64> version
+
+    15: msg _start {}
+    16: msg _end {}
+
+    17: msg set_pod_detail {
+      description "sets the pod owner name and namespace"
+      severity 0
+      1: string owner_name
+      2: string pod_name
+      3: string ns
+      4: string version
+    }
+  } /* span k8s_pod */
+
+  span k8s_container impl "server::matching::K8sContainerSpan" include "<server/matching/k8s_container_span.h>" {
+    pool_size 600000
+    index (uid_suffix, uid_hash)
+
+    u8 uid_suffix[64]
+    u64 uid_hash
+
+    string<64> name
+    string<64> version
+
+    reference<k8s_pod> pod
+
+    18: msg _start {}
+    19: msg _end {}
+
+    20: msg set_container_pod {
+      description "sets the pod for the given container"
+      severity 0
+      1: u8 pod_uid_suffix[64]
+      2: u64 pod_uid_hash
+      3: string name
+      4: string image
+    }
+  } /* span k8s_container */
+
+  span core_stats {
+    proxy logging.core_stats
+  }
+
+  span logger {
+    proxy logging.logger
+  }
+} /* app matching */
+
+app aggregation {
+  jit
+
+  /**
+   * a node which is part of a conversation
+   */
+  span node {
+    pool_size 5000000
+    index (id, ip, az)
+    string<80> id
+    string<45> ip
+    reference<az> az
+    string<64> pod_name
+  }
+
+  /**
+   * A (role,az) pair
+   */
+  span az {
+    pool_size 70000
+    index (s, role)
+    string<32> s
+    reference<role> role
+  }
+
+  /**
+   * A role with all its az's and nodes
+   */
+  span role {
+    pool_size 70000
+    index (s, version, env, ns, node_type, process, container)
+    string<80> s
+    string<64> version
+    string<32> env
+    string<64> ns
+    u8 node_type
+    string<16> process
+    string<64> container
+  }
+
+  /*****************************************************************************
+   * node-pair aggregation tree
+   ****************************************************************************/
+  span agg_root
+       impl "server::aggregation::AggRootSpan"
+       include "<server/aggregation/agg_root_span.h>"
+  {
+    pool_size 4000000
+
+    aggregate tcp_a_to_b (root type tcp_metrics interval 30 slots 2)
+    {
+      update node_node.tcp_a_to_b
+    }
+    aggregate tcp_b_to_a (root type tcp_metrics interval 30 slots 2)
+    {
+      update node_node.tcp_b_to_a
+    }
+    aggregate http_a_to_b (root type http_metrics interval 30 slots 2)
+    {
+      update node_node.http_a_to_b
+    }
+    aggregate http_b_to_a (root type http_metrics interval 30 slots 2)
+    {
+      update node_node.http_b_to_a
+    }
+    aggregate udp_a_to_b (root type udp_metrics interval 30 slots 2)
+    {
+      update node_node.udp_a_to_b
+    }
+    aggregate udp_b_to_a (root type udp_metrics interval 30 slots 2)
+    {
+      update node_node.udp_b_to_a
+    }
+    aggregate dns_a_to_b (root type dns_metrics interval 30 slots 2)
+    {
+      update node_node.dns_a_to_b
+    }
+    aggregate dns_b_to_a (root type dns_metrics interval 30 slots 2)
+    {
+      update node_node.dns_b_to_a
+    }
+
+    reference<node> node1
+    reference<node> node2
+
+    reference<node_node> node_node cached {
+      node1 = node1
+      node2 = node2
+    }
+
+    10: msg _start {}
+    11: msg _end {}
+    12: msg update_node {
+      1: u8 side
+      2: string id
+      3: string az
+      4: string role
+      5: string version
+      6: string env
+      7: string ns
+      8: u8 node_type
+      9: string address
+      11: string process
+      12: string container
+      13: string pod_name
+    }
+    14: msg update_tcp_metrics {
+      1: u8 direction
+      2: u32 active_sockets
+      3: u32 sum_retrans
+      4: u64 sum_bytes
+      5: u64 sum_srtt
+      6: u64 sum_delivered
+      7: u32 active_rtts
+      8: u32 syn_timeouts
+      9: u32 new_sockets
+     10: u32 tcp_resets
+    }
+    15: msg update_udp_metrics {
+      1: u8 direction
+      2: u32 active_sockets
+      3: u32 addr_changes
+      4: u32 packets
+      5: u64 bytes
+      6: u32 drops
+    }
+    16: msg update_http_metrics {
+      1: u8 direction
+      2: u32 active_sockets
+      3: u32 sum_code_200
+      4: u32 sum_code_400
+      5: u32 sum_code_500
+      6: u32 sum_code_other
+      7: u64 sum_total_time_ns
+      8: u64 sum_processing_time_ns
+    }
+    17: msg update_dns_metrics {
+      1: u8 direction
+      2: u32 active_sockets
+      3: u32 requests_a
+      4: u32 requests_aaaa
+      5: u32 responses
+      6: u32 timeouts
+      7: u64 sum_total_time_ns
+      8: u64 sum_processing_time_ns
+    }
+  }
+
+  span node_node
+  {
+    pool_size 4000000
+    index (node1, node2)
+
+    aggregate tcp_a_to_b (type tcp_metrics interval 30 slots 1)
+    {
+      update az_node.tcp_a_to_b
+      update node_az.tcp_b_to_a
+    }
+    aggregate tcp_b_to_a (type tcp_metrics interval 30 slots 1)
+    {
+      update az_node.tcp_b_to_a
+      update node_az.tcp_a_to_b
+    }
+    aggregate http_a_to_b (type http_metrics interval 30 slots 1)
+    {
+      update az_node.http_a_to_b
+      update node_az.http_b_to_a
+    }
+    aggregate http_b_to_a (type http_metrics interval 30 slots 1)
+    {
+      update az_node.http_b_to_a
+      update node_az.http_a_to_b
+    }
+    aggregate udp_a_to_b (type udp_metrics interval 30 slots 1)
+    {
+      update az_node.udp_a_to_b
+      update node_az.udp_b_to_a
+    }
+    aggregate udp_b_to_a (type udp_metrics interval 30 slots 1)
+    {
+      update az_node.udp_b_to_a
+      update node_az.udp_a_to_b
+    }
+    aggregate dns_a_to_b (type dns_metrics interval 30 slots 1)
+    {
+      update az_node.dns_a_to_b
+      update node_az.dns_b_to_a
+    }
+    aggregate dns_b_to_a (type dns_metrics interval 30 slots 1)
+    {
+      update az_node.dns_b_to_a
+      update node_az.dns_a_to_b
+    }
+
+    reference<node> node1
+    reference<node> node2
+
+    reference<az_node> az_node cached {
+      az = node1.az
+      node = node2
+    }
+    reference<az_node> node_az cached {
+      node = node1
+      az = node2.az
+    }
+  }
+
+
+
+  span az_az {
+    pool_size 600000
+    index (az1, az2)
+    aggregate tcp_a_to_b (type tcp_metrics interval 30 slots 1)
+    {
+    }
+    aggregate http_a_to_b (type http_metrics interval 30 slots 1)
+    {
+    }
+    aggregate udp_a_to_b (type udp_metrics interval 30 slots 1)
+    {
+
+    }
+    aggregate dns_a_to_b (type dns_metrics interval 30 slots 1)
+    {
+    
+    }
+
+    reference<az> az1
+    reference<az> az2
+  }
+
+  span az_node {
+    pool_size 3000000
+    index (az, node)
+
+    aggregate tcp_a_to_b (type tcp_metrics interval 30 slots 1)
+    {
+      update az_az.tcp_a_to_b
+    }
+    aggregate tcp_b_to_a (type tcp_metrics interval 30 slots 1)
+    {
+    }
+    aggregate http_a_to_b (type http_metrics interval 30 slots 1)
+    {
+      update az_az.http_a_to_b
+    }
+    aggregate http_b_to_a (type http_metrics interval 30 slots 1)
+    {
+    }
+    aggregate udp_a_to_b (type udp_metrics interval 30 slots 1)
+    {
+      update az_az.udp_a_to_b
+    }
+    aggregate udp_b_to_a (type udp_metrics interval 30 slots 1)
+    {
+    }
+    aggregate dns_a_to_b (type dns_metrics interval 30 slots 1)
+    {
+      update az_az.dns_a_to_b
+    }
+    aggregate dns_b_to_a (type dns_metrics interval 30 slots 1)
+    {
+    }
+
+    reference<az> az
+    reference<node> node
+
+    reference<az_az> az_az auto {
+      az1 = az
+      az2 = node.az
+    }
+  }
+
+  span core_stats {
+    proxy logging.core_stats
+  }
+  
+  span agg_core_stats {
+    proxy logging.agg_core_stats
+  }
+} /* app aggregation */
 
 app kernel_collector {
   span tracked_process
@@ -1047,3 +1690,261 @@ app cloud_collector {
     u128 ip
   }
 } /* app cloud_collector */
+
+app logging {
+  jit
+
+  span logger
+      impl "server::logging::LoggerSpan"
+      include "<server/logging/logger_span.h>"
+  {
+    pool_size 128
+
+    0: msg _start {}
+    1: msg _end {}
+    2: msg agent_lost_events {
+      description "agent lost perf events"
+      severity 3
+      1: u32 count
+      2: string client_hostname
+    }
+    3: msg pod_not_found {
+      description "pod with the specified UID is unknown"
+      severity 4
+      1: string uid
+      2: u8 on_delete
+    }
+    4: msg cgroup_not_found {
+      description "cgroup with the specified ID is unknown"
+      severity 4
+      1: u64 cgroup
+    }
+    5: msg rewriting_private_to_public_ip_mapping {
+      description "rewriting existing private-to-public IP address mapping"
+      severity 3
+      1: string private_addr
+      2: string existing_public_addr
+      3: string new_public_addr
+    }
+    6: msg private_ip_in_private_to_public_ip_mapping {
+      description "private-only address found in private-to-public mappings"
+      severity 3
+      1: string private_addr
+      2: string existing_public_addr
+    }
+    7: msg failed_to_insert_dns_record {
+      description "failed to insert DNS record into IP->domain map"
+      severity 4
+    }
+    8: msg tcp_socket_failed_getting_process_reference {
+      description "TCP socket failed to get process reference"
+      severity 4
+      1: u32 pid
+    }
+    9: msg udp_socket_failed_getting_process_reference {
+      description "UDP socket failed to get process reference"
+      severity 4
+      1: u32 pid
+    }
+    10: msg socket_address_already_assigned {
+      description "attempt to assign socket address multiple times"
+      severity 4
+    }
+    11: msg ingest_decompression_error {
+      description "failed to decompress data coming from client"
+      severity 4
+      1: u8 client_type
+      2: string client_hostname
+      3: string error
+    }
+    12: msg ingest_processing_error {
+      description "failed to process data coming from client"
+      severity 4
+      1: u8 client_type
+      2: string client_hostname
+      3: string error
+    }
+    13: msg ingest_connection_error {
+      description "client connection error"
+      severity 4
+      1: u8 client_type
+      2: string client_hostname
+      3: string error
+    }
+    14: msg agent_auth_success {
+      severity 2
+      1: u8 client_type
+      2: string client_hostname
+    }
+    15: msg agent_auth_failure {
+      severity 3
+      1: u8 client_type
+      2: string client_hostname
+      3: string error
+    }
+    16: msg agent_attempting_auth_using_api_key {
+      severity 3
+      1: u8 client_type
+      2: string client_hostname
+    }
+    17: msg k8s_container_pod_not_found {
+      severity 4
+      1: u8 pod_uid_suffix[64]
+      2: u64 pod_uid_hash
+    }
+    18: msg agent_connect_success {
+      severity 2
+      1: u8 client_type
+      2: string client_hostname
+    }
+  }
+
+  span core_stats
+     impl "server::logging::CoreStatsSpan"
+     include "<server/logging/core_stats_span.h>"
+  {
+    pool_size 128
+
+    19: msg _start {}
+    20: msg _end {}
+    21: msg span_utilization_stats {
+      1: string span_name
+      2: string module
+      3: u16 shard
+      4: u16 allocated
+      5: u16 max_allocated
+      6: u16 pool_size_
+      7: u64 time_ns
+    }
+    22: msg connection_message_stats {
+      1: string module
+      2: string msg_
+      3: u16 shard
+      4: u32 severity_
+      5: u16 conn
+      6: u64 time_ns
+      7: u64 count
+    }
+    23: msg connection_message_error_stats {
+      1: string module
+      2: u16 shard
+      3: u16 conn
+      4: string msg_
+      5: string error
+      6: u64 count
+      7: u64 time_ns
+    }
+    24: msg status_stats{
+      1: string module
+      2: u16 shard
+      3: string program
+      4: string version
+      5: u8 status
+      6: u64 time_ns
+    }
+    25: msg rpc_receive_stats{
+      1: string receiver_app
+      2: u16 shard
+      3: string sender_app
+      4: u64 max_latency_ns
+      5: u64 time_ns
+    }
+    26: msg rpc_write_stalls_stats{
+      1: string sender_app
+      2: u16 shard
+      3: string receiver_app
+      4: u64 count
+      5: u64 time_ns
+    }
+    27: msg rpc_write_utilization_stats{
+      1: string sender_app
+      2: u16 shard
+      3: string receiver_app
+      4: u32 max_buf_used
+      5: u64 max_buf_util
+      6: u64 max_elem_util
+      7: u64 time_ns
+    }
+    28: msg code_timing_stats{
+       1: string name
+       2: string filename
+       3: u16 line
+       4: u64 index_string
+       5: u64 count
+       6: u64 avg_ns
+       7: u64 min_ns
+       8: u64 max_ns
+       7: u64 sum_ns
+       8: u64 time_ns
+    }
+  }
+
+  span agg_core_stats
+     impl "server::logging::AggCoreStatsSpan"
+     include "<server/logging/agg_core_stats_span.h>"
+  {
+    pool_size 128
+
+    29: msg _start {}
+    30: msg _end {}
+    31: msg agg_root_truncation_stats{
+      1: string module
+      2: u16 shard
+      3: string field
+      4: u64 count
+      5: u64 time_ns
+    }
+    32: msg agg_metric_bytes_stats{
+      1: string module
+      2: u16 shard
+      3: u64 metric_bytes_written
+      4: u64 metric_bytes_discarded
+      5: u64 time_ns
+    }
+  }
+} /* app logging */
+
+/******************************************************************************
+ * METRICS
+ * CAUTION: If you change these, make sure you update server/copy_metrics.h
+ ******************************************************************************/
+metric tcp_metrics {
+  u32 active_sockets
+  u32 sum_retrans
+  u64 sum_bytes
+  u64 sum_srtt
+  u64 sum_delivered
+  u32 active_rtts
+  u32 syn_timeouts
+  u32 new_sockets
+  u32 tcp_resets
+}
+
+metric udp_metrics {
+  u32 active_sockets
+  u32 addr_changes
+  u32 packets
+  u64 bytes
+  u32 drops
+}
+
+metric http_metrics {
+  u32 active_sockets
+  u32 sum_code_200
+  u32 sum_code_400
+  u32 sum_code_500
+  u32 sum_code_other
+  u64 sum_total_time_ns
+  u64 sum_processing_time_ns
+}
+
+metric dns_metrics {
+  u32 active_sockets
+  u32 requests_a
+  u32 requests_aaaa
+  u32 responses
+  u32 timeouts
+  u64 sum_total_time_ns
+  u64 sum_processing_time_ns
+}
+
