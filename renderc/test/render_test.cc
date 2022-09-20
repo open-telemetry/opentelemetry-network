@@ -10,6 +10,7 @@
 
 #include <gtest/gtest.h>
 
+// Test auto handle, which hold references when they are in scope
 TEST(RenderTest, AutoHandle)
 {
   test::app1::Index index;
@@ -21,6 +22,7 @@ TEST(RenderTest, AutoHandle)
     ASSERT_EQ(index.simple_span.size(), 1);
   }
 
+  // When the auto handle goes out of scope, the span should be freed
   ASSERT_EQ(index.simple_span.size(), 0);
 
   {
@@ -29,13 +31,17 @@ TEST(RenderTest, AutoHandle)
 
     ASSERT_EQ(index.simple_span.size(), 1);
 
+    // Manually put the reference
     span.put();
+    // `put()` should make the handle invalid to make later accesses fail, and facilitate debugging
     ASSERT_FALSE(span.valid());
 
+    // The span should be freed after put even though the auto handle is still in scope
     ASSERT_EQ(index.simple_span.size(), 0);
   }
 }
 
+// Test handles, which are used for memory-efficient reference storage
 TEST(RenderTest, Handle)
 {
   static constexpr u32 the_number = 42;
@@ -55,17 +61,20 @@ TEST(RenderTest, Handle)
 
   // Auto-handle is released.
   ASSERT_FALSE(auto_handle.valid());
+  
+  // The conversion to handle should not release the span
   ASSERT_EQ(index.simple_span.size(), 1);
 
   // Check that it's the same span.
   ASSERT_EQ(handle.access(index).number(), the_number);
 
+  // Put()ing the reference should invalidate the handle and free the span
   handle.put(index);
   ASSERT_FALSE(handle.valid());
-
   ASSERT_EQ(index.simple_span.size(), 0);
 }
 
+// Test lookup and reference counting of indexed spans
 TEST(RenderTest, IndexedSpan)
 {
   static constexpr u32 key = 42;
@@ -73,6 +82,7 @@ TEST(RenderTest, IndexedSpan)
   test::app1::Index index;
 
   {
+    // Allocate a span
     auto ahandle = index.indexed_span.by_key(key);
     ASSERT_TRUE(ahandle.valid());
     ASSERT_EQ(ahandle.number(), key);
@@ -80,6 +90,7 @@ TEST(RenderTest, IndexedSpan)
     ASSERT_EQ(index.indexed_span.size(), 1);
 
     {
+      // Get another reference to the same span using lookup
       auto another = index.indexed_span.by_key(key);
       ASSERT_TRUE(another.valid());
 
@@ -89,6 +100,9 @@ TEST(RenderTest, IndexedSpan)
       // It's the same span.
       ASSERT_EQ(ahandle.loc(), another.loc());
     }
+
+    // The first reference is still in scope, 'another' should not free the span
+    ASSERT_EQ(index.indexed_span.size(), 1);
 
     {
       auto different = index.indexed_span.by_key(key + 1);
@@ -105,6 +119,7 @@ TEST(RenderTest, IndexedSpan)
   ASSERT_EQ(index.indexed_span.size(), 0);
 }
 
+// Test MetricStore updates and iteration, and its interaction with span reference counting
 TEST(RenderTest, MetricStore)
 {
   using metrics_visitor_t =
@@ -206,6 +221,7 @@ TEST(RenderTest, ManualReference)
   ASSERT_EQ(simple_loc, span.manual_reference().loc());
 }
 
+// Test auto references, which are recomputed whenever relevant span fields are modified
 TEST(RenderTest, AutoReference)
 {
   static constexpr u32 key_one = 11;
@@ -213,6 +229,7 @@ TEST(RenderTest, AutoReference)
 
   test::app1::Index index;
 
+  // Allocate 'key_one' directly on the index
   auto indexed = index.indexed_span.by_key(key_one);
   ASSERT_TRUE(indexed.valid());
   ASSERT_EQ(indexed.number(), key_one);
@@ -227,10 +244,10 @@ TEST(RenderTest, AutoReference)
   // has not been assigned.
   ASSERT_FALSE(span.auto_reference().valid());
 
-  // Still only one indexed_span exists.
+  // Still only one indexed_span exists (indexed_span{key_one}).
   ASSERT_EQ(index.indexed_span.size(), 1);
 
-  // Assign the field that is used in the reference key.
+  // Assign the field that is used in the auto-reference key.
   span.modify().number(key_two);
 
   // This caused the reference to be computed and a new indexed_span to be allocated (indexed_span{key_two}).
@@ -261,6 +278,7 @@ TEST(RenderTest, AutoReference)
   ASSERT_EQ(index.indexed_span.size(), 1);
 }
 
+// Test cached references, which are references that are re-computed when they are accessed
 TEST(RenderTest, CachedReference)
 {
   static constexpr u32 key_one = 11;
