@@ -25,7 +25,7 @@ task generateXtextLanguage(type: JavaExec) {
 }
 
 generateXtext.dependsOn(generateXtextLanguage)
-clean.dependsOn(cleanGenerateXtextLanguage)
+clean.dependsOn(cleanGenerateXtextLanguage, cleanGenerateXtext)
 eclipse.classpath.plusConfigurations += [configurations.mwe2]
 //this is an eclipse plugin project
 eclipseClasspath.enabled=false

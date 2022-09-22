@@ -17,3 +17,5 @@ dependencies {
   implementation "org.eclipse.xtext:org.eclipse.xtext.builder.standalone:${xtextVersion}"
   implementation "args4j:args4j:2.33"
 }
+
+clean.dependsOn(cleanGenerateXtext)
