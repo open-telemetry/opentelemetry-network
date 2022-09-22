@@ -339,6 +339,12 @@ target_link_libraries(
     absl::strings
 )
 
+add_library(
+  cgroup_parser
+  STATIC
+    cgroup_parser.cc
+)
+
 add_unit_test(log_modifiers LIBS logging)
 add_unit_test(expected)
 add_unit_test(enum)
@@ -349,4 +355,5 @@ add_unit_test(bits)
 add_unit_test(counter)
 add_unit_test(counter_to_rate)
 add_unit_test(gauge)
+add_unit_test(cgroup_parser LIBS cgroup_parser)
 add_unit_test(defer LIBS logging)

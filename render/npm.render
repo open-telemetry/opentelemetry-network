@@ -149,24 +149,24 @@ app agent_internal {
       severity 0
       1: u64 cgroup
       2: u64 cgroup_parent
-      3: u8 name[64]
-      // Container ID goes up to 64 chars even though max name length
-      // in kernfs_node is 255. This keeps us from going over the 512
-      // byte limit for the bpf stack as well.
+      3: u8 name[256]
+      // Be careful: mind the 512 byte limit for the bpf stack.
+      // We need the whole name because systemd style cgroup names are long and
+      // have the container id at the end.
     }
     13: log css_populate_dir {
       description "create subsys files in a cgroup directory"
       severity 0
       1: u64 cgroup
       2: u64 cgroup_parent
-      3: u8 name[64] // See kill_css note.
+      3: u8 name[256] // See kill_css note.
     }
     14: log cgroup_clone_children_read {
       description "cgroup_clone_children_read"
       severity 0
       1: u64 cgroup
       2: u64 cgroup_parent
-      3: u8 name[64] // See kill_css note.
+      3: u8 name[256] // See kill_css note.
     }
     15: log cgroup_attach_task {
       description "cgroup_attach_task"
@@ -394,7 +394,7 @@ app ingest {
     pool_size 800000
 
     // cgroup name prefix
-    string<64> name
+    string<256> name
 
     // if this cgroup is a pod
     u8 pod_uid_suffix[64]
@@ -410,13 +410,20 @@ app ingest {
 
     reference<container> container
 
-    36: start cgroup_create ref cgroup {
+    36: start cgroup_create_deprecated ref cgroup {
       description "cgroup created"
       severity 0
       1: u64 cgroup
       2: u64 cgroup_parent
       3: u8 name[64]
     }
+    110: start cgroup_create ref cgroup {
+      description "cgroup created"
+      severity 0
+      1: u64 cgroup
+      2: u64 cgroup_parent
+      3: u8 name[256]
+    }  
     37: end cgroup_close ref cgroup {
       description "cgroup destroyed"
       severity 0
@@ -482,7 +489,8 @@ app ingest {
       7: u64 memory_soft_limit
       8: s64 total_memory_limit
     }
-    90: log container_resource_limits ref cgroup { description "container resource limits"
+    90: log container_resource_limits ref cgroup {
+      description "container resource limits"
       severity 0
       1: u64 cgroup
       2: u16 cpu_shares
