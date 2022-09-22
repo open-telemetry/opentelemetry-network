@@ -417,7 +417,7 @@ app ingest {
       2: u64 cgroup_parent
       3: u8 name[64]
     }
-    110: start cgroup_create ref cgroup {
+    106: start cgroup_create ref cgroup {
       description "cgroup created"
       severity 0
       1: u64 cgroup
