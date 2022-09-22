@@ -344,6 +344,10 @@ add_library(
   STATIC
     cgroup_parser.cc
 )
+target_link_libraries(
+  cgroup_parser
+    logging
+)
 
 add_unit_test(log_modifiers LIBS logging)
 add_unit_test(expected)
@@ -355,5 +359,5 @@ add_unit_test(bits)
 add_unit_test(counter)
 add_unit_test(counter_to_rate)
 add_unit_test(gauge)
-add_unit_test(cgroup_parser LIBS cgroup_parser)
+add_unit_test(cgroup_parser LIBS cgroup_parser logging)
 add_unit_test(defer LIBS logging)
