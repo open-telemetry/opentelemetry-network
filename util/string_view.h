@@ -176,6 +176,11 @@ std::string_view slice_suffix(std::string_view view, std::size_t size);
 bool ends_with(std::string_view view, std::string_view suffix);
 
 /**
+ * Returns whether the view starts with the specified prefix.
+ */
+bool starts_with(std::string_view view, std::string_view prefix);
+
+/**
  * Convenience function to remove leading whitespace.
  */
 std::string_view ltrim_ws(std::string_view s);
