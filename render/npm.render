@@ -410,13 +410,20 @@ app ingest {
 
     reference<container> container
 
-    36: start cgroup_create ref cgroup {
+    36: start cgroup_create_deprecated ref cgroup {
+      description "cgroup created"
+      severity 0
+      1: u64 cgroup
+      2: u64 cgroup_parent
+      3: u8 name[64]
+    }
+    110: start cgroup_create ref cgroup {
       description "cgroup created"
       severity 0
       1: u64 cgroup
       2: u64 cgroup_parent
       3: u8 name[256]
-    }
+    }  
     37: end cgroup_close ref cgroup {
       description "cgroup destroyed"
       severity 0
@@ -482,7 +489,8 @@ app ingest {
       7: u64 memory_soft_limit
       8: s64 total_memory_limit
     }
-    90: log container_resource_limits ref cgroup { description "container resource limits"
+    90: log container_resource_limits ref cgroup {
+      description "container resource limits"
       severity 0
       1: u64 cgroup
       2: u16 cpu_shares
