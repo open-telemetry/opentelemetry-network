@@ -143,10 +143,7 @@ inline std::string_view slice_suffix(std::string_view view, std::size_t size)
 
 inline bool starts_with(std::string_view view, std::string_view prefix)
 {
-  if (view.length() < prefix.length()) {
-    return false;
-  }
-
+  // substr handles the case when the view.length() < prefix.length() gracefully
   return view.substr(0, prefix.length()) == prefix;
 }
 
