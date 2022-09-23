@@ -42,7 +42,6 @@ set(
     "io.opentelemetry.render/src"
     "io.opentelemetry.render/META-INF"
     "io.opentelemetry.render/build.gradle"
-    "io.opentelemetry.render/build.properties"
     "io.opentelemetry.render.standalone/src"
     "io.opentelemetry.render.standalone/build.gradle"
     "io.opentelemetry.render.standalone/plugin.properties"
@@ -77,7 +76,6 @@ add_custom_command(
     ./gradle/source-layout.gradle
     ./settings.gradle
     ./io.opentelemetry.render/build.gradle
-    ./io.opentelemetry.render/build.properties
     ./io.opentelemetry.render/src/io/opentelemetry/render/scoping/RenderScopeProvider.xtend
     ./io.opentelemetry.render/src/io/opentelemetry/render/RenderRuntimeModule.xtend
     ./io.opentelemetry.render/src/io/opentelemetry/render/RenderStandaloneSetup.xtend
