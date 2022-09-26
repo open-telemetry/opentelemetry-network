@@ -11,14 +11,14 @@
 // information extracted from the cgroup, used by CGroupParser (below).
 struct CGroupInfo
 {
-  std::string container_id_;
-  std::string runtime_;
-  std::string pod_id_;
-  std::string qos_;
-  std::string service_;
+  std::string container_id;
+  std::string runtime;
+  std::string pod_id;
+  std::string qos;
+  std::string service;
 
   // that is, if parsing failed
-  bool valid_ = false;
+  bool valid = false;
 };
 
 // This class parses a cgroup name, attempting to extract information that
