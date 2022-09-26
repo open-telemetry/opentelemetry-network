@@ -25,22 +25,23 @@ CGroupParser::CGroupParser(std::string_view cgroup_name) :
   read_head_(cgroup_name_.begin())
 {
   // enter and descend
-  info_.valid_ = parse_cgroup();
-  LOG::trace("CGroupParser info for"
-    " cgroup_name: '{}'"
-    " container_id: '{}' "
-    " pod_id: '{}'"
-    " qos: '{}'"
-    " runtime: '{}'"
-    " service: '{}'"
-    " valid: '{}'", 
-    cgroup_name_,
-    info_.container_id_, 
-    info_.pod_id_, 
-    info_.qos_, 
-    info_.runtime_, 
-    info_.service_, 
-    info_.valid_);
+  info_.valid = parse_cgroup();
+  LOG::trace(
+      "CGroupParser info for"
+      " cgroup_name: '{}'"
+      " container_id: '{}' "
+      " pod_id: '{}'"
+      " qos: '{}'"
+      " runtime: '{}'"
+      " service: '{}'"
+      " valid: '{}'",
+      cgroup_name_,
+      info_.container_id,
+      info_.pod_id,
+      info_.qos,
+      info_.runtime,
+      info_.service,
+      info_.valid);
 }
 
 bool CGroupParser::parse_cgroup() {
@@ -129,8 +130,8 @@ bool CGroupParser::parse_container_id() {
   // example:
   // 6f652f89943b50f7b101d13f11371daf34bf836b7e1b725b5e8b6439451018bd
   for (size_t ii = 0; ii < 64; ++ii) {
-    if (!parse_match(read_head_, cgroup_name_.end(), is_hex_digit, &info_.container_id_)) {
-      info_.container_id_.clear();
+    if (!parse_match(read_head_, cgroup_name_.end(), is_hex_digit, &info_.container_id)) {
+      info_.container_id.clear();
       return false;
     }
   }
@@ -160,7 +161,7 @@ bool CGroupParser::parse_service() {
   // systemd-journald.service
   static constexpr std::string_view SERVICE_SUFFIX = ".service";
   if (views::ends_with(cgroup_name_, SERVICE_SUFFIX)) {
-    info_.service_ = cgroup_name_.substr(0, cgroup_name_.size() - SERVICE_SUFFIX.size());
+    info_.service = cgroup_name_.substr(0, cgroup_name_.size() - SERVICE_SUFFIX.size());
     return true;
   }
   return false;
@@ -168,15 +169,15 @@ bool CGroupParser::parse_service() {
 
 bool CGroupParser::parse_qos() {
   // see https://kubernetes.io/docs/tasks/configure-pod-container/quality-service-pod/
-  if (parse_match(read_head_, cgroup_name_.end(), "guaranteed", &info_.qos_)) {
+  if (parse_match(read_head_, cgroup_name_.end(), "guaranteed", &info_.qos)) {
     return true;
   }
 
-  if (parse_match(read_head_, cgroup_name_.end(), "besteffort", &info_.qos_)) {
+  if (parse_match(read_head_, cgroup_name_.end(), "besteffort", &info_.qos)) {
     return true;
   }
 
-  if (parse_match(read_head_, cgroup_name_.end(), "burstable", &info_.qos_)) {
+  if (parse_match(read_head_, cgroup_name_.end(), "burstable", &info_.qos)) {
     return true;
   }
 
@@ -208,7 +209,7 @@ bool CGroupParser::parse_uid() {
       }
 
       // append the canonical separator
-      info_.pod_id_ += "-";
+      info_.pod_id += "-";
     }
   }
 
@@ -219,7 +220,7 @@ bool CGroupParser::parse_uid_group(size_t count)
 {
   // all the hex digits in the group (8,4, or 12)
   for(size_t ii = 0; ii < count; ++ii) {
-    if (!parse_match(read_head_, cgroup_name_.end(), is_hex_digit, &info_.pod_id_)) {
+    if (!parse_match(read_head_, cgroup_name_.end(), is_hex_digit, &info_.pod_id)) {
       return false;
     }
   }
@@ -228,5 +229,5 @@ bool CGroupParser::parse_uid_group(size_t count)
 
 bool CGroupParser::parse_runtime(char token) {
   // ought we to validate this? containerd, etc...
-  return parse_token(read_head_, cgroup_name_.end(), token, &info_.runtime_);
+  return parse_token(read_head_, cgroup_name_.end(), token, &info_.runtime);
 }
