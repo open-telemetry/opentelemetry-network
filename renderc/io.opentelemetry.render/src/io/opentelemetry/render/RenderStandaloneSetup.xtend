@@ -4,7 +4,7 @@
 package io.opentelemetry.render
 
 class RenderStandaloneSetup extends RenderStandaloneSetupGenerated {
-	def static void doSetup() {
-		new RenderStandaloneSetup().createInjectorAndDoEMFRegistration()
-	}
+  def static void doSetup() {
+    new RenderStandaloneSetup().createInjectorAndDoEMFRegistration()
+  }
 }
