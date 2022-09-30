@@ -1,27 +1,27 @@
 buildscript {
-	apply from: "${rootDir}/gradle/repositories.gradle"
-	dependencies {
-		classpath 'org.xtext:xtext-gradle-plugin:2.0.8'
-	}
+  apply from: "${rootDir}/gradle/repositories.gradle"
+  dependencies {
+    classpath 'org.xtext:xtext-gradle-plugin:2.0.8'
+  }
 }
 
 subprojects {
-	ext.xtextVersion = '2.28.0'
+  ext.xtextVersion = '2.28.0'
 
-	apply plugin: 'java'
-	apply plugin: 'org.xtext.xtend'
-	apply from: "${rootDir}/gradle/repositories.gradle"
-	apply from: "${rootDir}/gradle/source-layout.gradle"
-	apply plugin: 'eclipse'
-	apply plugin: 'idea'
-	
-	group = 'io.opentelemetry.render'
-	version = '1.0.0-SNAPSHOT'
-	
-	sourceCompatibility = '1.8'
-	targetCompatibility = '1.8'
-	
-	configurations.all {
-		exclude group: 'asm'
-	}
+  apply plugin: 'java'
+  apply plugin: 'org.xtext.xtend'
+  apply from: "${rootDir}/gradle/repositories.gradle"
+  apply from: "${rootDir}/gradle/source-layout.gradle"
+  apply plugin: 'eclipse'
+  apply plugin: 'idea'
+
+  group = 'io.opentelemetry.render'
+  version = '1.0.0-SNAPSHOT'
+
+  sourceCompatibility = '1.8'
+  targetCompatibility = '1.8'
+
+  configurations.all {
+    exclude group: 'asm'
+  }
 }

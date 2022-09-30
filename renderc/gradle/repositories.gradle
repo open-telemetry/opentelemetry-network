@@ -1,11 +1,11 @@
 def mavenUrl = System.getenv("MAVEN_REPOSITORY_URL")
 
 def repos = {
-	if (mavenUrl != null) {
-		maven { url mavenUrl }
-	} else {
-		mavenCentral()
-	}
+  if (mavenUrl != null) {
+    maven { url mavenUrl }
+  } else {
+    mavenCentral()
+  }
 }
 
 project.buildscript.repositories(repos)

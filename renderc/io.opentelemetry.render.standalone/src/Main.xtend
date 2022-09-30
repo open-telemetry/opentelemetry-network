@@ -23,65 +23,65 @@ import org.kohsuke.args4j.CmdLineException
 import org.kohsuke.args4j.Option
 
 class Main {
-	@Option(name = "-i", usage="input directory", required=true)
-	String inputDirectory
+  @Option(name = "-i", usage="input directory", required=true)
+  String inputDirectory
 
-	@Option(name = "-o", usage="output directory", required=true)
-	String outputDirectory
+  @Option(name = "-o", usage="output directory", required=true)
+  String outputDirectory
 
-	def static void main(String[] args) {
-		new Main().doMain(args)	
-	}
+  def static void main(String[] args) {
+    new Main().doMain(args)
+  }
 
-	def void doMain(String[] args) {
-		val parser = new CmdLineParser(this, ParserProperties.defaults().withUsageWidth(80))
+  def void doMain(String[] args) {
+    val parser = new CmdLineParser(this, ParserProperties.defaults().withUsageWidth(80))
 
-		try {
-			parser.parseArgument(args)
-		} catch (CmdLineException e) {
-			System.err.println("Error: " + e.message)
-			System.err.println("Usage:")
-			parser.printUsage(System.err)
-			System.exit(-1)
-		}
+    try {
+      parser.parseArgument(args)
+    } catch (CmdLineException e) {
+      System.err.println("Error: " + e.message)
+      System.err.println("Usage:")
+      parser.printUsage(System.err)
+      System.exit(-1)
+    }
 
-		val injector = Guice.createInjector(new StandaloneBuilderModule())
-		val builder = injector.getInstance(StandaloneBuilder)
+    val injector = Guice.createInjector(new StandaloneBuilderModule())
+    val builder = injector.getInstance(StandaloneBuilder)
 
-		builder.baseDir = new File(".").absolutePath
-		builder.sourceDirs = ImmutableList.<String>of(new File(inputDirectory).absolutePath)
-		builder.classPathEntries = ImmutableList.<String>of()
+    builder.baseDir = new File(".").absolutePath
+    builder.sourceDirs = ImmutableList.<String>of(new File(inputDirectory).absolutePath)
+    builder.classPathEntries = ImmutableList.<String>of()
 
-		val languages = new LanguageAccessFactory().createLanguageAccess(
-			ImmutableList.of(new RenderLanguageConfiguration(outputDirectory)),
-			Main.getClassLoader())
-		builder.languages = languages
+    val languages = new LanguageAccessFactory().createLanguageAccess(
+      ImmutableList.of(new RenderLanguageConfiguration(outputDirectory)),
+      Main.getClassLoader())
+    builder.languages = languages
 
-		if (!builder.launch()) {
-			System.exit(-1);
-		}
-	}
+    if (!builder.launch()) {
+      System.exit(-1);
+    }
+  }
 
-	static class RenderLanguageConfiguration implements ILanguageConfiguration {
-		String outputDirectory
+  static class RenderLanguageConfiguration implements ILanguageConfiguration {
+    String outputDirectory
 
-		new(String outputDir) {
-			outputDirectory = outputDir
-		}
+    new(String outputDir) {
+      outputDirectory = outputDir
+    }
 
-		override String getSetup() {
-			"io.opentelemetry.render.RenderStandaloneSetup"
-		}
+    override String getSetup() {
+      "io.opentelemetry.render.RenderStandaloneSetup"
+    }
 
-		override Set<OutputConfiguration> getOutputConfigurations() {
-			val config = new OutputConfiguration(IFileSystemAccess.DEFAULT_OUTPUT)
-			config.setOutputDirectory(outputDirectory)
+    override Set<OutputConfiguration> getOutputConfigurations() {
+      val config = new OutputConfiguration(IFileSystemAccess.DEFAULT_OUTPUT)
+      config.setOutputDirectory(outputDirectory)
 
-			return ImmutableSet.of(config)
-		}
+      return ImmutableSet.of(config)
+    }
 
-		override boolean isJavaSupport() {
-			return false
-		}
-	}
+    override boolean isJavaSupport() {
+      return false
+    }
+  }
 }

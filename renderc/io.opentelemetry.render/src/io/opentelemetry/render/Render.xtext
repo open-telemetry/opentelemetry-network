@@ -6,18 +6,18 @@ grammar io.opentelemetry.render.Render with org.eclipse.xtext.common.Terminals
 generate render "https://flowmill.github.io/network-explorer/render"
 
 Document:
-	package=PackageDefinition
-	namespace = Namespace
-	apps += App*
-	metrics += Metric*
-	spans += Span*;
+  package=PackageDefinition
+  namespace = Namespace
+  apps += App*
+  metrics += Metric*
+  spans += Span*;
 
 
 /*****************************************************************************
  * Package:
  */
 PackageDefinition:
-	'package' name=QualifiedName;
+  'package' name=QualifiedName;
 
 
 /*****************************************************************************
@@ -27,138 +27,145 @@ PackageDefinition:
  * Namespace maps module-specific rpc ids to global rpc ids
  */
 Namespace:
-	{Namespace} 'namespace' '{' mappings+=AppRpcMap* '}';
+  {Namespace} 'namespace' '{' mappings+=AppRpcMap* '}';
 
 /**
  * Map of app to range of rpc_id's
  */
 AppRpcMap:
-	app=[App] ':' ranges+=RpcIdRange (',' ranges+=RpcIdRange)*;
+  app=[App] ':' ranges+=RpcIdRange (',' ranges+=RpcIdRange)*;
 
 RpcIdRange:
-	start=INT (hasEnd ?= '-' end=INT)?;
+  start=INT (hasEnd ?= '-' end=INT)?;
+
 
 /*****************************************************************************
  * App:
  */
 App:
-	'app' name=ID '{'
-		(jit ?= 'jit')?
-		spans += Span*
-	'}'
-	/* internal */
- 	('internal' '{{'
-		'-' 'c_name'						c_name=STRING
-		'-' 'jb_h'							jb_h=STRING
-		'-' 'jsrv_h'						jsrv_h=STRING
-		'-' 'descriptor_h'					descriptor_h=STRING
-		'-' 'bpf_h'							bpf_h=STRING
- 	'}}')?
- 	;
+  'app' name=ID '{'
+    (jit ?= 'jit')?
+    spans += Span*
+  '}'
+  /* internal */
+   ('internal' '{{'
+    '-' 'c_name'            c_name=STRING
+    '-' 'jb_h'              jb_h=STRING
+    '-' 'jsrv_h'            jsrv_h=STRING
+    '-' 'descriptor_h'      descriptor_h=STRING
+    '-' 'bpf_h'             bpf_h=STRING
+   '}}')?
+   ;
 
 /*****************************************************************************
  * Message:
  */
 Message:
-	id=INT ':' type=MessageType name=ID
-	(referenceEmbedded ?= 'ref' reference_field=[Field])?
-		'{' (hasDescription?='description' description=STRING)?
-				(hasSeverity?='severity' severity=INT)?
-				(noAuthorizationNeeded?='no_authorization_needed')?
-				(pipelineOnly?='pipeline_only')?
-				fields+=Field* '}'
-	/* internal */
-	('internal' '{{'
-		'-' 'wire_msg' wire_msg=XPackedMessage
-		'-' 'parsed_msg' parsed_msg=XPackedMessage
-	'}}')?;
+  id=INT ':' type=MessageType name=ID
+  (referenceEmbedded ?= 'ref' reference_field=[Field])?
+    '{' (hasDescription?='description' description=STRING)?
+        (hasSeverity?='severity' severity=INT)?
+        (noAuthorizationNeeded?='no_authorization_needed')?
+        (pipelineOnly?='pipeline_only')?
+        fields+=Field* '}'
+  /* internal */
+  ('internal' '{{'
+    '-' 'wire_msg' wire_msg=XPackedMessage
+    '-' 'parsed_msg' parsed_msg=XPackedMessage
+  '}}')?;
 
 enum MessageType:
-	start | log | end | msg;
+  start | log | end | msg;
 
 /* internal PackedMessage */
 XPackedMessage:
-	'{{'
-		'-' 'size' 				size=INT
-		'-' 'rpc_id'			rpc_id=INT
-		'-' 'attr_name' 		attr_name=STRING
-		'-' 'packedStrings'		((packedStrings?='true') | 'false')
-		'-' 'struct_name'		struct_name=STRING
-		'-' 'descriptor_name'	descriptor_name=STRING
-		'-' 'descriptor'		(descriptor += INT)*
-		'-' 'dynamic_size'		((dynamic_size?='true') | 'false')
-		'-' 'fields'			(fields += [Field])*
-		'-' 'last_blob_field'	(last_blob_field=[Field])?
-	'}}'
+  '{{'
+    '-' 'size'             size=INT
+    '-' 'rpc_id'           rpc_id=INT
+    '-' 'attr_name'        attr_name=STRING
+    '-' 'packedStrings'    ((packedStrings?='true') | 'false')
+    '-' 'struct_name'      struct_name=STRING
+    '-' 'descriptor_name'  descriptor_name=STRING
+    '-' 'descriptor'       (descriptor += INT)*
+    '-' 'dynamic_size'     ((dynamic_size?='true') | 'false')
+    '-' 'fields'           (fields += [Field])*
+    '-' 'last_blob_field'  (last_blob_field=[Field])?
+  '}}'
 ;
 
 /*****************************************************************************
  * Metric:
  */
 Metric:
-	'metric' name=ID '{' fields+=MetricField* '}';
+  'metric' name=ID '{' fields+=MetricField* '}';
 
 MetricField:
-	type=FieldType name=ID (
-		('method' method=AggregationMethod)?
-	)?;
+  type=FieldType name=ID (
+    ('method' method=AggregationMethod)?
+  )?;
 
 enum AggregationMethod:
-	rate | gauge | counter | tdigest;
+  rate | gauge | counter | tdigest;
 
 /*****************************************************************************
  * Spans:
  */
 Span:
-	'span' name=ID ('impl' impl=STRING)? ('include' include=STRING)? '{'
-		('pool_size' pool_size_=INT)?
-		(index=Index)?
-		((isSingleton ?= 'singleton') | (conn_hash_ ?= 'conn_hash'))?
-		(isProxy ?= 'proxy' remoteApp=[App | ID] '.' remoteSpan=[Span | ID] (sharding=Sharding)?)?
-		aggs+=Aggregation*
-		definitions+=Definition*
-		messages += Message*
-	'}';
+  'span' name=ID ('impl' impl=STRING)? ('include' include=STRING)? '{'
+    ('pool_size' pool_size_=INT)?
+    (index=Index)?
+    ((isSingleton ?= 'singleton') | (conn_hash_ ?= 'conn_hash'))?
+    (isProxy ?= 'proxy' remoteApp=[App | ID] '.' remoteSpan=[Span | ID] (sharding=Sharding)?)?
+    aggs+=Aggregation*
+    definitions+=Definition*
+    messages += Message*
+  '}';
 
 /**
  * An Index makes the span available through a hash table by using the given
  *   fields/references
  */
 Index:
-	'index' '(' keys += [Definition | ID] (',' keys += [Definition | ID])* ')';
+  'index' '(' keys += [Definition | ID] (',' keys += [Definition | ID])* ')';
 
 Sharding:
-	'shard_by' '(' keys += [Field | ID] (',' keys += [Field | ID])* ')';
+  'shard_by' '(' keys += [Field | ID] (',' keys += [Field | ID])* ')';
 
 Aggregation:
-	'aggregate' name=ID '('
-				 ( (isRoot ?= 'root')? &
-					 ('type' type=[Metric]) &
-				 	 ('interval' interval=INT) &
-				 	 ('slots' slots=INT) ) ')'
-				 ('{' updates+=AggregationUpdate*
-							rollups+=Rollup* '}')?;
+  'aggregate' name=ID '('
+    (
+      (isRoot ?= 'root')? &
+      ('type' type=[Metric]) &
+      ('interval' interval=INT) &
+      ('slots' slots=INT)
+    )
+  ')'
+  ('{'
+    updates += AggregationUpdate*
+    rollups += Rollup*
+  '}')?;
+
 AggregationUpdate:
-	'update' ref=[Reference | ID] '.' agg=[Aggregation | ID];
+  'update' ref=[Reference | ID] '.' agg=[Aggregation | ID];
 
 Definition:
-	Field | Reference;
+  Field | Reference;
 
 Field:
-	(id=INT ':')? type=FieldType name=ID (isArray ?= '[' array_size=INT ']')?
-	/* internal */
-	('{{' 'wire_pos' wire_pos=INT 'parsed_pos' parsed_pos=INT '}}')?
-	;
+  (id=INT ':')? type=FieldType name=ID (isArray ?= '[' array_size=INT ']')?
+  /* internal */
+  ('{{' 'wire_pos' wire_pos=INT 'parsed_pos' parsed_pos=INT '}}')?
+  ;
 
 FieldType:
-	(isShortString ?= 'string<' size=INT '>') |
-	enum_type=FieldTypeEnum;
+  (isShortString ?= 'string<' size=INT '>') |
+  enum_type=FieldTypeEnum;
 
 enum FieldTypeEnum:
-	s8 | u8 | s16 | u16 | s32 | u32 | s64 | u64 | s128 | u128 | string;
+  s8 | u8 | s16 | u16 | s32 | u32 | s64 | u64 | s128 | u128 | string;
 
 Rollup:
-	'rollup' rollup_count=INT;
+  'rollup' rollup_count=INT;
 
 /**
  * Keep a reference to another span.
@@ -176,8 +183,8 @@ Rollup:
  *     (through references).
  */
 Reference:
-	'reference<' target=[Span | QualifiedName] '>' name=ID
-	(((isAuto ?= 'auto') | (isCached ?= 'cached')) '{' bindings+= ReferenceBinding* '}')?;
+  'reference<' target=[Span | QualifiedName] '>' name=ID
+  (((isAuto ?= 'auto') | (isCached ?= 'cached')) '{' bindings+= ReferenceBinding* '}')?;
 
 /**
  * Each ReferenceBinding clause binds a named index variable in the reference
@@ -191,13 +198,13 @@ Reference:
  *   https://christiandietrich.wordpress.com/2013/05/18/xtext-and-dot-expressions/
  */
 ReferenceBinding:
-	key=[Definition] '=' value=ReferenceBindingValue;
+  key=[Definition] '=' value=ReferenceBindingValue;
 
 ReferenceBindingValue returns ReferenceBindingRef:
-	ReferenceBindingRoot ({ReferenceBindingValue.ref=current} '.' tail=[Definition])*;
+  ReferenceBindingRoot ({ReferenceBindingValue.ref=current} '.' tail=[Definition])*;
 
 ReferenceBindingRoot returns ReferenceBindingRef:
-	{ReferenceBindingRoot} entity=[Definition];
+  {ReferenceBindingRoot} entity=[Definition];
 
 QualifiedName:
-	ID ('.' ID)*;
+  ID ('.' ID)*;

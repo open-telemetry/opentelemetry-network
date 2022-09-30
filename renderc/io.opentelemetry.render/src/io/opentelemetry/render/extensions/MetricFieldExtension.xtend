@@ -8,8 +8,8 @@ import static extension io.opentelemetry.render.extensions.FieldTypeExtensions.*
 
 class MetricFieldExtensions {
 
-	static def cType(MetricField field) {
-		// using -1 for non-array type
-		return field.type.cType(-1);
-	}
+  static def cType(MetricField field) {
+    // using -1 for non-array type
+    return field.type.cType(-1);
+  }
 }

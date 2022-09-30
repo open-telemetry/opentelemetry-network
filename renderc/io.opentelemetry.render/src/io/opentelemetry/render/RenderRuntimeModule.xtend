@@ -8,7 +8,7 @@ import org.eclipse.xtext.formatting2.IFormatter2
 import io.opentelemetry.render.generator.RenderFormatter
 
 class RenderRuntimeModule extends AbstractRenderRuntimeModule {
-	def Provider<IFormatter2> provideIFormatter2() {
-		return new RenderFormatter.Factory()
-	}
+  def Provider<IFormatter2> provideIFormatter2() {
+    return new RenderFormatter.Factory()
+  }
 }
