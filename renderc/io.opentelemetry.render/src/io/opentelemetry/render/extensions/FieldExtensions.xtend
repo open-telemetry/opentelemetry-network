@@ -30,4 +30,5 @@ class FieldExtensions {
   static def cType(Field field) {
     return field.type.cType(field.isIsArray ? field.array_size : -1);
   }
+
 }

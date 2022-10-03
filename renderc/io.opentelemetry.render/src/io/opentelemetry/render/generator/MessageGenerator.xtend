@@ -4,34 +4,35 @@
 package io.opentelemetry.render.generator
 
 import java.util.Collections
-import io.opentelemetry.render.render.App
+
 import org.eclipse.emf.ecore.resource.Resource
 import org.eclipse.xtext.generator.IFileSystemAccess2
-
+import io.opentelemetry.render.render.App
 import static extension io.opentelemetry.render.extensions.XPackedMessageExtensions.*
 import static extension io.opentelemetry.render.extensions.FieldExtensions.*
+import static extension io.opentelemetry.render.extensions.AppExtensions.pkg
 
 /**
  * Generates message-related code (previously "jitbuf")
  */
 class MessageGenerator {
 
-  static def void doGenerate(Resource resource, IFileSystemAccess2 fsa,
-    String pkg_name)
-  {
-
+  def void doGenerate(Resource resource, IFileSystemAccess2 fsa) {
     for (app : resource.allContents.filter(App).toIterable) {
-      val app_path = pkg_name + '/' + app.name
-
-      fsa.generateFile(app_path + ".wire_message.h", generateMessageH(app, true))
-      fsa.generateFile(app_path + ".parsed_message.h", generateMessageH(app, false))
-      fsa.generateFile(app_path + ".descriptor.h", generateDescriptorH(app))
-      fsa.generateFile(app_path + ".descriptor.cc", generateDescriptorCc(app))
+      fsa.generateFile(outputPath(app, "wire_message.h"), generateMessageH(app, true))
+      fsa.generateFile(outputPath(app, "parsed_message.h"), generateMessageH(app, false))
+      fsa.generateFile(outputPath(app, "descriptor.h"), generateDescriptorH(app))
+      fsa.generateFile(outputPath(app, "descriptor.cc"), generateDescriptorCc(app))
     }
   }
 
+  private static def outputPath(App app, String fileName) {
+    // NOTE: currently different from AppGenerator.outputPath
+    app.pkg.name + "/" + app.name + "." + fileName
+  }
+
   static def generateMessageH(App app, boolean wire_message) {
-    return '''
+    '''
     /*********************************************************************
      * JITBUF GENERATED HEADER
      * !!! generated code, do not modify !!!
@@ -112,7 +113,7 @@ class MessageGenerator {
   }
 
   static def generateDescriptorH(App app) {
-    return '''
+    '''
     #pragma once
     #include <stddef.h>
     #include <string>

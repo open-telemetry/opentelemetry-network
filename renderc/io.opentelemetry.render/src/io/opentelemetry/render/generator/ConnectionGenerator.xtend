@@ -3,19 +3,27 @@
 
 package io.opentelemetry.render.generator
 
+import org.eclipse.xtext.generator.IFileSystemAccess2
+
 import io.opentelemetry.render.render.App
-import static extension io.opentelemetry.render.extensions.AppExtensions.*
-import static extension io.opentelemetry.render.extensions.SpanExtensions.*
-import static extension io.opentelemetry.render.extensions.MessageExtensions.*
-import static extension io.opentelemetry.render.extensions.FieldTypeExtensions.*
 import io.opentelemetry.render.render.Field
 import io.opentelemetry.render.render.Span
 import io.opentelemetry.render.render.Message
 import io.opentelemetry.render.render.MessageType
+import static io.opentelemetry.render.generator.AppGenerator.outputPath
+import static extension io.opentelemetry.render.extensions.AppExtensions.*
+import static extension io.opentelemetry.render.extensions.SpanExtensions.*
+import static extension io.opentelemetry.render.extensions.MessageExtensions.*
+import static extension io.opentelemetry.render.extensions.FieldTypeExtensions.*
 
 class ConnectionGenerator {
-  static def generateConnectionH(App app)
-  {
+
+  def void doGenerate(App app, IFileSystemAccess2 fsa) {
+    fsa.generateFile(outputPath(app, "connection.h"), generateConnectionH(app))
+    fsa.generateFile(outputPath(app, "connection.cc"), generateConnectionCc(app))
+  }
+
+  private static def generateConnectionH(App app) {
     '''
     /********************************************
      * JITBUF GENERATED CODE
@@ -204,8 +212,7 @@ class ConnectionGenerator {
     '''
   }
 
-  static def generateConnectionCc(App app)
-  {
+  private static def generateConnectionCc(App app) {
     '''
     #include "connection.h"
     #include "protocol.h"
@@ -399,15 +406,13 @@ class ConnectionGenerator {
     '''
   }
 
-  static def spanLookupDeclaration(Span span)
-  {
+  private static def spanLookupDeclaration(Span span) {
     '''
     «fixedHashTypeName(span)»::position «fixedHashName(span)»_find(«span.referenceType.wireCType» key);
     '''
   }
 
-  static def spanLookupImplementation(Span span)
-  {
+  private static def spanLookupImplementation(Span span) {
     '''
     Connection::«fixedHashTypeName(span)»::position Connection::«fixedHashName(span)»_find(«span.referenceType.wireCType» key)
     {
@@ -416,8 +421,7 @@ class ConnectionGenerator {
     '''
   }
 
-  static def handlerImplementation(Span span, Message msg, App app)
-  {
+  private static def handlerImplementation(Span span, Message msg, App app) {
     val pmsg = msg.parsed_msg
 
     '''

@@ -8,9 +8,9 @@ import io.opentelemetry.render.render.FieldType
 import static extension io.opentelemetry.render.extensions.FieldTypeExtensions.cType
 
 class XPackedMessageExtensions {
-  static def cType(XPackedMessage packed_msg, FieldType fieldType)
-  {
-    fieldType.cType(packed_msg.packedStrings)
+
+  static def cType(XPackedMessage packedMsg, FieldType fieldType) {
+    fieldType.cType(packedMsg.packedStrings)
   }
 
 }

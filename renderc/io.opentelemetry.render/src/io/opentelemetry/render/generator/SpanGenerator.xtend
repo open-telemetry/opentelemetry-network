@@ -3,9 +3,12 @@
 
 package io.opentelemetry.render.generator
 
+import java.util.Arrays
+
+import org.eclipse.xtext.generator.IFileSystemAccess2
+
 import io.opentelemetry.render.render.AggregationMethod
 import io.opentelemetry.render.render.Field
-import io.opentelemetry.render.render.Metric
 import io.opentelemetry.render.render.Reference
 import io.opentelemetry.render.render.ReferenceBindingRef
 import io.opentelemetry.render.render.ReferenceBindingRoot
@@ -13,13 +16,12 @@ import io.opentelemetry.render.render.ReferenceBindingValue
 import io.opentelemetry.render.render.Span
 import io.opentelemetry.render.render.App
 import io.opentelemetry.render.render.Aggregation
-import io.opentelemetry.render.render.Message;
-import org.eclipse.emf.ecore.resource.Resource
-import io.opentelemetry.render.render.FieldTypeEnum
-import java.util.Arrays
-
+import io.opentelemetry.render.render.Message
 import static io.opentelemetry.render.generator.AppPacker.pulseMessageName
-
+import static io.opentelemetry.render.generator.AppGenerator.outputPath
+import static io.opentelemetry.render.generator.RenderGenerator.generatedCodeWarning
+import static io.opentelemetry.render.generator.RenderGenerator.integerTypeSize
+import static io.opentelemetry.render.generator.RenderGenerator.fieldSize
 import static extension io.opentelemetry.render.extensions.AppExtensions.*
 import static extension io.opentelemetry.render.extensions.FieldExtensions.*
 import static extension io.opentelemetry.render.extensions.SpanExtensions.*
@@ -33,13 +35,38 @@ import static extension io.opentelemetry.render.extensions.XPackedMessageExtensi
  */
 class SpanGenerator {
 
-  static def generatedCodeWarning() {
-    '''
-    /**********************************************
-     * !!! render-generated code, do not modify !!!
-     **********************************************/
+  def void doGenerate(App app, IFileSystemAccess2 fsa) {
+    fsa.generateFile(outputPath(app, "index.h"), generateIndexH(app))
+    fsa.generateFile(outputPath(app, "index.cc"), generateIndexCc(app))
 
-    '''
+    fsa.generateFile(outputPath(app, "containers.h"), generateContainersH(app))
+    fsa.generateFile(outputPath(app, "containers.inl"), generateContainersInl(app))
+    fsa.generateFile(outputPath(app, "containers.cc"), generateContainersCc(app))
+
+    fsa.generateFile(outputPath(app, "keys.h"), generateKeysH(app))
+
+    fsa.generateFile(outputPath(app, "handles.h"), generateHandlesH(app))
+    fsa.generateFile(outputPath(app, "handles.cc"), generateHandlesCc(app))
+
+    fsa.generateFile(outputPath(app, "auto_handles.h"), generateAutoHandlesH(app))
+    fsa.generateFile(outputPath(app, "auto_handles.cc"), generateAutoHandlesCc(app))
+
+    fsa.generateFile(outputPath(app, "weak_refs.h"), generateWeakRefsH(app))
+    fsa.generateFile(outputPath(app, "weak_refs.inl"), generateWeakRefsInl(app))
+    fsa.generateFile(outputPath(app, "weak_refs.cc"), generateWeakRefsCc(app))
+
+    fsa.generateFile(outputPath(app, "modifiers.h"), generateModifiersH(app))
+    fsa.generateFile(outputPath(app, "modifiers.cc"), generateModifiersCc(app))
+
+    fsa.generateFile(outputPath(app, "spans.h"), generateSpansH(app))
+    fsa.generateFile(outputPath(app, "spans.cc"), generateSpansCc(app))
+
+    fsa.generateFile(outputPath(app, "span_base.h"), generateSpanBaseH(app))
+
+    fsa.generateFile(outputPath(app, "auto_handle_converters.h"), generateAutoHandleConvertersH(app))
+    fsa.generateFile(outputPath(app, "auto_handle_converters.cc"), generateAutoHandleConvertersCc(app))
+
+    fsa.generateFile(outputPath(app, "meta.h"), generateMetaH(app))
   }
 
   /**
@@ -243,39 +270,10 @@ class SpanGenerator {
       '''
     }
   }
+
   /***************************************************************************
    * FIELD HELPER FUNCTIONS
    **************************************************************************/
-
-  static def integerTypeSize(FieldTypeEnum enum_type) {
-    switch (enum_type) {
-        case FieldTypeEnum.S8,
-        case FieldTypeEnum.U8: 1
-        case FieldTypeEnum.S16,
-        case FieldTypeEnum.U16: 2
-        case FieldTypeEnum.S32,
-        case FieldTypeEnum.U32: 4
-        case FieldTypeEnum.S64,
-        case FieldTypeEnum.U64: 8
-        case FieldTypeEnum.S128,
-        case FieldTypeEnum.U128: 16
-        case FieldTypeEnum.STRING:
-          throw new RuntimeException("String not supported in hash")
-    }
-  }
-
-  static def fieldSize(Field field) {
-    val non_array_size =
-      if (field.type.isShortString)
-        field.type.size
-      else
-        integerTypeSize(field.type.enum_type)
-
-    if (field.isArray)
-      non_array_size * field.array_size
-    else
-      non_array_size
-  }
 
   static def generateField(Field field) {
     generateField(field, "")
@@ -314,7 +312,7 @@ class SpanGenerator {
     '''«FOR ran : app.remoteApps.map[name].sort SEPARATOR ", "»std::vector<::«app.pkg.name»::«ran»::Writer> «ran»_writers«ENDFOR»'''
   }
 
-  static def generateIndexH(App app, String pkg_name) {
+  static def generateIndexH(App app) {
     '''
     «generatedCodeWarning()»
     #pragma once
@@ -329,7 +327,7 @@ class SpanGenerator {
     #include <string>
     #include <vector>
 
-    namespace «pkg_name» { /* pkg */
+    namespace «app.pkg.name» { /* pkg */
     namespace «app.name» { /* app */
 
     /**
@@ -383,7 +381,7 @@ class SpanGenerator {
 
       «FOR remote_app_name : app.remoteApps.map[name].sort»
         /* Writer for sending proxy span messages to «remote_app_name» app */
-        std::vector<::«pkg_name»::«remote_app_name»::Writer> «remote_app_name»_writers_;
+        std::vector<::«app.pkg.name»::«remote_app_name»::Writer> «remote_app_name»_writers_;
       «ENDFOR»
 
       void dump_json(std::ostream &out) const;
@@ -394,7 +392,7 @@ class SpanGenerator {
       }
     };
     } /* namespace «app.name» (app) */
-    } /* namespace «pkg_name» (pkg) */
+    } /* namespace «app.pkg.name» (pkg) */
     '''
   }
 
@@ -402,13 +400,13 @@ class SpanGenerator {
    * INDEX CC
    **************************************************************************/
 
-  static def generateIndexCc(App app, String pkg_name) {
+  static def generateIndexCc(App app) {
     '''
     «generatedCodeWarning()»
 
     #include "index.h"
 
-    «pkg_name»::«app.name»::Index::Index(«indexConstructorSignature(app)»)
+    «app.pkg.name»::«app.name»::Index::Index(«indexConstructorSignature(app)»)
     «FOR span : app.spans BEFORE " : " SEPARATOR ","»
       «span.name»()
     «ENDFOR»
@@ -417,14 +415,14 @@ class SpanGenerator {
     «ENDFOR»
     {}
 
-    void «pkg_name»::«app.name»::Index::size_statistics(size_statistics_cb f)
+    void «app.pkg.name»::«app.name»::Index::size_statistics(size_statistics_cb f)
     {
       «FOR span : app.spans»
         f("«span.name»", «span.name».size(), «span.name».max_size(), «span.pool_size»);
       «ENDFOR»
     }
 
-    void «pkg_name»::«app.name»::Index::send_pulse()
+    void «app.pkg.name»::«app.name»::Index::send_pulse()
     {
       «FOR ran : app.remoteApps.map[name].sort»
         for (auto &writer : «ran»_writers_) {
@@ -433,7 +431,7 @@ class SpanGenerator {
       «ENDFOR»
     }
 
-    void «pkg_name»::«app.name»::Index::dump_json(std::ostream &out) const
+    void «app.pkg.name»::«app.name»::Index::dump_json(std::ostream &out) const
     {
       out << '{'
         «FOR span: app.spans SEPARATOR " << ','"»
@@ -457,7 +455,7 @@ class SpanGenerator {
     }
   }
 
-  static def generateContainersH(App app, String pkg_name) {
+  static def generateContainersH(App app) {
     '''
     «generatedCodeWarning()»
     #pragma once
@@ -466,7 +464,7 @@ class SpanGenerator {
     #include "keys.h"
     #include "auto_handles.h"
 
-    #include <generated/«pkg_name»/metrics.h>
+    #include <generated/«app.pkg.name»/metrics.h>
 
     #include <util/short_string.h>
     #include <util/fixed_hash.h>
@@ -474,7 +472,7 @@ class SpanGenerator {
 
     #include <ostream>
 
-    namespace «pkg_name» { /* pkg */
+    namespace «app.pkg.name» { /* pkg */
     namespace «app.name» { /* app */
     namespace containers {
 
@@ -507,9 +505,9 @@ class SpanGenerator {
          * Get a span handle from key.
          *
          * This span is indexed, so spans are accessed by their key.
-         * @see ::«pkg_name»::«app.name»::keys::«span.name»
+         * @see ::«app.pkg.name»::«app.name»::keys::«span.name»
          */
-        auto_handles::«span.name» by_key(const ::«pkg_name»::«app.name»::keys::«span.name» &key, bool create_if_not_found = true);
+        auto_handles::«span.name» by_key(const ::«app.pkg.name»::«app.name»::keys::«span.name» &key, bool create_if_not_found = true);
         «ELSE»
         /**
          * Allocate a new span.
@@ -523,7 +521,7 @@ class SpanGenerator {
         /**
          * get: increase reference count and get a handle for an existing span
          */
-        ::«pkg_name»::«app.name»::auto_handles::«span.name» get(«locationTypeForHandle(span)» loc);
+        ::«app.pkg.name»::«app.name»::auto_handles::«span.name» get(«locationTypeForHandle(span)» loc);
 
         /**
          * put: decrease reference count and deallocate span if new refcount is 0.
@@ -537,7 +535,7 @@ class SpanGenerator {
          *
          * @assumes: refcount for the span is positive.
          */
-        ::«pkg_name»::«app.name»::weak_refs::«span.name» at(«locationTypeForHandle(span)» loc);
+        ::«app.pkg.name»::«app.name»::weak_refs::«span.name» at(«locationTypeForHandle(span)» loc);
 
         /**
          * @return number of allocated spans of type «span.name»
@@ -557,9 +555,9 @@ class SpanGenerator {
          * aggregator «agg.name»: update metrics
          */
           «IF agg.isRoot»
-          void «agg.name»_update(«locationTypeForHandle(span)» loc, u64 t, ::«pkg_name»::metrics::«agg.type.name»_point const &m);
+          void «agg.name»_update(«locationTypeForHandle(span)» loc, u64 t, ::«app.pkg.name»::metrics::«agg.type.name»_point const &m);
           «ELSE»
-          void «agg.name»_update(«locationTypeForHandle(span)» loc, u64 t, ::«pkg_name»::metrics::«agg.type.name» const &m);
+          void «agg.name»_update(«locationTypeForHandle(span)» loc, u64 t, ::«app.pkg.name»::metrics::«agg.type.name» const &m);
           «ENDIF»
         «ENDFOR»
 
@@ -603,9 +601,9 @@ class SpanGenerator {
           «ENDFOR»
         «ENDFOR»
 
-        using span_t = ::«pkg_name»::«app.name»::spans::«span.name»;
+        using span_t = ::«app.pkg.name»::«app.name»::spans::«span.name»;
         «IF span.index !== null»
-        typedef ::«pkg_name»::«app.name»::keys::«span.name» key_t;
+        typedef ::«app.pkg.name»::«app.name»::keys::«span.name» key_t;
         «ENDIF»
 
         «IF span.sharding !== null»
@@ -619,8 +617,8 @@ class SpanGenerator {
         «ENDIF»
 
         /* getter for specific location */
-        friend ::«pkg_name»::«app.name»::weak_refs::«span.name»;
-        inline ::«pkg_name»::«app.name»::spans::«span.name» *at_ptr(«locationTypeForHandle(span)» loc);
+        friend ::«app.pkg.name»::«app.name»::weak_refs::«span.name»;
+        inline ::«app.pkg.name»::«app.name»::spans::«span.name» *at_ptr(«locationTypeForHandle(span)» loc);
 
         «IF span.index !== null»
           /* key hasher for map */
@@ -646,12 +644,12 @@ class SpanGenerator {
         /* metric stores */
         «FOR agg: span.aggs»
         «IF agg.isRoot»
-          MetricStore<::«pkg_name»::metrics::«agg.type.name»_accumulator, pool_size, «agg.slots»> «agg.name»;
+          MetricStore<::«app.pkg.name»::metrics::«agg.type.name»_accumulator, pool_size, «agg.slots»> «agg.name»;
         «ELSE»
-          MetricStore<::«pkg_name»::metrics::«agg.type.name», pool_size, «agg.slots»> «agg.name»;
+          MetricStore<::«app.pkg.name»::metrics::«agg.type.name», pool_size, «agg.slots»> «agg.name»;
         «ENDIF»
         «FOR rollup: agg.rollups»
-          MetricStore<::«pkg_name»::metrics::«agg.type.name», pool_size, «agg.slots»> «agg.name»_«rollup.rollup_count»;
+          MetricStore<::«app.pkg.name»::metrics::«agg.type.name», pool_size, «agg.slots»> «agg.name»_«rollup.rollup_count»;
         «ENDFOR»
         «ENDFOR»
 
@@ -666,14 +664,14 @@ class SpanGenerator {
     «ENDFOR»
     } /* namespace containers */
     } /* namespace «app.name» (app) */
-    } /* namespace «pkg_name» (pkg) */
+    } /* namespace «app.pkg.name» (pkg) */
     '''
   }
 
   /***************************************************************************
    * CONTAINERS INL
    **************************************************************************/
-  static def generateContainersInl(App app, String pkg_name) {
+  static def generateContainersInl(App app) {
     '''
     «generatedCodeWarning()»
     #pragma once
@@ -685,7 +683,7 @@ class SpanGenerator {
     #include <util/container_of.h>
     #include <util/lookup3.h>
 
-    namespace «pkg_name» { /* pkg */
+    namespace «app.pkg.name» { /* pkg */
     namespace «app.name» { /* app */
     namespace containers {
       /*****************************************************************************
@@ -735,7 +733,7 @@ class SpanGenerator {
      * span getters
      ****************************************************************************/
     «FOR span : app.spans»
-    ::«pkg_name»::«app.name»::spans::«span.name» *«span.name»::at_ptr(«locationTypeForHandle(span)» loc)
+    ::«app.pkg.name»::«app.name»::spans::«span.name» *«span.name»::at_ptr(«locationTypeForHandle(span)» loc)
     {
       return &map[loc];
     }
@@ -755,7 +753,7 @@ class SpanGenerator {
     «ENDFOR»
     } /* namespace containers */
     } /* namespace «app.name» (app) */
-    } /* namespace «pkg_name» (pkg) */
+    } /* namespace «app.pkg.name» (pkg) */
   '''
   }
 
@@ -795,7 +793,7 @@ class SpanGenerator {
    * CONTAINERS CC
    **************************************************************************/
 
-  static def generateContainersCc(App app, String pkg_name) {
+  static def generateContainersCc(App app) {
     '''
     «generatedCodeWarning()»
 
@@ -809,7 +807,7 @@ class SpanGenerator {
     #include "../«remote_app.name»/writer.h"
     «ENDFOR»
 
-    namespace «pkg_name» { /* pkg */
+    namespace «app.pkg.name» { /* pkg */
     namespace «app.name» { /* app */
     namespace containers {
 
@@ -828,8 +826,8 @@ class SpanGenerator {
       {}
 
       «IF span.index !== null»
-      ::«pkg_name»::«app.name»::auto_handles::«span.name»
-      «span.name»::by_key(const ::«pkg_name»::«app.name»::keys::«span.name» &key, bool create_if_not_found)
+      ::«app.pkg.name»::«app.name»::auto_handles::«span.name»
+      «span.name»::by_key(const ::«app.pkg.name»::«app.name»::keys::«span.name» &key, bool create_if_not_found)
       {
         /* does the key already have a handle? */
         auto pos = map.find(key);
@@ -848,7 +846,7 @@ class SpanGenerator {
           }
 
           /* make the handle */
-          ::«pkg_name»::«app.name»::auto_handles::«span.name» handle(*index_ptr, pos.index);
+          ::«app.pkg.name»::«app.name»::auto_handles::«span.name» handle(*index_ptr, pos.index);
 
           «IF span.sharding !== null»
             /* calculate the shard ID of this span */
@@ -931,7 +929,7 @@ class SpanGenerator {
       }
 
       «ENDIF»
-      ::«pkg_name»::«app.name»::auto_handles::«span.name» «span.name»::get(«locationTypeForHandle(span)» loc)
+      ::«app.pkg.name»::«app.name»::auto_handles::«span.name» «span.name»::get(«locationTypeForHandle(span)» loc)
       {
         auto index_ptr = fp_container_of(this, &Index::«span.name»);
 
@@ -991,7 +989,7 @@ class SpanGenerator {
         return false;
       }
 
-      ::«pkg_name»::«app.name»::weak_refs::«span.name» «span.name»::at(«locationTypeForHandle(span)» loc)
+      ::«app.pkg.name»::«app.name»::weak_refs::«span.name» «span.name»::at(«locationTypeForHandle(span)» loc)
       {
         auto index_ptr = fp_container_of(this, &Index::«span.name»);
         return {*index_ptr, loc};
@@ -1009,13 +1007,13 @@ class SpanGenerator {
       «FOR agg : span.aggs»
       «IF agg.isRoot»
         void «span.name»::«agg.name»_update(«locationTypeForHandle(span)» loc,
-            u64 t, ::«pkg_name»::metrics::«agg.type.name»_point const &m)
+            u64 t, ::«app.pkg.name»::metrics::«agg.type.name»_point const &m)
         {
           «generateMetricUpdate(agg, agg.name, "loc", "t", "m", true)»
         }
       «ELSE»
         void «span.name»::«agg.name»_update(«locationTypeForHandle(span)» loc,
-            u64 t, ::«pkg_name»::metrics::«agg.type.name» const &m)
+            u64 t, ::«app.pkg.name»::metrics::«agg.type.name» const &m)
         {
           «generateMetricUpdate(agg, agg.name, "loc", "t", "m", false)»
         }
@@ -1057,14 +1055,14 @@ class SpanGenerator {
     «ENDFOR»
     } /* namespace containers */
     } /* namespace «app.name» (app) */
-    } /* namespace «pkg_name» (pkg) */
+    } /* namespace «app.pkg.name» (pkg) */
     '''
   }
 
   /***************************************************************************
    * KEYS H
    **************************************************************************/
-  static def generateKeysH(App app, String pkg_name) {
+  static def generateKeysH(App app) {
     '''
     «generatedCodeWarning()»
     #pragma once
@@ -1073,7 +1071,7 @@ class SpanGenerator {
     #include <util/short_string.h>
     #include <array>
 
-    namespace «pkg_name» { /* pkg */
+    namespace «app.pkg.name» { /* pkg */
     namespace «app.name» { /* app */
     namespace keys {
     «FOR span : app.spans»
@@ -1125,21 +1123,21 @@ class SpanGenerator {
     «ENDFOR»
     } /* namespace keys */
     } /* namespace «app.name» (app) */
-    } /* namespace «pkg_name» (pkg) */
+    } /* namespace «app.pkg.name» (pkg) */
     '''
   }
 
   /***************************************************************************
    * HANDLES H
    **************************************************************************/
-  static def generateHandlesH(App app, String pkg_name) {
+  static def generateHandlesH(App app) {
     '''
     «generatedCodeWarning()»
     #pragma once
 
     #include <platform/types.h>
 
-    namespace «pkg_name» { /* pkg */
+    namespace «app.pkg.name» { /* pkg */
     namespace «app.name» { /* app */
 
     /* forward declarations */
@@ -1215,7 +1213,7 @@ class SpanGenerator {
         /**
          * Get a weak_ref to access the span associated with the handle
          */
-        ::«pkg_name»::«app.name»::weak_refs::«span.name» access(Index &ai);
+        ::«app.pkg.name»::«app.name»::weak_refs::«span.name» access(Index &ai);
 
         /**
          * Move operator is allowed
@@ -1240,12 +1238,12 @@ class SpanGenerator {
         /**
          * Convert from an auto_handle_converter to a handle
          */
-        «span.name»(::«pkg_name»::«app.name»::auto_handle_converters::«span.name» &&other);
+        «span.name»(::«app.pkg.name»::«app.name»::auto_handle_converters::«span.name» &&other);
 
       private:
-        friend class ::«pkg_name»::«app.name»::containers::«span.name»;
-        friend class ::«pkg_name»::«app.name»::weak_refs::«span.name»;
-        friend class ::«pkg_name»::«app.name»::auto_handles::«span.name»;
+        friend class ::«app.pkg.name»::«app.name»::containers::«span.name»;
+        friend class ::«app.pkg.name»::«app.name»::weak_refs::«span.name»;
+        friend class ::«app.pkg.name»::«app.name»::auto_handles::«span.name»;
 
         explicit «span.name»(location_type loc);
         location_type loc_;
@@ -1254,14 +1252,14 @@ class SpanGenerator {
     «ENDFOR»
     } /* namespace handles */
     } /* namespace «app.name» (app) */
-    } /* namespace «pkg_name» (pkg) */
+    } /* namespace «app.pkg.name» (pkg) */
     '''
   }
 
   /***************************************************************************
    * HANDLES CC
    **************************************************************************/
-  static def generateHandlesCc(App app, String pkg_name) {
+  static def generateHandlesCc(App app) {
     '''
     «generatedCodeWarning()»
 
@@ -1273,7 +1271,7 @@ class SpanGenerator {
     #include "weak_refs.h"
     #include "auto_handle_converters.h"
 
-    namespace «pkg_name» { /* pkg */
+    namespace «app.pkg.name» { /* pkg */
     namespace «app.name» { /* app */
     namespace handles {
 
@@ -1317,7 +1315,7 @@ class SpanGenerator {
     }
 
     /* access the span associated with the handle */
-    ::«pkg_name»::«app.name»::weak_refs::«span.name» «span.name»::access(Index &ai)
+    ::«app.pkg.name»::«app.name»::weak_refs::«span.name» «span.name»::access(Index &ai)
     {
       return ai.«span.name».at(loc_);
     }
@@ -1339,7 +1337,7 @@ class SpanGenerator {
       : loc_(loc)
     {}
 
-    «span.name»::«span.name»(::«pkg_name»::«app.name»::auto_handle_converters::«span.name» &&other)
+    «span.name»::«span.name»(::«app.pkg.name»::«app.name»::auto_handle_converters::«span.name» &&other)
     {
       loc_ = other.release();
     }
@@ -1347,21 +1345,21 @@ class SpanGenerator {
     «ENDFOR»
     } /* namespace handles */
     } /* namespace «app.name» (app) */
-    } /* namespace «pkg_name» (pkg) */
+    } /* namespace «app.pkg.name» (pkg) */
     '''
   }
 
   /***************************************************************************
    * AUTO HANDLES H
    **************************************************************************/
-  static def generateAutoHandlesH(App app, String pkg_name) {
+  static def generateAutoHandlesH(App app) {
     '''
     «generatedCodeWarning()»
     #pragma once
 
     #include "weak_refs.h"
 
-    namespace «pkg_name» { /* pkg */
+    namespace «app.pkg.name» { /* pkg */
     namespace «app.name» { /* app */
 
     /* forward declarations */
@@ -1384,7 +1382,7 @@ class SpanGenerator {
        *
        * Like a weak_ref, but puts the reference after use
        */
-      class «span.name» : public ::«pkg_name»::«app.name»::weak_refs::«span.name» {
+      class «span.name» : public ::«app.pkg.name»::«app.name»::weak_refs::«span.name» {
       public:
         /**
          * C'tor for an invalid handle.
@@ -1413,7 +1411,7 @@ class SpanGenerator {
          * The reference moves to the handle, and this instance becomes
          * invalid
          */
-        ::«pkg_name»::«app.name»::handles::«span.name» to_handle();
+        ::«app.pkg.name»::«app.name»::handles::«span.name» to_handle();
 
         /**
          * Release the reference, return the loc
@@ -1428,7 +1426,7 @@ class SpanGenerator {
         /**
          * ..but weak_ref is incompatible (does not hold a reference)
          */
-        «span.name»& operator=(::«pkg_name»::«app.name»::weak_refs::«span.name» &&other) = delete;
+        «span.name»& operator=(::«app.pkg.name»::«app.name»::weak_refs::«span.name» &&other) = delete;
 
         /**
          * Move constructor is allowed
@@ -1438,7 +1436,7 @@ class SpanGenerator {
         /**
          * ..but weak_ref is incompatible (does not hold a reference)
          */
-        «span.name»(::«pkg_name»::«app.name»::weak_refs::«span.name» &&other) = delete;
+        «span.name»(::«app.pkg.name»::«app.name»::weak_refs::«span.name» &&other) = delete;
 
         /**
          * Non-move copy constructor is forbidden
@@ -1451,7 +1449,7 @@ class SpanGenerator {
         «span.name»& operator=(const «span.name»&) = delete;
 
       private:
-        friend class ::«pkg_name»::«app.name»::containers::«span.name»;
+        friend class ::«app.pkg.name»::«app.name»::containers::«span.name»;
 
         /**
          * C'tor from a location into the index.
@@ -1465,14 +1463,14 @@ class SpanGenerator {
     «ENDFOR»
     } /* namespace auto_handles */
     } /* namespace «app.name» (app) */
-    } /* namespace «pkg_name» (pkg) */
+    } /* namespace «app.pkg.name» (pkg) */
     '''
   }
 
   /***************************************************************************
    * AUTO HANDLES CC
    **************************************************************************/
-  static def generateAutoHandlesCc(App app, String pkg_name) {
+  static def generateAutoHandlesCc(App app) {
     '''
     «generatedCodeWarning()»
 
@@ -1484,7 +1482,7 @@ class SpanGenerator {
     #include "weak_refs.h"
     #include "handles.h"
 
-    namespace «pkg_name» { /* pkg */
+    namespace «app.pkg.name» { /* pkg */
     namespace «app.name» { /* app */
     namespace auto_handles {
 
@@ -1493,7 +1491,7 @@ class SpanGenerator {
      * «span.name»
      ********************************************/
     «span.name»::«span.name»(Index &index)
-      : ::«pkg_name»::«app.name»::weak_refs::«span.name»(index, invalid)
+      : ::«app.pkg.name»::«app.name»::weak_refs::«span.name»(index, invalid)
     {}
 
     «span.name»::~«span.name»()
@@ -1510,12 +1508,12 @@ class SpanGenerator {
       }
     }
 
-    ::«pkg_name»::«app.name»::handles::«span.name» «span.name»::to_handle()
+    ::«app.pkg.name»::«app.name»::handles::«span.name» «span.name»::to_handle()
     {
       «locationTypeForHandle(span)» saved_loc = loc_;
       loc_ = invalid;
       span_ptr_ = nullptr;
-      return ::«pkg_name»::«app.name»::handles::«span.name»(saved_loc);
+      return ::«app.pkg.name»::«app.name»::handles::«span.name»(saved_loc);
     }
 
     «locationTypeForHandle(span)» «span.name»::release()
@@ -1539,20 +1537,20 @@ class SpanGenerator {
     }
 
     «span.name»::«span.name»(«span.name» &&other)
-      : ::«pkg_name»::«app.name»::weak_refs::«span.name»(other.index_, other.loc_)
+      : ::«app.pkg.name»::«app.name»::weak_refs::«span.name»(other.index_, other.loc_)
     {
       other.loc_ = invalid;
       other.span_ptr_ = nullptr;
     }
 
     «span.name»::«span.name»(Index &index, location_type loc)
-      : ::«pkg_name»::«app.name»::weak_refs::«span.name»(index, loc)
+      : ::«app.pkg.name»::«app.name»::weak_refs::«span.name»(index, loc)
     {}
 
     «ENDFOR»
     } /* namespace auto_handles */
     } /* namespace «app.name» (app) */
-    } /* namespace «pkg_name» (pkg) */
+    } /* namespace «app.pkg.name» (pkg) */
     '''
   }
 
@@ -1571,7 +1569,7 @@ class SpanGenerator {
     '''
   }
 
-  static def generateWeakRefsH(Resource resource, App app, String pkg_name) {
+  static def generateWeakRefsH(App app) {
     '''
     «generatedCodeWarning()»
     #pragma once
@@ -1587,11 +1585,11 @@ class SpanGenerator {
       «generateImplFwdDeclaration(span.impl.split("::"))»
     «ENDFOR»
 
-    namespace «pkg_name» { /* pkg */
+    namespace «app.pkg.name» { /* pkg */
 
     /* forward declarations */
     namespace metrics {
-    «FOR metric : resource.allContents.filter(Metric).toIterable»
+    «FOR metric : app.metrics»
         class «metric.name»;
         class «metric.name»_point;
     «ENDFOR»
@@ -1687,7 +1685,7 @@ class SpanGenerator {
         /**
          * get: increase reference count and get a handle to the span
          */
-        ::«pkg_name»::«app.name»::auto_handles::«span.name» get();
+        ::«app.pkg.name»::«app.name»::auto_handles::«span.name» get();
 
         «FOR field : span.definitions.filter(Field) SEPARATOR "\n"»
         /**
@@ -1710,7 +1708,7 @@ class SpanGenerator {
          * @note using fully qualified return value in this definition is
          * necessary because reference names can be equal to the targets
          */
-        ::«pkg_name»::«app.name»::weak_refs::«ref.target.name» «ref.name»();
+        ::«app.pkg.name»::«app.name»::weak_refs::«ref.target.name» «ref.name»();
         «ENDFOR»
 
         /**
@@ -1719,7 +1717,7 @@ class SpanGenerator {
          * The modifier allows changing fields and references, and automatically
          * updates auto references when destructed.
          */
-        ::«pkg_name»::«app.name»::modifiers::«span.name» modify();
+        ::«app.pkg.name»::«app.name»::modifiers::«span.name» modify();
 
         «FOR agg : span.aggs»
         /**
@@ -1730,9 +1728,9 @@ class SpanGenerator {
          * @param m: the values of the metric to be aggreagated
          */
         «IF agg.isRoot»
-          void «agg.name»_update(u64 t, ::«pkg_name»::metrics::«agg.type.name»_point const &m);
+          void «agg.name»_update(u64 t, ::«app.pkg.name»::metrics::«agg.type.name»_point const &m);
         «ELSE»
-          void «agg.name»_update(u64 t, ::«pkg_name»::metrics::«agg.type.name» const &m);
+          void «agg.name»_update(u64 t, ::«app.pkg.name»::metrics::«agg.type.name» const &m);
         «ENDIF»
         «ENDFOR»
 
@@ -1761,19 +1759,19 @@ class SpanGenerator {
 
         Index &index_;
         location_type loc_;
-        ::«pkg_name»::«app.name»::spans::«span.name» *span_ptr_;
+        ::«app.pkg.name»::«app.name»::spans::«span.name» *span_ptr_;
       };
     «ENDFOR»
     } /* namespace weak_refs */
     } /* namespace «app.name» (app) */
-    } /* namespace «pkg_name» (pkg) */
+    } /* namespace «app.pkg.name» (pkg) */
     '''
   }
 
   /***************************************************************************
    * WEAK REFS INL
    **************************************************************************/
-  static def generateWeakRefsInl(App app, String pkg_name) {
+  static def generateWeakRefsInl(App app) {
     '''
     «generatedCodeWarning()»
     #pragma once
@@ -1783,7 +1781,7 @@ class SpanGenerator {
     #include <util/container_of.h>
     #include <util/lookup3.h>
 
-    namespace «pkg_name» { /* pkg */
+    namespace «app.pkg.name» { /* pkg */
     namespace «app.name» { /* app */
     namespace weak_refs {
     «FOR span : app.spans»
@@ -1796,14 +1794,14 @@ class SpanGenerator {
     «ENDFOR»
     } /* namespace weak_refs */
     } /* namespace «app.name» (app) */
-    } /* namespace «pkg_name» (pkg) */
+    } /* namespace «app.pkg.name» (pkg) */
     '''
   }
 
   /***************************************************************************
    * WEAK REFS CC
    **************************************************************************/
-  static def generateWeakRefsCc(App app, String pkg_name) {
+  static def generateWeakRefsCc(App app) {
     '''
     #include "weak_refs.h"
     #include "spans.h"
@@ -1818,7 +1816,7 @@ class SpanGenerator {
     #include "../«remote_app.name»/writer.h"
     «ENDFOR»
 
-    namespace «pkg_name» { /* pkg */
+    namespace «app.pkg.name» { /* pkg */
     namespace «app.name» { /* app */
     namespace weak_refs {
     «FOR span : app.spans»
@@ -1828,7 +1826,7 @@ class SpanGenerator {
       /**
        * Get a reference to the node
        */
-      ::«pkg_name»::«app.name»::auto_handles::«span.name» «span.name»::get()
+      ::«app.pkg.name»::«app.name»::auto_handles::«span.name» «span.name»::get()
       {
         assert(valid());
         return index_.«span.name».get(loc_);
@@ -1844,7 +1842,7 @@ class SpanGenerator {
 
       /* reference getters */
       «FOR ref : span.definitions.filter(Reference)»
-        ::«pkg_name»::«app.name»::weak_refs::«ref.target.name»
+        ::«app.pkg.name»::«app.name»::weak_refs::«ref.target.name»
         «span.name»::«ref.name»()
         {
           «IF ref.isIsCached»
@@ -1852,7 +1850,7 @@ class SpanGenerator {
             span_ptr_->refresh__«ref.name»(index_);
           «ENDIF»
           /* return weak_ref to referenced span */
-          return ::«pkg_name»::«app.name»::weak_refs::«ref.target.name»(index_, span_ptr_->__«ref.name»);
+          return ::«app.pkg.name»::«app.name»::weak_refs::«ref.target.name»(index_, span_ptr_->__«ref.name»);
         }
       «ENDFOR»
 
@@ -1862,7 +1860,7 @@ class SpanGenerator {
         return span_ptr_->__refcount;
       }
 
-      ::«pkg_name»::«app.name»::modifiers::«span.name» «span.name»::modify()
+      ::«app.pkg.name»::«app.name»::modifiers::«span.name» «span.name»::modify()
       {
         return {span_ptr_, index_};
       }
@@ -1870,9 +1868,9 @@ class SpanGenerator {
       /* metric updaters */
       «FOR agg : span.aggs»
       «IF agg.isRoot»
-      void «span.name»::«agg.name»_update(u64 t, ::«pkg_name»::metrics::«agg.type.name»_point const &m)
+      void «span.name»::«agg.name»_update(u64 t, ::«app.pkg.name»::metrics::«agg.type.name»_point const &m)
       «ELSE»
-      void «span.name»::«agg.name»_update(u64 t, ::«pkg_name»::metrics::«agg.type.name» const &m)
+      void «span.name»::«agg.name»_update(u64 t, ::«app.pkg.name»::metrics::«agg.type.name» const &m)
       «ENDIF»
       {
         return index_.«span.name».«agg.name»_update(loc_, t, m);
@@ -1903,7 +1901,7 @@ class SpanGenerator {
     «ENDFOR»
     } /* namespace weak_refs */
     } /* namespace «app.name» (app) */
-    } /* namespace «pkg_name» (pkg) */
+    } /* namespace «app.pkg.name» (pkg) */
     '''
   }
 
@@ -1911,7 +1909,7 @@ class SpanGenerator {
   /***************************************************************************
    * MODIFIERS H
    **************************************************************************/
-  static def generateModifiersH(App app, String pkg_name) {
+  static def generateModifiersH(App app) {
     '''
     «generatedCodeWarning()»
     #pragma once
@@ -1920,7 +1918,7 @@ class SpanGenerator {
     #include <util/short_string.h>
     #include <array>
 
-    namespace «pkg_name» { /* pkg */
+    namespace «app.pkg.name» { /* pkg */
     namespace «app.name» { /* app */
 
     /* forward declarations */
@@ -2012,11 +2010,11 @@ class SpanGenerator {
             /**
              * Setter for reference «ref.name» to span «ref.target.name»
              */
-            «span.name» &«ref.name»(::«pkg_name»::«app.name»::handles::«ref.target.name» &&other);
+            «span.name» &«ref.name»(::«app.pkg.name»::«app.name»::handles::«ref.target.name» &&other);
             /**
              * Setter for reference «ref.name» to span «ref.target.name»
              */
-            «span.name» &«ref.name»(::«pkg_name»::«app.name»::auto_handles::«ref.target.name» &&other);
+            «span.name» &«ref.name»(::«app.pkg.name»::«app.name»::auto_handles::«ref.target.name» &&other);
           «ENDIF»
         «ENDFOR»
       private:
@@ -2043,21 +2041,21 @@ class SpanGenerator {
              *
              * This reference is indexed on, so the setter is private
              */
-            «span.name» &«ref.name»(::«pkg_name»::«app.name»::handles::«ref.target.name» &&other);
+            «span.name» &«ref.name»(::«app.pkg.name»::«app.name»::handles::«ref.target.name» &&other);
             /**
              * Setter for reference «ref.name» to span «ref.target.name»
              *
              * This reference is indexed on, so the setter is private
              */
-            «span.name» &«ref.name»(::«pkg_name»::«app.name»::auto_handles::«ref.target.name» &&other);
+            «span.name» &«ref.name»(::«app.pkg.name»::«app.name»::auto_handles::«ref.target.name» &&other);
           «ENDIF»
         «ENDFOR»
 
         /* allow the by_key() method to set the keys */
-        friend class ::«pkg_name»::«app.name»::containers::«span.name»;
+        friend class ::«app.pkg.name»::«app.name»::containers::«span.name»;
 
         /* allow the weak_ref to construct instances */
-        friend class ::«pkg_name»::«app.name»::weak_refs::«span.name»;
+        friend class ::«app.pkg.name»::«app.name»::weak_refs::«span.name»;
 
         /**
          * Private c'tor
@@ -2066,23 +2064,23 @@ class SpanGenerator {
          * @param index: the index holding the span. used to get and put
          * references.
          */
-        «span.name»(::«pkg_name»::«app.name»::spans::«span.name» *span_ptr, Index &index);
+        «span.name»(::«app.pkg.name»::«app.name»::spans::«span.name» *span_ptr, Index &index);
 
-        ::«pkg_name»::«app.name»::spans::«span.name» *span_ptr_;
+        ::«app.pkg.name»::«app.name»::spans::«span.name» *span_ptr_;
         Index &index_;
         u64 modified_mask_;
       };
     «ENDFOR»
     } /* namespace modifiers */
     } /* namespace «app.name» (app) */
-    } /* namespace «pkg_name» (pkg) */
+    } /* namespace «app.pkg.name» (pkg) */
     '''
   }
 
   /***************************************************************************
    * Modifiers CC
    **************************************************************************/
-  static def generateModifiersCc(App app, String pkg_name) {
+  static def generateModifiersCc(App app) {
     '''
     #include "modifiers.h"
     #include "spans.h"
@@ -2091,18 +2089,19 @@ class SpanGenerator {
     #include "containers.h"
     #include "handles.h"
 
-    namespace «pkg_name» { /* pkg */
+    namespace «app.pkg.name» { /* pkg */
     namespace «app.name» { /* app */
     namespace modifiers {
     «FOR span : app.spans»
-      «generateModifierImpl(app, span, pkg_name)»
+      «generateModifierImpl(app, span)»
     «ENDFOR»
     } /* namespace modifiers */
     } /* namespace «app.name» (app) */
-    } /* namespace «pkg_name» (pkg) */
+    } /* namespace «app.pkg.name» (pkg) */
     '''
   }
-  static def generateModifierImpl(App app, Span span, String pkg_name) {
+
+  static def generateModifierImpl(App app, Span span) {
     val deps = new SpanAutoDependencies(span)
 
     if (deps.non_dynamic_prereqs.size > 64)
@@ -2131,7 +2130,7 @@ class SpanGenerator {
     /*******************************
      * «span.name»
      *******************************/
-    «span.name»::«span.name»(::«pkg_name»::«app.name»::spans::«span.name» *span_ptr, Index &index)
+    «span.name»::«span.name»(::«app.pkg.name»::«app.name»::spans::«span.name» *span_ptr, Index &index)
       : span_ptr_(span_ptr),
         index_(index),
         modified_mask_(0)
@@ -2163,7 +2162,7 @@ class SpanGenerator {
     /* manual references */
     «FOR ref : span.definitions.filter(Reference).filter[!isAuto && !isCached]»
       «FOR handle_type: Arrays.asList("handles", "auto_handles")»
-      «span.name» &«span.name»::«ref.name»(::«pkg_name»::«app.name»::«handle_type»::«ref.target.name» &&other)
+      «span.name» &«span.name»::«ref.name»(::«app.pkg.name»::«app.name»::«handle_type»::«ref.target.name» &&other)
       {
         if (span_ptr_->__«ref.name» != «invalidConstForHandle(ref.target)») {
           index_.«ref.target.name».put(span_ptr_->__«ref.name»);
@@ -2183,7 +2182,7 @@ class SpanGenerator {
   /***************************************************************************
    * SPANS H
    **************************************************************************/
-  static def generateSpansH(App app, String pkg_name) {
+  static def generateSpansH(App app) {
     '''
     «generatedCodeWarning()»
     #pragma once
@@ -2197,7 +2196,7 @@ class SpanGenerator {
       #include «app_span.include»
     «ENDFOR»
 
-    namespace «pkg_name» { /* pkg */
+    namespace «app.pkg.name» { /* pkg */
     namespace «app.name» { /* app */
 
     /* forward declarations */
@@ -2253,16 +2252,16 @@ class SpanGenerator {
 
     private:
       /* allow getters from the weak_ref */
-      friend class ::«pkg_name»::«app.name»::weak_refs::«span.name»;
+      friend class ::«app.pkg.name»::«app.name»::weak_refs::«span.name»;
 
       /* allow modification from modifier */
-      friend class ::«pkg_name»::«app.name»::modifiers::«span.name»;
+      friend class ::«app.pkg.name»::«app.name»::modifiers::«span.name»;
 
       /* allow access to the accessor for compute_key__<...> methods */
       friend class impl::__accessor;
 
       /* allow refcounting */
-      friend class ::«pkg_name»::«app.name»::containers::«span.name»;
+      friend class ::«app.pkg.name»::«app.name»::containers::«span.name»;
 
       /**
        * compute key for auto and cached references
@@ -2270,7 +2269,7 @@ class SpanGenerator {
        * @returns: true if key is valid, false otherwise
        */
       «FOR ref : span.definitions.filter(Reference).filter[isAuto || isCached]»
-        bool compute_key__«ref.name»(Index &index, ::«pkg_name»::«app.name»::keys::«ref.target.name» &key);
+        bool compute_key__«ref.name»(Index &index, ::«app.pkg.name»::«app.name»::keys::«ref.target.name» &key);
       «ENDFOR»
 
       /**
@@ -2307,15 +2306,14 @@ class SpanGenerator {
     «ENDFOR»
     } /* namespace spans */
     } /* namespace «app.name» (app) */
-    } /* namespace «pkg_name» (pkg) */
+    } /* namespace «app.pkg.name» (pkg) */
     '''
   }
-
 
   /***************************************************************************
    * SPANS CC
    **************************************************************************/
-  static def generateSpansCc(App app, String pkg_name) {
+  static def generateSpansCc(App app) {
     '''
     #include "spans.h"
     #include "weak_refs.h"
@@ -2325,7 +2323,7 @@ class SpanGenerator {
 
     #include <util/raw_json.h>
 
-    namespace «pkg_name» { /* pkg */
+    namespace «app.pkg.name» { /* pkg */
     namespace «app.name» { /* app */
 
     namespace impl {
@@ -2359,7 +2357,7 @@ class SpanGenerator {
 
     /* key getters for auto, cached references */
     «FOR ref : span.definitions.filter(Reference).filter[isAuto || isCached]»
-      bool «span.name»::compute_key__«ref.name»(Index &index, ::«pkg_name»::«app.name»::keys::«ref.target.name» &key)
+      bool «span.name»::compute_key__«ref.name»(Index &index, ::«app.pkg.name»::«app.name»::keys::«ref.target.name» &key)
       {
         «FOR binding : ref.bindings»
         /* find key '«binding.key.name»' */
@@ -2379,7 +2377,7 @@ class SpanGenerator {
         auto prev_reference = __«ref.name»;
 
         /* compute the key from dependencies */
-        ::«pkg_name»::«app.name»::keys::«ref.target.name» key;
+        ::«app.pkg.name»::«app.name»::keys::«ref.target.name» key;
         bool valid = compute_key__«ref.name»(index, key);
 
         /* get the reference, if valid */
@@ -2408,15 +2406,55 @@ class SpanGenerator {
     «ENDFOR»
     } /* namespace spans */
     } /* namespace «app.name» (app) */
-    } /* namespace «pkg_name» (pkg) */
+    } /* namespace «app.pkg.name» (pkg) */
+    '''
+  }
+
+  /***************************************************************************
+   * SPAN BASE H
+   **************************************************************************/
+  static def generateSpanBaseH(App app) {
+    '''
+    «generatedCodeWarning()»
+    #pragma once
+
+    #include "weak_refs.h"
+
+    /* message structs for decoding */
+    #include "generated/«app.jsrv_h»"
+    #include "generated/«app.descriptor_h»"
+
+    #include <platform/types.h>
+
+    namespace «app.pkg.name»::«app.name» {
+
+    /******************************************************************************
+     * Span handlers
+     ******************************************************************************/
+
+    «FOR span : app.spans»
+    /**
+     * «span.baseClassName»
+     */
+    class «span.baseClassName» {
+    public:
+      /** handlers */
+      «FOR msg : span.messages»
+        void «msg.name»(
+          ::«app.pkg.name»::«app.name»::weak_refs::«span.name» span_ref,
+          u64 timestamp, «msg.parsed_msg.struct_name» *msg) {}
+      «ENDFOR»
+    };
+
+    «ENDFOR»
+    } /* namespace «app.pkg.name»::«app.name» */
     '''
   }
 
   /**
    * Resolve a reference binding for compute_key__<...>
    */
-  static def CharSequence generateReferenceRef(ReferenceBindingRef ref, String into_var, Integer depth)
-  {
+  static def CharSequence generateReferenceRef(ReferenceBindingRef ref, String into_var, Integer depth) {
     switch ref {
       ReferenceBindingRoot:
         '''«into_var» = __«ref.entity.name»;'''
@@ -2440,24 +2478,24 @@ class SpanGenerator {
   /***************************************************************************
    * AUTO HANDLE CONVERTER H
    **************************************************************************/
-  static def generateAutoHandleConvertersH(App app, String pkg_name) {
+  static def generateAutoHandleConvertersH(App app) {
     '''
     «generatedCodeWarning()»
     #pragma once
 
     #include "auto_handles.h"
 
-    namespace «pkg_name» { /* pkg */
+    namespace «app.pkg.name» { /* pkg */
     namespace «app.name» { /* app */
 
     namespace auto_handle_converters {
     «FOR span : app.spans»
-      class «span.name» : public ::«pkg_name»::«app.name»::auto_handles::«span.name»{
+      class «span.name» : public ::«app.pkg.name»::«app.name»::auto_handles::«span.name»{
       public:
         /**
          * C'tor
          */
-        «span.name»(::«pkg_name»::«app.name»::auto_handles::«span.name» &&«span.name»);
+        «span.name»(::«app.pkg.name»::«app.name»::auto_handles::«span.name» &&«span.name»);
 
         /**
          * Move c'tor
@@ -2468,21 +2506,21 @@ class SpanGenerator {
     «ENDFOR»
     } /* namespace auto_handle_converters */
     } /* namespace «app.name» (app) */
-    } /* namespace «pkg_name» (pkg) */
+    } /* namespace «app.pkg.name» (pkg) */
     '''
   }
 
   /***************************************************************************
    * AUTO HANDLE CONVERTER CC
    **************************************************************************/
-  static def generateAutoHandleConvertersCc(App app, String pkg_name) {
+  static def generateAutoHandleConvertersCc(App app) {
     '''
     «generatedCodeWarning()»
 
     #include <utility>
     #include "auto_handle_converters.h"
 
-    namespace «pkg_name» { /* pkg */
+    namespace «app.pkg.name» { /* pkg */
     namespace «app.name» { /* app */
 
     namespace auto_handle_converters {
@@ -2490,14 +2528,14 @@ class SpanGenerator {
       /********************************************
       * «span.name»
       ********************************************/
-      «span.name»::«span.name»(::«pkg_name»::«app.name»::auto_handles::«span.name» &&«span.name»)
-        : ::«pkg_name»::«app.name»::auto_handles::«span.name»(std::move(«span.name»))
+      «span.name»::«span.name»(::«app.pkg.name»::«app.name»::auto_handles::«span.name» &&«span.name»)
+        : ::«app.pkg.name»::«app.name»::auto_handles::«span.name»(std::move(«span.name»))
       {}
 
     «ENDFOR»
     } /* namespace auto_handle_converters */
     } /* namespace «app.name» (app) */
-    } /* namespace «pkg_name» (pkg) */
+    } /* namespace «app.pkg.name» (pkg) */
     '''
   }
 
@@ -2505,15 +2543,15 @@ class SpanGenerator {
    * META H
    **************************************************************************/
 
-  static def generateMetaH(App app, String pkg_name) {
+  static def generateMetaH(App app) {
     return '''
     «generatedCodeWarning()»
     #pragma once
 
-    #include <generated/«pkg_name»/«app.name».parsed_message.h>
-    #include <generated/«pkg_name»/«app.name».wire_message.h>
-    #include <generated/«pkg_name»/«app.name»/protocol.h>
-    #include <generated/«pkg_name»/«app.name»/transform_builder.h>
+    #include <generated/«app.pkg.name»/«app.name».parsed_message.h>
+    #include <generated/«app.pkg.name»/«app.name».wire_message.h>
+    #include <generated/«app.pkg.name»/«app.name»/protocol.h>
+    #include <generated/«app.pkg.name»/«app.name»/transform_builder.h>
 
     #include <util/meta.h>
 
@@ -2522,7 +2560,7 @@ class SpanGenerator {
 
     #include <cstdint>
 
-    namespace «pkg_name» { /* pkg */
+    namespace «app.pkg.name» { /* pkg */
     namespace «app.name» { /* app */
 
     «FOR span : app.spans»
@@ -2585,7 +2623,7 @@ class SpanGenerator {
       );
     };
 
-    } // namespace «pkg_name» /* pkg */
+    } // namespace «app.pkg.name» /* pkg */
     '''
   }
 }

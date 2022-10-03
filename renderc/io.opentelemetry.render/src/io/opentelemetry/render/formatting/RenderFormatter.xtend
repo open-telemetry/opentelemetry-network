@@ -1,21 +1,23 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package io.opentelemetry.render.generator
+package io.opentelemetry.render.formatting
 
 import com.google.inject.Provider
-import io.opentelemetry.render.render.Field
-import io.opentelemetry.render.render.Message
-import io.opentelemetry.render.render.AppRpcMap
-import io.opentelemetry.render.render.ReferenceBindingValue
+
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.xtext.formatting2.AbstractFormatter2
 import org.eclipse.xtext.formatting2.IFormattableDocument
 import org.eclipse.xtext.formatting2.IFormatter2
 
+import io.opentelemetry.render.render.Field
+import io.opentelemetry.render.render.Message
+import io.opentelemetry.render.render.AppRpcMap
+import io.opentelemetry.render.render.ReferenceBindingValue
+
 class RenderFormatter extends AbstractFormatter2 {
 
-  static class Factory implements Provider<IFormatter2>{
+  static class Factory implements Provider<IFormatter2> {
     override RenderFormatter get() {
       return new RenderFormatter
     }

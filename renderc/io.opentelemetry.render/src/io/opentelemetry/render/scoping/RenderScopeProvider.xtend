@@ -3,6 +3,12 @@
 
 package io.opentelemetry.render.scoping
 
+import org.eclipse.emf.ecore.EObject
+import org.eclipse.emf.ecore.EReference
+import org.eclipse.xtext.scoping.IScope
+import org.eclipse.xtext.scoping.Scopes
+import org.eclipse.xtext.scoping.impl.AbstractDeclarativeScopeProvider
+
 import io.opentelemetry.render.render.Span
 import io.opentelemetry.render.render.Field
 import io.opentelemetry.render.render.Reference
@@ -10,11 +16,6 @@ import io.opentelemetry.render.render.ReferenceBinding
 import io.opentelemetry.render.render.ReferenceBindingRoot
 import io.opentelemetry.render.render.ReferenceBindingValue
 import io.opentelemetry.render.render.RenderPackage
-import org.eclipse.emf.ecore.EObject
-import org.eclipse.emf.ecore.EReference
-import org.eclipse.xtext.scoping.IScope
-import org.eclipse.xtext.scoping.Scopes
-import org.eclipse.xtext.scoping.impl.AbstractDeclarativeScopeProvider
 import io.opentelemetry.render.render.AggregationUpdate
 
 /**
@@ -31,13 +32,11 @@ class RenderScopeProvider extends AbstractDeclarativeScopeProvider {
    * follows pattern from:
    *   https://christiandietrich.wordpress.com/2013/05/18/xtext-and-dot-expressions/
    */
-  def IScope scope_ReferenceBindingValue_tail(ReferenceBindingValue exp,
-    EReference reference)
-  {
-    val head = exp.ref;
+  def IScope scope_ReferenceBindingValue_tail(ReferenceBindingValue exp, EReference reference) {
+    val head = exp.ref
     switch (head) {
       ReferenceBindingRoot: {
-        val entity = head.entity;
+        val entity = head.entity
         switch(entity) {
           Field :    IScope::NULLSCOPE
           Reference:  Scopes.scopeFor(entity.target.definitions)
@@ -55,23 +54,17 @@ class RenderScopeProvider extends AbstractDeclarativeScopeProvider {
     }
   }
 
-  def IScope scope_AggregationUpdate_agg(AggregationUpdate exp,
-    EReference reference)
-  {
-    Scopes.scopeFor(exp.ref.target.aggs);
+  def IScope scope_AggregationUpdate_agg(AggregationUpdate exp, EReference reference) {
+    Scopes.scopeFor(exp.ref.target.aggs)
   }
 
-  def IScope scope_Span_remoteSpan(Span exp, EReference reference)
-  {
-    Scopes.scopeFor(exp.remoteApp.spans);
+  def IScope scope_Span_remoteSpan(Span exp, EReference reference) {
+    Scopes.scopeFor(exp.remoteApp.spans)
   }
 
   override getScope(EObject context, EReference reference) {
-//    println("getScope context " + context + " ref " + reference);
-
     /* ReferenceBinding::key should be scoped inside Reference::target */
-    if (reference == RenderPackage.Literals.REFERENCE_BINDING__KEY)
-    {
+    if (reference == RenderPackage.Literals.REFERENCE_BINDING__KEY) {
       /*
        * we can be called from Reference or ReferenceBinding context.
        * In either case, find the Reference context.
@@ -83,13 +76,13 @@ class RenderScopeProvider extends AbstractDeclarativeScopeProvider {
 
       /* get the Reference::target (which is an Index) */
       val span = ref.target
-      val index = span.index;
+      val index = span.index
 
       /* get all the Index::keys (which are references to Definition) */
-      return Scopes.scopeFor(index.keys);
+      return Scopes.scopeFor(index.keys)
     }
 
     /* if we didn't override, call the default implementation */
-    return super.getScope(context, reference);
+    return super.getScope(context, reference)
   }
 }

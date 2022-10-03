@@ -3,22 +3,35 @@
 
 package io.opentelemetry.render.generator
 
-import io.opentelemetry.render.render.FieldTypeEnum
-import io.opentelemetry.render.render.App
+import org.eclipse.xtext.generator.IFileSystemAccess2
 
+import io.opentelemetry.render.render.App
+import io.opentelemetry.render.render.FieldTypeEnum
+import static io.opentelemetry.render.generator.AppGenerator.outputPath
 import static extension io.opentelemetry.render.extensions.AppExtensions.*
 import static extension io.opentelemetry.render.extensions.FieldExtensions.*
 import static extension io.opentelemetry.render.extensions.MessageExtensions.*
 
 class WriterGenerator {
-  static def generateWriterH(App app, String pkg_name)
-  {
+
+  def void doGenerate(App app, IFileSystemAccess2 fsa) {
+      fsa.generateFile(outputPath(app, "writer.h"), generateWriterH(app))
+      fsa.generateFile(outputPath(app, "writer.cc"), generateWriterCc(app))
+
+      fsa.generateFile(outputPath(app, "encoder.h"), generateEncoderH(app))
+      fsa.generateFile(outputPath(app, "encoder.cc"), generateEncoderCc(app))
+
+      fsa.generateFile(outputPath(app, "otlp_log_encoder.h"), generateOtlpLogEncoderH(app))
+      fsa.generateFile(outputPath(app, "otlp_log_encoder.cc"), generateOtlpLogEncoderCc(app))
+  }
+
+  private static def generateWriterH(App app) {
     '''
     #pragma once
 
     #include <generated/«app.jb_h»>
     #include <generated/«app.jsrv_h»>
-    #include <generated/«pkg_name»/«app.name»/encoder.h>
+    #include <generated/«app.pkg.name»/«app.name»/encoder.h>
 
     #include <channel/ibuffered_writer.h>
     #include <platform/types.h>
@@ -93,10 +106,9 @@ class WriterGenerator {
     '''
   }
 
-  static def generateWriterCc(App app, String pkg_name)
-  {
+  private static def generateWriterCc(App app) {
     '''
-    #include <generated/«pkg_name»/«app.name»/writer.h>
+    #include <generated/«app.pkg.name»/«app.name»/writer.h>
 
     namespace «app.pkg.name»::«app.name» {
 
@@ -125,8 +137,7 @@ class WriterGenerator {
     '''
   }
 
-  static def generateEncoderH(App app, String pkg_name)
-  {
+  private static def generateEncoderH(App app) {
     '''
     #pragma once
 
@@ -152,10 +163,9 @@ class WriterGenerator {
     '''
   }
 
-  static def generateEncoderCc(App app, String pkg_name)
-  {
+  private static def generateEncoderCc(App app) {
     '''
-    #include <generated/«pkg_name»/«app.name»/encoder.h>
+    #include <generated/«app.pkg.name»/«app.name»/encoder.h>
 
     #include <util/log.h>
     #include <util/log_formatters.h>
@@ -238,12 +248,11 @@ class WriterGenerator {
     '''
   }
 
-  static def generateOtlpLogEncoderH(App app, String pkg_name)
-  {
+  private static def generateOtlpLogEncoderH(App app) {
     '''
     #pragma once
 
-    #include <generated/«pkg_name»/«app.name»/encoder.h>
+    #include <generated/«app.pkg.name»/«app.name»/encoder.h>
 
     #include <channel/ibuffered_writer.h>
     #include <platform/types.h>
@@ -284,10 +293,9 @@ class WriterGenerator {
     '''
   }
 
-  static def generateOtlpLogEncoderCc(App app, String pkg_name)
-  {
+  private static def generateOtlpLogEncoderCc(App app) {
     '''
-    #include <generated/«pkg_name»/«app.name»/otlp_log_encoder.h>
+    #include <generated/«app.pkg.name»/«app.name»/otlp_log_encoder.h>
 
     #include <jitbuf/jb.h>
     #include <util/log.h>

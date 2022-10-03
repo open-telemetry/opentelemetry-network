@@ -3,17 +3,23 @@
 
 package io.opentelemetry.render.generator
 
+import org.eclipse.xtext.generator.IFileSystemAccess2
+
 import io.opentelemetry.render.render.FieldTypeEnum
 import io.opentelemetry.render.render.App
 import io.opentelemetry.render.render.Message
-
+import static io.opentelemetry.render.generator.AppGenerator.outputPath
 import static extension io.opentelemetry.render.extensions.FieldExtensions.*
 import static extension io.opentelemetry.render.extensions.MessageExtensions.*
 
 class BpfGenerator {
-  static def generateBpfH(App app)
-  {
-    return '''
+
+  def void doGenerate(App app, IFileSystemAccess2 fsa) {
+    fsa.generateFile(outputPath(app, "bpf.h"), generateBpfH(app))
+  }
+
+  private static def generateBpfH(App app) {
+    '''
     /*********************************************************************
      * JITBUF GENERATED HEADER
      * !!! generated code, do not modify !!!
@@ -67,19 +73,16 @@ class BpfGenerator {
     '''
   }
 
-  static def fillerFunctionName(Message msg, App app)
-  {
+  private static def fillerFunctionName(Message msg, App app) {
     val jmsg = msg.wire_msg
-    return  jmsg.attr_name + '_fill_' + app.name + '__' + msg.name
+    return jmsg.attr_name + '_fill_' + app.name + '__' + msg.name
   }
 
-  static def bpfStructName(Message msg, App app)
-  {
+  private static def bpfStructName(Message msg, App app) {
     return 'bpf_' + app.name + '__' + msg.name
   }
 
-  static def fillerFunction(Message msg, App app)
-  {
+  private static def fillerFunction(Message msg, App app) {
     val jmsg = msg.wire_msg
     val filler_function_name = fillerFunctionName(msg, app)
     '''
@@ -120,8 +123,7 @@ class BpfGenerator {
     '''
   }
 
-  static def bpfMessageStruct(Message msg, App app)
-  {
+  private static def bpfMessageStruct(Message msg, App app) {
     val jmsg = msg.wire_msg
     val bpf_struct_name = bpfStructName(msg, app)
     '''
@@ -146,8 +148,7 @@ class BpfGenerator {
     '''
   }
 
-  static def bpfFillerFunction(Message msg, App app)
-  {
+  private static def bpfFillerFunction(Message msg, App app) {
     val jmsg = msg.wire_msg
     val bpf_struct_name = bpfStructName(msg, app)
     val filler_function_name = fillerFunctionName(msg, app)

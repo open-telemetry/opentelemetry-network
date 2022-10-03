@@ -81,6 +81,7 @@ add_custom_command(
     ./io.opentelemetry.render/src/io/opentelemetry/render/RenderStandaloneSetup.xtend
     ./io.opentelemetry.render/src/io/opentelemetry/render/GenerateRender.mwe2
     ./io.opentelemetry.render/src/io/opentelemetry/render/validation/RenderValidator.xtend
+    ./io.opentelemetry.render/src/io/opentelemetry/render/formatting/RenderFormatter.xtend
     ./io.opentelemetry.render/src/io/opentelemetry/render/extensions/AppExtensions.xtend
     ./io.opentelemetry.render/src/io/opentelemetry/render/extensions/SpanExtensions.xtend
     ./io.opentelemetry.render/src/io/opentelemetry/render/extensions/FieldExtensions.xtend
@@ -89,10 +90,11 @@ add_custom_command(
     ./io.opentelemetry.render/src/io/opentelemetry/render/extensions/UtilityExtensions.xtend
     ./io.opentelemetry.render/src/io/opentelemetry/render/extensions/XPackedMessageExtensions.xtend
     ./io.opentelemetry.render/src/io/opentelemetry/render/generator/RenderGenerator.xtend
+    ./io.opentelemetry.render/src/io/opentelemetry/render/generator/MetricsGenerator.xtend
     ./io.opentelemetry.render/src/io/opentelemetry/render/generator/AppPacker.xtend
     ./io.opentelemetry.render/src/io/opentelemetry/render/generator/MessageGenerator.xtend
     ./io.opentelemetry.render/src/io/opentelemetry/render/generator/AppGenerator.xtend
-    ./io.opentelemetry.render/src/io/opentelemetry/render/generator/RenderFormatter.xtend
+    ./io.opentelemetry.render/src/io/opentelemetry/render/generator/HashGenerator.xtend
     ./io.opentelemetry.render/src/io/opentelemetry/render/generator/PerfectHash.xtend
     ./io.opentelemetry.render/src/io/opentelemetry/render/generator/ConnectionGenerator.xtend
     ./io.opentelemetry.render/src/io/opentelemetry/render/generator/ProtocolGenerator.xtend

@@ -77,4 +77,5 @@ class SpanExtensions {
 
     return (span.messages.length > 0) && !span.isSingleton
   }
+
 }
