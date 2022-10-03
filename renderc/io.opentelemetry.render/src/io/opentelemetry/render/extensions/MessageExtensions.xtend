@@ -11,7 +11,8 @@ import static extension io.opentelemetry.render.extensions.FieldExtensions.array
 import static extension io.opentelemetry.render.extensions.FieldTypeExtensions.parsedCType
 
 class MessageExtensions {
-  static def _prepend_comma_if_not_empty(String s) {
+
+  private static def prependCommaIfNotEmpty(String s) {
     if (s == "")
       s
     else
@@ -27,7 +28,7 @@ class MessageExtensions {
   }
 
   static def commaPrototype(Message msg) {
-    _prepend_comma_if_not_empty(msg.prototype)
+    prependCommaIfNotEmpty(msg.prototype)
   }
 
   static def callPrototype(Message msg) {
@@ -35,7 +36,7 @@ class MessageExtensions {
   }
 
   static def commaCallPrototype(Message msg) {
-    _prepend_comma_if_not_empty(msg.callPrototype)
+    prependCommaIfNotEmpty(msg.callPrototype)
   }
 
   static def norefPrototype(Message msg) {
@@ -48,14 +49,14 @@ class MessageExtensions {
     val fields = msg.fields.filter[field | field !== msg.reference_field].sortBy[id]
     val strs = fields.map['''const «type.parsedCType» «name»«arraySuffix»''']
     val str = strs.join(", ")
-    _prepend_comma_if_not_empty(str)
+    prependCommaIfNotEmpty(str)
   }
 
   static def norefCommaCallPrototype(Message msg) {
     val fields = msg.fields.filter[field | field !== msg.reference_field].sortBy[id]
     val strs = fields.map[type.isShortString ? '''«name».data()''' : name]
     val str = strs.join(", ")
-    _prepend_comma_if_not_empty(str)
+    prependCommaIfNotEmpty(str)
   }
 
   static def span(Message msg) {
@@ -75,4 +76,5 @@ class MessageExtensions {
       #{}
     }
   }
+
 }

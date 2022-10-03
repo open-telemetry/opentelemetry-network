@@ -12,4 +12,5 @@ class MetricFieldExtensions {
     // using -1 for non-array type
     return field.type.cType(-1);
   }
+
 }

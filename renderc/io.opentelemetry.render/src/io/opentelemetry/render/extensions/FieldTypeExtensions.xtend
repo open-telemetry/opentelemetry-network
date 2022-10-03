@@ -8,8 +8,7 @@ import io.opentelemetry.render.render.FieldTypeEnum
 
 class FieldTypeExtensions {
 
-  static def cType(FieldType fieldType, boolean packedStrings)
-  {
+  static def cType(FieldType fieldType, boolean packedStrings) {
     switch(fieldType.enum_type) {
     case FieldTypeEnum.U8:  "uint8_t"
     case FieldTypeEnum.U16:  "uint16_t"
@@ -29,18 +28,19 @@ class FieldTypeExtensions {
     }
   }
 
-  static def cType(FieldType type, int array_size /* -1 if not array */) {
-    val non_array_type =
+  // |arraySize| is -1 if not an array
+  static def cType(FieldType type, int arraySize) {
+    val nonArrayType =
       if (type.isShortString) {
         '''short_string<«type.size»>'''
       } else {
         type.enum_type.literal
       }
 
-    if (array_size >= 0) {
-      '''std::array<«non_array_type»,«array_size»>'''
+    if (arraySize >= 0) {
+      '''std::array<«nonArrayType»,«arraySize»>'''
     } else {
-      non_array_type
+      nonArrayType
     }
   }
 
@@ -115,8 +115,8 @@ class FieldTypeExtensions {
     fieldType.alignment(false)
   }
 
-  static def isSigned(FieldType field_type) {
-    switch (field_type.enum_type) {
+  static def isSigned(FieldType fieldType) {
+    switch (fieldType.enum_type) {
     case FieldTypeEnum.S8,
     case FieldTypeEnum.S16,
     case FieldTypeEnum.S32,
@@ -128,9 +128,9 @@ class FieldTypeExtensions {
     }
   }
 
-  static def isInt(FieldType field_type) {
-    return (!field_type.isShortString) &&
-        (field_type.enum_type != FieldTypeEnum.STRING)
+  static def isInt(FieldType fieldType) {
+    return (!fieldType.isShortString) &&
+        (fieldType.enum_type != FieldTypeEnum.STRING)
   }
 
 }

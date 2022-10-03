@@ -3,24 +3,31 @@
 
 package io.opentelemetry.render.generator
 
+import org.eclipse.xtext.generator.IFileSystemAccess2
+
 import io.opentelemetry.render.render.App
+import io.opentelemetry.render.render.Message
+import io.opentelemetry.render.render.FieldTypeEnum
+import static io.opentelemetry.render.generator.AppGenerator.outputPath
 import static extension io.opentelemetry.render.extensions.AppExtensions.*
 import static extension io.opentelemetry.render.extensions.SpanExtensions.*
 import static extension io.opentelemetry.render.extensions.FieldExtensions.*
 import static extension io.opentelemetry.render.extensions.MessageExtensions.*
-import io.opentelemetry.render.render.Message
-import io.opentelemetry.render.render.FieldTypeEnum
 
 class TransformBuilderGenerator {
 
-  static def generateTransformerH(App app, String pkg_name)
-  {
+  def void doGenerate(App app, IFileSystemAccess2 fsa) {
+    fsa.generateFile(outputPath(app, "transform_builder.h"), generateTransformerH(app))
+    fsa.generateFile(outputPath(app, "transform_builder.cc"), generateTransformerCc(app))
+  }
+
+  private static def generateTransformerH(App app) {
     '''
     #pragma once
 
     #include <stdexcept>
     #include <jitbuf/perfect_hash.h>
-    #include <generated/«pkg_name»/«app.name»/hash.h>
+    #include <generated/«app.pkg.name»/«app.name»/hash.h>
     #include <platform/types.h>
     «IF app.jit»
       #include <jitbuf/transform_builder.h>
@@ -79,8 +86,7 @@ class TransformBuilderGenerator {
     '''
   }
 
-  static def generateTransformerCc(App app)
-  {
+  private static def generateTransformerCc(App app) {
      '''
     #include "transform_builder.h"
 
@@ -157,12 +163,12 @@ class TransformBuilderGenerator {
     '''
   }
 
-  static def identityTransformName(Message msg) {
+  private static def identityTransformName(Message msg) {
     val app = msg.span.app
     '''«app.c_name»_«msg.name»_identity_handler'''
   }
 
-  static def identityTransform(Message msg) {
+  private static def identityTransform(Message msg) {
     '''
     static uint16_t «identityTransformName(msg)»(const char *src, char *dst) {
       «IF !msg.wire_msg.dynamic_size»

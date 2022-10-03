@@ -3,14 +3,20 @@
 
 package io.opentelemetry.render.generator
 
+import org.eclipse.xtext.generator.IFileSystemAccess2
+
 import io.opentelemetry.render.render.App
+import static io.opentelemetry.render.generator.AppGenerator.outputPath
 import static extension io.opentelemetry.render.extensions.AppExtensions.*
 
 class ProtocolGenerator {
 
-  static def generateProtocolH(App app, String pkg_name)
-  {
-    val app_name = app.name
+  def void doGenerate(App app, IFileSystemAccess2 fsa) {
+    fsa.generateFile(outputPath(app, "protocol.h"), generateProtocolH(app))
+    fsa.generateFile(outputPath(app, "protocol.cc"), generateProtocolCc(app))
+  }
+
+  private static def generateProtocolH(App app) {
     '''
     /********************************************
      * JITBUF GENERATED CODE
@@ -22,7 +28,7 @@ class ProtocolGenerator {
     #include <common/client_type.h>
     #include <jitbuf/perfect_hash.h>
     #include <platform/types.h>
-    #include <generated/«pkg_name»/«app_name»/hash.h>
+    #include <generated/«app.pkg.name»/«app.name»/hash.h>
     «IF app.jit»
       #include <jitbuf/transform_builder.h>
     «ENDIF»
@@ -158,8 +164,7 @@ class ProtocolGenerator {
     '''
   }
 
-  static def generateProtocolCc(App app)
-  {
+  private static def generateProtocolCc(App app) {
     /* compute an upper bound on parsed message size */
     val max_message_size =
       if (app.spans.flatMap[messages].size == 0)
