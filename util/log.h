@@ -48,12 +48,12 @@ public:
   template <typename Format, typename... Args> static void inline trace(Format &&format, Args &&... args)
   {
     logger::check_logging_overhead<Args &&...>();
-    if constexpr (DEBUG_LOG) {
-      if (rate_limited()) {
-        return;
-      }
-      spdlog::trace(format, args...);
+
+    if (rate_limited()) {
+      return;
     }
+    spdlog::trace(format, args...);
+
   }
 
   /**
@@ -67,12 +67,10 @@ public:
   template <typename Whitelist, typename Format, typename... Args, typename = std::enable_if_t<std::is_enum_v<Whitelist>>>
   static void inline trace_in(Whitelist filter, Format &&format, Args &&... args)
   {
-    if constexpr (DEBUG_LOG) {
-      if (!is_log_whitelisted(filter)) {
-        return;
-      }
-      trace(std::forward<Format>(format), std::forward<Args>(args)...);
+    if (!is_log_whitelisted(filter)) {
+      return;
     }
+    trace(std::forward<Format>(format), std::forward<Args>(args)...);
   }
 
   /**
@@ -86,23 +84,19 @@ public:
   template <typename Format, typename... Whitelist, typename... Args>
   static void inline trace_in(std::tuple<Whitelist...> const &filter, Format &&format, Args &&... args)
   {
-    if constexpr (DEBUG_LOG) {
-      if (!is_log_whitelisted(filter)) {
-        return;
-      }
-      trace(std::forward<Format>(format), std::forward<Args>(args)...);
+    if (!is_log_whitelisted(filter)) {
+      return;
     }
+    trace(std::forward<Format>(format), std::forward<Args>(args)...);
   }
 
   template <typename Format, typename... Args> static void inline debug(Format &&format, Args &&... args)
   {
     logger::check_logging_overhead<Args &&...>();
-    if constexpr (DEBUG_LOG) {
-      if (rate_limited()) {
-        return;
-      }
-      spdlog::debug(format, args...);
+    if (rate_limited()) {
+      return;
     }
+    spdlog::debug(format, args...);
   }
 
   /**
@@ -118,12 +112,10 @@ public:
   template <typename Whitelist, typename Format, typename... Args, typename = std::enable_if_t<std::is_enum_v<Whitelist>>>
   static void inline debug_in(Whitelist filter, Format &&format, Args &&... args)
   {
-    if constexpr (DEBUG_LOG) {
-      if (!is_log_whitelisted(filter)) {
-        return;
-      }
-      debug(std::forward<Format>(format), std::forward<Args>(args)...);
+    if (!is_log_whitelisted(filter)) {
+      return;
     }
+    debug(std::forward<Format>(format), std::forward<Args>(args)...);
   }
 
   /**
@@ -137,12 +129,10 @@ public:
   template <typename Format, typename... Whitelist, typename... Args>
   static void inline debug_in(std::tuple<Whitelist...> const &filter, Format &&format, Args &&... args)
   {
-    if constexpr (DEBUG_LOG) {
-      if (!is_log_whitelisted(filter)) {
-        return;
-      }
-      debug(std::forward<Format>(format), std::forward<Args>(args)...);
+    if (!is_log_whitelisted(filter)) {
+      return;
     }
+    debug(std::forward<Format>(format), std::forward<Args>(args)...);
   }
 
   template <typename Format, typename... Args> static void inline info(Format &&format, Args &&... args)
