@@ -102,6 +102,7 @@ add_custom_command(
     ./io.opentelemetry.render/src/io/opentelemetry/render/generator/BpfGenerator.xtend
     ./io.opentelemetry.render/src/io/opentelemetry/render/generator/WriterGenerator.xtend
     ./io.opentelemetry.render/src/io/opentelemetry/render/generator/SpanGenerator.xtend
+    ./io.opentelemetry.render/src/io/opentelemetry/render/generator/SpanAutoDependencies.xtend
     ./io.opentelemetry.render/src/io/opentelemetry/render/Render.xtext
     ./io.opentelemetry.render.standalone/build.gradle
     ./io.opentelemetry.render.standalone/plugin.properties

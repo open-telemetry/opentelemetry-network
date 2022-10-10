@@ -2104,9 +2104,9 @@ class SpanGenerator {
   static def generateModifierImpl(App app, Span span) {
     val deps = new SpanAutoDependencies(span)
 
-    if (deps.non_dynamic_prereqs.size > 64)
+    if (deps.nonDynamicPrereqs.size > 64)
       throw new RuntimeException(
-         '''span «span.name» has «deps.non_dynamic_prereqs.size» prereqs, only 64 supported''')
+         '''span «span.name» has «deps.nonDynamicPrereqs.size» prereqs, only 64 supported''')
 
     '''
     /*******************************
@@ -2115,14 +2115,14 @@ class SpanGenerator {
     namespace {
       struct «span.name»__masks {
         /* enum of all possible prereqs */
-        enum class prereqs { «deps.non_dynamic_prereqs.map[name].join(', ')» };
+        enum class prereqs { «deps.nonDynamicPrereqs.map[name].sort().join(', ')» };
         /* mask of each prereq */
-        «FOR defn : deps.non_dynamic_prereqs»
+        «FOR defn : deps.nonDynamicPrereqs.sortBy[name]»
           static constexpr u64 «defn.name» = (1ull << static_cast<int>(prereqs::«defn.name»));
         «ENDFOR»
         /* mask for each computed reference, what are its dependencies */
-        «FOR ref : deps.compute_order»
-          static constexpr u64 «ref.name» = «deps.ref_non_dynamic_prereqs.get(ref).map[name].join(' | ')»;
+        «FOR ref : deps.computeOrder»
+          static constexpr u64 «ref.name» = «deps.refNonDynamicPrereqs.get(ref).map[name].sort().join(' | ')»;
         «ENDFOR»
       };
     }
@@ -2140,8 +2140,8 @@ class SpanGenerator {
 
     «span.name»::~«span.name»()
     {
-      /* compute order: «deps.compute_order.map[name].join(", ")» */
-      «FOR ref: deps.compute_order»
+      /* compute order: «deps.computeOrder.map[name].join(", ")» */
+      «FOR ref: deps.computeOrder»
         if (modified_mask_ & «span.name»__masks::«ref.name») {
           span_ptr_->refresh__«ref.name»(index_);
         }
@@ -2153,7 +2153,7 @@ class SpanGenerator {
       «span.name» &«span.name»::«field.name»(const «field.cType» &_«field.name»)
       {
         span_ptr_->__«field.name» = _«field.name»;
-        «IF deps.non_dynamic_prereqs.contains(field)»
+        «IF deps.nonDynamicPrereqs.contains(field)»
           modified_mask_ |= «span.name»__masks::«field.name»;
         «ENDIF»
         return *this;
@@ -2168,7 +2168,7 @@ class SpanGenerator {
           index_.«ref.target.name».put(span_ptr_->__«ref.name»);
         }
         span_ptr_->__«ref.name» = other.release();
-        «IF deps.non_dynamic_prereqs.contains(ref)»
+        «IF deps.nonDynamicPrereqs.contains(ref)»
           modified_mask_ |= «span.name»__masks::«ref.name»;
         «ENDIF»
         return *this;
