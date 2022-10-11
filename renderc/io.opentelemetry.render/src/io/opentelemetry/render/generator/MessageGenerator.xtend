@@ -8,9 +8,9 @@ import java.util.Collections
 import org.eclipse.emf.ecore.resource.Resource
 import org.eclipse.xtext.generator.IFileSystemAccess2
 import io.opentelemetry.render.render.App
+import static io.opentelemetry.render.generator.AppGenerator.outputPath
 import static extension io.opentelemetry.render.extensions.XPackedMessageExtensions.*
 import static extension io.opentelemetry.render.extensions.FieldExtensions.*
-import static extension io.opentelemetry.render.extensions.AppExtensions.pkg
 
 /**
  * Generates message-related code (previously "jitbuf")
@@ -24,11 +24,6 @@ class MessageGenerator {
       fsa.generateFile(outputPath(app, "descriptor.h"), generateDescriptorH(app))
       fsa.generateFile(outputPath(app, "descriptor.cc"), generateDescriptorCc(app))
     }
-  }
-
-  private static def outputPath(App app, String fileName) {
-    // NOTE: currently different from AppGenerator.outputPath
-    app.pkg.name + "/" + app.name + "." + fileName
   }
 
   static def generateMessageH(App app, boolean wire_message) {

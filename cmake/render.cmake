@@ -27,7 +27,7 @@ function(render_compile INPUT_DIR)
   foreach(APP ${ARG_APPS})
     set(
       RENDER_${PACKAGE}_${APP}_DESCRIPTOR
-        "${OUTPUT_DIR}/${PACKAGE}/${APP}.descriptor.cc"
+        "${OUTPUT_DIR}/${PACKAGE}/${APP}/descriptor.cc"
     )
     set(
       RENDER_${PACKAGE}_${APP}_HASH

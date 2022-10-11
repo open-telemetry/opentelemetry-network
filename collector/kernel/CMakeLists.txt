@@ -151,7 +151,7 @@ set(BPF_DEPENDENCIES
   "${CMAKE_CURRENT_SOURCE_DIR}/bpf_src/tcp-processor/bpf_tcp_send_recv.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/bpf_src/tcp-processor/bpf_tcp_socket.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/bpf_src/tcp-processor/bpf_types.h"
-  "${CMAKE_BINARY_DIR}/generated/ebpf_net/agent_internal.wire_message.h"
+  "${CMAKE_BINARY_DIR}/generated/ebpf_net/agent_internal/wire_message.h"
   "${CMAKE_BINARY_DIR}/generated/ebpf_net/agent_internal/bpf.h"
   "${PROJECT_SOURCE_DIR}/jitbuf/jb.h"
   render_compile_ebpf_net

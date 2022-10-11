@@ -2548,8 +2548,8 @@ class SpanGenerator {
     «generatedCodeWarning()»
     #pragma once
 
-    #include <generated/«app.pkg.name»/«app.name».parsed_message.h>
-    #include <generated/«app.pkg.name»/«app.name».wire_message.h>
+    #include <generated/«app.pkg.name»/«app.name»/parsed_message.h>
+    #include <generated/«app.pkg.name»/«app.name»/wire_message.h>
     #include <generated/«app.pkg.name»/«app.name»/protocol.h>
     #include <generated/«app.pkg.name»/«app.name»/transform_builder.h>
 
