@@ -13,7 +13,7 @@
 #include <util/log.h>
 #include <util/nomad_metadata.h>
 
-#include <generated/ebpf_net/agent_internal.wire_message.h>
+#include <generated/ebpf_net/agent_internal/wire_message.h>
 
 #include <nlohmann/json.hpp>
 

@@ -16,9 +16,9 @@
 #include <util/lookup3.h>
 
 #include <generated/agent_bpf_debug.inc>
-#include <generated/ebpf_net/agent_internal.wire_message.h>
+#include <generated/ebpf_net/agent_internal/wire_message.h>
 #include <generated/ebpf_net/agent_internal/meta.h>
-#include <generated/ebpf_net/ingest.wire_message.h>
+#include <generated/ebpf_net/ingest/wire_message.h>
 
 #include <spdlog/common.h>
 #include <spdlog/fmt/bin_to_hex.h>
