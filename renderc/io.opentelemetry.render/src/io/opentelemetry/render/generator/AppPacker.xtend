@@ -254,13 +254,13 @@ class AppPacker {
   }
 
   private static def annotateClass(App app) {
-    val basename = (app.pkg.name + '/' + app.name).replace('.','/')
+    val basename = (app.pkg.name + '/' + app.name + '/').replace('.','/')
 
     app.c_name = app.name.replace('.','_')
-    app.jb_h = basename + '.wire_message.h'
-    app.jsrv_h = basename + '.parsed_message.h'
-    app.descriptor_h = basename + ".descriptor.h"
-    app.bpf_h = basename + '.bpf.h'
+    app.jb_h = basename + "wire_message.h"
+    app.jsrv_h = basename + "parsed_message.h"
+    app.descriptor_h = basename + "descriptor.h"
+    app.bpf_h = basename + "bpf.h"
   }
 
   private static def makeMessageDescriptors(XPackedMessage packedMsg, boolean packedStrings) {

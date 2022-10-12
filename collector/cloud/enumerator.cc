@@ -9,7 +9,7 @@
 #include <aws/ec2/model/DescribeRegionsResponse.h>
 
 #include <generated/ebpf_net/cloud_collector/index.h>
-#include <generated/ebpf_net/ingest.wire_message.h>
+#include <generated/ebpf_net/ingest/wire_message.h>
 
 #include <util/ip_address.h>
 #include <util/log.h>

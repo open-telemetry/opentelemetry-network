@@ -9,7 +9,7 @@
 #include <util/log_formatters.h>
 #include <util/system_ops.h>
 
-#include <generated/ebpf_net/agent_internal.wire_message.h>
+#include <generated/ebpf_net/agent_internal/wire_message.h>
 
 #include <cassert>
 

@@ -7,7 +7,7 @@
 
 #include <collector/kernel/hostport_tuple.h>
 
-#include <generated/ebpf_net/agent_internal.wire_message.h>
+#include <generated/ebpf_net/agent_internal/wire_message.h>
 #include <generated/ebpf_net/ingest/writer.h>
 #include <platform/platform.h>
 #include <util/logger.h>

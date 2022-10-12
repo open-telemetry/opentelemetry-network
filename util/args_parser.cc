@@ -33,14 +33,8 @@ public:
     LOG::init(*log_console_, no_log_file_ ? nullptr : &log_file);
 
     if (trace_) {
-      if constexpr (!DEBUG_LOG) {
-        std::cout << "Warning: `trace` log level requested but can't be enabled on a release build" << std::endl;
-      }
       spdlog::set_level(spdlog::level::trace);
     } else if (debug_) {
-      if constexpr (!DEBUG_LOG) {
-        std::cout << "Warning: `debug` log level requested but can't be enabled on a release build" << std::endl;
-      }
       spdlog::set_level(spdlog::level::debug);
     } else if (info_) {
       spdlog::set_level(spdlog::level::info);

@@ -22,7 +22,7 @@ Usage:
 Options:
   --dirty: don't clean previous build artifacts before building
   -j N | --jobs N: use N parallel jobs for building (default: auto-detect)
-  --debug: build with CMAKE_BUILD_TYPE="Debug" which includes debug code, debug and trace logging, and turns off compiler
+  --debug: build with CMAKE_BUILD_TYPE="Debug" which includes debug code and turns off compiler
            optimization that prevents readable single stepping
   --cmake: run cmake but don't build with a subsequent make
   --asan: enable the address sanitizer (use with --debug to get better backtraces when an asan issue is hit)
@@ -82,7 +82,6 @@ while :; do
     --debug)
       CMAKE_BUILD_TYPE="Debug"
       cmake_args+=( \
-        -DDEBUG_LOG=ON
         -DOPTIMIZE=OFF
       )
       ;;
