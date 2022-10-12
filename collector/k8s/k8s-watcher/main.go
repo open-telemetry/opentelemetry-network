@@ -26,18 +26,41 @@ import (
 	"k8s.io/client-go/rest"
 )
 
+type LogLevel int
+
+const (
+	Error LogLevel = iota
+	Warn
+	Info
+	Debug
+	Trace
+)
+
+var (
+	levelsMap = map[string]LogLevel{
+		"error": Error,
+		"warn":  Warn,
+		"info":  Info,
+		"debug": Debug,
+		"trace": Trace,
+	}
+)
+
 var (
 	server_address = flag.String("server-address", "localhost:8712",
 		"Where traffic is sent to. It should be in hostname:port format.")
 	local_test = flag.Bool("local-test", false,
 		"If true, do not connect to K8S; instead, generate synthetic traffic for test.")
-	log_to_stderr = flag.Bool("log-to-stderr", false,
-		"If true, perform additional logging to stderr.")
+	log_console = flag.Bool("log-console", true,
+		"(default true) If false, cease logging to console")
+	string_level = flag.String("log-level", "warn",
+		"The logging level: one of error, warn, info, debug, trace.")
+	log_level LogLevel = Warn
 )
 
-func logmsg(msg string) {
-	if *log_to_stderr {
-		log.Println(msg)
+func logmsg(level LogLevel, msg string) {
+	if *log_console && log_level >= level {
+		log.Printf("[%s]: %s", level, msg)
 	}
 }
 
@@ -130,7 +153,7 @@ func make_collector_info_from_replicaset(event_type collector.Info_Event, rs_inf
 }
 
 func send_info(info *collector.Info, stream collector.Collector_CollectClient) error {
-	logmsg("Sending: " + info.String())
+	logmsg(Debug, "Sending: "+info.String())
 	return stream.Send(info)
 }
 
@@ -189,7 +212,7 @@ func run_local_test(stream collector.Collector_CollectClient) error {
 			RsInfo: rs_info,
 		}
 
-		logmsg("Sending: " + info.String())
+		logmsg(Debug, "Sending: "+info.String())
 		err := stream.Send(info)
 		if err != nil {
 			return err
@@ -213,7 +236,7 @@ func run_local_test(stream collector.Collector_CollectClient) error {
 			PodInfo: pod_info,
 		}
 
-		logmsg("Sending: " + info2.String())
+		logmsg(Debug, "Sending: "+info2.String())
 		err = stream.Send(info2)
 		if err != nil {
 			return err
@@ -226,7 +249,7 @@ func run_local_test(stream collector.Collector_CollectClient) error {
 		}
 		time.Sleep(100 * time.Millisecond)
 
-		logmsg("Sending: " + info3.String())
+		logmsg(Debug, "Sending: "+info3.String())
 		err = stream.Send(info3)
 		if err != nil {
 			return err
@@ -246,7 +269,7 @@ func run_local_test(stream collector.Collector_CollectClient) error {
 		}
 
 		time.Sleep(100 * time.Millisecond)
-		logmsg("Sending: " + info4.String())
+		logmsg(Debug, "Sending: "+info4.String())
 		err = stream.Send(info4)
 		if err != nil {
 			return err
@@ -257,7 +280,7 @@ func run_local_test(stream collector.Collector_CollectClient) error {
 }
 
 func run() error {
-	logmsg("Connect to Collector service.")
+	logmsg(Trace, "Connect to Collector service.")
 
 	conn, err := grpc.Dial(*server_address, grpc.WithInsecure())
 	if err != nil {
@@ -280,7 +303,7 @@ func run() error {
 	}
 
 	////////////////////////////////////////////////
-	logmsg("Connect to k8s.")
+	logmsg(Trace, "Connect to k8s.")
 	config, err := rest.InClusterConfig()
 	if err != nil {
 		return err
@@ -291,7 +314,7 @@ func run() error {
 		return err
 	}
 
-	logmsg("Fetch k8s ReplicaSet info.")
+	logmsg(Trace, "Fetch k8s ReplicaSet info.")
 	apps_api := clientset.AppsV1()
 	rs_list, err := apps_api.ReplicaSets(metav1.NamespaceAll).List(ctx, metav1.ListOptions{})
 	if err != nil {
@@ -305,7 +328,7 @@ func run() error {
 		}
 	}
 
-	logmsg("Fetch k8s Pod info.")
+	logmsg(Trace, "Fetch k8s Pod info.")
 	core_api := clientset.CoreV1()
 	pod_list, err := core_api.Pods(metav1.NamespaceAll).List(ctx, metav1.ListOptions{})
 	if err != nil {
@@ -319,7 +342,7 @@ func run() error {
 		}
 	}
 
-	logmsg("Start watch.")
+	logmsg(Trace, "Start watch.")
 
 	cancel_ch := make(chan error)
 	go func() {
@@ -380,7 +403,7 @@ func run() error {
 				pod_version = *version
 
 			case <-ctx.Done():
-				logmsg("server signals canceld")
+				logmsg(Info, "server signals canceled")
 				pod_watcher.Stop()
 				rs_watcher.Stop()
 				return ctx.Err()
@@ -392,7 +415,7 @@ func run() error {
 
 			case <-tick_ch:
 				keep_watching = false
-				logmsg("end of one iteration of watch loop.")
+				logmsg(Trace, "end of one iteration of watch loop.")
 				pod_watcher.Stop()
 				rs_watcher.Stop()
 			}
@@ -402,10 +425,18 @@ func run() error {
 
 func main() {
 	flag.Parse()
+	l, ok := levelsMap[*string_level]
+	if !ok {
+		panic("Unknown log level: " + *string_level)
+	}
+	log_level = l
+
+	logmsg(Info, "k8s-watcher starting")
+
 	for {
 		err := run()
 		if err != nil {
-			logmsg(fmt.Sprintf("Error: %v", err))
+			logmsg(Error, fmt.Sprintf("Error: %v", err))
 		}
 		time.Sleep(200 * time.Millisecond)
 	}
