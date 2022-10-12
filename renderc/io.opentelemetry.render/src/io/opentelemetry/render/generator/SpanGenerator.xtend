@@ -464,7 +464,7 @@ class SpanGenerator {
     #include "keys.h"
     #include "auto_handles.h"
 
-    #include <generated/«app.pkg.name»/metrics.h>
+    #include "../metrics.h"
 
     #include <util/short_string.h>
     #include <util/fixed_hash.h>
@@ -2418,11 +2418,8 @@ class SpanGenerator {
     «generatedCodeWarning()»
     #pragma once
 
+    #include "parsed_message.h"
     #include "weak_refs.h"
-
-    /* message structs for decoding */
-    #include "generated/«app.jsrv_h»"
-    #include "generated/«app.descriptor_h»"
 
     #include <platform/types.h>
 
@@ -2517,13 +2514,14 @@ class SpanGenerator {
     '''
     «generatedCodeWarning()»
 
-    #include <utility>
     #include "auto_handle_converters.h"
 
-    namespace «app.pkg.name» { /* pkg */
-    namespace «app.name» { /* app */
+    #include <utility>
+
+    namespace «app.pkg.name»::«app.name» {
 
     namespace auto_handle_converters {
+
     «FOR span : app.spans»
       /********************************************
       * «span.name»
@@ -2533,9 +2531,9 @@ class SpanGenerator {
       {}
 
     «ENDFOR»
-    } /* namespace auto_handle_converters */
-    } /* namespace «app.name» (app) */
-    } /* namespace «app.pkg.name» (pkg) */
+    } // namespace auto_handle_converters
+
+    } // namespace «app.pkg.name»::«app.name»
     '''
   }
 
@@ -2548,10 +2546,10 @@ class SpanGenerator {
     «generatedCodeWarning()»
     #pragma once
 
-    #include <generated/«app.pkg.name»/«app.name»/parsed_message.h>
-    #include <generated/«app.pkg.name»/«app.name»/wire_message.h>
-    #include <generated/«app.pkg.name»/«app.name»/protocol.h>
-    #include <generated/«app.pkg.name»/«app.name»/transform_builder.h>
+    #include "parsed_message.h"
+    #include "wire_message.h"
+    #include "protocol.h"
+    #include "transform_builder.h"
 
     #include <util/meta.h>
 

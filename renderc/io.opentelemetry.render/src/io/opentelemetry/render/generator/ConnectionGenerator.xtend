@@ -217,17 +217,14 @@ class ConnectionGenerator {
     #include "connection.h"
     #include "protocol.h"
     #include "auto_handle_converters.h"
+    #include "parsed_message.h"
 
     #include <util/log.h>
     #include <util/render.h>
 
     #include <algorithm>
 
-    /* message structs for decoding */
-    #include "generated/«app.jsrv_h»"
-
-    namespace «app.pkg.name» {
-    namespace «app.name» {
+    namespace «app.pkg.name»::«app.name» {
 
     /******************************************************************************
      * Message statistics
@@ -401,8 +398,7 @@ class ConnectionGenerator {
       }
     «ENDFOR»
 
-    } /* namespace «app.name» */
-    } /* namespace «app.pkg.name» */
+    } // namespace «app.pkg.name»::«app.name»
     '''
   }
 

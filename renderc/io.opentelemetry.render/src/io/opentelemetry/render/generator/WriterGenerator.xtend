@@ -29,15 +29,15 @@ class WriterGenerator {
     '''
     #pragma once
 
-    #include <generated/«app.jb_h»>
-    #include <generated/«app.jsrv_h»>
-    #include <generated/«app.pkg.name»/«app.name»/encoder.h>
+    #include "encoder.h"
+    #include "parsed_message.h"
+    #include "wire_message.h"
 
     #include <channel/ibuffered_writer.h>
     #include <platform/types.h>
+    #include <util/log.h>
 
     #include <spdlog/fmt/fmt.h>
-    #include <util/log.h>
 
     #include <functional>
     #include <stdexcept>
@@ -108,7 +108,7 @@ class WriterGenerator {
 
   private static def generateWriterCc(App app) {
     '''
-    #include <generated/«app.pkg.name»/«app.name»/writer.h>
+    #include "writer.h"
 
     namespace «app.pkg.name»::«app.name» {
 
@@ -141,8 +141,8 @@ class WriterGenerator {
     '''
     #pragma once
 
-    #include <generated/«app.jb_h»>
-    #include <generated/«app.jsrv_h»>
+    #include "parsed_message.h"
+    #include "wire_message.h"
 
     #include <channel/ibuffered_writer.h>
     #include <platform/types.h>
@@ -165,7 +165,7 @@ class WriterGenerator {
 
   private static def generateEncoderCc(App app) {
     '''
-    #include <generated/«app.pkg.name»/«app.name»/encoder.h>
+    #include "encoder.h"
 
     #include <util/log.h>
     #include <util/log_formatters.h>
@@ -174,8 +174,8 @@ class WriterGenerator {
 
     Encoder::Encoder() {}
     Encoder::~Encoder() {}
-    «FOR msg : app.spans.flatMap[messages].toSet»
 
+    «FOR msg : app.spans.flatMap[messages].toSet»
       /* «msg.name» */
       std::error_code Encoder::«msg.name»(IBufferedWriter &__buffer, u64 __tstamp«msg.commaPrototype») {
         /* allocate space on the stack, 64-bit aligned */
@@ -242,8 +242,8 @@ class WriterGenerator {
 
         return {};
       }
-    «ENDFOR»
 
+    «ENDFOR»
     } /* namespace «app.pkg.name»::«app.name» */
     '''
   }
@@ -252,13 +252,12 @@ class WriterGenerator {
     '''
     #pragma once
 
-    #include <generated/«app.pkg.name»/«app.name»/encoder.h>
+    #include "encoder.h"
+    #include "parsed_message.h"
+    #include "wire_message.h"
 
     #include <channel/ibuffered_writer.h>
     #include <platform/types.h>
-
-    #include <generated/«app.jb_h»>
-    #include <generated/«app.jsrv_h»>
 
     namespace «app.pkg.name»::«app.name» {
 
@@ -295,7 +294,7 @@ class WriterGenerator {
 
   private static def generateOtlpLogEncoderCc(App app) {
     '''
-    #include <generated/«app.pkg.name»/«app.name»/otlp_log_encoder.h>
+    #include "otlp_log_encoder.h"
 
     #include <jitbuf/jb.h>
     #include <util/log.h>

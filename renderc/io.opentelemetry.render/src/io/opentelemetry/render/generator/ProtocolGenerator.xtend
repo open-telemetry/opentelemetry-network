@@ -25,16 +25,17 @@ class ProtocolGenerator {
 
     #pragma once
 
+    #include "hash.h"
+
     #include <common/client_type.h>
     #include <jitbuf/perfect_hash.h>
-    #include <platform/types.h>
-    #include <generated/«app.pkg.name»/«app.name»/hash.h>
     «IF app.jit»
       #include <jitbuf/transform_builder.h>
     «ENDIF»
+    #include <platform/types.h>
 
-    #include <stdexcept>
     #include <chrono>
+    #include <stdexcept>
 
     namespace «app.pkg.name» {
     namespace «app.name» {
@@ -178,17 +179,16 @@ class ProtocolGenerator {
     '''
     #include "protocol.h"
     #include "transform_builder.h"
-    #include <iostream>
-    #include <util/log.h>
+    #include "parsed_message.h"
+    #include "wire_message.h"
 
-    /* message structs for decoding */
-    #include "generated/«app.jsrv_h»"
-    #include "generated/«app.jb_h»"
+    #include <util/log.h>
 
     #include <spdlog/fmt/fmt.h>
 
-    namespace «app.pkg.name» {
-    namespace «app.name» {
+    #include <iostream>
+
+    namespace «app.pkg.name»::«app.name» {
 
     /******************************************************************************
      * PROTOCOL CLASS: C'tor
@@ -456,8 +456,7 @@ class ProtocolGenerator {
       «ENDFOR»
     }
 
-    } /* namespace «app.name» */
-    } /* namespace «app.pkg.name» */
+    } // namespace «app.pkg.name»::«app.name»
     '''
   }
 }
