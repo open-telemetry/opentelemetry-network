@@ -25,16 +25,18 @@ class TransformBuilderGenerator {
     '''
     #pragma once
 
-    #include <stdexcept>
+    #include "hash.h"
+
     #include <jitbuf/perfect_hash.h>
-    #include <generated/«app.pkg.name»/«app.name»/hash.h>
-    #include <platform/types.h>
     «IF app.jit»
       #include <jitbuf/transform_builder.h>
     «ENDIF»
+    #include <platform/types.h>
 
-    namespace «app.pkg.name» {
-    namespace «app.name» {
+    #include <stdexcept>
+
+    namespace «app.pkg.name»::«app.name» {
+
     /******************************************************************************
      * TRANSFORM BUILDER
      ******************************************************************************/
@@ -81,8 +83,7 @@ class TransformBuilderGenerator {
       PerfectHash<xform_info, «app.hashSize», rpc_id_hash_fn> identity_xforms_;
     };
 
-    } /* namespace «app.name» */
-    } /* namespace «app.pkg.name» */
+    } // namespace «app.pkg.name»::«app.name»
     '''
   }
 
@@ -90,10 +91,9 @@ class TransformBuilderGenerator {
      '''
     #include "transform_builder.h"
 
-    /* message structs for decoding */
-    #include "generated/«app.jsrv_h»"
-    #include "generated/«app.jb_h»"
-    #include "generated/«app.descriptor_h»"
+    #include "parsed_message.h"
+    #include "wire_message.h"
+    #include "descriptor.h"
 
     /******************************************************************************
      * IDENTITY TRANSFORM IMPLEMENTATIONS

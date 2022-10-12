@@ -37,7 +37,7 @@ class BpfGenerator {
 
     #include "jitbuf/jb.h"
 
-    #include "generated/«app.jb_h»"
+    #include "wire_message.h"
 
     #ifdef __cplusplus
     extern "C" {
