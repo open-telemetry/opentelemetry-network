@@ -45,8 +45,7 @@ class ConnectionGenerator {
       #include «app_span.include»
     «ENDFOR»
 
-    namespace «app.pkg.name» {
-    namespace «app.name» {
+    namespace «app.pkg.name»::«app.name» {
 
     /* forward declaration */
     class Protocol;
@@ -207,8 +206,7 @@ class ConnectionGenerator {
       ClientType client_type_ = ClientType::unknown;
     };
 
-    } /* namespace «app.name» */
-    } /* namespace «app.pkg.name» */
+    } // namespace «app.pkg.name»::«app.name»
     '''
   }
 
