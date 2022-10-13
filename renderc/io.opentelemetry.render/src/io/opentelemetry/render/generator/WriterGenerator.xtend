@@ -102,7 +102,7 @@ class WriterGenerator {
       u64 time_adjustment_;
     };
 
-    } /* namespace «app.pkg.name»::«app.name» */
+    } // namespace «app.pkg.name»::«app.name»
     '''
   }
 
@@ -133,7 +133,7 @@ class WriterGenerator {
       time_adjustment_(std::move(rhs.time_adjustment_))
     {}
 
-    } /* namespace «app.pkg.name»::«app.name» */
+    } // namespace «app.pkg.name»::«app.name»
     '''
   }
 
@@ -159,7 +159,7 @@ class WriterGenerator {
       «ENDFOR»
     };
 
-    } /* namespace «app.pkg.name»::«app.name» */
+    } // namespace «app.pkg.name»::«app.name»
     '''
   }
 
@@ -244,7 +244,8 @@ class WriterGenerator {
       }
 
     «ENDFOR»
-    } /* namespace «app.pkg.name»::«app.name» */
+
+    } // namespace «app.pkg.name»::«app.name»
     '''
   }
 
@@ -288,7 +289,7 @@ class WriterGenerator {
       static constexpr bool raw_message = false;
     };
 
-    } /* namespace «app.pkg.name»::«app.name» */
+    } // namespace «app.pkg.name»::«app.name»
     '''
   }
 
@@ -415,7 +416,7 @@ class WriterGenerator {
       return __buffer.flush();
     }
 
-    } /* namespace «app.pkg.name»::«app.name» */
+    } // namespace «app.pkg.name»::«app.name»
     '''
   }
 }

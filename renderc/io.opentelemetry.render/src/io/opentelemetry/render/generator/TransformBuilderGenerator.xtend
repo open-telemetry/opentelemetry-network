@@ -103,8 +103,7 @@ class TransformBuilderGenerator {
 
     «ENDFOR»
 
-    namespace «app.pkg.name» {
-    namespace «app.name» {
+    namespace «app.pkg.name»::«app.name» {
 
     typedef uint16_t (*transform)(const char *src, char *dst);
 
@@ -158,8 +157,7 @@ class TransformBuilderGenerator {
       return func_info_p->xform;
     }
 
-    } /* namespace «app.name» */
-    } /* namespace «app.pkg.name» */
+    } // namespace «app.pkg.name»::«app.name»
     '''
   }
 

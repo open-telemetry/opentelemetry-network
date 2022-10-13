@@ -327,8 +327,7 @@ class SpanGenerator {
     #include <string>
     #include <vector>
 
-    namespace «app.pkg.name» { /* pkg */
-    namespace «app.name» { /* app */
+    namespace «app.pkg.name»::«app.name» {
 
     /**
      * Index: a container for all types of spans, with reference counting.
@@ -391,8 +390,8 @@ class SpanGenerator {
         return out;
       }
     };
-    } /* namespace «app.name» (app) */
-    } /* namespace «app.pkg.name» (pkg) */
+
+    } // namespace «app.pkg.name»::«app.name»
     '''
   }
 
@@ -472,8 +471,8 @@ class SpanGenerator {
 
     #include <ostream>
 
-    namespace «app.pkg.name» { /* pkg */
-    namespace «app.name» { /* app */
+    namespace «app.pkg.name»::«app.name» {
+
     namespace containers {
 
     «FOR span : app.spans»
@@ -662,9 +661,9 @@ class SpanGenerator {
       };
 
     «ENDFOR»
-    } /* namespace containers */
-    } /* namespace «app.name» (app) */
-    } /* namespace «app.pkg.name» (pkg) */
+    } // namespace containers
+
+    } // namespace «app.pkg.name»::«app.name»
     '''
   }
 
@@ -683,9 +682,10 @@ class SpanGenerator {
     #include <util/container_of.h>
     #include <util/lookup3.h>
 
-    namespace «app.pkg.name» { /* pkg */
-    namespace «app.name» { /* app */
+    namespace «app.pkg.name»::«app.name» {
+
     namespace containers {
+
       /*****************************************************************************
        * hashers
        ****************************************************************************/
@@ -751,9 +751,10 @@ class SpanGenerator {
         «ENDFOR»
       «ENDFOR»
     «ENDFOR»
-    } /* namespace containers */
-    } /* namespace «app.name» (app) */
-    } /* namespace «app.pkg.name» (pkg) */
+
+    } // namespace containers
+
+    } // namespace «app.pkg.name»::«app.name»
   '''
   }
 
@@ -807,8 +808,8 @@ class SpanGenerator {
     #include "../«remote_app.name»/writer.h"
     «ENDFOR»
 
-    namespace «app.pkg.name» { /* pkg */
-    namespace «app.name» { /* app */
+    namespace «app.pkg.name»::«app.name» {
+
     namespace containers {
 
     «FOR span : app.spans»
@@ -1053,9 +1054,9 @@ class SpanGenerator {
         out << "]}";
       }
     «ENDFOR»
-    } /* namespace containers */
-    } /* namespace «app.name» (app) */
-    } /* namespace «app.pkg.name» (pkg) */
+    } // namespace containers
+
+    } // namespace «app.pkg.name»::«app.name»
     '''
   }
 
@@ -1071,9 +1072,10 @@ class SpanGenerator {
     #include <util/short_string.h>
     #include <array>
 
-    namespace «app.pkg.name» { /* pkg */
-    namespace «app.name» { /* app */
+    namespace «app.pkg.name»::«app.name» {
+
     namespace keys {
+
     «FOR span : app.spans»
       «IF span.index !== null»
         /**
@@ -1121,9 +1123,9 @@ class SpanGenerator {
         };
       «ENDIF»
     «ENDFOR»
-    } /* namespace keys */
-    } /* namespace «app.name» (app) */
-    } /* namespace «app.pkg.name» (pkg) */
+    } // namespace keys
+
+    } // namespace «app.pkg.name»::«app.name»
     '''
   }
 
@@ -1137,8 +1139,7 @@ class SpanGenerator {
 
     #include <platform/types.h>
 
-    namespace «app.pkg.name» { /* pkg */
-    namespace «app.name» { /* app */
+    namespace «app.pkg.name»::«app.name» {
 
     /* forward declarations */
     class Index;
@@ -1164,6 +1165,7 @@ class SpanGenerator {
     }
 
     namespace handles {
+
     «FOR span : app.spans»
       class «span.name» {
       public:
@@ -1250,9 +1252,9 @@ class SpanGenerator {
       };
 
     «ENDFOR»
-    } /* namespace handles */
-    } /* namespace «app.name» (app) */
-    } /* namespace «app.pkg.name» (pkg) */
+    } // namespace handles
+
+    } // namespace «app.pkg.name»::«app.name»
     '''
   }
 
@@ -1271,8 +1273,8 @@ class SpanGenerator {
     #include "weak_refs.h"
     #include "auto_handle_converters.h"
 
-    namespace «app.pkg.name» { /* pkg */
-    namespace «app.name» { /* app */
+    namespace «app.pkg.name»::«app.name» {
+
     namespace handles {
 
     «FOR span : app.spans»
@@ -1343,9 +1345,9 @@ class SpanGenerator {
     }
 
     «ENDFOR»
-    } /* namespace handles */
-    } /* namespace «app.name» (app) */
-    } /* namespace «app.pkg.name» (pkg) */
+    } // namespace handles
+
+    } // namespace «app.pkg.name»::«app.name»
     '''
   }
 
@@ -1359,8 +1361,7 @@ class SpanGenerator {
 
     #include "weak_refs.h"
 
-    namespace «app.pkg.name» { /* pkg */
-    namespace «app.name» { /* app */
+    namespace «app.pkg.name»::«app.name» {
 
     /* forward declarations */
     class Index;
@@ -1376,6 +1377,7 @@ class SpanGenerator {
     }
 
     namespace auto_handles {
+
     «FOR span : app.spans»
       /**
        * Auto-handle for span «span.name».
@@ -1461,9 +1463,9 @@ class SpanGenerator {
       };
 
     «ENDFOR»
-    } /* namespace auto_handles */
-    } /* namespace «app.name» (app) */
-    } /* namespace «app.pkg.name» (pkg) */
+    } // namespace auto_handles
+
+    } // namespace «app.pkg.name»::«app.name»
     '''
   }
 
@@ -1482,8 +1484,8 @@ class SpanGenerator {
     #include "weak_refs.h"
     #include "handles.h"
 
-    namespace «app.pkg.name» { /* pkg */
-    namespace «app.name» { /* app */
+    namespace «app.pkg.name»::«app.name» {
+
     namespace auto_handles {
 
     «FOR span : app.spans»
@@ -1548,9 +1550,9 @@ class SpanGenerator {
     {}
 
     «ENDFOR»
-    } /* namespace auto_handles */
-    } /* namespace «app.name» (app) */
-    } /* namespace «app.pkg.name» (pkg) */
+    } // namespace auto_handles
+
+    } // namespace «app.pkg.name»::«app.name»
     '''
   }
 
@@ -1585,17 +1587,15 @@ class SpanGenerator {
       «generateImplFwdDeclaration(span.impl.split("::"))»
     «ENDFOR»
 
-    namespace «app.pkg.name» { /* pkg */
-
     /* forward declarations */
-    namespace metrics {
+    namespace «app.pkg.name»::metrics {
     «FOR metric : app.metrics»
         class «metric.name»;
         class «metric.name»_point;
     «ENDFOR»
     }
 
-    namespace «app.name» { /* app */
+    namespace «app.pkg.name»::«app.name» {
 
     /* forward declarations */
     class Index;
@@ -1626,6 +1626,7 @@ class SpanGenerator {
     }
 
     namespace weak_refs {
+
     /* forward declarations */
     «FOR span : app.spans»
       class «span.name»;
@@ -1761,10 +1762,11 @@ class SpanGenerator {
         location_type loc_;
         ::«app.pkg.name»::«app.name»::spans::«span.name» *span_ptr_;
       };
+
     «ENDFOR»
-    } /* namespace weak_refs */
-    } /* namespace «app.name» (app) */
-    } /* namespace «app.pkg.name» (pkg) */
+    } // namespace weak_refs
+
+    } // namespace «app.pkg.name»::«app.name»
     '''
   }
 
@@ -1781,9 +1783,10 @@ class SpanGenerator {
     #include <util/container_of.h>
     #include <util/lookup3.h>
 
-    namespace «app.pkg.name» { /* pkg */
-    namespace «app.name» { /* app */
+    namespace «app.pkg.name»::«app.name» {
+
     namespace weak_refs {
+
     «FOR span : app.spans»
       inline «span.name»::«span.name»(Index &index, «span.name»::location_type loc)
         : index_(index)
@@ -1792,9 +1795,9 @@ class SpanGenerator {
       {}
 
     «ENDFOR»
-    } /* namespace weak_refs */
-    } /* namespace «app.name» (app) */
-    } /* namespace «app.pkg.name» (pkg) */
+    } // namespace weak_refs
+
+    } // namespace «app.pkg.name»::«app.name»
     '''
   }
 
@@ -1816,9 +1819,10 @@ class SpanGenerator {
     #include "../«remote_app.name»/writer.h"
     «ENDFOR»
 
-    namespace «app.pkg.name» { /* pkg */
-    namespace «app.name» { /* app */
+    namespace «app.pkg.name»::«app.name» {
+
     namespace weak_refs {
+
     «FOR span : app.spans»
       /*******************************
        * «span.name»
@@ -1898,10 +1902,11 @@ class SpanGenerator {
           out << "null";
         }
       }
+
     «ENDFOR»
-    } /* namespace weak_refs */
-    } /* namespace «app.name» (app) */
-    } /* namespace «app.pkg.name» (pkg) */
+    } // namespace weak_refs
+
+    } // namespace «app.pkg.name»::«app.name»
     '''
   }
 
@@ -1918,8 +1923,7 @@ class SpanGenerator {
     #include <util/short_string.h>
     #include <array>
 
-    namespace «app.pkg.name» { /* pkg */
-    namespace «app.name» { /* app */
+    namespace «app.pkg.name»::«app.name» {
 
     /* forward declarations */
     class Index;
@@ -1950,6 +1954,7 @@ class SpanGenerator {
     }
 
     namespace modifiers {
+
     «FOR span : app.spans»
       /**
        * Modifier for span «span.name»
@@ -2070,10 +2075,11 @@ class SpanGenerator {
         Index &index_;
         u64 modified_mask_;
       };
+
     «ENDFOR»
-    } /* namespace modifiers */
-    } /* namespace «app.name» (app) */
-    } /* namespace «app.pkg.name» (pkg) */
+    } // namespace modifiers
+
+    } // namespace «app.pkg.name»«app.name»
     '''
   }
 
@@ -2089,15 +2095,17 @@ class SpanGenerator {
     #include "containers.h"
     #include "handles.h"
 
-    namespace «app.pkg.name» { /* pkg */
-    namespace «app.name» { /* app */
+    namespace «app.pkg.name»::«app.name» {
+
     namespace modifiers {
+
     «FOR span : app.spans»
       «generateModifierImpl(app, span)»
+
     «ENDFOR»
-    } /* namespace modifiers */
-    } /* namespace «app.name» (app) */
-    } /* namespace «app.pkg.name» (pkg) */
+    } // namespace modifiers
+
+    } // namespace «app.pkg.name»::«app.name»
     '''
   }
 
@@ -2196,8 +2204,7 @@ class SpanGenerator {
       #include «app_span.include»
     «ENDFOR»
 
-    namespace «app.pkg.name» { /* pkg */
-    namespace «app.name» { /* app */
+    namespace «app.pkg.name»::«app.name» {
 
     /* forward declarations */
     class Index;
@@ -2228,6 +2235,7 @@ class SpanGenerator {
     }
 
     namespace spans {
+
     «FOR span : app.spans»
     class «span.name» {
     public:
@@ -2304,9 +2312,9 @@ class SpanGenerator {
     };
 
     «ENDFOR»
-    } /* namespace spans */
-    } /* namespace «app.name» (app) */
-    } /* namespace «app.pkg.name» (pkg) */
+    } // namespace spans
+
+    } // namespace «app.pkg.name»::«app.name»
     '''
   }
 
@@ -2323,10 +2331,10 @@ class SpanGenerator {
 
     #include <util/raw_json.h>
 
-    namespace «app.pkg.name» { /* pkg */
-    namespace «app.name» { /* app */
+    namespace «app.pkg.name»::«app.name» {
 
     namespace impl {
+
     class __accessor {
       public:
       «FOR span : app.spans»
@@ -2338,9 +2346,11 @@ class SpanGenerator {
         «ENDFOR»
       «ENDFOR»
     };
-    } /* namespace impl */
+
+    } // namespace impl
 
     namespace spans {
+
     «FOR span : app.spans»
     /********************************************
      * «span.name»
@@ -2403,10 +2413,11 @@ class SpanGenerator {
         out << ",\"#«ref.name»\":" << __«ref.name»;
       «ENDFOR»
     }
+
     «ENDFOR»
-    } /* namespace spans */
-    } /* namespace «app.name» (app) */
-    } /* namespace «app.pkg.name» (pkg) */
+    } // namespace spans
+
+    } // namespace «app.pkg.name»::«app.name»
     '''
   }
 
@@ -2444,7 +2455,7 @@ class SpanGenerator {
     };
 
     «ENDFOR»
-    } /* namespace «app.pkg.name»::«app.name» */
+    } // namespace «app.pkg.name»::«app.name»
     '''
   }
 
@@ -2482,12 +2493,12 @@ class SpanGenerator {
 
     #include "auto_handles.h"
 
-    namespace «app.pkg.name» { /* pkg */
-    namespace «app.name» { /* app */
+    namespace «app.pkg.name»::«app.name» {
 
     namespace auto_handle_converters {
+
     «FOR span : app.spans»
-      class «span.name» : public ::«app.pkg.name»::«app.name»::auto_handles::«span.name»{
+      class «span.name» : public ::«app.pkg.name»::«app.name»::auto_handles::«span.name» {
       public:
         /**
          * C'tor
@@ -2501,9 +2512,9 @@ class SpanGenerator {
       };
 
     «ENDFOR»
-    } /* namespace auto_handle_converters */
-    } /* namespace «app.name» (app) */
-    } /* namespace «app.pkg.name» (pkg) */
+    } // namespace auto_handle_converters
+
+    } // namespace «app.pkg.name»::«app.name»
     '''
   }
 

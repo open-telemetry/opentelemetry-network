@@ -54,6 +54,7 @@ class MetricsGenerator {
     #include <util/tdigest.h>
 
     namespace «pkg_name» {
+
     namespace metrics {
 
     /**
@@ -145,9 +146,11 @@ class MetricsGenerator {
           return out;
         }
       };
+
     «ENDFOR»
-    } /* namespace metrics */
-    } /* namespace «pkg_name» */
+    } // namespace metrics
+
+    } // namespace «pkg_name»
     '''
   }
 
