@@ -73,6 +73,8 @@ function(render_compile INPUT_DIR)
         "${OUTPUT_DIR}/${PACKAGE}/${APP}/transform_builder.cc"
         "${OUTPUT_DIR}/${PACKAGE}/${APP}/auto_handle_converters.h"
         "${OUTPUT_DIR}/${PACKAGE}/${APP}/auto_handle_converters.cc"
+        "${OUTPUT_DIR}/${PACKAGE}/${APP}/parsed_message.h"
+        "${OUTPUT_DIR}/${PACKAGE}/${APP}/wire_message.h"
         "${OUTPUT_DIR}/${PACKAGE}/${APP}/meta.h"
         "${OUTPUT_DIR}/${PACKAGE}/${APP}/bpf.h"
     )

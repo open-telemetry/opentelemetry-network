@@ -15,7 +15,7 @@ import io.opentelemetry.render.render.XPackedMessage
 import io.opentelemetry.render.render.impl.RenderFactoryImpl
 import org.eclipse.xtend.lib.annotations.Accessors
 import org.eclipse.emf.ecore.util.EcoreUtil
-import static extension io.opentelemetry.render.extensions.AppExtensions.pkg
+import static extension io.opentelemetry.render.extensions.AppExtensions.*
 import static extension io.opentelemetry.render.extensions.MessageExtensions.*
 import static extension io.opentelemetry.render.extensions.FieldExtensions.*
 import static extension io.opentelemetry.render.extensions.FieldTypeExtensions.*
@@ -39,11 +39,9 @@ class AppPacker {
 
     app.spans.add(makePulseSpan(factory))
 
-    for (span : app.spans) {
-      for (msg : span.messages) {
-        makeMessage(factory, msg, true)
-        makeMessage(factory, msg, false)
-      }
+    for (msg : app.messages) {
+      makeMessage(factory, msg, true)
+      makeMessage(factory, msg, false)
     }
 
     annotateClass(app)

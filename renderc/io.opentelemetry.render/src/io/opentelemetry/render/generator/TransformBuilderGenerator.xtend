@@ -88,7 +88,8 @@ class TransformBuilderGenerator {
   }
 
   private static def generateTransformerCc(App app) {
-     '''
+    val messages = app.messages
+    '''
     #include "transform_builder.h"
 
     #include "parsed_message.h"
@@ -98,7 +99,7 @@ class TransformBuilderGenerator {
     /******************************************************************************
      * IDENTITY TRANSFORM IMPLEMENTATIONS
      ******************************************************************************/
-    «FOR msg : app.spans.flatMap[messages].toSet»
+    «FOR msg : messages»
       «identityTransform(msg)»
 
     «ENDFOR»
@@ -115,10 +116,8 @@ class TransformBuilderGenerator {
         : jitbuf::TransformBuilder(context)
       {
         /* add all local message descriptors for jit */
-        «FOR span : app.spans»
-          «FOR msg : span.messages»
-            add_descriptor(«msg.parsed_msg.descriptor_name»);
-          «ENDFOR»
+        «FOR msg : messages»
+          add_descriptor(«msg.parsed_msg.descriptor_name»);
         «ENDFOR»
 
     «ELSE»
@@ -126,7 +125,7 @@ class TransformBuilderGenerator {
       {
     «ENDIF»
       /* add identity transforms */
-      «FOR msg : app.spans.flatMap[messages].toSet»
+      «FOR msg : messages»
         identity_xforms_.insert(«msg.parsed_msg.rpc_id»,
           xform_info{.xform = «msg.identityTransformName»,
                 .size = «msg.wire_msg.size»});

@@ -8,6 +8,7 @@ import org.eclipse.xtext.generator.IFileSystemAccess2
 import io.opentelemetry.render.render.App
 import static io.opentelemetry.render.generator.AppGenerator.outputPath
 import static extension io.opentelemetry.render.extensions.AppExtensions.*
+import static extension io.opentelemetry.render.extensions.MessageExtensions.*
 
 class ProtocolGenerator {
 
@@ -163,15 +164,16 @@ class ProtocolGenerator {
   }
 
   private static def generateProtocolCc(App app) {
+    val messages = app.messages
+
     /* compute an upper bound on parsed message size */
     val max_message_size =
-      if (app.spans.flatMap[messages].size == 0)
+      if (messages.size == 0)
         0
       else
-        app.spans.flatMap[messages.map[parsed_msg.size]].max
+        messages.map[parsed_msg.size].max
 
-    val need_auth_msg = app.spans.flatMap[messages]
-      .filter[!noAuthorizationNeeded];
+    val need_auth_msg = messages.filter[!noAuthorizationNeeded];
 
     '''
     #include "protocol.h"
@@ -428,13 +430,11 @@ class ProtocolGenerator {
      ******************************************************************************/
     void Protocol::insert_no_auth_identity_transforms()
     {
-      «FOR span : app.spans»
-        «FOR msg : span.messages»
-          «IF msg.noAuthorizationNeeded»
-            /* «span.name»: «app.name».«msg.name» */
-            insert_identity_transform(«msg.wire_msg.rpc_id»);
-          «ENDIF»
-        «ENDFOR»
+      «FOR msg : messages»
+        «IF msg.noAuthorizationNeeded»
+          /* «msg.span.name»: «app.name».«msg.name» */
+          insert_identity_transform(«msg.wire_msg.rpc_id»);
+        «ENDIF»
       «ENDFOR»
     }
 
@@ -443,13 +443,11 @@ class ProtocolGenerator {
      ******************************************************************************/
     void Protocol::insert_need_auth_identity_transforms()
     {
-      «FOR span : app.spans»
-        «FOR msg : span.messages»
-          «IF !msg.noAuthorizationNeeded»
-            /* «span.name»: «app.name».«msg.name» */
-            insert_identity_transform(«msg.wire_msg.rpc_id»);
-          «ENDIF»
-        «ENDFOR»
+      «FOR msg : messages»
+        «IF !msg.noAuthorizationNeeded»
+          /* «msg.span.name»: «app.name».«msg.name» */
+          insert_identity_transform(«msg.wire_msg.rpc_id»);
+        «ENDIF»
       «ENDFOR»
     }
 

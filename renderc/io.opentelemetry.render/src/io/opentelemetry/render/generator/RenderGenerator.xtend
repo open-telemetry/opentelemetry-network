@@ -24,12 +24,13 @@ import io.opentelemetry.render.render.PackageDefinition
 class RenderGenerator extends AbstractGenerator {
 
   AppGenerator appGenerator = new AppGenerator()
-  MessageGenerator messageGenerator = new MessageGenerator()
   MetricsGenerator metricsGenerator = new MetricsGenerator()
 
   override void doGenerate(Resource resource, IFileSystemAccess2 fsa, IGeneratorContext context) {
+    val apps = resource.allContents.filter(App).toList()
+
     // Pack messages.
-    resource.allContents.filter(App).forEach[a | AppPacker.populate(a)]
+    apps.forEach[a | AppPacker.populate(a)]
 
     // Output a file with the enriched model.
     {
@@ -40,9 +41,9 @@ class RenderGenerator extends AbstractGenerator {
       fsa.generateFile(pkgName + ".render.packed", resourceStream.toString)
     }
 
-    messageGenerator.doGenerate(resource, fsa)
-
-    appGenerator.doGenerate(resource, fsa)
+    for (app : apps) {
+      appGenerator.doGenerate(app, fsa)
+    }
 
     metricsGenerator.doGenerate(resource, fsa)
   }
