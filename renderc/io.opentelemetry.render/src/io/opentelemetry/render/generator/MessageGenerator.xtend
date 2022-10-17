@@ -3,12 +3,15 @@
 
 package io.opentelemetry.render.generator
 
-import java.util.Collections
+import java.util.List
 
-import org.eclipse.emf.ecore.resource.Resource
 import org.eclipse.xtext.generator.IFileSystemAccess2
+
 import io.opentelemetry.render.render.App
+import io.opentelemetry.render.render.Message
 import static io.opentelemetry.render.generator.AppGenerator.outputPath
+import static io.opentelemetry.render.generator.RenderGenerator.generatedCodeWarning
+import static extension io.opentelemetry.render.extensions.AppExtensions.*
 import static extension io.opentelemetry.render.extensions.XPackedMessageExtensions.*
 import static extension io.opentelemetry.render.extensions.FieldExtensions.*
 
@@ -17,16 +20,19 @@ import static extension io.opentelemetry.render.extensions.FieldExtensions.*
  */
 class MessageGenerator {
 
-  def void doGenerate(Resource resource, IFileSystemAccess2 fsa) {
-    for (app : resource.allContents.filter(App).toIterable) {
-      fsa.generateFile(outputPath(app, "wire_message.h"), generateMessageH(app, true))
-      fsa.generateFile(outputPath(app, "parsed_message.h"), generateMessageH(app, false))
-      fsa.generateFile(outputPath(app, "descriptor.h"), generateDescriptorH(app))
-      fsa.generateFile(outputPath(app, "descriptor.cc"), generateDescriptorCc(app))
-    }
+  def void doGenerate(App app, IFileSystemAccess2 fsa) {
+    val messages = app.messages
+
+    fsa.generateFile(outputPath(app, "wire_message.h"), generateMessageH(messages, true))
+    fsa.generateFile(outputPath(app, "parsed_message.h"), generateMessageH(messages, false))
+
+    fsa.generateFile(outputPath(app, "descriptor.h"), generateDescriptorH(messages))
+    fsa.generateFile(outputPath(app, "descriptor.cc"), generateDescriptorCc(messages))
+
+    fsa.generateFile(outputPath(app, "meta.h"), generateMetaH(app, messages))
   }
 
-  static def generateMessageH(App app, boolean wire_message) {
+  static def generateMessageH(List<Message> messages, boolean wire_message) {
     '''
     /*********************************************************************
      * JITBUF GENERATED HEADER
@@ -48,9 +54,8 @@ class MessageGenerator {
     # include <utility>
     #endif /* __cplusplus */
 
-    «FOR span : app.spans»
-    «FOR msg : span.messages»
-    «FOR xmsg: Collections.singletonList(msg).map[if (wire_message) wire_msg else parsed_msg]»
+    «FOR msg : messages»
+    «val xmsg = if (wire_message) msg.wire_msg else msg.parsed_msg»
     /************************************
      * «msg.name»
      ************************************/
@@ -102,45 +107,117 @@ class MessageGenerator {
     #define «xmsg.struct_name»__rpc_id    «xmsg.rpc_id»
 
     «ENDFOR»
-    «ENDFOR»
-    «ENDFOR»
     '''
   }
 
-  static def generateDescriptorH(App app) {
+  static def generateDescriptorH(List<Message> messages) {
     '''
     #pragma once
     #include <stddef.h>
     #include <string>
 
-    «FOR span : app.spans»
-    «FOR msg : span.messages»
+    «FOR msg : messages»
       /* JitbufDescriptor for message «msg.name» */
       extern const std::string «msg.wire_msg.descriptor_name»;
       /* JitbufExtDescriptor for message «msg.name» */
       extern const std::string «msg.parsed_msg.descriptor_name»;
     «ENDFOR»
-    «ENDFOR»
     '''
   }
 
-  static def generateDescriptorCc(App app) {
+  static def generateDescriptorCc(List<Message> messages) {
     '''
-    #include "«app.descriptor_h»"
+    #include "descriptor.h"
 
     /***********************
      * DESCRIPTORS
      ***********************/
-    «FOR span : app.spans»
-    «FOR xmsg : span.messages.map[wire_msg]»
-      static const uint16_t «xmsg.descriptor_name»_buffer[] = {«xmsg.descriptor.map[toString].join(',')»};
-      const std::string «xmsg.descriptor_name»((const char*)«xmsg.descriptor_name»_buffer, «xmsg.descriptor.size * 2»);
+    «FOR msg : messages»
+      «FOR xmsg : List.of(msg.wire_msg, msg.parsed_msg)»
+        static const uint16_t «xmsg.descriptor_name»_buffer[] = {«xmsg.descriptor.map[toString].join(',')»};
+        const std::string «xmsg.descriptor_name»((const char*)«xmsg.descriptor_name»_buffer, «xmsg.descriptor.size * 2»);
+      «ENDFOR»
     «ENDFOR»
-    «FOR xmsg : span.messages.map[parsed_msg]»
-      static const uint16_t «xmsg.descriptor_name»_buffer[] = {«xmsg.descriptor.map[toString].join(',')»};
-      const std::string «xmsg.descriptor_name»((const char*)«xmsg.descriptor_name»_buffer, «xmsg.descriptor.size * 2»);
+    '''
+  }
+
+  static def generateMetaH(App app, List<Message> messages) {
+    '''
+    «generatedCodeWarning()»
+    #pragma once
+
+    #include "parsed_message.h"
+    #include "wire_message.h"
+    #include "protocol.h"
+    #include "transform_builder.h"
+
+    #include <util/meta.h>
+
+    #include <string_view>
+    #include <type_traits>
+
+    #include <cstdint>
+
+    namespace «app.pkg.name» { /* pkg */
+    namespace «app.name» { /* app */
+
+    «FOR msg : messages»
+      struct «msg.name»_message_metadata {
+        static constexpr std::uint16_t rpc_id = «msg.wire_msg.rpc_id»;
+        static constexpr std::string_view name = "«msg.name»";
+
+        using wire_message = «msg.wire_msg.struct_name»;
+        static constexpr std::size_t wire_message_size = «msg.wire_msg.size»;
+
+        using parsed_message = «msg.parsed_msg.struct_name»;
+        static constexpr std::size_t parsed_message_size = «msg.parsed_msg.size»;
+
+        «FOR field : msg.fields.indexed»
+          struct field_«field.value.name» {
+            using type = «msg.parsed_msg.cType(field.value.type)»«field.value.arraySuffix»;
+            static constexpr std::string_view name = "«field.value.name»";
+            static constexpr std::size_t index = «field.key»;
+            static constexpr auto const &get(void const *msg) {
+              return reinterpret_cast<parsed_message const *>(msg)->«field.value.name»;
+            }
+          };
+
+        «ENDFOR»
+        using fields = meta::list<«FOR field : msg.fields SEPARATOR ", "»field_«field.name»«ENDFOR»>;
+
+        «IF msg.reference_field !== null»
+          static constexpr bool has_reference = true;
+          using reference = field_«msg.reference_field.name»;
+        «ELSE»
+          static constexpr bool has_reference = false;
+        «ENDIF»
+      };
+
     «ENDFOR»
-    «ENDFOR»
+    } // namespace «app.name» /* app */
+
+    class «app.name»_metadata {
+
+      «FOR msg : messages»
+        static «app.name»::«msg.name»_message_metadata message_metadata_for_impl(
+            «msg.wire_msg.struct_name» const &);
+        static «app.name»::«msg.name»_message_metadata message_metadata_for_impl(
+            «msg.parsed_msg.struct_name» const &);
+      «ENDFOR»
+
+    public:
+      using protocol = «app.name»::Protocol;
+      using transform_builder = «app.name»::TransformBuilder;
+
+      using messages = meta::list<«FOR msg : messages SEPARATOR ", "»«app.name»::«msg.name»_message_metadata«ENDFOR»>;
+
+      template <typename MessageStruct>
+      using message_metadata_for = decltype(
+        message_metadata_for_impl(std::declval<MessageStruct>())
+      );
+    };
+
+    } // namespace «app.pkg.name» /* pkg */
     '''
   }
 

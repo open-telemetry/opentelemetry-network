@@ -45,4 +45,8 @@ class AppExtensions {
     return app.spans.filter[isProxy].map[remoteApp].toSet
   }
 
+  static def messages(App app) {
+    app.spans.flatMap[messages].toList
+  }
+
 }

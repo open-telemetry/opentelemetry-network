@@ -26,7 +26,6 @@ import static extension io.opentelemetry.render.extensions.AppExtensions.*
 import static extension io.opentelemetry.render.extensions.FieldExtensions.*
 import static extension io.opentelemetry.render.extensions.SpanExtensions.*
 import static extension io.opentelemetry.render.extensions.MessageExtensions.*
-import static extension io.opentelemetry.render.extensions.XPackedMessageExtensions.*
 
 /**
  * Generates code from your model files on save.
@@ -65,8 +64,6 @@ class SpanGenerator {
 
     fsa.generateFile(outputPath(app, "auto_handle_converters.h"), generateAutoHandleConvertersH(app))
     fsa.generateFile(outputPath(app, "auto_handle_converters.cc"), generateAutoHandleConvertersCc(app))
-
-    fsa.generateFile(outputPath(app, "meta.h"), generateMetaH(app))
   }
 
   /**
@@ -2548,91 +2545,4 @@ class SpanGenerator {
     '''
   }
 
-  /***************************************************************************
-   * META H
-   **************************************************************************/
-
-  static def generateMetaH(App app) {
-    return '''
-    «generatedCodeWarning()»
-    #pragma once
-
-    #include "parsed_message.h"
-    #include "wire_message.h"
-    #include "protocol.h"
-    #include "transform_builder.h"
-
-    #include <util/meta.h>
-
-    #include <string_view>
-    #include <type_traits>
-
-    #include <cstdint>
-
-    namespace «app.pkg.name» { /* pkg */
-    namespace «app.name» { /* app */
-
-    «FOR span : app.spans»
-      «FOR msg : span.messages»
-        struct «msg.name»_message_metadata {
-          static constexpr std::uint16_t rpc_id = «msg.wire_msg.rpc_id»;
-          static constexpr std::string_view name = "«msg.name»";
-
-          using wire_message = «msg.wire_msg.struct_name»;
-          static constexpr std::size_t wire_message_size = «msg.wire_msg.size»;
-
-          using parsed_message = «msg.parsed_msg.struct_name»;
-          static constexpr std::size_t parsed_message_size = «msg.parsed_msg.size»;
-
-          «FOR field : msg.fields.indexed»
-            struct field_«field.value.name» {
-              using type = «msg.parsed_msg.cType(field.value.type)»«field.value.arraySuffix»;
-              static constexpr std::string_view name = "«field.value.name»";
-              static constexpr std::size_t index = «field.key»;
-              static constexpr auto const &get(void const *msg) {
-                return reinterpret_cast<parsed_message const *>(msg)->«field.value.name»;
-              }
-            };
-
-          «ENDFOR»
-          using fields = meta::list<«FOR field : msg.fields SEPARATOR ", "»field_«field.name»«ENDFOR»>;
-
-          «IF msg.reference_field !== null»
-            static constexpr bool has_reference = true;
-            using reference = field_«msg.reference_field.name»;
-          «ELSE»
-            static constexpr bool has_reference = false;
-          «ENDIF»
-        };
-
-      «ENDFOR»
-    «ENDFOR»
-    } // namespace «app.name» /* app */
-
-    class «app.name»_metadata {
-
-      «FOR span : app.spans»
-        «FOR msg : span.messages»
-          static «app.name»::«msg.name»_message_metadata message_metadata_for_impl(
-              «msg.wire_msg.struct_name» const &);
-          static «app.name»::«msg.name»_message_metadata message_metadata_for_impl(
-              «msg.parsed_msg.struct_name» const &);
-        «ENDFOR»
-      «ENDFOR»
-
-    public:
-      using protocol = «app.name»::Protocol;
-      using transform_builder = «app.name»::TransformBuilder;
-
-      using messages = meta::list<«FOR msg : app.spans.flatMap[messages] SEPARATOR ", "»«app.name»::«msg.name»_message_metadata«ENDFOR»>;
-
-      template <typename MessageStruct>
-      using message_metadata_for = decltype(
-        message_metadata_for_impl(std::declval<MessageStruct>())
-      );
-    };
-
-    } // namespace «app.pkg.name» /* pkg */
-    '''
-  }
 }

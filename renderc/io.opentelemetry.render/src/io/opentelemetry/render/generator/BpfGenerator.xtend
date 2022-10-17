@@ -9,6 +9,7 @@ import io.opentelemetry.render.render.FieldTypeEnum
 import io.opentelemetry.render.render.App
 import io.opentelemetry.render.render.Message
 import static io.opentelemetry.render.generator.AppGenerator.outputPath
+import static extension io.opentelemetry.render.extensions.AppExtensions.*
 import static extension io.opentelemetry.render.extensions.FieldExtensions.*
 import static extension io.opentelemetry.render.extensions.MessageExtensions.*
 
@@ -19,6 +20,7 @@ class BpfGenerator {
   }
 
   private static def generateBpfH(App app) {
+    val messages = app.messages
     '''
     /*********************************************************************
      * JITBUF GENERATED HEADER
@@ -46,7 +48,7 @@ class BpfGenerator {
     /******************************
      * MSG FILLER FUNCTIONS
      ******************************/
-    «FOR msg : app.spans.flatMap[messages].toSet»
+    «FOR msg : messages»
       «fillerFunction(msg, app)»
 
     «ENDFOR»
@@ -55,7 +57,7 @@ class BpfGenerator {
     /******************************
      * BPF MESSAGE STRUCTS
      ******************************/
-    «FOR msg : app.spans.flatMap[messages].toSet»
+    «FOR msg : messages»
       «bpfMessageStruct(msg, app)»
 
     «ENDFOR»
@@ -63,7 +65,7 @@ class BpfGenerator {
     /******************************
      * BPF FILLER FUNCTIONS
      ******************************/
-    «FOR msg : app.spans.flatMap[messages].toSet»
+    «FOR msg : messages»
       «bpfFillerFunction(msg, app)»
 
     «ENDFOR»

@@ -58,7 +58,7 @@ class WriterGenerator {
       Writer &operator =(Writer const &) = delete;
       Writer &operator =(Writer &&) = delete;
 
-      «FOR msg : app.spans.flatMap[messages].toSet»
+      «FOR msg : app.messages»
 
         /* «msg.name» */
         template <bool ThrowOnError = true>
@@ -154,7 +154,7 @@ class WriterGenerator {
       Encoder();
       virtual ~Encoder();
 
-      «FOR msg : app.spans.flatMap[messages].toSet»
+      «FOR msg : app.messages»
       virtual std::error_code «msg.name»(IBufferedWriter &__buffer, u64 __tstamp«msg.commaPrototype»);
       «ENDFOR»
     };
@@ -175,7 +175,7 @@ class WriterGenerator {
     Encoder::Encoder() {}
     Encoder::~Encoder() {}
 
-    «FOR msg : app.spans.flatMap[messages].toSet»
+    «FOR msg : app.messages»
       /* «msg.name» */
       std::error_code Encoder::«msg.name»(IBufferedWriter &__buffer, u64 __tstamp«msg.commaPrototype») {
         /* allocate space on the stack, 64-bit aligned */
@@ -267,7 +267,7 @@ class WriterGenerator {
       OtlpLogEncoder(std::string const host, std::string port);
       ~OtlpLogEncoder();
 
-      «FOR msg : app.spans.flatMap[messages].toSet»
+      «FOR msg : app.messages»
       std::error_code «msg.name»(
         IBufferedWriter &__buffer,
         u64 __tstamp«msg.commaPrototype»
@@ -311,7 +311,7 @@ class WriterGenerator {
 
     OtlpLogEncoder::~OtlpLogEncoder() {}
 
-    «FOR msg : app.spans.flatMap[messages].toSet»
+    «FOR msg : app.messages»
 
       std::error_code OtlpLogEncoder::«msg.name»(
         IBufferedWriter &__buffer,
