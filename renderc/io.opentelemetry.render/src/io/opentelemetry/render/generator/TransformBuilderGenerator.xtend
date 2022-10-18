@@ -9,6 +9,7 @@ import io.opentelemetry.render.render.App
 import io.opentelemetry.render.render.Message
 import io.opentelemetry.render.render.FieldTypeEnum
 import static io.opentelemetry.render.generator.AppGenerator.outputPath
+import static io.opentelemetry.render.generator.RenderGenerator.generatedCodeWarning
 import static extension io.opentelemetry.render.extensions.AppExtensions.*
 import static extension io.opentelemetry.render.extensions.SpanExtensions.*
 import static extension io.opentelemetry.render.extensions.FieldExtensions.*
@@ -23,6 +24,7 @@ class TransformBuilderGenerator {
 
   private static def generateTransformerH(App app) {
     '''
+    «generatedCodeWarning()»
     #pragma once
 
     #include "hash.h"
@@ -90,6 +92,8 @@ class TransformBuilderGenerator {
   private static def generateTransformerCc(App app) {
     val messages = app.messages
     '''
+    «generatedCodeWarning()»
+
     #include "transform_builder.h"
 
     #include "parsed_message.h"

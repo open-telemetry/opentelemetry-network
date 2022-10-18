@@ -11,6 +11,7 @@ import io.opentelemetry.render.render.Span
 import io.opentelemetry.render.render.Message
 import io.opentelemetry.render.render.MessageType
 import static io.opentelemetry.render.generator.AppGenerator.outputPath
+import static io.opentelemetry.render.generator.RenderGenerator.generatedCodeWarning
 import static extension io.opentelemetry.render.extensions.AppExtensions.*
 import static extension io.opentelemetry.render.extensions.SpanExtensions.*
 import static extension io.opentelemetry.render.extensions.MessageExtensions.*
@@ -25,11 +26,7 @@ class ConnectionGenerator {
 
   private static def generateConnectionH(App app) {
     '''
-    /********************************************
-     * JITBUF GENERATED CODE
-     * !!! generated code, do not modify !!!
-     ********************************************/
-
+    «generatedCodeWarning()»
     #pragma once
 
     #include <stdexcept>
@@ -212,6 +209,8 @@ class ConnectionGenerator {
 
   private static def generateConnectionCc(App app) {
     '''
+    «generatedCodeWarning()»
+
     #include "connection.h"
     #include "protocol.h"
     #include "auto_handle_converters.h"

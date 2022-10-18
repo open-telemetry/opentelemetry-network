@@ -1803,6 +1803,8 @@ class SpanGenerator {
    **************************************************************************/
   static def generateWeakRefsCc(App app) {
     '''
+    «generatedCodeWarning()»
+
     #include "weak_refs.h"
     #include "spans.h"
     #include "keys.h"
@@ -2085,6 +2087,8 @@ class SpanGenerator {
    **************************************************************************/
   static def generateModifiersCc(App app) {
     '''
+    «generatedCodeWarning()»
+
     #include "modifiers.h"
     #include "spans.h"
     #include "keys.h"
@@ -2320,6 +2324,8 @@ class SpanGenerator {
    **************************************************************************/
   static def generateSpansCc(App app) {
     '''
+    «generatedCodeWarning()»
+
     #include "spans.h"
     #include "weak_refs.h"
     #include "keys.h"

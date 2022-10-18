@@ -8,6 +8,7 @@ import org.eclipse.xtext.generator.IFileSystemAccess2
 import io.opentelemetry.render.render.App
 import io.opentelemetry.render.render.FieldTypeEnum
 import static io.opentelemetry.render.generator.AppGenerator.outputPath
+import static io.opentelemetry.render.generator.RenderGenerator.generatedCodeWarning
 import static extension io.opentelemetry.render.extensions.AppExtensions.*
 import static extension io.opentelemetry.render.extensions.FieldExtensions.*
 import static extension io.opentelemetry.render.extensions.MessageExtensions.*
@@ -27,6 +28,7 @@ class WriterGenerator {
 
   private static def generateWriterH(App app) {
     '''
+    «generatedCodeWarning()»
     #pragma once
 
     #include "encoder.h"
@@ -108,6 +110,8 @@ class WriterGenerator {
 
   private static def generateWriterCc(App app) {
     '''
+    «generatedCodeWarning()»
+
     #include "writer.h"
 
     namespace «app.pkg.name»::«app.name» {
@@ -139,6 +143,7 @@ class WriterGenerator {
 
   private static def generateEncoderH(App app) {
     '''
+    «generatedCodeWarning()»
     #pragma once
 
     #include "parsed_message.h"
@@ -165,6 +170,8 @@ class WriterGenerator {
 
   private static def generateEncoderCc(App app) {
     '''
+    «generatedCodeWarning()»
+
     #include "encoder.h"
 
     #include <util/log.h>
@@ -251,6 +258,7 @@ class WriterGenerator {
 
   private static def generateOtlpLogEncoderH(App app) {
     '''
+    «generatedCodeWarning()»
     #pragma once
 
     #include "encoder.h"
@@ -295,6 +303,8 @@ class WriterGenerator {
 
   private static def generateOtlpLogEncoderCc(App app) {
     '''
+    «generatedCodeWarning()»
+
     #include "otlp_log_encoder.h"
 
     #include <jitbuf/jb.h>

@@ -7,6 +7,7 @@ import org.eclipse.xtext.generator.IFileSystemAccess2
 
 import io.opentelemetry.render.render.App
 import static io.opentelemetry.render.generator.AppGenerator.outputPath
+import static io.opentelemetry.render.generator.RenderGenerator.generatedCodeWarning
 import static extension io.opentelemetry.render.extensions.AppExtensions.*
 import static extension io.opentelemetry.render.extensions.MessageExtensions.*
 
@@ -19,11 +20,7 @@ class ProtocolGenerator {
 
   private static def generateProtocolH(App app) {
     '''
-    /********************************************
-     * JITBUF GENERATED CODE
-     * !!! generated code, do not modify !!!
-     ********************************************/
-
+    «generatedCodeWarning()»
     #pragma once
 
     #include "hash.h"
@@ -176,6 +173,8 @@ class ProtocolGenerator {
     val need_auth_msg = messages.filter[!noAuthorizationNeeded];
 
     '''
+    «generatedCodeWarning()»
+
     #include "protocol.h"
     #include "transform_builder.h"
     #include "parsed_message.h"
