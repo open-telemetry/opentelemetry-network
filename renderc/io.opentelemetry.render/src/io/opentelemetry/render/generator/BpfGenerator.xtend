@@ -9,6 +9,7 @@ import io.opentelemetry.render.render.FieldTypeEnum
 import io.opentelemetry.render.render.App
 import io.opentelemetry.render.render.Message
 import static io.opentelemetry.render.generator.AppGenerator.outputPath
+import static io.opentelemetry.render.generator.RenderGenerator.generatedCodeWarning
 import static extension io.opentelemetry.render.extensions.AppExtensions.*
 import static extension io.opentelemetry.render.extensions.FieldExtensions.*
 import static extension io.opentelemetry.render.extensions.MessageExtensions.*
@@ -22,17 +23,7 @@ class BpfGenerator {
   private static def generateBpfH(App app) {
     val messages = app.messages
     '''
-    /*********************************************************************
-     * JITBUF GENERATED HEADER
-     * !!! generated code, do not modify !!!
-     *********************************************************************
-     *
-     * This header first includes a struct and descriptor for each
-     *    message in the .proto file, then a joint descriptor for the
-     *    entire .proto file, protected by an include guard.
-
-     *********************************************************************/
-
+    «generatedCodeWarning()»
     #pragma once
 
     #include <linux/stddef.h>

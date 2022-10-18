@@ -7,6 +7,7 @@ import org.eclipse.xtext.generator.IFileSystemAccess2
 
 import io.opentelemetry.render.render.App
 import static io.opentelemetry.render.generator.AppGenerator.outputPath
+import static io.opentelemetry.render.generator.RenderGenerator.generatedCodeWarning
 import static extension io.opentelemetry.render.extensions.AppExtensions.hashName
 import static extension io.opentelemetry.render.extensions.AppExtensions.hashSize
 
@@ -22,6 +23,8 @@ class HashGenerator {
 
   private def generateC(App app, PerfectHash hash) {
     '''
+    «generatedCodeWarning()»
+
     #include <platform/platform.h>
 
     «hash.g_type» «app.hashName»_g_array[] = {
@@ -32,6 +35,7 @@ class HashGenerator {
 
   private def generateH(App app, PerfectHash hash) {
     '''
+    «generatedCodeWarning()»
     #pragma once
 
     #include <platform/platform.h>

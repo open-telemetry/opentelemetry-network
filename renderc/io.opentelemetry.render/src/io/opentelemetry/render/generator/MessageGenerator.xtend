@@ -34,11 +34,7 @@ class MessageGenerator {
 
   static def generateMessageH(List<Message> messages, boolean wire_message) {
     '''
-    /*********************************************************************
-     * JITBUF GENERATED HEADER
-     * !!! generated code, do not modify !!!
-     *********************************************************************/
-
+    «generatedCodeWarning()»
     #pragma once
 
     #ifdef KBUILD_MODNAME
@@ -112,7 +108,9 @@ class MessageGenerator {
 
   static def generateDescriptorH(List<Message> messages) {
     '''
+    «generatedCodeWarning()»
     #pragma once
+
     #include <stddef.h>
     #include <string>
 
@@ -127,6 +125,8 @@ class MessageGenerator {
 
   static def generateDescriptorCc(List<Message> messages) {
     '''
+    «generatedCodeWarning()»
+
     #include "descriptor.h"
 
     /***********************
