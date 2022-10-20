@@ -10,6 +10,8 @@
 
 #include <gtest/gtest.h>
 
+#include <unordered_map>
+
 // Test auto handle, which hold references when they are in scope
 TEST(RenderTest, AutoHandle)
 {
@@ -71,6 +73,60 @@ TEST(RenderTest, Handle)
   // Put()ing the reference should invalidate the handle and free the span
   handle.put(index);
   ASSERT_FALSE(handle.valid());
+  ASSERT_EQ(index.simple_span.size(), 0);
+}
+
+// Test moving auto-handles to handles, which is usually done when holding handles in containers.
+TEST(RenderTest, MovedToHandle)
+{
+  static constexpr u32 the_number = 42;
+
+  test::app1::Index index;
+
+  std::unordered_map<u32, test::app1::handles::simple_span> handles;
+
+  {
+    auto auto_handle = index.simple_span.alloc();
+    ASSERT_TRUE(auto_handle.valid());
+
+    // Move the reference from the auto-handle into the hashmap.
+    auto [it, inserted] = handles.try_emplace(the_number, std::move(auto_handle));
+    ASSERT_TRUE(inserted);
+
+    // Reference is moved-out, so this auto-handle no longer holds it.
+    ASSERT_FALSE(auto_handle.valid());
+
+    // Only one span is allocated.
+    ASSERT_EQ(index.simple_span.size(), 1);
+  }
+
+  {
+    auto auto_handle = index.simple_span.alloc();
+    ASSERT_TRUE(auto_handle.valid());
+
+    // Since this key already exists inside the hashmap, `try_emplace` will do nothing.
+    auto [it, inserted] = handles.try_emplace(the_number, std::move(auto_handle));
+    ASSERT_FALSE(inserted);
+
+    // Auto-handle still holds the reference.
+    ASSERT_TRUE(auto_handle.valid());
+
+    // In total two spans are allocated.
+    ASSERT_EQ(index.simple_span.size(), 2);
+  }
+
+  // This would fail with `test::app1::handles::simple_span::~simple_span(): Assertion `!valid()' failed.`
+  //
+  //{
+  //  auto auto_handle = index.simple_span.alloc();
+  //  handles.insert({the_number, auto_handle.to_handle()});
+  //}
+
+  // Put()-back all references in the hashmap.
+  for (auto &[key, handle] : handles) {
+    handle.put(index);
+  }
+
   ASSERT_EQ(index.simple_span.size(), 0);
 }
 

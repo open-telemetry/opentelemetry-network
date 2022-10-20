@@ -213,7 +213,6 @@ class ConnectionGenerator {
 
     #include "connection.h"
     #include "protocol.h"
-    #include "auto_handle_converters.h"
     #include "parsed_message.h"
 
     #include <util/log.h>
@@ -455,9 +454,8 @@ class ConnectionGenerator {
           message_errors.changed.«app.c_name»_«msg.name»_span_alloc_failed = 1;
           return;
         }
-        auto converter = auto_handle_converters::«span.name»(std::move(ref));
 
-        auto pos = «fixedHashName(span)».insert(msg->«msg.reference_field.name», std::move(converter));
+        auto pos = «fixedHashName(span)».insert(msg->«msg.reference_field.name», std::move(ref));
         if (pos.index == «fixedHashName(span)».invalid) {
           if («fixedHashName(span)».full()) {
             LOG::trace_in(client_type_,
