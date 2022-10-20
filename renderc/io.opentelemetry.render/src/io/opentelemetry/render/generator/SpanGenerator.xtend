@@ -61,9 +61,6 @@ class SpanGenerator {
     fsa.generateFile(outputPath(app, "spans.cc"), generateSpansCc(app))
 
     fsa.generateFile(outputPath(app, "span_base.h"), generateSpanBaseH(app))
-
-    fsa.generateFile(outputPath(app, "auto_handle_converters.h"), generateAutoHandleConvertersH(app))
-    fsa.generateFile(outputPath(app, "auto_handle_converters.cc"), generateAutoHandleConvertersCc(app))
   }
 
   /**
@@ -1155,11 +1152,6 @@ class SpanGenerator {
         class «span.name»;
       «ENDFOR»
     }
-    namespace auto_handle_converters {
-      «FOR span : app.spans»
-        class «span.name»;
-      «ENDFOR»
-    }
 
     namespace handles {
 
@@ -1235,9 +1227,9 @@ class SpanGenerator {
         «span.name»& operator=(const «span.name»&) = delete;
 
         /**
-         * Convert from an auto_handle_converter to a handle
+         * Convert from an auto_handle to a handle.
          */
-        «span.name»(::«app.pkg.name»::«app.name»::auto_handle_converters::«span.name» &&other);
+        «span.name»(::«app.pkg.name»::«app.name»::auto_handles::«span.name» &&auto_handle);
 
       private:
         friend class ::«app.pkg.name»::«app.name»::containers::«span.name»;
@@ -1268,7 +1260,6 @@ class SpanGenerator {
     #include "containers.h"
     #include "containers.inl"
     #include "weak_refs.h"
-    #include "auto_handle_converters.h"
 
     namespace «app.pkg.name»::«app.name» {
 
@@ -1336,9 +1327,9 @@ class SpanGenerator {
       : loc_(loc)
     {}
 
-    «span.name»::«span.name»(::«app.pkg.name»::«app.name»::auto_handle_converters::«span.name» &&other)
+    «span.name»::«span.name»(::«app.pkg.name»::«app.name»::auto_handles::«span.name» &&auto_handle)
     {
-      loc_ = other.release();
+      loc_ = auto_handle.release();
     }
 
     «ENDFOR»
@@ -2484,71 +2475,6 @@ class SpanGenerator {
         '''
       }
     }
-  }
-
-  /***************************************************************************
-   * AUTO HANDLE CONVERTER H
-   **************************************************************************/
-  static def generateAutoHandleConvertersH(App app) {
-    '''
-    «generatedCodeWarning()»
-    #pragma once
-
-    #include "auto_handles.h"
-
-    namespace «app.pkg.name»::«app.name» {
-
-    namespace auto_handle_converters {
-
-    «FOR span : app.spans»
-      class «span.name» : public ::«app.pkg.name»::«app.name»::auto_handles::«span.name» {
-      public:
-        /**
-         * C'tor
-         */
-        «span.name»(::«app.pkg.name»::«app.name»::auto_handles::«span.name» &&«span.name»);
-
-        /**
-         * Move c'tor
-         */
-        «span.name»(«span.name» &&other);
-      };
-
-    «ENDFOR»
-    } // namespace auto_handle_converters
-
-    } // namespace «app.pkg.name»::«app.name»
-    '''
-  }
-
-  /***************************************************************************
-   * AUTO HANDLE CONVERTER CC
-   **************************************************************************/
-  static def generateAutoHandleConvertersCc(App app) {
-    '''
-    «generatedCodeWarning()»
-
-    #include "auto_handle_converters.h"
-
-    #include <utility>
-
-    namespace «app.pkg.name»::«app.name» {
-
-    namespace auto_handle_converters {
-
-    «FOR span : app.spans»
-      /********************************************
-      * «span.name»
-      ********************************************/
-      «span.name»::«span.name»(::«app.pkg.name»::«app.name»::auto_handles::«span.name» &&«span.name»)
-        : ::«app.pkg.name»::«app.name»::auto_handles::«span.name»(std::move(«span.name»))
-      {}
-
-    «ENDFOR»
-    } // namespace auto_handle_converters
-
-    } // namespace «app.pkg.name»::«app.name»
-    '''
   }
 
 }
