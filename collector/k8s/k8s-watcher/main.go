@@ -38,11 +38,11 @@ const (
 
 var (
 	levelsMap = map[string]LogLevel{
-		"error": Error,
-		"warn":  Warn,
-		"info":  Info,
-		"debug": Debug,
-		"trace": Trace,
+		"error":   Error,
+		"warning": Warn,
+		"info":    Info,
+		"debug":   Debug,
+		"trace":   Trace,
 	}
 )
 
