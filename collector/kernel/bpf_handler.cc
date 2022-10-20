@@ -146,11 +146,12 @@ void BPFHandler::load_probes(::ebpf_net::ingest::Writer &writer)
     LOG::debug("tcp rtt estimator alternative #1 failed, trying approach #2");
 
     rtt_status = probe_handler_.start_probe(bpf_module_, "on_tcp_rtt_estimator", "tcp_update_pacing_rate");
-    if (rtt_status != 0) {
-      LOG::debug("tcp rtt estimator alternative #2 failed, trying approach #3");
+  }
 
-      rtt_status = probe_handler_.start_probe(bpf_module_, "on_tcp_rtt_estimator", "tcp_ack");
-    }
+  if (rtt_status != 0) {
+    LOG::debug("tcp rtt estimator alternative #2 failed, trying approach #3");
+
+    rtt_status = probe_handler_.start_probe(bpf_module_, "on_tcp_rtt_estimator", "tcp_ack");
   }
 
   if (rtt_status != 0) {
