@@ -100,28 +100,29 @@ void BPFHandler::load_probes(::ebpf_net::ingest::Writer &writer)
 
   // UDP (v4+v6) DNS Replies
   // And receive udp statistics
-
+  LOG::debug("Attempting to instrument DNS.  Several approaches may be tried, depending on the kernel version.");
   // skb_consume_udp was introduced in f970bd9e3a06f, i.e.,
   // v4.10-rc1~202^2~423^2~1
   int udp_status = probe_handler_.start_probe(bpf_module_, "on_skb_consume_udp", "skb_consume_udp");
   if (udp_status != 0) {
-    log_.warn("DNS probing alternative #1 failed, trying approach #2 (usually "
-              "v4.7-v4.9 kernels)");
+    LOG::debug("DNS probing alternative #1 failed, trying approach #2 (usually "
+               "v4.7-v4.9 kernels)");
     // __skb_free_datagram_locked was introduced in 627d2d6b55009, i.e.,
     // v4.7-rc1~154^2~349^2
     udp_status = probe_handler_.start_probe(bpf_module_, "on_skb_free_datagram_locked", "__skb_free_datagram_locked");
   }
   if (udp_status != 0) {
-    log_.warn("DNS probing alternative #2 failed, trying approach #3 (usually "
-              "pre-4.7 kernels)");
+    LOG::debug("DNS probing alternative #2 failed, trying approach #3 (usually "
+               "pre-4.7 kernels)");
     // skb_free_datagram_locked exists in udp_recvmsg since 9d410c7960676, i.e.,
     // v2.6.32-rc6~9^2~3
     udp_status = probe_handler_.start_probe(bpf_module_, "on_skb_free_datagram_locked", "skb_free_datagram_locked");
   }
+
   if (udp_status != 0) {
     log_.error("Could not instrument DNS");
   } else {
-    LOG::trace("DNS instrumentation active");
+    LOG::debug("DNS instrumentation active");
   }
 
   // Start instrumentation for sockets
@@ -139,22 +140,23 @@ void BPFHandler::load_probes(::ebpf_net::ingest::Writer &writer)
   writer.socket_steady_state(0);
 
   // probe for steady-state data
+  LOG::debug("Attempting to instrument tcp rtt estimates.  Several approaches may be tried, depending on the kernel version.");
   int rtt_status = probe_handler_.start_probe(bpf_module_, "on_tcp_rtt_estimator", "tcp_rtt_estimator");
-  if (rtt_status) { // if tcp_rtt_estimator fails
-    log_.warn(
-        "cannot start tcp_rtt_estimator probe, trying "
-        "tcp_update_pacing_rate. error {}",
-        rtt_status);
+  if (rtt_status != 0) { // if tcp_rtt_estimator fails
+    LOG::debug("tcp rtt estimator alternative #1 failed, trying approach #2");
 
     rtt_status = probe_handler_.start_probe(bpf_module_, "on_tcp_rtt_estimator", "tcp_update_pacing_rate");
-    if (rtt_status) {
-      log_.warn("cannot start tcp_update_pacing_rate probe, trying tcp_ack. error {}", rtt_status);
+    if (rtt_status != 0) {
+      LOG::debug("tcp rtt estimator alternative #2 failed, trying approach #3");
 
       rtt_status = probe_handler_.start_probe(bpf_module_, "on_tcp_rtt_estimator", "tcp_ack");
-      if (rtt_status) {
-        log_.warn("cannot start tcp_ack probe. error {}", rtt_status);
-      }
     }
+  }
+
+  if (rtt_status != 0) {
+    log_.error("cannot start any tcp_rtt_estimator probe. status {}", rtt_status);
+  } else {
+    LOG::debug("tcp rtt estimation active");
   }
 
   // SYN timeouts
@@ -231,23 +233,32 @@ void BPFHandler::load_probes(::ebpf_net::ingest::Writer &writer)
   }
 
   // udp v4 send statistics and dns requests
-  int udp_send_skb_status = probe_handler_.start_probe(bpf_module_, "on_udp_send_skb", "udp_send_skb");
-  if (udp_send_skb_status != 0) {
-    log_.warn("udp_send_skb probe failed, using ip_send_skb hook. error {}", udp_send_skb_status);
-    int ip_send_skb_status = probe_handler_.start_probe(bpf_module_, "on_ip_send_skb", "ip_send_skb");
-    if (ip_send_skb_status != 0) {
-      log_.warn("ip_send_skb probe failed. error {}", ip_send_skb_status);
-    }
+  LOG::debug(
+      "Attempting to instrument udp v4 send socket buffer.  Several alternatives may be tried depending on kernel versions.");
+  int send_skb_status = probe_handler_.start_probe(bpf_module_, "on_udp_send_skb", "udp_send_skb");
+  if (send_skb_status != 0) {
+    LOG::debug("udp v4 send skb alternative #2 failed, trying approach #3");
+    send_skb_status = probe_handler_.start_probe(bpf_module_, "on_ip_send_skb", "ip_send_skb");
+  }
+
+  if (send_skb_status != 0) {
+    log_.error("cannot start any v4 send_skb probe. error {}", send_skb_status);
+  } else {
+    LOG::debug("udp v4 send skb instrumentation active");
   }
 
   // udp v6 send statistics and dns requests
-  int udp_v6_send_skb_status = probe_handler_.start_probe(bpf_module_, "on_udp_v6_send_skb", "udp_v6_send_skb");
-  if (udp_v6_send_skb_status != 0) {
-    log_.warn("udp_v6_send_skb probe failed, using ip6_send_skb hook. error {}", udp_v6_send_skb_status);
-    int ip6_send_skb_status = probe_handler_.start_probe(bpf_module_, "on_ip6_send_skb", "ip6_send_skb");
-    if (ip6_send_skb_status != 0) {
-      log_.warn("ip6_send_skb probe failed. error {}", ip6_send_skb_status);
-    }
+  LOG::debug("Attempting to instrument udp v6 socket buffer.  Several alternatives may be tried depending on kernel versions.");
+  int v6_send_skb_status = probe_handler_.start_probe(bpf_module_, "on_udp_v6_send_skb", "udp_v6_send_skb");
+  if (v6_send_skb_status != 0) {
+    LOG::debug("udp v6 send skb alternative #2 failed, trying approach #3");
+    v6_send_skb_status = probe_handler_.start_probe(bpf_module_, "on_ip6_send_skb", "ip6_send_skb");
+  }
+
+  if (v6_send_skb_status != 0) {
+    log_.error("cannot start any v6 send_skb probe. error {}", v6_send_skb_status);
+  } else {
+    LOG::debug("udp v6 skb instrumentation active");
   }
 
   // start the udp probes
