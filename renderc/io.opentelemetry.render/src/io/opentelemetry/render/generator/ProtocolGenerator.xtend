@@ -126,11 +126,6 @@ class ProtocolGenerator {
       }
 
     private:
-      /* hash function for PerfectHash objects */
-      struct rpc_id_hash_fn {
-        u32 operator()(u32 key) { return «app.hashName»(key); }
-      };
-
       TransformBuilder &builder_;
 
       /* information about our implemented messages */
@@ -138,7 +133,7 @@ class ProtocolGenerator {
         void *context;
         handler_func_t handler_fn;
       };
-      PerfectHash<func_info, «app.hashSize», rpc_id_hash_fn> funcs_;
+      PerfectHash<func_info, «app.hashSize», «app.hashFunctor»> funcs_;
 
       /* information about handlers and transforms for processing messages */
       struct handler_info {
@@ -150,7 +145,7 @@ class ProtocolGenerator {
           std::shared_ptr<jitbuf::TransformRecord> transform_ptr;
         «ENDIF»
       };
-      PerfectHash<handler_info, «app.hashSize», rpc_id_hash_fn> handlers_;
+      PerfectHash<handler_info, «app.hashSize», «app.hashFunctor»> handlers_;
 
       std::string_view client_location_ = {};
       ClientType client_type_ = ClientType::unknown;

@@ -10,6 +10,7 @@ import static io.opentelemetry.render.generator.AppGenerator.outputPath
 import static io.opentelemetry.render.generator.RenderGenerator.generatedCodeWarning
 import static extension io.opentelemetry.render.extensions.AppExtensions.hashName
 import static extension io.opentelemetry.render.extensions.AppExtensions.hashSize
+import static extension io.opentelemetry.render.extensions.AppExtensions.hashFunctor
 
 class HashGenerator {
 
@@ -57,10 +58,16 @@ class HashGenerator {
 
     #define «app.hashSize» «hash.hash_mask + 1»
 
-    static inline u32 «app.hashName»(u32 rpc_id) {
+    inline u32 «app.hashName»(u32 rpc_id) {
       u32 k = (rpc_id ^ «hash.hash_seed») * «hash.multiplier»;
       return ((k >> «hash.hash_shift») + «app.hashName»_g_array[k >> «hash.g_shift»]) & «hash.hash_mask»;
     }
+
+    #ifdef __cplusplus
+    struct «app.hashFunctor» {
+      u32 operator()(u32 rpc_id) const { return «app.hashName»(rpc_id); }
+    };
+    #endif
     '''
   }
 

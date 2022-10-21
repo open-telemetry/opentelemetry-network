@@ -29,6 +29,10 @@ class AppExtensions {
     app.name + "_hash"
   }
 
+  static def hashFunctor(App app) {
+    app.name + "_hasher_t"
+  }
+
   static def hashSize(App app) {
     app.hashName.toUpperCase + "_SIZE"
   }
