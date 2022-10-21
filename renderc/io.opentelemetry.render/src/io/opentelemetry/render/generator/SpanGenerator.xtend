@@ -1643,6 +1643,11 @@ class SpanGenerator {
         inline «span.name»(Index &index, location_type loc);
 
         /**
+         * Move from an auto-handle is prohibited.
+         */
+        «span.name»(::«app.pkg.name»::«app.name»::auto_handles::«span.name» &&auto_handle) = delete;
+
+        /**
          * @returns true if reference is valid
          */
         inline bool valid() const
