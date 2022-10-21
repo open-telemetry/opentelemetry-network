@@ -35,54 +35,32 @@ class TransformBuilderGenerator {
     «ENDIF»
     #include <platform/types.h>
 
-    #include <stdexcept>
-
     namespace «app.pkg.name»::«app.name» {
 
-    /******************************************************************************
-     * TRANSFORM BUILDER
-     ******************************************************************************/
-    class TransformBuilder
-        «IF app.jit»
-          : public ::jitbuf::TransformBuilder
-        «ENDIF»
-    {
+    class TransformBuilder «IF app.jit»: public ::jitbuf::TransformBuilder«ENDIF» {
     public:
-      /* message format transform function type */
-      typedef uint16_t (*transform)(const char *src, char *dst);
+      // Format-transformation function signature.
+      typedef uint16_t (*transform_t)(const char *src, char *dst);
 
-      /**
-       * C'tor
-       */
       «IF app.jit»
         TransformBuilder(llvm::LLVMContext &context);
       «ELSE»
         TransformBuilder();
       «ENDIF»
 
-      /**
-       * Get the size of the identity wire message for the given RPC ID
-       */
+      // Returns the size of the identity wire message for the given RPC ID.
       u32 get_identity_size(u16 rpc_id);
 
-      /**
-       * Get identity transform for the given RPC ID
-       */
-      transform get_identity(u16 rpc_id);
+      // Returns identity transform function for the given RPC ID.
+      transform_t get_identity(u16 rpc_id);
 
     private:
-      /* hash function for PerfectHash objects */
-      struct rpc_id_hash_fn {
-        u32 operator()(u32 key) { return «app.hashName»(key); }
-      };
-
-      /* information about our implemented messages */
-      struct xform_info {
-        transform xform;
+      struct TransformInfo {
+        transform_t func;
         u16 size;
       };
 
-      PerfectHash<xform_info, «app.hashSize», rpc_id_hash_fn> identity_xforms_;
+      PerfectHash<TransformInfo, «app.hashSize», «app.hashFunctor»> identity_transforms_;
     };
 
     } // namespace «app.pkg.name»::«app.name»
@@ -100,64 +78,55 @@ class TransformBuilderGenerator {
     #include "wire_message.h"
     #include "descriptor.h"
 
-    /******************************************************************************
-     * IDENTITY TRANSFORM IMPLEMENTATIONS
-     ******************************************************************************/
-    «FOR msg : messages»
-      «identityTransform(msg)»
+    #include <stdexcept>
 
+    namespace {
+
+    // Identity transform implementations.
+
+    «FOR msg : messages SEPARATOR "\n"»
+      «identityTransform(msg)»
     «ENDFOR»
+
+    } // namespace
 
     namespace «app.pkg.name»::«app.name» {
 
-    typedef uint16_t (*transform)(const char *src, char *dst);
-
-    /******************************************************************************
-     * TRANSFORM BUILDER: c'tor
-     ******************************************************************************/
     «IF app.jit»
-      TransformBuilder::TransformBuilder(llvm::LLVMContext &context)
-        : jitbuf::TransformBuilder(context)
-      {
-        /* add all local message descriptors for jit */
+      TransformBuilder::TransformBuilder(llvm::LLVMContext &context) : jitbuf::TransformBuilder(context)
+    «ELSE»
+      TransformBuilder::TransformBuilder()
+    «ENDIF»
+    {
+      «IF app.jit»
+        // Add all local message descriptors for JIT.
         «FOR msg : messages»
           add_descriptor(«msg.parsed_msg.descriptor_name»);
         «ENDFOR»
+      «ENDIF»
 
-    «ELSE»
-      TransformBuilder::TransformBuilder()
-      {
-    «ENDIF»
-      /* add identity transforms */
+      // Add identity transforms.
       «FOR msg : messages»
-        identity_xforms_.insert(«msg.parsed_msg.rpc_id»,
-          xform_info{.xform = «msg.identityTransformName»,
-                .size = «msg.wire_msg.size»});
+        identity_transforms_.insert(«msg.parsed_msg.rpc_id», TransformInfo{.func = «msg.identityTransformName», .size = «msg.wire_msg.size»});
       «ENDFOR»
     }
 
-    /******************************************************************************
-     * TRANSFORM BUILDER: get identity message size
-     ******************************************************************************/
     u32 TransformBuilder::get_identity_size(u16 rpc_id)
     {
-      /* find our handler function */
-      auto func_info_p = identity_xforms_.find(rpc_id);
-      if (func_info_p == nullptr)
+      auto tranform_info = identity_transforms_.find(rpc_id);
+      if (tranform_info == nullptr) {
         throw std::runtime_error("identity_size: rpc_id not found");
-      return func_info_p->size;
+      }
+      return tranform_info->size;
     }
 
-    /******************************************************************************
-     * TRANSFORM BUILDER: get identity transform
-     ******************************************************************************/
-    transform TransformBuilder::get_identity(u16 rpc_id)
+    TransformBuilder::transform_t TransformBuilder::get_identity(u16 rpc_id)
     {
-      /* find our handler function */
-      auto func_info_p = identity_xforms_.find(rpc_id);
-      if (func_info_p == nullptr)
+      auto tranform_info = identity_transforms_.find(rpc_id);
+      if (tranform_info == nullptr) {
         throw std::runtime_error("get_identity: rpc_id not found");
-      return func_info_p->xform;
+      }
+      return tranform_info->func;
     }
 
     } // namespace «app.pkg.name»::«app.name»
@@ -171,7 +140,8 @@ class TransformBuilderGenerator {
 
   private static def identityTransform(Message msg) {
     '''
-    static uint16_t «identityTransformName(msg)»(const char *src, char *dst) {
+    uint16_t «identityTransformName(msg)»(const char *src, char *dst)
+    {
       «IF !msg.wire_msg.dynamic_size»
         /* simple message -- just needs a copy */
         memcpy(dst, src, «msg.wire_msg.size»);
