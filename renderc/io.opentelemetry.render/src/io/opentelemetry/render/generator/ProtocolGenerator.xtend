@@ -175,8 +175,6 @@ class ProtocolGenerator {
     #include "parsed_message.h"
     #include "wire_message.h"
 
-    #include <util/log.h>
-
     #include <spdlog/fmt/fmt.h>
 
     #include <iostream>
@@ -198,15 +196,11 @@ class ProtocolGenerator {
     {
       «IF app.spans.size == 0»
         /* no spans */
-        LOG::error("«app.name»::Protocol::handle: no spans");
         return {.result = -EINVAL, .client_timestamp = std::chrono::nanoseconds::zero()};
       «ELSE»
         /* size check: should have enough for timestamp and rpc_id */
         if (len < sizeof(u64) + sizeof(u16)) {
-          LOG::trace_in(
-            client_type_, "[{} at '{}']: «app.name»::Protocol::handle:"
-            " not enough data to read headers", client_type_, client_location_
-          );
+          /* not enough data to read headers */
           return {.result = -EAGAIN, .client_timestamp = std::chrono::nanoseconds::zero()};
         }
 
@@ -221,12 +215,6 @@ class ProtocolGenerator {
 
         /* find handler for RPC ID */
         handler_info *record = handlers_.find(rpc_id);
-        LOG::trace_in(client_type_,
-          "[{} at '{}']: «app.name»::Protocol::handle: resolved rpc_id and handler"
-          " (available={} rpc={} handler={} context={})",
-          client_type_, client_location_,
-          len, rpc_id, reinterpret_cast<void const *>(record), reinterpret_cast<void const *>(record ? record->context : nullptr)
-        );
 
         if (record == nullptr) {
           // compile-time list of rpc ids that need authentication
@@ -234,22 +222,17 @@ class ProtocolGenerator {
           constexpr u16 need_auth_rpc_ids[] = {«FOR rpc_id : need_auth_msg.map[wire_msg].map[rpc_id].sort SEPARATOR ", "»«rpc_id»«ENDFOR»};
 
           if (std::binary_search(need_auth_rpc_ids, need_auth_rpc_ids + need_auth_rpc_ids_count, rpc_id)) {
-            LOG::trace_in(client_type_, "handle(): permission denied for rpc_id: {}", rpc_id);
+            /* permission denied */
             return {.result = -EACCES, .client_timestamp = remote_timestamp};
           } else {
-            LOG::trace_in(client_type_, "handle(): cannot find handler for rpc_id: {}", rpc_id);
+            /* cannot find handler */
             return {.result = -ENOENT, .client_timestamp = remote_timestamp};
           }
         }
 
         /* safety check message size */
         if (len < record->size) {
-          LOG::trace_in(client_type_,
-            "[{} at '{}']: «app.name»::Protocol::handle: not enough data"
-            " (available={}) to read static payload (needed={} rpc={})",
-            client_type_, client_location_,
-            len, record->size, rpc_id
-          );
+          /* not enough data to read static payload */
           return {.result = -EAGAIN, .client_timestamp = remote_timestamp};
         }
 
@@ -259,32 +242,14 @@ class ProtocolGenerator {
 
         /* if we didn't get all the dynamic sized part, request more bytes */
         if (size > len) {
-          LOG::trace_in(client_type_,
-            "[{} at '{}']: «app.name»::Protocol::handle: not enough data"
-            " (available={}) to read dynamic payload (needed={} rpc={})",
-            client_type_, client_location_,
-            len, size, rpc_id
-          );
+          /* not enough data to read dynamic payload */
           return {.result = -EAGAIN, .client_timestamp = remote_timestamp};
         }
 
         /* call the handler function */
-        LOG::trace_in(client_type_,
-          "[{} at '{}']: «app.name»::Protocol::handle: delegating to handler"
-          " (available={} needed={} rpc={})",
-          client_type_, client_location_,
-          len, size, rpc_id
-        );
         (record->handler_fn)(record->context, remote_timestamp.count(), (char *)dst_buffer);
 
-        LOG::trace_in(client_type_,
-          "[{} at '{}']: «app.name»::Protocol::handle: consumed {} bytes total",
-          client_type_,
-          client_location_,
-          size + sizeof(u64)
-        );
-        return {.result = static_cast<int>(size + sizeof(u64)),
-                .client_timestamp = remote_timestamp};
+        return {.result = static_cast<int>(size + sizeof(u64)), .client_timestamp = remote_timestamp};
       «ENDIF»
     }
 
@@ -306,55 +271,26 @@ class ProtocolGenerator {
         client_timestamp = handled.client_timestamp;
         assert(ret != 0);
         if (ret < 0) {
-          LOG::trace_in(
-            client_type_, "[{} at '{}']: «app.name»::Protocol::handle_multiple:"
-            " error while handling message (received={} handled={} processed={}"
-            " remaining={} count={})", client_type_, client_location_,
-            len, ret, processed, remaining, count
-          );
+          /* error while handling the message */
           break;
         }
         assert ((u32)ret <= remaining);
 
         /* sanity check, should not happen */
         if (((u64)ret + processed > len) || (((u64)ret + processed) < processed)) {
-          LOG::critical(
-            "«app.name»::Protocol::handle_multiple: possible overflow"
-            " (received={} handled={} processed={} remaining={} count={})",
-            len, ret, processed, remaining, count
-          );
-          throw std::runtime_error("Possible overflow in handle_multiple");
+          throw std::runtime_error("«app.pkg.name»::«app.name»::Protocol::handle_multiple: possible overflow");
         }
 
         processed += ret;
         remaining -= ret;
         ++count;
-
-        LOG::trace_in(
-          client_type_, "[{} at '{}']: «app.name»::Protocol::handle_multiple:"
-          " handled message (received={} handled={} processed={} remaining={} count={})",
-          client_type_, client_location_,
-          len, ret, processed, remaining, count
-        );
       }
 
       if (processed > 0) {
-        LOG::trace_in(
-          client_type_, "[{} at '{}']: «app.name»::Protocol::handle_multiple:"
-          " done handling at least one message (received={} handled={} processed={}"
-          " remaining={} count={})", client_type_, client_location_,
-          len, ret, processed, remaining, count
-        );
         return {.result = static_cast<int>(processed), .client_timestamp = client_timestamp};
       }
 
       /* error, return code (or in edge case of len == 0, returns 0) */
-      LOG::trace_in(
-        client_type_, "[{} at '{}']: «app.name»::Protocol::handle_multiple:"
-        " done handling no message (received={} handled={} processed={} remaining={}"
-        " count={})", client_type_, client_location_,
-        len, ret, processed, remaining, count
-      );
       return {.result = ret, .client_timestamp = client_timestamp};
     }
 
