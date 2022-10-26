@@ -215,7 +215,6 @@ class ConnectionGenerator {
     #include "protocol.h"
     #include "parsed_message.h"
 
-    #include <util/log.h>
     #include <util/render.h>
 
     #include <algorithm>
@@ -419,13 +418,7 @@ class ConnectionGenerator {
     '''
     void Connection::«app.c_name»_«msg.name»(u64 t, char *msg_buf)
     {
-      struct «pmsg.struct_name» *msg = (struct «pmsg.struct_name» *)msg_buf;
-
-      LOG::trace_in(
-        client_type_, "[{} at '{}'] Connection::«app.c_name»_«msg.name»:"
-        " entered handler (rpc_id={})",
-        client_type_, client_location_, msg->_rpc_id
-      );
+      [[maybe_unused]] struct «pmsg.struct_name» *msg = (struct «pmsg.struct_name» *)msg_buf;
 
       «IF msg.type == MessageType.START»
         /* start message: insert */
@@ -446,10 +439,7 @@ class ConnectionGenerator {
         «ENDIF»
 
         if (!ref.valid()) {
-          LOG::trace_in(client_type_,
-            "[{} at '{}'] Connection::«app.c_name»_«msg.name»:"
-            " Could not allocate «span.name» ref",
-            client_type_, client_location_);
+          /* could not allocate span */
           message_errors.counts.«app.c_name»_«msg.name»_span_alloc_failed += 1;
           message_errors.changed.«app.c_name»_«msg.name»_span_alloc_failed = 1;
           return;
@@ -458,49 +448,29 @@ class ConnectionGenerator {
         auto pos = «fixedHashName(span)».insert(msg->«msg.reference_field.name», std::move(ref));
         if (pos.index == «fixedHashName(span)».invalid) {
           if («fixedHashName(span)».full()) {
-            LOG::trace_in(client_type_,
-              "[{} at '{}'] Connection::«app.c_name»_«msg.name»:"
-              " full (size={})",
-              client_type_, client_location_, «fixedHashName(span)».full());
+            /* span handle pool full */
             message_errors.counts.«app.c_name»_«msg.name»_span_pool_full += 1;
             message_errors.changed.«app.c_name»_«msg.name»_span_pool_full = 1;
           } else {
             auto find_pos = «fixedHashName(span)».find(msg->«msg.reference_field.name»);
             if (find_pos.index != «fixedHashName(span)».invalid) {
-              LOG::trace_in(client_type_,
-                "[{} at '{}'] Connection::«app.c_name»_«msg.name»:"
-                " already exists - {}",
-                client_type_, client_location_, msg->«msg.reference_field.name»
-              );
+              /* already exists */
               message_errors.counts.«app.c_name»_«msg.name»_duplicate_ref += 1;
               message_errors.changed.«app.c_name»_«msg.name»_duplicate_ref = 1;
             } else {
-              LOG::trace_in(client_type_,
-                "[{} at '{}'] Connection::«app.c_name»_«msg.name»:"
-                " insert failed (size={})",
-                client_type_, client_location_, «fixedHashName(span)».full()
-              );
+              /* insert failed */
               message_errors.counts.«app.c_name»_«msg.name»_span_insert_failed += 1;
               message_errors.changed.«app.c_name»_«msg.name»_span_insert_failed = 1;
             }
           }
-          LOG::trace_in(client_type_,
-            "[{} at '{}'] Connection::«app.c_name»_«msg.name»:"
-            " ignoring message - can't allocate or lookup span",
-            client_type_, client_location_
-          );
+          /* ignoring message - can't allocate or lookup span */
           return;
         }
       «ELSEIF (!span.isSingleton)»
         /* get the destination span */
         auto pos = «fixedHashName(span)».find(msg->«msg.reference_field.name»);
         if (pos.index == «fixedHashName(span)».invalid) {
-          LOG::trace_in(client_type_,
-            "[{} at '{}'] Connection::«app.c_name»_«msg.name»:"
-            " find failed key='{}' _ref={}",
-            client_type_, client_location_,
-            msg->«msg.reference_field.name», pos.index
-          );
+          /* find failed */
           message_errors.counts.«app.c_name»_«msg.name»_span_find_failed += 1;
           message_errors.changed.«app.c_name»_«msg.name»_span_find_failed = 1;
           return;
@@ -516,11 +486,6 @@ class ConnectionGenerator {
         auto entry = pos.entry;
         «ENDIF»
         auto span_ref = entry->access(index_);
-        LOG::trace_in(
-          client_type_, "[{} at '{}'] Connection::«app.c_name»_«msg.name»:"
-          " delegating to «span.impl»",
-          client_type_, client_location_
-        );
         span_ref.impl().«msg.name»(span_ref, t, msg);
       }
       «ENDIF»
@@ -530,11 +495,7 @@ class ConnectionGenerator {
         «fixedHashName(span)»[pos.index].put(index_);
         bool erase_res = «fixedHashName(span)».erase(msg->«msg.reference_field.name»);
         if (erase_res != true) {
-          LOG::trace_in(client_type_,
-            "[{} at '{}'] Connection::«app.c_name»_«msg.name»:"
-            " erase failed",
-            client_type_, client_location_
-          );
+          /* erase failed */
           message_errors.counts.«app.c_name»_«msg.name»_span_erase_failed += 1;
           message_errors.changed.«app.c_name»_«msg.name»_span_erase_failed = 1;
         }
@@ -543,12 +504,6 @@ class ConnectionGenerator {
       /* update message statistics */
       statistics.counts.«app.c_name»_«msg.name»++;
       statistics.changed.«app.c_name»_«msg.name» = 1;
-
-      LOG::trace_in(
-        client_type_, "[{} at '{}'] Connection::«app.c_name»_«msg.name»:"
-        " left handler normally",
-        client_type_, client_location_
-      );
     }
     '''
   }
