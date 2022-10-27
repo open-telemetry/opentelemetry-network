@@ -29,13 +29,11 @@ class ConnectionGenerator {
     «generatedCodeWarning()»
     #pragma once
 
-    #include <stdexcept>
-    #include <common/client_type.h>
-    #include <platform/types.h>
-    #include <util/fixed_hash.h>
-    #include <util/lookup3.h>
     #include "index.h"
     #include "handles.h"
+
+    #include <platform/types.h>
+    #include <util/fixed_hash.h>
 
     /* Span implementation classes */
     «FOR app_span : app.spans.filter[include !== null]»
@@ -180,27 +178,12 @@ class ConnectionGenerator {
 
       } message_errors;
 
-      std::string_view get_client_location() const {
-        return client_location_;
-      }
-
-      ClientType get_client_type() const {
-        return client_type_;
-      }
-
-      void set_client_info(std::string_view host, ClientType type) {
-        client_location_ = host;
-        client_type_ = type;
-      }
-
       Index &index() { return index_; }
 
     private:
       /* the protocol instance */
       Protocol &protocol_;
       Index &index_;
-      std::string_view client_location_ = {};
-      ClientType client_type_ = ClientType::unknown;
     };
 
     } // namespace «app.pkg.name»::«app.name»
@@ -215,9 +198,11 @@ class ConnectionGenerator {
     #include "protocol.h"
     #include "parsed_message.h"
 
+    #include <util/lookup3.h>
     #include <util/render.h>
 
     #include <algorithm>
+    #include <stdexcept>
 
     namespace «app.pkg.name»::«app.name» {
 
