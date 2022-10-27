@@ -25,7 +25,6 @@ class ProtocolGenerator {
 
     #include "hash.h"
 
-    #include <common/client_type.h>
     #include <jitbuf/perfect_hash.h>
     «IF app.jit»
       #include <jitbuf/transform_builder.h>
@@ -33,7 +32,6 @@ class ProtocolGenerator {
     #include <platform/types.h>
 
     #include <chrono>
-    #include <stdexcept>
 
     namespace «app.pkg.name»::«app.name» {
 
@@ -112,19 +110,6 @@ class ProtocolGenerator {
        */
       void insert_need_auth_identity_transforms();
 
-      std::string_view get_client_location() const {
-        return client_location_;
-      }
-
-      ClientType get_client_type() const {
-        return client_type_;
-      }
-
-      void set_client_info(std::string_view host, ClientType type) {
-        client_location_ = host;
-        client_type_ = type;
-      }
-
     private:
       TransformBuilder &builder_;
 
@@ -146,9 +131,6 @@ class ProtocolGenerator {
         «ENDIF»
       };
       PerfectHash<handler_info, «app.hashSize», «app.hashFunctor»> handlers_;
-
-      std::string_view client_location_ = {};
-      ClientType client_type_ = ClientType::unknown;
     };
 
     } // namespace «app.pkg.name»::«app.name»
@@ -178,6 +160,7 @@ class ProtocolGenerator {
     #include <spdlog/fmt/fmt.h>
 
     #include <iostream>
+    #include <stdexcept>
 
     namespace «app.pkg.name»::«app.name» {
 
