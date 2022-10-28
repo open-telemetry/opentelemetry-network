@@ -233,8 +233,8 @@ int ProbeHandler::start_probe(
   }
 
   /* attach the probe */
-  std::string p_name = "ebpf_net_p_" + k_func_name + event_id_suffix;
-  int attach_res = bpf_attach_kprobe(prog_fd, BPF_PROBE_ENTRY, p_name.c_str(), k_func_name.c_str(), 0, 0);
+  std::string probe_name = probe_prefix_ + k_func_name + event_id_suffix;
+  int attach_res = bpf_attach_kprobe(prog_fd, BPF_PROBE_ENTRY, probe_name.c_str(), k_func_name.c_str(), 0, 0);
   if (attach_res == -1) {
     // we expect this to be triggered depending on kernel version
     close(prog_fd);
@@ -244,7 +244,7 @@ int ProbeHandler::start_probe(
 
   fds_.push_back(prog_fd);
   probes_.push_back(attach_res);
-  k_func_names_.push_back(p_name);
+  probe_names_.push_back(probe_name);
   return 0;
 }
 
@@ -276,8 +276,8 @@ int ProbeHandler::start_kretprobe(
   }
 
   /* attach the probe */
-  std::string p_name = "ebpf_net_r_" + k_func_name + event_id_suffix;
-  int attach_res = bpf_attach_kprobe(prog_fd, BPF_PROBE_RETURN, p_name.c_str(), k_func_name.c_str(), 0, 0);
+  std::string probe_name = kretprobe_prefix_ + k_func_name + event_id_suffix;
+  int attach_res = bpf_attach_kprobe(prog_fd, BPF_PROBE_RETURN, probe_name.c_str(), k_func_name.c_str(), 0, 0);
   if (attach_res == -1) {
     close(prog_fd);
     // we expect this to be triggered depending on kernel version
@@ -287,7 +287,7 @@ int ProbeHandler::start_kretprobe(
 
   fds_.push_back(prog_fd);
   probes_.push_back(attach_res);
-  k_func_names_.push_back(p_name);
+  probe_names_.push_back(probe_name);
   return 0;
 }
 
@@ -298,10 +298,10 @@ void ProbeHandler::cleanup_probes()
     fds_.pop_back();
     auto probe = probes_.back();
     probes_.pop_back();
-    std::string k_func_name = k_func_names_.back();
-    k_func_names_.pop_back();
+    std::string probe_name = probe_names_.back();
+    probe_names_.pop_back();
 
-    LOG::debug_in(AgentLogKind::BPF, "cleanup probe for {}", k_func_name);
+    LOG::debug_in(AgentLogKind::BPF, "cleanup probe for {}", probe_name);
 
     bpf_close_perf_event_fd(probe);
 
@@ -310,7 +310,7 @@ void ProbeHandler::cleanup_probes()
       LOG::debug_in(AgentLogKind::BPF, "Error when unloading prog, res={}", res);
     }
 
-    res = bpf_detach_kprobe(k_func_name.c_str());
+    res = bpf_detach_kprobe(probe_name.c_str());
     if (res != 0) {
       LOG::debug_in(AgentLogKind::BPF, "Error when detaching, res={}", res);
     }
@@ -338,20 +338,30 @@ void ProbeHandler::cleanup_tail_calls(ebpf::BPFModule &bpf_module)
   }
 }
 
-void ProbeHandler::cleanup_probe(std::string func_name)
+void ProbeHandler::cleanup_probe(const std::string &k_func_name)
+{
+  cleanup_probe_common(probe_prefix_ + k_func_name);
+}
+
+void ProbeHandler::cleanup_kretprobe(const std::string &k_func_name)
+{
+  cleanup_probe_common(kretprobe_prefix_ + k_func_name);
+}
+
+void ProbeHandler::cleanup_probe_common(const std::string &probe_name)
 {
   int i = 0;
-  for (std::vector<std::string>::iterator it = k_func_names_.begin(); it != k_func_names_.end(); ++it) {
-    if (!k_func_names_[i].compare(func_name)) {
+  for (std::vector<std::string>::iterator it = probe_names_.begin(); it != probe_names_.end(); ++it) {
+    if (!probe_names_[i].compare(probe_name)) {
       int fd = fds_[i];
       auto probe = probes_[i];
-      std::string k_func_name = k_func_names_[i];
+      std::string probe_name = probe_names_[i];
 
       fds_.erase(fds_.begin() + i);
       probes_.erase(probes_.begin() + i);
-      k_func_names_.erase(k_func_names_.begin() + i);
+      probe_names_.erase(probe_names_.begin() + i);
 
-      LOG::debug_in(AgentLogKind::BPF, "cleanup probe for {}", k_func_name);
+      LOG::debug_in(AgentLogKind::BPF, "cleanup probe for {}", probe_name);
 
       bpf_close_perf_event_fd(probe);
 
@@ -360,7 +370,7 @@ void ProbeHandler::cleanup_probe(std::string func_name)
         LOG::debug_in(AgentLogKind::BPF, "Error when unloading prog, res={}", res);
       }
 
-      res = bpf_detach_kprobe(func_name.c_str());
+      res = bpf_detach_kprobe(probe_name.c_str());
       if (res != 0) {
         LOG::debug_in(AgentLogKind::BPF, "Error when detaching, res={}", res);
       }
@@ -369,5 +379,5 @@ void ProbeHandler::cleanup_probe(std::string func_name)
     ++i;
   }
 
-  LOG::debug_in(AgentLogKind::BPF, "Error removing probe. {} was not found.", func_name);
+  LOG::warn("Error removing probe. {} was not found.", probe_name);
 }

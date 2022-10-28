@@ -53,7 +53,7 @@ CgroupProber::CgroupProber(
   }
 
   /* can remove existing now */
-  probe_handler.cleanup_probe("p_cgroup_clone_children_read");
+  probe_handler.cleanup_probe("cgroup_clone_children_read");
   periodic_cb();
   check_cb("cgroup prober cleanup()");
 }

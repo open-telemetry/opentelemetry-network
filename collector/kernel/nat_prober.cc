@@ -42,7 +42,7 @@ NatProber::NatProber(ProbeHandler &probe_handler, ebpf::BPFModule &bpf_module, s
   periodic_cb();
 
   // Cleanup existing
-  probe_handler.cleanup_probe("p_ctnetlink_dump_tuples");
+  probe_handler.cleanup_probe("ctnetlink_dump_tuples");
   periodic_cb();
 }
 

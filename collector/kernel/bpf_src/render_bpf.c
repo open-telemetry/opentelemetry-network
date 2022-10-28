@@ -45,6 +45,11 @@ BPF_PERF_OUTPUT(events);
 #include "tcp-processor/bpf_debug.h"
 #include "tcp-processor/bpf_types.h"
 
+static u64 abs_val(int val)
+{
+  return val < 0 ? -val : val;
+}
+
 // using constants for placeholders for readability after code dump
 #pragma passthrough on
 #define REPORT_DEBUG_EVENTS REPORT_DEBUG_EVENTS_PLACEHOLDER
@@ -179,7 +184,7 @@ static int set_task_group_dead(struct pt_regs *ctx, struct task_struct *tsk)
 #if DEBUG_OTHER_MAP_ERRORS
     bpf_trace_printk("set_task_group_dead: unknown return code from map insert: ret=%d (tsk=%llx)\n", ret, tsk);
 #endif
-    bpf_log(ctx, BPF_LOG_TABLE_BAD_INSERT, BPF_TABLE_DEAD_GROUP_TASKS, 0, ret);
+    bpf_log(ctx, BPF_LOG_TABLE_BAD_INSERT, BPF_TABLE_DEAD_GROUP_TASKS, 0, abs_val(ret));
     return 0;
   }
 
@@ -209,7 +214,7 @@ static int task_is_group_leader(struct pt_regs *ctx, struct task_struct *tsk)
   struct task_struct *group_leader = NULL;
   ret = bpf_probe_read(&group_leader, sizeof(group_leader), &tsk->group_leader);
   if (ret != 0) {
-    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, (u64)ret, 0, 0);
+    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, abs_val(ret), 0, 0);
     return 0;
   }
   if (group_leader == NULL) {
@@ -236,7 +241,7 @@ static u64 get_task_cgroup(struct pt_regs *ctx, struct task_struct *tsk)
   struct css_set *set = NULL;
   ret = bpf_probe_read(&set, sizeof(set), &tsk->cgroups);
   if (ret != 0) {
-    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, (u64)ret, 0, 0);
+    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, abs_val(ret), 0, 0);
     return 0;
   }
   if (set == NULL) {
@@ -247,7 +252,7 @@ static u64 get_task_cgroup(struct pt_regs *ctx, struct task_struct *tsk)
   struct cgroup_subsys_state *css = NULL;
   ret = bpf_probe_read(&css, sizeof(css), &set->subsys[FLOW_CGROUP_SUBSYS]);
   if (ret != 0) {
-    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, (u64)ret, 0, 0);
+    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, abs_val(ret), 0, 0);
     return 0;
   }
   if (css == NULL) {
@@ -258,7 +263,7 @@ static u64 get_task_cgroup(struct pt_regs *ctx, struct task_struct *tsk)
   struct cgroup *cgrp = NULL;
   ret = bpf_probe_read(&cgrp, sizeof(cgrp), &css->cgroup);
   if (ret != 0) {
-    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, (u64)ret, 0, 0);
+    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, abs_val(ret), 0, 0);
     return 0;
   }
   if (cgrp == NULL) {
@@ -276,14 +281,14 @@ static pid_t get_task_parent(struct pt_regs *ctx, struct task_struct *tsk)
   struct task_struct *parent_tsk = NULL;
   ret = bpf_probe_read(&parent_tsk, sizeof(parent_tsk), &tsk->parent);
   if (ret != 0) {
-    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, (u64)ret, 0, 0);
+    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, abs_val(ret), 0, 0);
     return -1;
   }
 
   pid_t parent_tgid = 0;
   ret = bpf_probe_read(&parent_tgid, sizeof(parent_tgid), &parent_tsk->tgid);
   if (ret != 0) {
-    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, (u64)ret, 0, 0);
+    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, abs_val(ret), 0, 0);
     return -1;
   }
 
@@ -312,7 +317,7 @@ static int insert_tgid_info(struct pt_regs *ctx, TGID tgid)
 #if DEBUG_OTHER_MAP_ERRORS
     bpf_trace_printk("insert_tgid_info: unknown return code from map insert: ret=%d (tgid=%u)\n", ret, tgid);
 #endif
-    bpf_log(ctx, BPF_LOG_TABLE_BAD_INSERT, BPF_TABLE_TGID_INFO, tgid, ret);
+    bpf_log(ctx, BPF_LOG_TABLE_BAD_INSERT, BPF_TABLE_TGID_INFO, tgid, abs_val(ret));
     return 0;
   }
 
@@ -331,7 +336,7 @@ static int remove_tgid_info(struct pt_regs *ctx, TGID tgid)
     bpf_trace_printk("remove_tgid_info: can't remove missing tgid=%u\n", tgid);
 #endif
     if (ret != -ENOENT) {
-      bpf_log(ctx, BPF_LOG_TABLE_BAD_REMOVE, BPF_TABLE_TGID_INFO, tgid, ret);
+      bpf_log(ctx, BPF_LOG_TABLE_BAD_REMOVE, BPF_TABLE_TGID_INFO, tgid, abs_val(ret));
     }
     return 0;
   }
@@ -359,7 +364,7 @@ int on_cgroup_exit(struct pt_regs *ctx, struct task_struct *tsk)
   pid_t tgid = 0;
   ret = bpf_probe_read(&tgid, sizeof(tgid), &(tsk->tgid));
   if (ret != 0) {
-    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, (u64)ret, 0, 0);
+    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, abs_val(ret), 0, 0);
     return 0;
   }
 
@@ -424,7 +429,7 @@ int on_set_task_comm(struct pt_regs *ctx, struct task_struct *tsk, const char *b
   pid_t tgid = 0;
   ret = bpf_probe_read(&tgid, sizeof(tgid), &tsk->tgid);
   if (ret != 0) {
-    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, (u64)ret, 0, 0);
+    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, abs_val(ret), 0, 0);
     return 0;
   }
 
@@ -440,7 +445,7 @@ int on_wake_up_new_task(struct pt_regs *ctx, struct task_struct *tsk)
   pid_t tgid = 0;
   ret = bpf_probe_read(&tgid, sizeof(tgid), &tsk->tgid);
   if (ret != 0) {
-    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, (u64)ret, 0, 0);
+    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, abs_val(ret), 0, 0);
     return 0;
   }
 
@@ -456,7 +461,7 @@ int on_wake_up_new_task(struct pt_regs *ctx, struct task_struct *tsk)
   u8 comm[16] = {};
   ret = bpf_probe_read(comm, sizeof(comm), tsk->comm);
   if (ret != 0) {
-    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, (u64)ret, 0, 0);
+    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, abs_val(ret), 0, 0);
     return 0;
   }
 
@@ -474,7 +479,7 @@ int onret_get_pid_task(struct pt_regs *ctx)
   pid_t tgid = 0;
   ret = bpf_probe_read(&tgid, sizeof(tgid), &tsk->tgid);
   if (ret != 0) {
-    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, (u64)ret, 0, 0);
+    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, abs_val(ret), (u64)tsk, 0);
     return 0;
   }
 
@@ -490,7 +495,7 @@ int onret_get_pid_task(struct pt_regs *ctx)
   u8 comm[16] = {};
   ret = bpf_probe_read(comm, sizeof(comm), tsk->comm);
   if (ret != 0) {
-    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, (u64)ret, 0, 0);
+    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, abs_val(ret), 0, 0);
     return 0;
   }
 
@@ -547,37 +552,37 @@ report_rtt_estimator(struct pt_regs *ctx, struct sock *sk, struct tcp_open_socke
 
   ret = bpf_probe_read(&srtt, sizeof(srtt), &(tcp_sk(sk)->srtt_us));
   if (ret != 0) {
-    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, (u64)ret, 0, 0);
+    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, abs_val(ret), 0, 0);
     return;
   }
 
   ret = bpf_probe_read(&snd_cwnd, sizeof(snd_cwnd), &(tcp_sk(sk)->snd_cwnd));
   if (ret != 0) {
-    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, (u64)ret, 0, 0);
+    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, abs_val(ret), 0, 0);
     return;
   }
 
   ret = bpf_probe_read(&bytes_acked, sizeof(bytes_acked), &(tcp_sk(sk)->bytes_acked));
   if (ret != 0) {
-    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, (u64)ret, 0, 0);
+    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, abs_val(ret), 0, 0);
     return;
   }
 
   ret = bpf_probe_read(&ca_state, sizeof(ca_state), &(*(&(inet_csk(sk)->icsk_sync_mss) + 1)));
   if (ret != 0) {
-    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, (u64)ret, 0, 0);
+    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, abs_val(ret), 0, 0);
     return;
   }
 
   ret = bpf_probe_read(&packets_retrans, sizeof(packets_retrans), &(tcp_sk(sk)->total_retrans));
   if (ret != 0) {
-    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, (u64)ret, 0, 0);
+    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, abs_val(ret), 0, 0);
     return;
   }
 
   ret = bpf_probe_read(&bytes_received, sizeof(bytes_received), &(tcp_sk(sk)->bytes_received));
   if (ret != 0) {
-    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, (u64)ret, 0, 0);
+    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, abs_val(ret), 0, 0);
     return;
   }
 
@@ -636,7 +641,7 @@ static int add_tcp_open_socket(struct pt_regs *ctx, struct sock *sk, u32 tgid, u
 
   ret = bpf_probe_read(&sk_info.bytes_received, sizeof(sk_info.bytes_received), &tcp_sk(sk)->bytes_received);
   if (ret != 0) {
-    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, (u64)ret, 0, 0);
+    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, abs_val(ret), 0, 0);
     return -1;
   }
 
@@ -654,7 +659,7 @@ static int add_tcp_open_socket(struct pt_regs *ctx, struct sock *sk, u32 tgid, u
 #if DEBUG_TCP_SOCKET_ERRORS
     bpf_trace_printk("add_tcp_open_socket: unknown return code from map insert: ret=%d sk=%llx (tgid=%u)\n", ret, sk, tgid);
 #endif
-    bpf_log(ctx, BPF_LOG_TABLE_BAD_INSERT, BPF_TABLE_TCP_OPEN_SOCKETS, tgid, ret);
+    bpf_log(ctx, BPF_LOG_TABLE_BAD_INSERT, BPF_TABLE_TCP_OPEN_SOCKETS, tgid, abs_val(ret));
     return -1;
   }
   return 1;
@@ -691,7 +696,7 @@ static void remove_tcp_open_socket(struct pt_regs *ctx, struct sock *sk)
 #if DEBUG_TCP_SOCKET_ERRORS
     bpf_trace_printk("remove_tcp_open_socket: failed to remove sk=%llx, ret=%d\n", sk, ret);
 #endif
-    bpf_log(ctx, BPF_LOG_TABLE_BAD_REMOVE, BPF_TABLE_TCP_OPEN_SOCKETS, (u64)ret, 0);
+    bpf_log(ctx, BPF_LOG_TABLE_BAD_REMOVE, BPF_TABLE_TCP_OPEN_SOCKETS, abs_val(ret), 0);
     return;
   }
 
@@ -745,19 +750,19 @@ static inline void submit_reset_tcp_counters(struct pt_regs *ctx, u64 now, u64 p
 
   ret = bpf_probe_read(&bytes_acked, sizeof(bytes_acked), &(tcp_sk(sk)->bytes_acked));
   if (ret != 0) {
-    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, (u64)ret, 0, 0);
+    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, abs_val(ret), 0, 0);
     return;
   }
 
   ret = bpf_probe_read(&packets_retrans, sizeof(packets_retrans), &(tcp_sk(sk)->total_retrans));
   if (ret != 0) {
-    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, (u64)ret, 0, 0);
+    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, abs_val(ret), 0, 0);
     return;
   }
 
   ret = bpf_probe_read(&bytes_received, sizeof(bytes_received), &(tcp_sk(sk)->bytes_received));
   if (ret != 0) {
-    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, (u64)ret, 0, 0);
+    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, abs_val(ret), 0, 0);
     return;
   }
 
@@ -848,7 +853,7 @@ static void restart_tcp_socket(struct pt_regs *ctx, TIMESTAMP now, struct sock *
 #if DEBUG_TCP_SOCKET_ERRORS
     bpf_trace_printk("tcp_init_sock: add_tcp_open_socket failed: %llx (tgid=%u)\n", sk, _tgid);
 #endif
-    bpf_log(ctx, BPF_LOG_TABLE_BAD_INSERT, BPF_TABLE_TCP_OPEN_SOCKETS, _tgid, ret);
+    bpf_log(ctx, BPF_LOG_TABLE_BAD_INSERT, BPF_TABLE_TCP_OPEN_SOCKETS, _tgid, abs_val(ret));
   }
 }
 
@@ -975,7 +980,7 @@ int on_tcp_init_sock(struct pt_regs *ctx, struct sock *sk)
 #if DEBUG_TCP_SOCKET_ERRORS
     bpf_trace_printk("tcp_init_sock: add_tcp_open_socket failed: %llx (tgid=%u)\n", sk, _tgid);
 #endif
-    bpf_log(ctx, BPF_LOG_TABLE_BAD_INSERT, BPF_TABLE_TCP_OPEN_SOCKETS, _tgid, ret);
+    bpf_log(ctx, BPF_LOG_TABLE_BAD_INSERT, BPF_TABLE_TCP_OPEN_SOCKETS, _tgid, abs_val(ret));
   }
 
   return 0;
@@ -1146,7 +1151,7 @@ int on_tcp46_seq_show(struct pt_regs *ctx, struct seq_file *seq, void *v)
 #if DEBUG_TCP_SOCKET_ERRORS
     bpf_trace_printk("on_tcp46_seq_show: add_tcp_open_socket failed: %llx (tgid=%u)\n", sk, tgid);
 #endif
-    bpf_log(ctx, BPF_LOG_TABLE_BAD_INSERT, BPF_TABLE_TCP_OPEN_SOCKETS, tgid, ret);
+    bpf_log(ctx, BPF_LOG_TABLE_BAD_INSERT, BPF_TABLE_TCP_OPEN_SOCKETS, tgid, abs_val(ret));
   }
 
   return 0;
@@ -1188,7 +1193,7 @@ static inline int add_udp_open_socket(struct pt_regs *ctx, struct sock *sk, u32 
 #if DEBUG_UDP_SOCKET_ERRORS
     bpf_trace_printk("add_udp_open_socket: unknown return code from map insert: ret=%d sk=%llx (tgid=%u)\n", ret, sk, tgid);
 #endif
-    bpf_log(ctx, BPF_LOG_TABLE_BAD_INSERT, BPF_TABLE_UDP_OPEN_SOCKETS, (u64)tgid, (u64)ret);
+    bpf_log(ctx, BPF_LOG_TABLE_BAD_INSERT, BPF_TABLE_UDP_OPEN_SOCKETS, (u64)tgid, abs_val(ret));
     return -1;
   }
   return 1;
@@ -1310,7 +1315,7 @@ static void remove_udp_open_socket(struct pt_regs *ctx, struct sock *sk)
 #if DEBUG_UDP_SOCKET_ERRORS
     bpf_trace_printk("remove_udp_open_socket: failed to remove sk=%llx, ret=%d\n", sk, ret);
 #endif
-    bpf_log(ctx, BPF_LOG_TABLE_BAD_REMOVE, BPF_TABLE_UDP_OPEN_SOCKETS, (u64)ret, 0);
+    bpf_log(ctx, BPF_LOG_TABLE_BAD_REMOVE, BPF_TABLE_UDP_OPEN_SOCKETS, abs_val(ret), 0);
     return;
   }
 
@@ -1367,7 +1372,7 @@ int on_udp46_seq_show(struct pt_regs *ctx, struct seq_file *seq, void *v)
 #if DEBUG_UDP_SOCKET_ERRORS
     bpf_trace_printk("on_udp46_seq_show: add_udp_open_socket failed: %llx (tgid=%u)\n", sk, tgid);
 #endif
-    bpf_log(ctx, BPF_LOG_TABLE_BAD_INSERT, BPF_TABLE_UDP_OPEN_SOCKETS, tgid, ret);
+    bpf_log(ctx, BPF_LOG_TABLE_BAD_INSERT, BPF_TABLE_UDP_OPEN_SOCKETS, tgid, abs_val(ret));
   }
 
   return 0;
@@ -1902,7 +1907,7 @@ int on_tcp_rcv_established(struct pt_regs *ctx, struct sock *sk, struct sk_buff 
   u64 bytes_received = 0;
   ret = bpf_probe_read(&bytes_received, sizeof(bytes_received), &tcp_sk(sk)->bytes_received);
   if (ret != 0) {
-    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, (u64)ret, 0, 0);
+    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, abs_val(ret), 0, 0);
     return 0;
   }
 
@@ -1934,7 +1939,7 @@ int on_tcp_event_data_recv(struct pt_regs *ctx, struct sock *sk, struct sk_buff 
   u64 bytes_received = 0;
   ret = bpf_probe_read(&bytes_received, sizeof(bytes_received), &tcp_sk(sk)->bytes_received);
   if (ret != 0) {
-    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, (u64)ret, 0, 0);
+    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, abs_val(ret), 0, 0);
     return 0;
   }
 
@@ -2063,35 +2068,35 @@ perf_check_and_submit_dns(struct pt_regs *ctx, struct sock *sk, struct sk_buff *
   unsigned int skb_data_len = 0;
   ret = bpf_probe_read(&skb_data_len, sizeof(skb->data_len), &skb->data_len);
   if (ret != 0) {
-    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, (u64)ret, 0, 0);
+    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, abs_val(ret), 0, 0);
     return;
   }
 
   unsigned char *from = NULL;
   ret = bpf_probe_read(&from, sizeof(skb->data), &skb->data);
   if (ret != 0 || from == NULL) {
-    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, (u64)ret, 0, 0);
+    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, abs_val(ret), 0, 0);
     return;
   }
 
   unsigned char *skb_head = NULL;
   ret = bpf_probe_read(&skb_head, sizeof(skb->head), &skb->head);
   if (ret != 0 || skb_head == NULL) {
-    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, (u64)ret, 0, 0);
+    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, abs_val(ret), 0, 0);
     return;
   }
 
   u16 skb_transport_header = 0;
   ret = bpf_probe_read(&skb_transport_header, sizeof(skb->transport_header), &skb->transport_header);
   if (ret != 0) {
-    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, (u64)ret, 0, 0);
+    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, abs_val(ret), 0, 0);
     return;
   }
 
   u16 skb_network_header = 0;
   ret = bpf_probe_read(&skb_network_header, sizeof(skb->network_header), &skb->network_header);
   if (ret != 0) {
-    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, (u64)ret, 0, 0);
+    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, abs_val(ret), 0, 0);
     return;
   }
 
