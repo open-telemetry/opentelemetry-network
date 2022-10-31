@@ -286,7 +286,7 @@ app agent_internal {
 app ingest {
   jit
 
-  span process impl "server::ingest::ProcessSpan" include "<server/ingest/process_span.h>" {
+  span process impl "reducer::ingest::ProcessSpan" include "<reducer/ingest/process_span.h>" {
     pool_size 10000000
 
     string<16> comm
@@ -390,7 +390,7 @@ app ingest {
     }
   } /* span tracked_process_span */
 
-  span cgroup impl "server::ingest::CgroupSpan" include "<server/ingest/cgroup_span.h>" {
+  span cgroup impl "reducer::ingest::CgroupSpan" include "<reducer/ingest/cgroup_span.h>" {
     pool_size 800000
 
     // cgroup name prefix
@@ -423,7 +423,7 @@ app ingest {
       1: u64 cgroup
       2: u64 cgroup_parent
       3: u8 name[256]
-    }  
+    }
     37: end cgroup_close ref cgroup {
       description "cgroup destroyed"
       severity 0
@@ -510,7 +510,7 @@ app ingest {
     }
   } /* span cgroup */
 
-  span socket impl "server::ingest::SocketSpan" include "<server/ingest/socket_span.h>" {
+  span socket impl "reducer::ingest::SocketSpan" include "<reducer/ingest/socket_span.h>" {
     pool_size 5000000
 
     reference<process> process
@@ -587,7 +587,7 @@ app ingest {
     }
   } /* span socket */
 
-  span agent impl "server::ingest::AgentSpan" include "<server/ingest/agent_span.h>" {
+  span agent impl "reducer::ingest::AgentSpan" include "<reducer/ingest/agent_span.h>" {
     pool_size 512 /* See core.h CONN_POOL_SIZE */
     singleton
     6: log process_steady_state {
@@ -947,8 +947,8 @@ app ingest {
   } /* span agent */
 
   span aws_network_interface
-    impl "server::collector::cloud::AwsNetworkInterfaceSpan"
-    include "<server/ingest/aws_network_interface_span.h>"
+    impl "reducer::collector::cloud::AwsNetworkInterfaceSpan"
+    include "<reducer/ingest/aws_network_interface_span.h>"
   {
     pool_size 60000 // arbitrary number, we need a better estimate
     index (ip)
@@ -991,7 +991,7 @@ app ingest {
     }
   } /* span aws_network_interface */
 
-  span udp_socket impl "server::ingest::UdpSocketSpan" include "<server/ingest/udp_socket_span.h>" {
+  span udp_socket impl "reducer::ingest::UdpSocketSpan" include "<reducer/ingest/udp_socket_span.h>" {
     pool_size 120000
 
     reference<process> process
@@ -1084,7 +1084,7 @@ app ingest {
   /**
    * An k8s_pod
    */
-  span k8s_pod impl "server::ingest::K8sPodSpan" include "<server/ingest/k8s_pod_span.h>" {
+  span k8s_pod impl "reducer::ingest::K8sPodSpan" include "<reducer/ingest/k8s_pod_span.h>" {
     pool_size 220000
     index (uid_suffix, uid_hash)
     proxy matching.k8s_pod
@@ -1174,12 +1174,20 @@ app ingest {
   span logger {
     proxy logging.logger
   }
+
+  span core_stats {
+    proxy logging.core_stats
+  }
+
+  span ingest_core_stats {
+    proxy logging.ingest_core_stats
+  }
 } /* app ingest */
 
 app matching {
   jit
 
-  span flow impl "server::matching::FlowSpan" include "<server/matching/flow_span.h>" {
+  span flow impl "reducer::matching::FlowSpan" include "<reducer/matching/flow_span.h>" {
     pool_size 4200000
     index (addr1, port1, addr2, port2)
 
@@ -1296,8 +1304,8 @@ app matching {
   }
 
   span aws_enrichment
-    impl "server::matching::AwsEnrichmentSpan"
-    include "<server/matching/aws_enrichment_span.h>"
+    impl "reducer::matching::AwsEnrichmentSpan"
+    include "<reducer/matching/aws_enrichment_span.h>"
   {
     pool_size 60000 // arbitrary number, we need a better estimate
     index (ip)
@@ -1325,7 +1333,7 @@ app matching {
     string<32> az2
   }
 
-  span k8s_pod impl "server::matching::K8sPodSpan" include "<server/matching/k8s_pod_span.h>" {
+  span k8s_pod impl "reducer::matching::K8sPodSpan" include "<reducer/matching/k8s_pod_span.h>" {
     pool_size 220000
     index (uid_suffix, uid_hash)
 
@@ -1354,7 +1362,7 @@ app matching {
     }
   } /* span k8s_pod */
 
-  span k8s_container impl "server::matching::K8sContainerSpan" include "<server/matching/k8s_container_span.h>" {
+  span k8s_container impl "reducer::matching::K8sContainerSpan" include "<reducer/matching/k8s_container_span.h>" {
     pool_size 600000
     index (uid_suffix, uid_hash)
 
@@ -1432,8 +1440,8 @@ app aggregation {
    * node-pair aggregation tree
    ****************************************************************************/
   span agg_root
-       impl "server::aggregation::AggRootSpan"
-       include "<server/aggregation/agg_root_span.h>"
+       impl "reducer::aggregation::AggRootSpan"
+       include "<reducer/aggregation/agg_root_span.h>"
   {
     pool_size 4000000
 
@@ -1703,8 +1711,8 @@ app logging {
   jit
 
   span logger
-      impl "server::logging::LoggerSpan"
-      include "<server/logging/logger_span.h>"
+      impl "reducer::logging::LoggerSpan"
+      include "<reducer/logging/logger_span.h>"
   {
     pool_size 128
 
@@ -1808,8 +1816,8 @@ app logging {
   }
 
   span core_stats
-     impl "server::logging::CoreStatsSpan"
-     include "<server/logging/core_stats_span.h>"
+     impl "reducer::logging::CoreStatsSpan"
+     include "<reducer/logging/core_stats_span.h>"
   {
     pool_size 128
 
@@ -1888,8 +1896,8 @@ app logging {
   }
 
   span agg_core_stats
-     impl "server::logging::AggCoreStatsSpan"
-     include "<server/logging/agg_core_stats_span.h>"
+     impl "reducer::logging::AggCoreStatsSpan"
+     include "<reducer/logging/agg_core_stats_span.h>"
   {
     pool_size 128
 
@@ -1908,6 +1916,173 @@ app logging {
       3: u64 metric_bytes_written
       4: u64 metric_bytes_discarded
       5: u64 time_ns
+    }
+  }
+
+  span ingest_core_stats
+     impl "reducer::logging::IngestCoreStatsSpan"
+     include "<reducer/logging/ingest_core_stats_span.h>"
+  {
+    pool_size 128
+
+    33: msg _start {}
+    34: msg _end {}
+    35: msg client_handle_pool_stats{
+      1: string module
+      2: u16 shard
+      3: string version
+      4: string cloud
+      5: string env
+      6: string role
+      7: string az
+      8: string node_id
+      9: string kernel_version
+      10: u16 client_type
+      11: string agent_hostname
+      12: string os
+      13: string os_version
+      14: u64 time_ns
+      15: u64 client_handle_pool
+      16: u64 client_handle_pool_fraction
+    }
+    36: msg agent_connection_message_stats{
+      1: string module
+      2: u16 shard
+      3: string version
+      4: string cloud
+      5: string env
+      6: string role
+      7: string az
+      8: string node_id
+      9: string kernel_version
+      10: u16 client_type
+      11: string agent_hostname
+      12: string os
+      13: string os_version
+      14: u64 time_ns
+      15: string message
+      16: u16 severity_
+      17: u64 count
+    }
+    37: msg agent_connection_message_error_stats{
+      1: string module
+      2: u16 shard
+      3: string version
+      4: string cloud
+      5: string env
+      6: string role
+      7: string az
+      8: string node_id
+      9: string kernel_version
+      10: u16 client_type
+      11: string agent_hostname
+      12: string os
+      13: string os_version
+      14: u64 time_ns
+      15: string message
+      16: string error
+      17: u64 count
+    }
+    38: msg connection_stats{
+      1: string module
+      2: u16 shard
+      3: string version
+      4: string cloud
+      5: string env
+      6: string role
+      7: string az
+      8: string node_id
+      9: string kernel_version
+      10: u16 client_type
+      11: string agent_hostname
+      12: string os
+      13: string os_version
+      14: u64 time_ns
+      15: u64 time_since_last_message_ns
+      16: u64 clock_offset_ns
+    }
+    39: msg collector_log_stats{
+      1: string module
+      2: u16 shard
+      3: string version
+      4: string cloud
+      5: string env
+      6: string role
+      7: string az
+      8: string node_id
+      9: string kernel_version
+      10: u16 client_type
+      11: string agent_hostname
+      12: string os
+      13: string os_version
+      14: u64 time_ns
+      15: string severity_
+      16: u32 count
+    }
+    40: msg entry_point_stats{
+      1: string module
+      2: u16 shard
+      3: string version
+      4: string cloud
+      5: string env
+      6: string role
+      7: string az
+      8: string node_id
+      9: string kernel_version
+      10: u16 client_type
+      11: string agent_hostname
+      12: string os
+      13: string os_version
+      14: u64 time_ns
+      15: string kernel_headers_source
+      16: string entrypoint_error
+      17: u8 entrypoint_info
+    }
+    41: msg collector_health_stats{
+      1: string module
+      2: u16 shard
+      3: string version
+      4: string cloud
+      5: string env
+      6: string role
+      7: string az
+      8: string node_id
+      9: string kernel_version
+      10: u16 client_type
+      11: string hostname
+      12: string os
+      13: string os_version
+      14: u64 time_ns
+      15: string status
+      16: string status_detail
+    }
+    42: msg bpf_log_stats{
+      1: string module
+      2: u16 shard
+      3: string version
+      4: string cloud
+      5: string env
+      6: string role
+      7: string az
+      8: string node_id
+      9: string kernel_version
+      10: u16 client_type
+      11: string hostname
+      12: string os
+      13: string os_version
+      14: u64 time_ns
+      15: string filename
+      16: string line
+      17: string code
+      18: string arg0
+      19: string arg1
+      20: string arg2
+    }
+    43: msg server_stats{
+      1: string module
+      2: u64 connection_counter
+      3: u64 disconnect_counter
+      4: u64 time_ns
     }
   }
 } /* app logging */
