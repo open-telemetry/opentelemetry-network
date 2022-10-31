@@ -72,7 +72,12 @@ public:
   /**
    * Cleans up a single probe
    */
-  void cleanup_probe(std::string func_name);
+  void cleanup_probe(const std::string &k_func_name);
+
+  /**
+   * Cleans up a single kretprobe
+   */
+  void cleanup_kretprobe(const std::string &k_func_name);
 
 #if DEBUG_ENABLE_STACKTRACE
   /**
@@ -82,6 +87,8 @@ public:
 #endif
 
 protected:
+  void cleanup_probe_common(const std::string &probe_name);
+
   /**
    * Returns the file descriptor for a table declared in bpf
    */
@@ -93,6 +100,9 @@ protected:
   int setup_mmap(int cpu, int events_fd, PerfContainer &perf, bool is_data, u32 n_bytes, u32 n_watermark_bytes);
 
 private:
+  static constexpr char probe_prefix_[] = "ebpf_net_p_";
+  static constexpr char kretprobe_prefix_[] = "ebpf_net_r_";
+
   struct TailCallTuple {
     TailCallTuple(const std::string &table, const std::string &func, int fd, int index)
         : table_(table), func_(func), fd_(fd), index_(index)
@@ -105,6 +115,6 @@ private:
   std::vector<int> fds_;
   std::vector<int> probes_;
   std::vector<TailCallTuple> tail_calls_;
-  std::vector<std::string> k_func_names_;
+  std::vector<std::string> probe_names_;
   size_t stack_trace_count_;
 };

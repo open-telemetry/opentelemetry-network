@@ -67,6 +67,12 @@ void LOG::init(bool console, std::string const *filename)
   spdlog::flush_on(spdlog::level::err);
 
   spdlog::flush_every(FLUSH_INTERVAL);
+
+#ifndef NDEBUG
+  // Spdlog doesn't throw exceptions while logging.  See https://spdlog.docsforge.com/v1.x/error-handling.
+  // In debug builds, use a custom error handler to catch incorrectly formatted (typically due to argument mismatches) logs.
+  spdlog::set_error_handler([](const std::string &msg) { throw std::runtime_error("spdlog error: " + msg); });
+#endif
 }
 
 std::string_view LOG::log_file_path()

@@ -69,16 +69,16 @@ SocketProber::SocketProber(
   check_cb("trigger_seq_show()");
 
   /* can remove existing now */
-  probe_handler.cleanup_probe("p_tcp4_seq_show");
+  probe_handler.cleanup_probe("tcp4_seq_show");
   periodic_cb();
   check_cb("socket prober cleanup (1)");
-  probe_handler.cleanup_probe("p_tcp6_seq_show");
+  probe_handler.cleanup_probe("tcp6_seq_show");
   periodic_cb();
   check_cb("socket prober cleanup (2)");
-  probe_handler.cleanup_probe("p_udp4_seq_show");
+  probe_handler.cleanup_probe("udp4_seq_show");
   periodic_cb();
   check_cb("socket prober cleanup (3)");
-  probe_handler.cleanup_probe("p_udp6_seq_show");
+  probe_handler.cleanup_probe("udp6_seq_show");
   periodic_cb();
   check_cb("socket prober cleanup (4)");
 }

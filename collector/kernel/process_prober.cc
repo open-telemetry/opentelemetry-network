@@ -39,7 +39,7 @@ ProcessProber::ProcessProber(
   check_cb("trigger_get_pid_task()");
 
   // we can remove the probe for existing now
-  probe_handler.cleanup_probe("r_get_pid_task");
+  probe_handler.cleanup_kretprobe("get_pid_task");
   periodic_cb();
   check_cb("process prober cleanup()");
 }
