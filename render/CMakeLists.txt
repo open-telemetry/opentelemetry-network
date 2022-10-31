@@ -2,10 +2,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-if(EBPF_NET_SUBPROJECT)
-  return()
-endif()
-
 get_target_property(
   RENDER_COMPILER
    render_compiler LOCATION
