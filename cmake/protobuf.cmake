@@ -1,6 +1,8 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
+include_guard()
+
 find_package(Protobuf CONFIG REQUIRED)
 message(STATUS "Found Protobuf ${Protobuf_VERSION}")
 

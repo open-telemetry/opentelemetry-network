@@ -1,6 +1,8 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
+include_guard()
+
 find_package(AWSSDK REQUIRED)
 set(AWS_SERVICES ec2 s3 core)
 AWSSDK_DETERMINE_LIBS_TO_LINK(AWS_SERVICES AWSSDK_LIBS)

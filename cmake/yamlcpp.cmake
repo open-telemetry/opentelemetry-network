@@ -1,6 +1,8 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
+include_guard()
+
 find_path(YAMLCPP_INCLUDE_DIR yaml-cpp/yaml.h)
 find_library(YAMLCPP_LIBRARY NAMES "libyaml-cpp.a")
 find_package_handle_standard_args(YAMLCPP DEFAULT_MSG YAMLCPP_LIBRARY YAMLCPP_INCLUDE_DIR)

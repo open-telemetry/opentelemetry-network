@@ -1,6 +1,8 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
+include_guard()
+
 # Runs linters on the given set of shell scripts.
 #
 # The scripts are bundled as a single cmake target.

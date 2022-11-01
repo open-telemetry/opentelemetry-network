@@ -1,6 +1,8 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
+include_guard()
+
 option(RUN_DOCKER_COMMANDS "when disabled, prepares docker images to be built but stop short of running `docker` commands" ON)
 
 add_custom_target(docker)

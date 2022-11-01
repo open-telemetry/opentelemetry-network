@@ -1,6 +1,8 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
+include_guard()
+
 pkg_check_modules(LIBELF REQUIRED libelf)
 add_library(libelf INTERFACE)
 target_compile_options(libelf INTERFACE "${LIBELF_CFLAGS}")

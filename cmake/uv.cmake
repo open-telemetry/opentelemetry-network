@@ -1,6 +1,8 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
+include_guard()
+
 find_path(LIBUV_INCLUDE_DIR uv.h)
 find_library(LIBUV_LIBS NAMES uv libuv)
 find_library(LIBUV_STATIC_LIBRARY NAMES libuv.a)

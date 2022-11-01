@@ -1,6 +1,8 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
+include_guard()
+
 find_library(CURL_STATIC_LIBRARY NAMES libcurl.a)
 message(STATUS "curl static library: ${CURL_STATIC_LIBRARY}")
 add_library(curl-static INTERFACE)

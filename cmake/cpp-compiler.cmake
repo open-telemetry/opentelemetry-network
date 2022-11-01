@@ -1,6 +1,8 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
+include_guard()
+
 # resolves the command line option for limiting error output
 # this is extremely useful for debugging compilation errors
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
