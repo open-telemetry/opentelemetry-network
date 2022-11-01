@@ -23,7 +23,6 @@ endif()
 
 # Custom modules
 #
-if(NOT EBPF_NET_SUBPROJECT)
 include(cpp-compiler)
 include(ccache)
 include(docker-utils)
@@ -50,7 +49,6 @@ include(breakpad)
 include(abseil)
 include(yamlcpp)
 include(render)
-endif(NOT EBPF_NET_SUBPROJECT)
 
 include_directories(
   ${PROJECT_SOURCE_DIR}

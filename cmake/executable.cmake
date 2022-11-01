@@ -1,6 +1,8 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
+include_guard()
+
 ###########################
 # static compilation target
 add_library(static-executable INTERFACE)

@@ -1,6 +1,8 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
+include_guard()
+
 function (add_xxd FIL GENERATED_NAME)
   cmake_parse_arguments(MOD "" "OUTPUT" "DEPENDS" ${ARGN})
 
