@@ -62,6 +62,10 @@ include_directories(
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 set(CONFIG_H_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
+add_custom_target(pipeline)
+add_custom_target(pipeline-docker)
+add_custom_target(pipeline-docker-registry)
+
 add_subdirectory(renderc)
 add_subdirectory(render)
 add_subdirectory(config)
@@ -72,6 +76,11 @@ add_subdirectory(util)
 add_subdirectory(geoip)
 add_subdirectory(jitbuf)
 add_subdirectory(collector)
+add_subdirectory(reducer)
 add_subdirectory(otlp)
 
 configure_file(config.h.cmake_in config.h)
+
+add_dependencies(pipeline collectors reducer)
+add_dependencies(pipeline-docker collectors-docker)
+add_dependencies(pipeline-docker-registry collectors-docker-registry)
