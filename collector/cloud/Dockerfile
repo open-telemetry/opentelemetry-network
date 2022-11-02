@@ -1,7 +1,7 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
-FROM bitnami/minideb:buster
+FROM bitnami/minideb:bullseye
 
 LABEL org.label-schema.name="network-explorer/cloud-collector" \
       org.label-schema.description="Cloud metadata collector" \

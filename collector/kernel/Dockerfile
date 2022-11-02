@@ -1,13 +1,12 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
-FROM bitnami/minideb:buster
+FROM bitnami/minideb:bullseye
 
 LABEL org.label-schema.name="network-explorer/kernel-collector" \
       org.label-schema.description="eBPF kernel information collector" \
       org.label-schema.schema-version="1.0"
 
-ARG EXTRA_PKGS=""
 
 # ca-certificates are required by libcurl
 RUN apt-get update && apt-get install -y ca-certificates
@@ -19,13 +18,12 @@ ENV EBPF_NET_DATA_DIR=/var/run/ebpf_net
 
 ENTRYPOINT [ "/srv/entrypoint.sh" ]
 
-RUN apt-get install -y --no-install-recommends \
-  coreutils tar gzip sed curl yum yum-utils \
-  $EXTRA_PKGS
+RUN apt-get update && apt-get install -y --no-install-recommends \
+  bc coreutils curl gawk gzip iputils-ping jq netcat-openbsd ripgrep sed tar vim
 
 ARG BUILD_TYPE
 RUN if [ "$BUILD_TYPE" = "Debug" ]; then \
-      apt-get -y install --no-install-recommends cgdb gdb valgrind; \
+      apt-get install -y --no-install-recommends cgdb gdb valgrind; \
     fi
 
 COPY srv /srv
