@@ -1,7 +1,7 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
-FROM bitnami/minideb:bullseye
+FROM bitnami/minideb:buster
 
 LABEL org.label-schema.name="network-explorer/kernel-collector" \
       org.label-schema.description="eBPF kernel information collector" \
@@ -18,8 +18,8 @@ ENV EBPF_NET_DATA_DIR=/var/run/ebpf_net
 
 ENTRYPOINT [ "/srv/entrypoint.sh" ]
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-  bc coreutils curl gawk gzip iputils-ping jq netcat-openbsd ripgrep sed tar vim
+RUN apt-get install -y --no-install-recommends \
+  bc coreutils curl gawk gzip iputils-ping jq netcat-openbsd ripgrep sed tar vim yum yum-utils
 
 ARG BUILD_TYPE
 RUN if [ "$BUILD_TYPE" = "Debug" ]; then \
