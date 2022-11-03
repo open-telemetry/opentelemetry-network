@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Tried alpine (nope,  binary incompatible with glibc) & distroless (nope, missing some libs, probably fixable with some effort)
-FROM docker-hub.repo.splunkdev.net/bitnami/minideb:unstable
+FROM bitnami/minideb:bullseye
 
 LABEL \
   org.label-schema.name="opentelemetry/opentelemetry-ebpf-reducer" \
@@ -11,7 +11,13 @@ LABEL \
   org.label-schema.usage="./README.md" \
   org.label-schema.schema-version="1.0"
 
-RUN install_packages gdb cgdb bc sed coreutils netcat-openbsd jq gawk ripgrep vim
+RUN apt-get update && apt-get install -y --no-install-recommends \
+  bc coreutils curl gawk gzip iputils-ping jq netcat-openbsd ripgrep sed tar vim
+
+ARG BUILD_TYPE
+RUN if [ "$BUILD_TYPE" = "Debug" ]; then \
+      apt-get install -y --no-install-recommends cgdb gdb valgrind; \
+    fi
 
 # Inbound metrics on 8000 (currently via stunnel); prometheus scrapes 7000, 7001, 7010
 EXPOSE 7000 7001 7010 8000
