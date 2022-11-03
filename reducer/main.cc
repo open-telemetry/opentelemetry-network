@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
   // Command-line flags.
   //
 
-  cli::ArgsParser parser("OpenTelemetry NPM reducer.");
+  cli::ArgsParser parser("OpenTelemetry eBPF Reducer.");
 
   // Main.
   //
@@ -261,7 +261,7 @@ int main(int argc, char *argv[])
   global_otlp_grpc_batch_size = otlp_grpc_batch_size_flag.Get();
 
   /* log reducer version */
-  LOG::info("Starting OpenTelemetry NPM Reducer version {} ({})", versions::release, release_mode_string);
+  LOG::info("Starting OpenTelemetry eBPF Reducer version {} ({})", versions::release, release_mode_string);
 
   // If the path to a GeoIP database is defined, try loading the database here
   // and print an error message if it fails.
@@ -473,7 +473,7 @@ int main(int argc, char *argv[])
     thread.join();
   }
 
-  LOG::info("OpenTelemetry NPM Reducer exiting");
+  LOG::info("OpenTelemetry eBPF Reducer exiting");
 
   return 0;
 }

@@ -3,9 +3,10 @@
 
 FROM bitnami/minideb:bullseye
 
-LABEL org.label-schema.name="network-explorer/k8s-relay" \
-      org.label-schema.description="Kubernetes metadata collector relay service" \
-      org.label-schema.schema-version="1.0"
+LABEL org.label-schema.name="opentelemetry-ebpf-k8s-relay"
+LABEL org.label-schema.description="OpenTelemetry eBPF Kubernetes metadata collector relay service"
+LABEL org.label-schema.vcs-url="https://github.com/open-telemetry/opentelemetry-ebpf"
+LABEL org.label-schema.schema-version="1.0"
 
 # ca-certificates are required by libcurl
 RUN apt-get update && apt-get install -y ca-certificates

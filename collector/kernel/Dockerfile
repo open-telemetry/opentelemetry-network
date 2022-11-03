@@ -3,10 +3,10 @@
 
 FROM bitnami/minideb:buster
 
-LABEL org.label-schema.name="network-explorer/kernel-collector" \
-      org.label-schema.description="eBPF kernel information collector" \
-      org.label-schema.schema-version="1.0"
-
+LABEL org.label-schema.name="opentelemetry-ebpf-kernel-collector"
+LABEL org.label-schema.description="OpenTelemetry eBPF kernel information collector"
+LABEL org.label-schema.vcs-url="https://github.com/open-telemetry/opentelemetry-ebpf"
+LABEL org.label-schema.schema-version="1.0"
 
 # ca-certificates are required by libcurl
 RUN apt-get update && apt-get install -y ca-certificates

@@ -3,9 +3,10 @@
 
 FROM bitnami/minideb:bullseye
 
-LABEL org.label-schema.name="network-explorer/cloud-collector" \
-      org.label-schema.description="Cloud metadata collector" \
-      org.label-schema.schema-version="1.0"
+LABEL org.label-schema.name="opentelemetry-ebpf-cloud-collector"
+LABEL org.label-schema.description="OpenTelemetry eBPF cloud metadata collector"
+LABEL org.label-schema.vcs-url="https://github.com/open-telemetry/opentelemetry-ebpf"
+LABEL org.label-schema.schema-version="1.0"
 
 # ca-certificates are required by libcurl
 RUN apt-get update && apt-get install -y ca-certificates
