@@ -15,6 +15,12 @@ The reducer outputs metrics to the OpenTelemetry collector.
 
 ## Building the collectors ##
 
+Before building, make sure that all submodules are checked-out:
+
+```
+git submodule update --init --recursive
+```
+
 There's a docker build image provided with all dependencies pre-installed,
 ready to build the collectors.
 
