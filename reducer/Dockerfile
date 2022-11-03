@@ -1,15 +1,12 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
-# Tried alpine (nope,  binary incompatible with glibc) & distroless (nope, missing some libs, probably fixable with some effort)
 FROM bitnami/minideb:bullseye
 
-LABEL \
-  org.label-schema.name="opentelemetry/opentelemetry-ebpf-reducer" \
-  org.label-schema.description="OpenTelemetry eBPF reducer" \
-  org.label-schema.vcs-url="https://github.com/open-telemetry/opentelemetry-ebpf" \
-  org.label-schema.usage="./README.md" \
-  org.label-schema.schema-version="1.0"
+LABEL org.label-schema.name="opentelemetry-ebpf-reducer"
+LABEL org.label-schema.description="OpenTelemetry eBPF reducer"
+LABEL org.label-schema.vcs-url="https://github.com/open-telemetry/opentelemetry-ebpf"
+LABEL org.label-schema.schema-version="1.0"
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
   bc coreutils curl gawk gzip iputils-ping jq netcat-openbsd ripgrep sed tar vim

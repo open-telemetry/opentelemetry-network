@@ -3,7 +3,7 @@
 
 grammar io.opentelemetry.render.Render with org.eclipse.xtext.common.Terminals
 
-generate render "https://flowmill.github.io/network-explorer/render"
+generate render "https://open-telemetry.github.io/opentelemetry-ebpf/render"
 
 Document:
   package=PackageDefinition
