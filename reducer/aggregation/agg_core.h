@@ -34,7 +34,7 @@ class RpcQueueMatrix;
 
 namespace reducer::aggregation {
 
-// This class implements the 'aggregation' app (see npm.render file).
+// This class implements the 'aggregation' app (see render definition file).
 //
 // It receives messages from one or more matching core(s), performs flow
 // aggregation and outputs metrics ready to be scraped by a time-series DB.

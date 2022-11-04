@@ -27,7 +27,7 @@ class RpcQueueMatrix;
 
 namespace reducer::matching {
 
-// This class implements the 'matching' app (see npm.render file).
+// This class implements the 'matching' app (see render definition file).
 //
 // It receives messages from one or more ingest core(s), matches received
 // information to 'flow' spans, sends enriched flows to aggregation core(s) for
