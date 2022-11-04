@@ -26,4 +26,4 @@ ENTRYPOINT ["/srv/entrypoint.sh"]
 CMD ["--port", "8000", "--prom", "0.0.0.0:7010"]
 
 COPY srv /srv
-RUN mv /srv/reducer-static /srv/opentelemetry-npm-reducer
+RUN mv /srv/reducer-static /srv/opentelemetry-ebpf-reducer
