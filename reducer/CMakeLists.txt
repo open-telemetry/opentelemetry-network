@@ -151,16 +151,32 @@ lint_shell_script_bundle(
 
 # Docker image
 #
-build_custom_docker_image(
-  reducer
-  OUT_DIR srv
-  OUTPUT_OF
-    reducer-scripts
-  ARTIFACTS_OF
-    reducer-static
-  DEPENDENCY_OF
-    pipeline
-)
+if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+  build_custom_docker_image(
+    reducer
+    OUT_DIR srv
+    OUTPUT_OF
+      reducer-scripts
+    ARTIFACTS_OF
+      reducer
+      reducer-static
+    DEPENDENCY_OF
+      pipeline
+    ARGS
+      BUILD_TYPE="Debug"
+  )
+else()
+  build_custom_docker_image(
+    reducer
+    OUT_DIR srv
+    OUTPUT_OF
+      reducer-scripts
+    ARTIFACTS_OF
+      reducer-static
+    DEPENDENCY_OF
+      pipeline
+  )
+endif()
 
 # Unit Tests
 add_unit_test(otlp_grpc_formatter LIBS metrics_output)
