@@ -8,12 +8,12 @@ LABEL org.label-schema.description="OpenTelemetry eBPF reducer"
 LABEL org.label-schema.vcs-url="https://github.com/open-telemetry/opentelemetry-ebpf"
 LABEL org.label-schema.schema-version="1.0"
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-  bc coreutils curl gawk gzip iputils-ping jq netcat-openbsd ripgrep sed tar vim
+# required by entrypoint.sh and health_check.sh scripts
+RUN install_packages bc coreutils netcat-openbsd sed
 
 ARG BUILD_TYPE
 RUN if [ "$BUILD_TYPE" = "Debug" ]; then \
-      apt-get install -y --no-install-recommends cgdb gdb valgrind; \
+      install_packages cgdb curl gawk gdb gzip iputils-ping jq procps ripgrep tar vim valgrind; \
     fi
 
 # Inbound metrics on 8000 (currently via stunnel); prometheus scrapes 7000, 7001, 7010
