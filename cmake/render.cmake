@@ -41,8 +41,6 @@ function(render_compile INPUT_DIR)
         "${OUTPUT_DIR}/${PACKAGE}/${APP}/writer.cc"
         "${OUTPUT_DIR}/${PACKAGE}/${APP}/encoder.h"
         "${OUTPUT_DIR}/${PACKAGE}/${APP}/encoder.cc"
-        "${OUTPUT_DIR}/${PACKAGE}/${APP}/otlp_log_encoder.h"
-        "${OUTPUT_DIR}/${PACKAGE}/${APP}/otlp_log_encoder.cc"
     )
     set(
       RENDER_${PACKAGE}_${APP}_OUTPUTS

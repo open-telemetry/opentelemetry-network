@@ -532,16 +532,7 @@ void KernelCollector::received_data(const u8 *data, int data_len)
         recieved_length_ = 0;
       }
     }
-    break;
-  }
-
-  case IntakeEncoder::otlp_log: {
-    static constexpr std::string_view http_200 = "HTTP/1.1 200 ";
-    if (response.size() < http_200.size() || response.substr(0, http_200.size()) != http_200) {
-      LOG::error("HTTP response from OTLP log collector (sz:{}): {}", data_len, response);
-    }
-    break;
-  }
+  } break;
   }
 }
 

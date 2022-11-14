@@ -9,7 +9,6 @@
 #include <config/config_file.h>
 #include <config/intake_config.h>
 #include <generated/ebpf_net/ingest/meta.h>
-#include <generated/ebpf_net/ingest/otlp_log_encoder.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <jitbuf/jb.h>
@@ -390,12 +389,4 @@ TEST_F(KernelCollectorTest, binary)
   stop_conditions.names_and_counts["begin_telemetry"] = 1;
 
   start_kernel_collector(IntakeEncoder::binary, stop_conditions, BPF_DUMP_FILE);
-}
-
-TEST_F(KernelCollectorTest, otlp_log)
-{
-  StopConditions stop_conditions{
-      .num_sends = 1000, .names_and_counts = {NAMES_AND_COUNTS_COMMON}, .timeout_sec = std::chrono::seconds(60)};
-
-  start_kernel_collector(IntakeEncoder::otlp_log, stop_conditions, BPF_DUMP_FILE);
 }
