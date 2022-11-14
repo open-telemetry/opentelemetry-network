@@ -49,41 +49,6 @@ std::error_code TestChannel::send(const u8 *data, int size)
         }
       }
     } break;
-    case IntakeEncoder::otlp_log: {
-      auto msg_size = static_cast<std::string_view::size_type>(size);
-      std::string_view const msg{reinterpret_cast<char const *>(data), msg_size};
-
-      ss_ << msg;
-      LOG::trace("TestChannel::send() otlp_log format msg {}", msg);
-
-      auto pos = msg.find_first_of("{");
-      if (pos == std::string::npos) {
-        ++num_failed_sends_;
-        LOG::error("cannot parse msg {}", msg);
-        return {};
-      }
-      std::string_view json_msg(&msg[pos], msg_size - pos);
-      nlohmann::json const object = nlohmann::json::parse(json_msg);
-
-      /*
-        {
-        "resourceLogs": [
-        {
-        "instrumentationLibraryLogs": [
-        {
-        "log_records": [
-        {
-        "name": "nic_stats",
-      */
-      for (auto const &rl : object["resourceLogs"]) {
-        for (auto const &ill : rl["instrumentationLibraryLogs"]) {
-          for (auto const &log : ill["log_records"]) {
-            ++message_counts_[log["name"]];
-            json_messages_.push_back(log);
-          }
-        }
-      }
-    } break;
     default:
       ++num_failed_sends_;
       LOG::error("unknown IntakeEncoder {}", encoder_);

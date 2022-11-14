@@ -11,7 +11,6 @@
 #include <util/file_ops.h>
 
 #include <generated/ebpf_net/ingest/encoder.h>
-#include <generated/ebpf_net/ingest/otlp_log_encoder.h>
 
 #include <uv.h>
 
@@ -71,10 +70,8 @@ public:
   std::unique_ptr<::ebpf_net::ingest::Encoder> make_encoder() const
   {
     switch (encoder_) {
-    case IntakeEncoder::otlp_log:
-      return std::make_unique<::ebpf_net::ingest::OtlpLogEncoder>(host_, port_);
-
     default:
+      // Use default encoder.
       return nullptr;
     }
   }
