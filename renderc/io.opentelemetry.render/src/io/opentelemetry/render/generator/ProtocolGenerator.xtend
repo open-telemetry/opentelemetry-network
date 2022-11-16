@@ -157,10 +157,10 @@ class ProtocolGenerator {
     #include "parsed_message.h"
     #include "wire_message.h"
 
-    #include <spdlog/fmt/fmt.h>
-
+    #include <algorithm>
     #include <iostream>
     #include <stdexcept>
+    #include <string>
 
     namespace «app.pkg.name»::«app.name» {
 
@@ -283,9 +283,9 @@ class ProtocolGenerator {
     void Protocol::add_handler(u16 rpc_id, void *context, handler_func_t handler_fn)
     {
       func_info *record = funcs_.insert(rpc_id, func_info{ context, handler_fn, });
-      if (record == nullptr)
-        throw std::runtime_error(fmt::format(
-          "Protocol::add_handler: unable to insert handler_fn (rpc_id={})", rpc_id));
+      if (record == nullptr) {
+        throw std::runtime_error("Protocol::add_handler: unable to insert handler_fn for rpc_id=" + std::to_string(rpc_id));
+      }
     }
 
     «IF app.jit»
@@ -297,9 +297,9 @@ class ProtocolGenerator {
     {
       /* find our handler function */
       auto func_info_p = funcs_.find(rpc_id);
-      if (func_info_p == nullptr)
-        throw std::runtime_error(fmt::format(
-          "Protocol::insert_transform: handler not found (rpc_id={})", rpc_id));
+      if (func_info_p == nullptr) {
+        throw std::runtime_error("Protocol::insert_transform: handler not found for rpc_id=" + std::to_string(rpc_id));
+      }
 
       handler_info *record = handlers_.insert(rpc_id, handler_info{
           .xform = xform,
@@ -307,9 +307,9 @@ class ProtocolGenerator {
           .handler_fn = func_info_p->handler_fn,
           .size = size,
           .transform_ptr = transform_ptr });
-      if (record == nullptr)
-        throw std::runtime_error(fmt::format(
-          "Protocol::insert_transform: unable to insert transform (rpc_id={})", rpc_id));
+      if (record == nullptr) {
+        throw std::runtime_error("Protocol::insert_transform: unable to insert transform for rpc_id=" + std::to_string(rpc_id));
+      }
     }
     «ENDIF»
 
@@ -320,9 +320,9 @@ class ProtocolGenerator {
     {
       /* find our handler function */
       auto func_info_p = funcs_.find(rpc_id);
-      if (func_info_p == nullptr)
-        throw std::runtime_error(fmt::format(
-          "Protocol::insert_identity_transform: handler not found (rpc_id={})", rpc_id));
+      if (func_info_p == nullptr) {
+        throw std::runtime_error("Protocol::insert_identity_transform: handler not found for rpc_id=" + std::to_string(rpc_id));
+      }
 
       handler_info *record = handlers_.insert(rpc_id, handler_info{
           .xform = builder_.get_identity(rpc_id),
@@ -333,9 +333,9 @@ class ProtocolGenerator {
           .transform_ptr = nullptr
         «ENDIF»
       });
-      if (record == nullptr)
-        throw std::runtime_error(fmt::format(
-          "Protocol::insert_identity_transform: unable to insert identity transform (rpc_id={})", rpc_id));
+      if (record == nullptr) {
+        throw std::runtime_error("Protocol::insert_identity_transform: unable to insert identity transform for rpc_id=" + std::to_string(rpc_id));
+      }
     }
 
     /******************************************************************************

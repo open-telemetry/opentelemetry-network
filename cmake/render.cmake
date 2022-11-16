@@ -134,11 +134,6 @@ function(render_compile INPUT_DIR)
     INTERFACE
       "${OUTPUT_DIR}"
   )
-  target_link_libraries(
-    render_${PACKAGE}_artifacts
-    INTERFACE
-      logging
-  )
   add_dependencies(
     render_${PACKAGE}_artifacts
       render_compile_${PACKAGE}
@@ -161,7 +156,6 @@ function(render_compile INPUT_DIR)
     target_link_libraries(
       render_${PACKAGE}_${APP}
       PUBLIC
-        logging
         fixed_hash
         jitbuf_llvm
         render_${PACKAGE}_artifacts
