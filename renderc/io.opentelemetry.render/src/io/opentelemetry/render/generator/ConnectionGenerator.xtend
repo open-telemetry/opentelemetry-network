@@ -35,127 +35,104 @@ class ConnectionGenerator {
     #include <platform/types.h>
     #include <util/fixed_hash.h>
 
-    /* Span implementation classes */
     «FOR app_span : app.spans.filter[include !== null]»
       #include «app_span.include»
     «ENDFOR»
 
     namespace «app.pkg.name»::«app.name» {
 
-    /* forward declaration */
     class Protocol;
 
-    /******************************************************************************
-     * CONNECTION CLASS: handles a single connection to the server
-     ******************************************************************************/
     class Connection {
     public:
-      /**
-       * C'tor
-       * @param identity: True if all messages should be identity messages
-       */
       Connection(Protocol &protocol, Index &index);
-
-      /**
-       * D'tor
-       */
       ~Connection();
 
-      /**
-       * Auth support.
-       */
       void on_connection_authenticated();
 
-      /**
-       * Singleton span accessors
-       */
+      // Singleton span accessors.
+      //
       «FOR span : app.spans.filter[isSingleton]»
-        weak_refs::«span.name» «span.name»() { return «span.instanceName».access(index_); }
+        weak_refs::«span.name» «span.name»() const { return «span.instanceName».access(index_); }
       «ENDFOR»
 
-      /**
-       * Handlers for all the incoming messages
-       */
+      // Handlers for all the incoming messages.
+      //
       «FOR span : app.spans»
-        /* span «span.name» */
-        «FOR msg : span.messages»
-        void «app.c_name»_«msg.name»(u64 timestamp, char *msg_buf);
-        «ENDFOR»
+        «IF span.messages.length > 0»
+          // span «span.name»
+          «FOR msg : span.messages»
+            void «app.c_name»_«msg.name»(u64 timestamp, char *msg_buf);
+          «ENDFOR»
+        «ENDIF»
       «ENDFOR»
 
-      /* hashers for each span type */
+      // Hashers for each span type.
+      //
       «FOR span : app.spans.filter[conn_hash]»
         struct «fixedHashHasherName(span)» {
           typedef std::size_t result_type;
-          inline result_type operator()(«span.referenceType.wireCType» const &s) const noexcept;
+          result_type operator()(«span.referenceType.wireCType» const &s) const noexcept;
         };
       «ENDFOR»
 
-      /* hash table types for each span type */
+      // Hash table types for each span type.
+      //
       «FOR span : app.spans.filter[conn_hash]»
-        using «fixedHashTypeName(span)» = FixedHash<«span.referenceType.wireCType», handles::«span.name»,
-              «span.pool_size», «fixedHashHasherName(span)»>;
+        using «fixedHashTypeName(span)» = FixedHash<«span.referenceType.wireCType», handles::«span.name», «span.pool_size», «fixedHashHasherName(span)»>;
       «ENDFOR»
 
-      /* pools for each span type */
+      // Pools for each span type.
+      //
       «FOR span : app.spans.filter[conn_hash]»
-          «fixedHashTypeName(span)» «fixedHashName(span)»;
+        «fixedHashTypeName(span)» «fixedHashName(span)»;
       «ENDFOR»
 
-      /* singleton spans maintain one instance per span */
+      // Singleton spans maintain one instance per span.
+      //
       «FOR span : app.spans.filter[isSingleton]»
         handles::«span.name» «span.instanceName»;
       «ENDFOR»
 
-      /* lookup functions for each span type */
+      // Lookup functions for each span type.
+      //
       «FOR span : app.spans.filter[conn_hash]»
         «spanLookupDeclaration(span)»
       «ENDFOR»
 
-      /**
-       * Message statistics for «app.connName»
-       */
-      struct Statistics {
-        /**
-         * C'tor
-         */
-        Statistics();
+      struct MessageStatistics {
+        MessageStatistics();
 
-        /**
-         * For each message, calls @f (module_name, message_name, severity, count)
-         */
-        void for_each_message(std::function<void(std::string_view, std::string_view, int, u64)> const& f);
+        // For each message, calls `f(module_name, message_name, severity, count)`
+        void foreach(std::function<void(std::string_view, std::string_view, int, u64)> const& f);
 
-        /*** message counts ***/
+        // Message counts.
         struct {
           «FOR span : app.spans»
-            /* span «span.name» */
             «FOR msg : span.messages»
               u64 «app.c_name»_«msg.name»;
             «ENDFOR»
           «ENDFOR»
         } counts;
 
-        /*** message change indication ***/
+        // Message count change indications.
         struct {
           «FOR span : app.spans»
-            /* span «span.name» */
             «FOR msg : span.messages»
-              unsigned int «app.c_name»_«msg.name»: 1; /* 1 bit */
+              unsigned int «app.c_name»_«msg.name» : 1;
             «ENDFOR»
           «ENDFOR»
         } changed;
 
-      } statistics;
+      } message_stats;
 
       struct MessageErrors {
         MessageErrors();
 
-        /**
-         * For each message, calls @f (module_name, message_name, error_name, count)
-         */
+        // For each message, calls `f(module_name, message_name, error_name, count)`
         void foreach(std::function<void(std::string_view, std::string_view, std::string_view, u64)> const &f);
 
+        // Error counts.
         struct {
           «FOR span : app.spans»
             «FOR msg : span.messages»
@@ -166,6 +143,7 @@ class ConnectionGenerator {
           «ENDFOR»
         } counts;
 
+        // Error count change indications.
         struct {
           «FOR span : app.spans»
             «FOR msg : span.messages»
@@ -181,7 +159,6 @@ class ConnectionGenerator {
       Index &index() { return index_; }
 
     private:
-      /* the protocol instance */
       Protocol &protocol_;
       Index &index_;
     };
@@ -206,101 +183,42 @@ class ConnectionGenerator {
 
     namespace «app.pkg.name»::«app.name» {
 
-    /******************************************************************************
-     * Message statistics
-     ******************************************************************************/
-    Connection::Statistics::Statistics()
-    {
-      «FOR span : app.spans»
-        /* span «span.name» */
-        «FOR msg : span.messages»
-          counts.«app.c_name»_«msg.name» = 0;
-        «ENDFOR»
-      «ENDFOR»
-
-      memset(&changed, 0, sizeof(changed));
-    }
-
-    void Connection::Statistics::for_each_message(std::function<void(std::string_view, std::string_view, int, u64)> const& f)
-    {
-      «FOR span : app.spans»
-        /* span «span.name» */
-        «FOR msg : span.messages»
-          if (changed.«app.c_name»_«msg.name») {
-            f("«app.c_name»", "«msg.name»", «msg.severity», counts.«app.c_name»_«msg.name»);
-          }
-        «ENDFOR»
-      «ENDFOR»
-
-      memset(&changed, 0, sizeof(changed));
-    }
-
-    /******************************************************************************
-     * Message error counts
-     ******************************************************************************/
-    Connection::MessageErrors::MessageErrors()
-    {
-      memset(&counts, 0, sizeof(counts));
-      memset(&changed, 0, sizeof(changed));
-    }
-
-    void Connection::MessageErrors::foreach(std::function<void(std::string_view, std::string_view, std::string_view, u64)> const &f)
-    {
-      «FOR span : app.spans»
-        «FOR msg : span.messages»
-          «FOR error_name : msg.errors»
-            if (changed.«app.c_name»_«msg.name»_«error_name») {
-              f("«app.c_name»", "«msg.name»", "«error_name»", counts.«app.c_name»_«msg.name»_«error_name»);
-            }
-          «ENDFOR»
-        «ENDFOR»
-      «ENDFOR»
-
-      memset(&changed, 0, sizeof(changed));
-    }
-
-    /******************************************************************************
-     * CONNECTION CLASS: c'tor
-     ******************************************************************************/
     Connection::Connection(Protocol &protocol, Index &index)
-      : protocol_(protocol),
-        index_(index)
+      : protocol_(protocol), index_(index)
     {
-      «FOR span : app.spans.filter[isSingleton]»
-        {
-          auto ref = index_.«span.name».alloc();
-          if (!ref.valid())
-            throw std::runtime_error("Connection::Connection - could not allocate «span.name» handle");
+      «FOR span : app.spans.filter[isSingleton] SEPARATOR "\n"»
+        if (auto ref = index_.«span.name».alloc(); ref.valid()) {
           «span.instanceName» = ref.to_handle();
+        } else {
+          throw std::runtime_error("«app.pkg.name»::«app.name»::Connection - could not allocate «span.name» handle");
         }
       «ENDFOR»
 
-      /* populate handlers_ */
       «FOR span : app.spans»
         «FOR msg : span.messages»
           «IF msg.noAuthorizationNeeded»
-            protocol_.add_handler(«msg.wire_msg.rpc_id», this,
-              &dispatch_protocol_member_handler<Connection, &Connection::«app.c_name»_«msg.name»>);
+            protocol_.add_handler(«msg.wire_msg.rpc_id», this, &dispatch_protocol_member_handler<Connection, &Connection::«app.c_name»_«msg.name»>);
           «ENDIF»
         «ENDFOR»
       «ENDFOR»
 
-      /* we currently only support identity transformations */
+      // Only identity transformations are currently supported.
       protocol_.insert_no_auth_identity_transforms();
     }
 
-    /******************************************************************************
-     * CONNECTION CLASS: d'tor
-     ******************************************************************************/
     Connection::~Connection()
     {
-      /* cleanup singleton spans */
+      // Clean up singleton spans.
+      //
       «FOR span : app.spans.filter[isSingleton]»
         «span.instanceName».put(index_);
       «ENDFOR»
 
-      /* cleanup fixed hashes */
-      «FOR span : app.spans.filter[conn_hash]»
+      //
+      // Clean up span pools.
+      //
+
+      «FOR span : app.spans.filter[conn_hash] SEPARATOR "\n"»
         for (auto handle_loc : «fixedHashName(span)».allocated()) {
           «IF span.impl !== null»
             «FOR msg : span.messages.filter[type == MessageType.END && reference_field.name == "_ref"]»
@@ -324,59 +242,109 @@ class ConnectionGenerator {
       «FOR span : app.spans»
         «FOR msg : span.messages»
           «IF !msg.noAuthorizationNeeded»
-            protocol_.add_handler(«msg.wire_msg.rpc_id», this,
-              &dispatch_protocol_member_handler<Connection, &Connection::«app.c_name»_«msg.name»>);
+            protocol_.add_handler(«msg.wire_msg.rpc_id», this, &dispatch_protocol_member_handler<Connection, &Connection::«app.c_name»_«msg.name»>);
           «ENDIF»
         «ENDFOR»
       «ENDFOR»
 
-      /* we currently only support identity transformations */
+      // Only identity transformations are currently supported.
       protocol_.insert_need_auth_identity_transforms();
     }
 
-    /******************************************************************************
-     * CONNECTION CLASS: span accessor functions implementation
-     ******************************************************************************/
-    «FOR span : app.spans.filter[conn_hash]»
+    ////////////////////////////////////////////////////////////////////////////////
+    // Span accessor function implementations.
+    //
+
+    «FOR span : app.spans.filter[conn_hash] SEPARATOR "\n"»
       «spanLookupImplementation(span)»
     «ENDFOR»
 
-    /******************************************************************************
-     * CONNECTION CLASS: handler function implementation
-     ******************************************************************************/
-    «FOR span : app.spans»
-      /* span «span.name» */
-      «FOR msg : span.messages»
-        «handlerImplementation(span, msg, app)»
+    ////////////////////////////////////////////////////////////////////////////////
+    // Handler function implementations.
+    //
 
+    «FOR span : app.spans»
+      «FOR msg : span.messages SEPARATOR "\n"»
+        «handlerImplementation(span, msg, app)»
       «ENDFOR»
     «ENDFOR»
 
-    /******************************************************************************
-     * CONNECTION CLASS: hasher_t implementation for spans
-     ******************************************************************************/
-    «FOR span : app.spans.filter[conn_hash]»
+    ////////////////////////////////////////////////////////////////////////////////
+    // Hasher implementations for spans.
+    //
+
+    «FOR span : app.spans.filter[conn_hash] SEPARATOR "\n"»
       typename Connection::«fixedHashHasherName(span)»::result_type
       Connection::«fixedHashHasherName(span)»::operator()(«span.referenceType.wireCType» const &s) const noexcept
       {
-        /* note: this is from generateContainersInl */
         result_type val = 0xBFFB7A00;
-        /**** fields ****/
         «FOR field : #[span.messages.head.reference_field]»
           «IF field.isArray && field.type.isShortString»
           «ELSEIF field.type.isShortString»
           «ELSEIF RenderGenerator::integerTypeSize(field.type.enum_type) % 4 == 0»
-            /* «field.name» is a primitive type, is multiple of 4 bytes.
-               will hash in 4-byte words */
+            // «field.name» is a primitive type, is multiple of 4 bytes: will hash in 4-byte words.
             val = (result_type)lookup3_hashword((u32 *)&s, «RenderGenerator::fieldSize(field) / 4», val + «RenderGenerator::fieldSize(field)»);
           «ELSE»
-            /* «field.name» is a plain variable: will hash individual bytes */
+            // «field.name» is a plain variable: will hash individual bytes.
             val = (result_type)lookup3_hashlittle((char *)&s, «RenderGenerator::fieldSize(field)», val + «RenderGenerator::fieldSize(field)»);
           «ENDIF»
         «ENDFOR»
         return val;
       }
     «ENDFOR»
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // Message statistics.
+    //
+
+    Connection::MessageStatistics::MessageStatistics()
+    {
+      «FOR span : app.spans»
+        «FOR msg : span.messages»
+          counts.«app.c_name»_«msg.name» = 0;
+        «ENDFOR»
+      «ENDFOR»
+
+      memset(&changed, 0, sizeof(changed));
+    }
+
+    void Connection::MessageStatistics::foreach(std::function<void(std::string_view, std::string_view, int, u64)> const& f)
+    {
+      «FOR span : app.spans»
+        «FOR msg : span.messages»
+          if (changed.«app.c_name»_«msg.name») {
+            f("«app.c_name»", "«msg.name»", «msg.severity», counts.«app.c_name»_«msg.name»);
+          }
+        «ENDFOR»
+      «ENDFOR»
+
+      memset(&changed, 0, sizeof(changed));
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // Message error counts.
+    //
+
+    Connection::MessageErrors::MessageErrors()
+    {
+      memset(&counts, 0, sizeof(counts));
+      memset(&changed, 0, sizeof(changed));
+    }
+
+    void Connection::MessageErrors::foreach(std::function<void(std::string_view, std::string_view, std::string_view, u64)> const &f)
+    {
+      «FOR span : app.spans»
+        «FOR msg : span.messages»
+          «FOR error_name : msg.errors»
+            if (changed.«app.c_name»_«msg.name»_«error_name») {
+              f("«app.c_name»", "«msg.name»", "«error_name»", counts.«app.c_name»_«msg.name»_«error_name»);
+            }
+          «ENDFOR»
+        «ENDFOR»
+      «ENDFOR»
+
+      memset(&changed, 0, sizeof(changed));
+    }
 
     } // namespace «app.pkg.name»::«app.name»
     '''
@@ -406,7 +374,7 @@ class ConnectionGenerator {
       [[maybe_unused]] struct «pmsg.struct_name» *msg = (struct «pmsg.struct_name» *)msg_buf;
 
       «IF msg.type == MessageType.START»
-        /* start message: insert */
+        // "start" message: allocate/lookup and insert into the pool.
         «IF span.index === null»
           auto ref = index_.«span.name».alloc();
         «ELSE»
@@ -414,17 +382,15 @@ class ConnectionGenerator {
           «FOR field : span.index.keys»
             «IF (field instanceof Field) && (field as Field).isIsArray»
               static_assert(sizeof(key.«field.name») == sizeof(msg->«field.name»));
-              std::copy_n(std::begin(msg->«field.name»), «(field as Field).array_size», 
-                    std::begin(key.«field.name»));
+              std::copy_n(std::begin(msg->«field.name»), «(field as Field).array_size», std::begin(key.«field.name»));
             «ELSE»
               key.«field.name» = msg->«field.name»;
             «ENDIF»
           «ENDFOR»
           auto ref = index_.«span.name».by_key(key);
         «ENDIF»
-
         if (!ref.valid()) {
-          /* could not allocate span */
+          // Could not allocate span.
           message_errors.counts.«app.c_name»_«msg.name»_span_alloc_failed += 1;
           message_errors.changed.«app.c_name»_«msg.name»_span_alloc_failed = 1;
           return;
@@ -433,29 +399,29 @@ class ConnectionGenerator {
         auto pos = «fixedHashName(span)».insert(msg->«msg.reference_field.name», std::move(ref));
         if (pos.index == «fixedHashName(span)».invalid) {
           if («fixedHashName(span)».full()) {
-            /* span handle pool full */
+            // Span handle pool full.
             message_errors.counts.«app.c_name»_«msg.name»_span_pool_full += 1;
             message_errors.changed.«app.c_name»_«msg.name»_span_pool_full = 1;
           } else {
             auto find_pos = «fixedHashName(span)».find(msg->«msg.reference_field.name»);
             if (find_pos.index != «fixedHashName(span)».invalid) {
-              /* already exists */
+              // Already exists.
               message_errors.counts.«app.c_name»_«msg.name»_duplicate_ref += 1;
               message_errors.changed.«app.c_name»_«msg.name»_duplicate_ref = 1;
             } else {
-              /* insert failed */
+              // Pool insert failed.
               message_errors.counts.«app.c_name»_«msg.name»_span_insert_failed += 1;
               message_errors.changed.«app.c_name»_«msg.name»_span_insert_failed = 1;
             }
           }
-          /* ignoring message - can't allocate or lookup span */
+          // Ignoring message -- failed to allocate or lookup span.
           return;
         }
       «ELSEIF (!span.isSingleton)»
-        /* get the destination span */
+        // Get the destination span.
         auto pos = «fixedHashName(span)».find(msg->«msg.reference_field.name»);
         if (pos.index == «fixedHashName(span)».invalid) {
-          /* find failed */
+          // Find failed.
           message_errors.counts.«app.c_name»_«msg.name»_span_find_failed += 1;
           message_errors.changed.«app.c_name»_«msg.name»_span_find_failed = 1;
           return;
@@ -464,7 +430,7 @@ class ConnectionGenerator {
 
       «IF span.impl !== null»
       {
-        /* call the span's handler */
+        // Call the span's handler.
         «IF span.isSingleton»
         auto entry = &«span.instanceName»;
         «ELSE»
@@ -476,20 +442,22 @@ class ConnectionGenerator {
       «ENDIF»
 
       «IF msg.type == MessageType.END»
-        /* end message: remove from hash */
+        // "end" message: remove from pool.
         «fixedHashName(span)»[pos.index].put(index_);
-        bool erase_res = «fixedHashName(span)».erase(msg->«msg.reference_field.name»);
-        if (erase_res != true) {
-          /* erase failed */
+        bool erased = «fixedHashName(span)».erase(msg->«msg.reference_field.name»);
+        if (erased != true) {
+          // Erase failed.
           message_errors.counts.«app.c_name»_«msg.name»_span_erase_failed += 1;
           message_errors.changed.«app.c_name»_«msg.name»_span_erase_failed = 1;
         }
       «ENDIF»
 
-      /* update message statistics */
-      statistics.counts.«app.c_name»_«msg.name»++;
-      statistics.changed.«app.c_name»_«msg.name» = 1;
+      // Update message statistics.
+      //
+      message_stats.counts.«app.c_name»_«msg.name» += 1;
+      message_stats.changed.«app.c_name»_«msg.name» = 1;
     }
     '''
   }
+
 }

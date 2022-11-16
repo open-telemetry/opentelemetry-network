@@ -236,7 +236,7 @@ void IngestCore::on_write_internal_stats_timer()
         client_handle_utilization(conn->aws_network_interface__hash.size(), conn->aws_network_interface__hash.capacity());
 
         /* write message statistics */
-        conn->statistics.for_each_message([&](std::string_view module, std::string_view msg, int severity, u64 count) {
+        conn->message_stats.foreach ([&](std::string_view module, std::string_view msg, int severity, u64 count) {
           local_ingest_core_stats_handle().agent_connection_message_stats(
               jb_blob(module),
               shard,

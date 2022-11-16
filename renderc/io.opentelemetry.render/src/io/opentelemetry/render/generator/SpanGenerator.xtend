@@ -1204,7 +1204,7 @@ class SpanGenerator {
         /**
          * Get a weak_ref to access the span associated with the handle
          */
-        ::«app.pkg.name»::«app.name»::weak_refs::«span.name» access(Index &ai);
+        ::«app.pkg.name»::«app.name»::weak_refs::«span.name» access(Index &ai) const;
 
         /**
          * Move operator is allowed
@@ -1305,7 +1305,7 @@ class SpanGenerator {
     }
 
     /* access the span associated with the handle */
-    ::«app.pkg.name»::«app.name»::weak_refs::«span.name» «span.name»::access(Index &ai)
+    ::«app.pkg.name»::«app.name»::weak_refs::«span.name» «span.name»::access(Index &ai) const
     {
       return ai.«span.name».at(loc_);
     }

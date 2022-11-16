@@ -37,7 +37,7 @@ void CoreBase<I, P, C, T>::write_common_stats(InternalMetricsEncoder &encoder, u
     auto &rpc_handler = static_cast<RpcHandler &>(*rpc_clients_[conn].handler);
     auto &connection = rpc_handler.connection;
 
-    connection.statistics.for_each_message([&](std::string_view module, std::string_view msg, int severity, u64 count) {
+    connection.message_stats.foreach ([&](std::string_view module, std::string_view msg, int severity, u64 count) {
       ConnectionMessageStats stats;
       stats.labels.module = module;
       stats.labels.shard = std::to_string(shard);
@@ -89,7 +89,7 @@ void CoreBase<I, P, C, T>::write_common_stats_to_logging_core(CoreStatsHandle &i
     auto &rpc_handler = static_cast<RpcHandler &>(*rpc_clients_[conn].handler);
     auto &connection = rpc_handler.connection;
 
-    connection.statistics.for_each_message([&](std::string_view module, std::string_view msg, int severity, u64 count) {
+    connection.message_stats.foreach ([&](std::string_view module, std::string_view msg, int severity, u64 count) {
       internal_metrics.connection_message_stats(jb_blob(module), jb_blob(msg), shard, severity, conn, time_ns, count);
     });
 
