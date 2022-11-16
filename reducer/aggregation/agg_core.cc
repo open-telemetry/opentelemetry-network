@@ -189,14 +189,15 @@ void AggCore::write_internal_stats()
     agg_core_stats_.agg_root_truncation_stats(jb_blob(module), shard, jb_blob(field), count, time_ns);
   });
 
-  u64 metric_bytes_written = 0;
-  u64 metric_bytes_discarded = 0;
+  u64 prometheus_bytes_written = 0;
+  u64 prometheus_bytes_discarded = 0;
   for (auto &metric_writer : metric_writers_) {
-    metric_bytes_written += metric_writer->bytes_written();
-    metric_bytes_discarded += metric_writer->bytes_failed_to_write();
+    prometheus_bytes_written += metric_writer->bytes_written();
+    prometheus_bytes_discarded += metric_writer->bytes_failed_to_write();
   }
 
-  agg_core_stats_.agg_metric_bytes_stats(jb_blob(module), shard, metric_bytes_written, metric_bytes_discarded, time_ns);
+  agg_core_stats_.agg_prometheus_bytes_stats(
+      jb_blob(module), shard, prometheus_bytes_written, prometheus_bytes_discarded, time_ns);
 
   matching_to_aggregation_stats_.write_internal_metrics_to_logging_core(core_stats_, time_ns);
   aggregation_to_logging_stats_.write_internal_metrics_to_logging_core(core_stats_, time_ns);

@@ -78,12 +78,12 @@ void LoggingCore::write_internal_stats()
 
   stats_writer_->write_internal_stats(encoder_, time_ns, shard, module);
 
+  encoder_.flush();
+  stats_writer_->flush();
+
   if (stats_writer_->bytes_failed_to_write() > bytes_failed_to_write) {
     LOG::error("Logging core failed to publish internal metrics writer stats");
   }
-
-  encoder_.flush();
-  stats_writer_->flush();
 }
 
 } // namespace reducer::logging

@@ -43,15 +43,18 @@ void OtlpGrpcMetricsClient::AsyncExport(ExportMetricsServiceRequest const &reque
   async_response->response_reader_->Finish(
       &async_response->response_, &async_response->status_, reinterpret_cast<void *>(async_response_tag));
 
-  async_responses_.emplace(async_response_tag, std::move(async_response));
-
-  ++requests_sent_;
-  bytes_sent_ += request.ByteSizeLong();
+  async_response->num_bytes = request.ByteSizeLong();
   for (auto const &resource_metrics : request.resource_metrics()) {
     for (auto const &scope_metrics : resource_metrics.scope_metrics()) {
-      metrics_sent_ += scope_metrics.metrics_size();
+      async_response->num_metrics += scope_metrics.metrics_size();
     }
   }
+
+  bytes_sent_ += async_response->num_bytes;
+  metrics_sent_ += async_response->num_metrics;
+  ++requests_sent_;
+
+  async_responses_.emplace(async_response_tag, std::move(async_response));
 }
 
 void OtlpGrpcMetricsClient::process_async_responses()
@@ -73,15 +76,15 @@ void OtlpGrpcMetricsClient::process_async_responses()
       // Note: Per gRPC docs, for client-side Finish: ok should always be true, so not checking it here.
       if (auto itr = async_responses_.find(reinterpret_cast<u64>(tag)); itr != async_responses_.end()) {
         auto const &async_response = itr->second;
-        if (async_response->status_.ok()) {
-          ++successful_requests_;
-        } else {
+        if (!async_response->status_.ok()) {
           LOG::debug(
               "RPC failed for tag={}: {}: {}",
               reinterpret_cast<u64>(tag),
               async_response->status_.error_code(),
               log_waive(async_response->status_.error_message()));
-          ++failed_requests_;
+          bytes_failed_ += async_response->num_bytes;
+          metrics_failed_ += async_response->num_metrics;
+          ++requests_failed_;
         }
         async_responses_.erase(itr);
       } else {

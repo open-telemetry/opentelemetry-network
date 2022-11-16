@@ -215,7 +215,7 @@ void PrometheusPublisher::Writer::write_internal_stats(
   BigItemsDroppedStats stats;
   stats.labels.shard = std::to_string(shard);
   stats.labels.module = module;
-  stats.metrics.big_items_dropped = stats_.big_items_dropped;
+  stats.metrics.prometheus_big_items_dropped = stats_.big_items_dropped;
   encoder.write_internal_stats(stats, time_ns);
 }
 
