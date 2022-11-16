@@ -34,9 +34,6 @@ class WriterGenerator {
 
     #include <channel/ibuffered_writer.h>
     #include <platform/types.h>
-    #include <util/log.h>
-
-    #include <spdlog/fmt/fmt.h>
 
     #include <functional>
     #include <stdexcept>
@@ -71,10 +68,7 @@ class WriterGenerator {
 
           if constexpr (ThrowOnError) {
             if (__result) {
-              throw std::system_error(
-                __result,
-                fmt::format("Writer::«msg.name» failed: {}", __result)
-              );
+              throw std::system_error(__result, "Writer::«msg.name» failed");
             }
           }
 
@@ -171,9 +165,6 @@ class WriterGenerator {
 
     #include "encoder.h"
 
-    #include <util/log.h>
-    #include <util/log_formatters.h>
-
     namespace «app.pkg.name»::«app.name» {
 
     Encoder::Encoder() {}
@@ -221,10 +212,6 @@ class WriterGenerator {
         /* start write */
         auto __allocated = __buffer.start_write(sizeof(u64) + __consumed);
         if (!__allocated) {
-          LOG::error(
-            "Writer::«msg.name» start_write failed on a closed channel: {}",
-            __allocated.error()
-          );
           return __allocated.error();
         }
 
