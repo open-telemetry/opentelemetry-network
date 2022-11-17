@@ -9,22 +9,6 @@ import io.opentelemetry.render.render.Document
 
 class AppExtensions {
 
-  static def connName(App app) {
-    app.name.toCamelCase + "Connection"
-  }
-
-  static def configClass(App app) {
-    app.name.toCamelCase + "DefaultConfig"
-  }
-
-  static def transformBuilder(App app) {
-    app.name.toCamelCase + "TransformBuilder"
-  }
-
-  static def printerName(App app) {
-    app.name.toCamelCase + "Printer"
-  }
-
   static def hashName(App app) {
     app.name + "_hash"
   }
