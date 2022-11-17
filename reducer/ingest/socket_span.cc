@@ -27,8 +27,8 @@ void SocketSpan::new_sock_info(::ebpf_net::ingest::weak_refs::socket span_ref, u
   auto *conn = local_connection()->ingest_connection();
 
   // get a reference to the process
-  if (auto entry = conn->process__hash_find(msg->pid).entry; entry != nullptr) {
-    span_ref.modify().process(entry->access(*local_index()).get());
+  if (auto process_ref = conn->get_process(msg->pid); process_ref.valid()) {
+    span_ref.modify().process(process_ref.get());
   } else {
     local_logger().tcp_socket_failed_getting_process_reference(msg->pid);
   }

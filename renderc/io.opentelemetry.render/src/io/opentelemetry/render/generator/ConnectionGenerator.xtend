@@ -31,6 +31,7 @@ class ConnectionGenerator {
 
     #include "index.h"
     #include "handles.h"
+    #include "weak_refs.h"
 
     #include <platform/types.h>
     #include <util/fixed_hash.h>
@@ -54,6 +55,12 @@ class ConnectionGenerator {
       //
       «FOR span : app.spans.filter[isSingleton]»
         weak_refs::«span.name» «span.name»() const { return «span.instanceName».access(index_); }
+      «ENDFOR»
+
+      // Lookup functions for each span type.
+      //
+      «FOR span : app.spans.filter[conn_hash]»
+        «spanLookupDeclaration(span)»
       «ENDFOR»
 
       // Handlers for all the incoming messages.
@@ -86,18 +93,6 @@ class ConnectionGenerator {
       //
       «FOR span : app.spans.filter[conn_hash]»
         «fixedHashTypeName(span)» «fixedHashName(span)»;
-      «ENDFOR»
-
-      // Singleton spans maintain one instance per span.
-      //
-      «FOR span : app.spans.filter[isSingleton]»
-        handles::«span.name» «span.instanceName»;
-      «ENDFOR»
-
-      // Lookup functions for each span type.
-      //
-      «FOR span : app.spans.filter[conn_hash]»
-        «spanLookupDeclaration(span)»
       «ENDFOR»
 
       struct MessageStatistics {
@@ -161,6 +156,12 @@ class ConnectionGenerator {
     private:
       Protocol &protocol_;
       Index &index_;
+
+      // Singleton spans maintain one instance per span.
+      //
+      «FOR span : app.spans.filter[isSingleton]»
+        handles::«span.name» «span.instanceName»;
+      «ENDFOR»
     };
 
     } // namespace «app.pkg.name»::«app.name»
@@ -174,6 +175,8 @@ class ConnectionGenerator {
     #include "connection.h"
     #include "protocol.h"
     #include "parsed_message.h"
+    #include "weak_refs.inl"
+    #include "containers.inl"
 
     #include <util/lookup3.h>
     #include <util/render.h>
@@ -352,15 +355,19 @@ class ConnectionGenerator {
 
   private static def spanLookupDeclaration(Span span) {
     '''
-    «fixedHashTypeName(span)»::position «fixedHashName(span)»_find(«span.referenceType.wireCType» key);
+    weak_refs::«span.name» get_«span.name»(«span.referenceType.wireCType» key);
     '''
   }
 
   private static def spanLookupImplementation(Span span) {
     '''
-    Connection::«fixedHashTypeName(span)»::position Connection::«fixedHashName(span)»_find(«span.referenceType.wireCType» key)
+    weak_refs::«span.name» Connection::get_«span.name»(«span.referenceType.wireCType» key)
     {
-      return «fixedHashName(span)».find(key);
+      if (auto pos = «fixedHashName(span)».find(key); pos.index != «fixedHashName(span)».invalid) {
+        return pos.entry->access(index_);
+      } else {
+        return {index_, weak_refs::«span.name»::invalid};
+      }
     }
     '''
   }
