@@ -84,6 +84,7 @@ private:
     enable_metric("ebpf_net.otlp_grpc.requests_failed");
     enable_metric("ebpf_net.otlp_grpc.requests_sent");
     enable_metric("ebpf_net.otlp_grpc.unknown_response_tags");
+    enable_metric("ebpf_net.up");
   }
 
   // disable a metric by its full name.
