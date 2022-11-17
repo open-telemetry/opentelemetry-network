@@ -3,7 +3,6 @@
 
 package io.opentelemetry.render.extensions
 
-import static extension io.opentelemetry.render.extensions.UtilityExtensions.toCamelCase
 import io.opentelemetry.render.render.App
 import io.opentelemetry.render.render.Document
 
