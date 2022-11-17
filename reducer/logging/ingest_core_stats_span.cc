@@ -30,6 +30,7 @@ void IngestCoreStatsSpan::client_handle_pool_stats(
   ClientHandlePoolStats stats;
   stats.labels.module = msg->module;
   stats.labels.shard = std::to_string(msg->shard);
+  stats.labels.span = msg->span_name;
   stats.labels.version = msg->version;
   stats.labels.cloud = msg->cloud;
   stats.labels.env = msg->env;

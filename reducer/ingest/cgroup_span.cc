@@ -92,8 +92,7 @@ void CgroupSpan::set_parent(::ebpf_net::ingest::weak_refs::cgroup span_ref, u64 
 {
   auto *conn = local_connection()->ingest_connection();
 
-  if (auto parent_handle = conn->cgroup__hash_find(cgroup_parent).entry; parent_handle != nullptr) {
-    auto parent_ref = parent_handle->access(*local_index());
+  if (auto parent_ref = conn->get_cgroup(cgroup_parent); parent_ref.valid()) {
     span_ref.modify().parent(parent_ref.get());
   } else {
     LOG::trace_in(Component::cgroup, "CgroupSpan: unable to find parent cgroup");
@@ -383,17 +382,6 @@ void CgroupSpan::on_container_updated(::ebpf_net::ingest::weak_refs::container c
   // Increase the update counter to signal that the container metadata has
   // changed and needs to be sent to the matching core.
   container_ref.modify().update_count(container_ref.update_count() + 1);
-}
-
-::ebpf_net::ingest::weak_refs::cgroup CgroupSpan::lookup_cgroup(u64 cgroup)
-{
-  auto *conn = local_connection()->ingest_connection();
-
-  if (auto entry = conn->cgroup__hash_find(cgroup).entry; entry != nullptr) {
-    return entry->access(*local_index());
-  }
-
-  return {*local_index(), ::ebpf_net::ingest::weak_refs::cgroup::invalid};
 }
 
 } // namespace reducer::ingest

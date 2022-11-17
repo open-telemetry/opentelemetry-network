@@ -104,15 +104,13 @@ void ProcessSpan::create_refs(
   span_ref.modify().comm({comm.c_str(), comm.size()});
 
   if (cgroup) {
-    if (auto cgroup_handle = conn->cgroup__hash_find(*cgroup).entry; cgroup_handle != nullptr) {
-      auto cgroup_span = cgroup_handle->access(span_ref.index());
+    if (auto cgroup_span = conn->get_cgroup(*cgroup); cgroup_span.valid()) {
       span_ref.modify().cgroup(cgroup_span.get());
     }
   }
 
   if (parent_pid.has_value() && (parent_pid.value() >= 0)) {
-    if (auto parent_handle = conn->process__hash_find(*parent_pid).entry; parent_handle != nullptr) {
-      auto parent_span = parent_handle->access(span_ref.index());
+    if (auto parent_span = conn->get_process(*parent_pid); parent_span.valid()) {
       if (parent_span.service().valid()) {
         // Inherit parent's service.
         span_ref.modify().service(parent_span.service().get());
@@ -128,13 +126,7 @@ void ProcessSpan::pid_cgroup_move(
 
   LOG::trace_in(Component::process, "ProcessSpan::pid_cgroup_move pid:{} cgroup:{}", msg->pid, msg->cgroup);
 
-  auto cgroup_handle = conn->cgroup__hash_find(msg->cgroup).entry;
-  if (cgroup_handle == nullptr) {
-    local_logger().cgroup_not_found(msg->cgroup);
-    return;
-  }
-
-  auto cgroup_span = cgroup_handle->access(span_ref.index());
+  auto cgroup_span = conn->get_cgroup(msg->cgroup);
   if (!cgroup_span.valid()) {
     local_logger().cgroup_not_found(msg->cgroup);
     return;

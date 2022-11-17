@@ -208,10 +208,11 @@ void IngestCore::on_write_internal_stats_timer()
 
         /* write client span utilization statistics */
 
-        auto const client_handle_utilization = [&](u64 size, u64 capacity) {
+        auto const client_handle_utilization = [&](std::string_view span_name, u64 size, u64 capacity) {
           local_ingest_core_stats_handle().client_handle_pool_stats(
               jb_blob(module),
               shard,
+              jb_blob(span_name),
               jb_blob(to_string(agent.version())),
               jb_blob(std::to_string(integer_value(agent.cloud_platform()))),
               jb_blob(agent.cluster()),
@@ -228,12 +229,12 @@ void IngestCore::on_write_internal_stats_timer()
               (double)(size / capacity));
         };
 
-        client_handle_utilization(conn->socket__hash.size(), conn->socket__hash.capacity());
-        client_handle_utilization(conn->udp_socket__hash.size(), conn->udp_socket__hash.capacity());
-        client_handle_utilization(conn->process__hash.size(), conn->process__hash.capacity());
-        client_handle_utilization(conn->tracked_process__hash.size(), conn->tracked_process__hash.capacity());
-        client_handle_utilization(conn->cgroup__hash.size(), conn->cgroup__hash.capacity());
-        client_handle_utilization(conn->aws_network_interface__hash.size(), conn->aws_network_interface__hash.capacity());
+        client_handle_utilization("socket", conn->socket__hash.size(), conn->socket__hash.capacity());
+        client_handle_utilization("udp_socket", conn->udp_socket__hash.size(), conn->udp_socket__hash.capacity());
+        client_handle_utilization("process", conn->process__hash.size(), conn->process__hash.capacity());
+        client_handle_utilization("tracked_process", conn->tracked_process__hash.size(), conn->tracked_process__hash.capacity());
+        client_handle_utilization("cgroup", conn->cgroup__hash.size(), conn->cgroup__hash.capacity());
+        client_handle_utilization("aws_network_interface", conn->aws_network_interface__hash.size(), conn->aws_network_interface__hash.capacity());
 
         /* write message statistics */
         conn->message_stats.foreach ([&](std::string_view module, std::string_view msg, int severity, u64 count) {

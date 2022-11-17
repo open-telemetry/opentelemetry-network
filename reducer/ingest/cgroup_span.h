@@ -42,8 +42,6 @@ public:
   void k8s_metadata_port(::ebpf_net::ingest::weak_refs::cgroup span_ref, u64 timestamp, jsrv_ingest__k8s_metadata_port *msg);
   void nomad_metadata(::ebpf_net::ingest::weak_refs::cgroup span_ref, u64 timestamp, jsrv_ingest__nomad_metadata *msg);
 
-  static ::ebpf_net::ingest::weak_refs::cgroup lookup_cgroup(u64 cgroup);
-
 private:
   // Called whenever one or more container span fields have been modified.
   void on_container_updated(::ebpf_net::ingest::weak_refs::container container_ref);
