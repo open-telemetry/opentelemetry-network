@@ -66,6 +66,12 @@ public:
   // buffered metrics that need to be sent - but this will process any outstanding async responses that have been received.
   void flush() override;
 
+  // Number of bytes successfully written.
+  u64 bytes_written() const override { return client_.bytes_sent() - client_.bytes_failed(); }
+
+  // Number of bytes that were not written.
+  u64 bytes_failed_to_write() const override { return client_.bytes_failed(); }
+
   // Gets this writer's stats encoded for TSDB output.
   void write_internal_stats(InternalMetricsEncoder &encoder, u64 time_ns, int shard, std::string_view module) const override;
 

@@ -1910,11 +1910,11 @@ app logging {
       4: u64 count
       5: u64 time_ns
     }
-    32: msg agg_metric_bytes_stats{
+    32: msg agg_prometheus_bytes_stats{
       1: string module
       2: u16 shard
-      3: u64 metric_bytes_written
-      4: u64 metric_bytes_discarded
+      3: u64 prometheus_bytes_written
+      4: u64 prometheus_bytes_discarded
       5: u64 time_ns
     }
   }

@@ -52,11 +52,12 @@ void OtlpGrpcPublisher::Writer::write_internal_stats(
   OtlpGrpcStats stats;
   stats.labels.shard = std::to_string(shard);
   stats.labels.module = module;
-  stats.metrics.requests_sent = client_.requests_sent();
+  stats.metrics.bytes_failed = client_.bytes_failed();
   stats.metrics.bytes_sent = client_.bytes_sent();
+  stats.metrics.metrics_failed = client_.metrics_failed();
   stats.metrics.metrics_sent = client_.metrics_sent();
-  stats.metrics.successful_requests = client_.successful_requests();
-  stats.metrics.failed_requests = client_.failed_requests();
+  stats.metrics.requests_failed = client_.requests_failed();
+  stats.metrics.requests_sent = client_.requests_sent();
   stats.metrics.unknown_response_tags = client_.unknown_response_tags();
   encoder.write_internal_stats(stats, time_ns);
 }

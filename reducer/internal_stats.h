@@ -192,14 +192,14 @@ struct AggRootTruncationStats {
   END_METRICS
 };
 
-struct AggMetricBytesStats {
+struct AggPrometheusBytesStats {
   BEGIN_LABELS
   COMMON_LABELS
   END_LABELS
 
   BEGIN_METRICS
-  METRIC(EbpfNetMetricInfo::pipeline_metric_bytes_written, metric_bytes_written)
-  METRIC(EbpfNetMetricInfo::pipeline_metric_bytes_discarded, metric_bytes_discarded)
+  METRIC(EbpfNetMetricInfo::prometheus_bytes_written, prometheus_bytes_written)
+  METRIC(EbpfNetMetricInfo::prometheus_bytes_discarded, prometheus_bytes_discarded)
   END_METRICS
 };
 
@@ -373,11 +373,12 @@ struct OtlpGrpcStats {
   END_LABELS
 
   BEGIN_METRICS
-  METRIC(EbpfNetMetricInfo::otlp_grpc_requests_sent, requests_sent)
+  METRIC(EbpfNetMetricInfo::otlp_grpc_bytes_failed, bytes_failed)
   METRIC(EbpfNetMetricInfo::otlp_grpc_bytes_sent, bytes_sent)
+  METRIC(EbpfNetMetricInfo::otlp_grpc_metrics_failed, metrics_failed)
   METRIC(EbpfNetMetricInfo::otlp_grpc_metrics_sent, metrics_sent)
-  METRIC(EbpfNetMetricInfo::otlp_grpc_successful_requests, successful_requests)
-  METRIC(EbpfNetMetricInfo::otlp_grpc_failed_requests, failed_requests)
+  METRIC(EbpfNetMetricInfo::otlp_grpc_requests_failed, requests_failed)
+  METRIC(EbpfNetMetricInfo::otlp_grpc_requests_sent, requests_sent)
   METRIC(EbpfNetMetricInfo::otlp_grpc_unknown_response_tags, unknown_response_tags)
   END_METRICS
 };
@@ -390,8 +391,8 @@ struct PromStats {
   END_LABELS
 
   BEGIN_METRICS
-  METRIC(EbpfNetMetricInfo::bytes_ingested_by_prometheus, bytes_ingested)
-  METRIC(EbpfNetMetricInfo::pipeline_failed_scrapes, failed_scrapes)
+  METRIC(EbpfNetMetricInfo::prometheus_bytes_ingested, bytes_ingested)
+  METRIC(EbpfNetMetricInfo::prometheus_failed_scrapes, failed_scrapes)
   END_METRICS
 };
 
@@ -401,7 +402,7 @@ struct BigItemsDroppedStats {
   END_LABELS
 
   BEGIN_METRICS
-  METRIC(EbpfNetMetricInfo::big_items_dropped, big_items_dropped)
+  METRIC(EbpfNetMetricInfo::prometheus_big_items_dropped, prometheus_big_items_dropped)
   END_METRICS
 };
 

@@ -77,12 +77,14 @@ private:
     // except the following
     enable_metric("ebpf_net.collector_health");
     enable_metric("ebpf_net.bpf_log");
+    enable_metric("ebpf_net.otlp_grpc.bytes_failed");
     enable_metric("ebpf_net.otlp_grpc.bytes_sent");
-    enable_metric("ebpf_net.otlp_grpc.failed_requests");
+    enable_metric("ebpf_net.otlp_grpc.metrics_failed");
     enable_metric("ebpf_net.otlp_grpc.metrics_sent");
+    enable_metric("ebpf_net.otlp_grpc.requests_failed");
     enable_metric("ebpf_net.otlp_grpc.requests_sent");
-    enable_metric("ebpf_net.otlp_grpc.successful_requests");
     enable_metric("ebpf_net.otlp_grpc.unknown_response_tags");
+    enable_metric("ebpf_net.up");
   }
 
   // disable a metric by its full name.

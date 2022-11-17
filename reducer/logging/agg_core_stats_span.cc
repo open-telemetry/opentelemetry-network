@@ -45,26 +45,26 @@ void AggCoreStatsSpan::agg_root_truncation_stats(
       msg->time_ns);
 }
 
-void AggCoreStatsSpan::agg_metric_bytes_stats(
-    ::ebpf_net::logging::weak_refs::agg_core_stats span_ref, u64 timestamp, jsrv_logging__agg_metric_bytes_stats *msg)
+void AggCoreStatsSpan::agg_prometheus_bytes_stats(
+    ::ebpf_net::logging::weak_refs::agg_core_stats span_ref, u64 timestamp, jsrv_logging__agg_prometheus_bytes_stats *msg)
 {
   auto &encoder = local_core<LoggingCore>().encoder_;
 
-  AggMetricBytesStats stats;
+  AggPrometheusBytesStats stats;
   stats.labels.module = msg->module;
   stats.labels.shard = std::to_string(msg->shard);
-  stats.metrics.metric_bytes_written = msg->metric_bytes_written;
-  stats.metrics.metric_bytes_discarded = msg->metric_bytes_discarded;
+  stats.metrics.prometheus_bytes_written = msg->prometheus_bytes_written;
+  stats.metrics.prometheus_bytes_discarded = msg->prometheus_bytes_discarded;
 
   encoder.write_internal_stats(stats, msg->time_ns);
 
   LOG::debug_in(
       reducer::logging::Component::internal_metrics,
-      "AggCoreStatsSpan::agg_metric_bytes_stats module={} shard={} metrics_bytes_written={} metrics_bytes_discarded={} timestamp={}",
+      "AggCoreStatsSpan::agg_prometheus_bytes_stats module={} shard={} metrics_bytes_written={} metrics_bytes_discarded={} timestamp={}",
       msg->module,
       msg->shard,
-      msg->metric_bytes_written,
-      msg->metric_bytes_discarded,
+      msg->prometheus_bytes_written,
+      msg->prometheus_bytes_discarded,
       msg->time_ns);
 }
 } // namespace reducer::logging

@@ -13,8 +13,8 @@ public:
   ~AggCoreStatsSpan();
   void agg_root_truncation_stats(
       ::ebpf_net::logging::weak_refs::agg_core_stats span_ref, u64 timestamp, jsrv_logging__agg_root_truncation_stats *msg);
-  void agg_metric_bytes_stats(
-      ::ebpf_net::logging::weak_refs::agg_core_stats span_ref, u64 timestamp, jsrv_logging__agg_metric_bytes_stats *msg);
+  void agg_prometheus_bytes_stats(
+      ::ebpf_net::logging::weak_refs::agg_core_stats span_ref, u64 timestamp, jsrv_logging__agg_prometheus_bytes_stats *msg);
 };
 
 }; // namespace reducer::logging

@@ -17,8 +17,8 @@ namespace reducer {
 // EBPF_NET
 //
 
-EbpfNetMetricInfo EbpfNetMetricInfo::pipeline_metric_bytes_discarded{
-    EbpfNetMetrics::pipeline_metric_bytes_discarded,
+EbpfNetMetricInfo EbpfNetMetricInfo::prometheus_bytes_discarded{
+    EbpfNetMetrics::prometheus_bytes_discarded,
     "some description"
     "some description",
     UNIT_MICROSECONDS};
@@ -33,6 +33,12 @@ EbpfNetMetricInfo EbpfNetMetricInfo::entrypoint_info{
     EbpfNetMetrics::entrypoint_info,
     "description"
     "description ",
+    UNIT_DIMENSIONLESS};
+
+EbpfNetMetricInfo EbpfNetMetricInfo::otlp_grpc_requests_failed{
+    EbpfNetMetrics::otlp_grpc_requests_failed,
+    " some definitions"
+    " some description.",
     UNIT_DIMENSIONLESS};
 
 EbpfNetMetricInfo EbpfNetMetricInfo::otlp_grpc_requests_sent{
@@ -67,12 +73,6 @@ EbpfNetMetricInfo EbpfNetMetricInfo::codetiming_avg_ns{
 
 EbpfNetMetricInfo EbpfNetMetricInfo::client_handle_pool{
     EbpfNetMetrics::client_handle_pool,
-    " some definitions"
-    " some description.",
-    UNIT_DIMENSIONLESS};
-
-EbpfNetMetricInfo EbpfNetMetricInfo::otlp_grpc_successful_requests{
-    EbpfNetMetrics::otlp_grpc_successful_requests,
     " some definitions"
     " some description.",
     UNIT_DIMENSIONLESS};
@@ -125,6 +125,12 @@ EbpfNetMetricInfo EbpfNetMetricInfo::message{
     " some description.",
     UNIT_DIMENSIONLESS};
 
+EbpfNetMetricInfo EbpfNetMetricInfo::otlp_grpc_bytes_failed{
+    EbpfNetMetrics::otlp_grpc_bytes_failed,
+    " some definitions"
+    " some description.",
+    UNIT_DIMENSIONLESS};
+
 EbpfNetMetricInfo EbpfNetMetricInfo::otlp_grpc_bytes_sent{
     EbpfNetMetrics::otlp_grpc_bytes_sent,
     " some definitions"
@@ -137,8 +143,8 @@ EbpfNetMetricInfo EbpfNetMetricInfo::pipeline_message_error{
     " some description.",
     UNIT_DIMENSIONLESS};
 
-EbpfNetMetricInfo EbpfNetMetricInfo::pipeline_metric_bytes_written{
-    EbpfNetMetrics::pipeline_metric_bytes_written,
+EbpfNetMetricInfo EbpfNetMetricInfo::prometheus_bytes_written{
+    EbpfNetMetrics::prometheus_bytes_written,
     " some definitions"
     " some description.",
     UNIT_DIMENSIONLESS};
@@ -185,6 +191,12 @@ EbpfNetMetricInfo EbpfNetMetricInfo::clock_offset_ns{
     " some description.",
     UNIT_DIMENSIONLESS};
 
+EbpfNetMetricInfo EbpfNetMetricInfo::otlp_grpc_metrics_failed{
+    EbpfNetMetrics::otlp_grpc_metrics_failed,
+    " some definitions"
+    " some description.",
+    UNIT_DIMENSIONLESS};
+
 EbpfNetMetricInfo EbpfNetMetricInfo::otlp_grpc_metrics_sent{
     EbpfNetMetrics::otlp_grpc_metrics_sent,
     " some definitions"
@@ -209,12 +221,6 @@ EbpfNetMetricInfo EbpfNetMetricInfo::codetiming_sum_ns{
     " some description.",
     UNIT_DIMENSIONLESS};
 
-EbpfNetMetricInfo EbpfNetMetricInfo::otlp_grpc_failed_requests{
-    EbpfNetMetrics::otlp_grpc_failed_requests,
-    " some definitions"
-    " some description.",
-    UNIT_DIMENSIONLESS};
-
 EbpfNetMetricInfo EbpfNetMetricInfo::rpc_queue_buf_utilization{
     EbpfNetMetrics::rpc_queue_buf_utilization,
     " some definitions"
@@ -222,31 +228,31 @@ EbpfNetMetricInfo EbpfNetMetricInfo::rpc_queue_buf_utilization{
     UNIT_DIMENSIONLESS};
 
 EbpfNetMetricInfo EbpfNetMetricInfo::pipeline_agent_connections{
-    EbpfNetMetrics::rpc_queue_buf_utilization,
+    EbpfNetMetrics::pipeline_agent_connections,
     " some definitions"
     " some description.",
     UNIT_DIMENSIONLESS};
 
-EbpfNetMetricInfo EbpfNetMetricInfo::bytes_ingested_by_prometheus{
-    EbpfNetMetrics::rpc_queue_buf_utilization,
+EbpfNetMetricInfo EbpfNetMetricInfo::prometheus_bytes_ingested{
+    EbpfNetMetrics::prometheus_bytes_ingested,
     " some definitions"
     " some description.",
     UNIT_DIMENSIONLESS};
 
-EbpfNetMetricInfo EbpfNetMetricInfo::pipeline_failed_scrapes{
-    EbpfNetMetrics::rpc_queue_buf_utilization,
+EbpfNetMetricInfo EbpfNetMetricInfo::prometheus_failed_scrapes{
+    EbpfNetMetrics::prometheus_failed_scrapes,
     " some definitions"
     " some description.",
     UNIT_DIMENSIONLESS};
 
-EbpfNetMetricInfo EbpfNetMetricInfo::big_items_dropped{
-    EbpfNetMetrics::rpc_queue_buf_utilization,
+EbpfNetMetricInfo EbpfNetMetricInfo::prometheus_big_items_dropped{
+    EbpfNetMetrics::prometheus_big_items_dropped,
     " some definitions"
     " some description.",
     UNIT_DIMENSIONLESS};
 
 EbpfNetMetricInfo EbpfNetMetricInfo::rpc_write_stalls{
-    EbpfNetMetrics::rpc_queue_buf_utilization,
+    EbpfNetMetrics::rpc_write_stalls,
     " some definitions"
     " some description.",
     UNIT_DIMENSIONLESS};
