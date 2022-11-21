@@ -66,12 +66,9 @@ IngestCore::IngestCore(
     RpcQueueMatrix &ingest_to_logging_queues,
     RpcQueueMatrix &ingest_to_matching_queues,
     u32 telemetry_port,
-    Publisher::WriterPtr stats_writer,
-    std::vector<ShardConfig> shards_config,
     bool localhost)
-    : stats_writer_(std::move(stats_writer)), shards_config_(std::move(shards_config))
 {
-  auto const ingest_shard_count = shards_config_.size();
+  auto const ingest_shard_count = ingest_to_matching_queues.num_senders();
   int res;
 
   res = uv_loop_init(&loop_);
@@ -178,7 +175,6 @@ void IngestCore::on_write_internal_stats_timer()
   /* write span statistics */
   tcp_server_->visit_indexes(
       [&](const int shard, ::ebpf_net::ingest::Index *const index) {
-        assert(static_cast<std::size_t>(shard) < shards_config_.size());
         index->size_statistics(
             [&](std::string_view span_name, std::size_t allocated, std::size_t max_allocated, std::size_t pool_size) {
               local_core_stats_handle().span_utilization_stats(
