@@ -183,6 +183,7 @@ int main(int argc, char *argv[])
   auto const num_aggregation_shards = num_aggregation_shards_flag.Get();
   auto const num_matching_shards = num_matching_shards_flag.Get();
   auto const num_ingest_shards = num_ingest_shards_flag.Get();
+
   if (disable_node_ip_field.Get()) {
     reducer::aggregation::AggCore::disable_node_ip_field();
   }
@@ -294,9 +295,7 @@ int main(int argc, char *argv[])
     stats_scrape_size_limit_bytes = scrape_size_limit_bytes;
   }
 
-  // 2 is one logging core and one for ingest, since ingest core writes stats
-  // from just one thread
-  const size_t num_stat_writers = num_ingest_shards + 2;
+  const size_t num_stat_writers = 1; // one for the logging core
   const size_t num_prom_metric_writers = num_aggregation_shards * partitions_per_shard.Get();
 
   std::unique_ptr<reducer::Publisher> stats_publisher;
@@ -413,19 +412,10 @@ int main(int argc, char *argv[])
     matching_cores.push_back(std::move(matching_core));
   }
 
-  std::vector<reducer::ingest::IngestCore::ShardConfig> ingest_core_shard_config;
-  ingest_core_shard_config.reserve(num_ingest_shards);
-  for (std::size_t i = 0; i < num_ingest_shards; ++i) {
-    ingest_core_shard_config.emplace_back(reducer::ingest::IngestCore::ShardConfig{
-        .stats_writer = stats_publisher->make_writer(stat_writer_num++),
-    });
-  }
   auto ingest_core = std::make_unique<reducer::ingest::IngestCore>(
       ingest_to_logging_queues,
       ingest_to_matching_queues,
-      telemetry_port.Get(),
-      stats_publisher->make_writer(stat_writer_num++),
-      std::move(ingest_core_shard_config));
+      telemetry_port.Get());
 
   // all writers created
   assert(stat_writer_num == num_stat_writers);

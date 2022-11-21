@@ -31,11 +31,6 @@ class TcpServer;
 
 class IngestCore {
 public:
-  struct ShardConfig {
-    // Used by the shard to write internal stats.
-    reducer::Publisher::WriterPtr stats_writer;
-  };
-
   // Arguments:
   //   - ingest_to_logging_queues - Queues for sending messages to the logging
   //       core
@@ -52,8 +47,6 @@ public:
       RpcQueueMatrix &ingest_to_logging_queues,
       RpcQueueMatrix &ingest_to_matching_queues,
       u32 telemetry_port,
-      Publisher::WriterPtr stats_writer,
-      std::vector<ShardConfig> shards_config,
       bool localhost = false);
 
   ~IngestCore();
@@ -115,10 +108,6 @@ private:
   uv_timer_t write_internal_stats_timer_;
   uv_timer_t pulse_timer_;
   std::optional<scheduling::IntervalScheduler> connection_timeout_handler_;
-
-  // Internal stats writer.
-  Publisher::WriterPtr stats_writer_;
-  std::vector<ShardConfig> shards_config_;
 
   friend void __on_signal_cb(uv_signal_t *, int);
 };
