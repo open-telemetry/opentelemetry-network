@@ -105,6 +105,8 @@ int main(int argc, char *argv[])
   //
   args::Flag disable_prometheus_metrics(
       *parser, "disable_prometheus_metrics", "Disables prometheus metrics output", {"disable-prometheus-metrics"});
+  args::Flag shard_prometheus_metrics(
+      *parser, "shard_prometheus_metrics", "Partitions prometheus metrics", {"shard-prometheus-metrics"});
   args::ValueFlag<std::string> prom_bind(*parser, "prometheus_bind", "Bind address for Prometheus", {"prom"}, "127.0.0.1:7010");
   args::ValueFlag<uint32_t> scrape_size_limit_bytes_flag(
       *parser, "scrape_size_limit", "Maximum size of a scrape response, in bytes.", {"scrape-size-limit-bytes"});
@@ -315,7 +317,7 @@ int main(int argc, char *argv[])
   std::unique_ptr<reducer::Publisher> prom_metrics_publisher;
   if (!disable_prometheus_metrics.Get()) {
     prom_metrics_publisher = std::make_unique<reducer::PrometheusPublisher>(
-        reducer::PrometheusPublisher::PORT_RANGE,
+        shard_prometheus_metrics.Get() ? reducer::PrometheusPublisher::PORT_RANGE : reducer::PrometheusPublisher::SINGLE_PORT,
         num_prom_metric_writers,
         prom_bind.Get(),
         num_prom_metric_writers,
