@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
   args::Flag disable_node_ip_field(
       *parser, "disable_node_ip_field", "Disables the IP addresses field in node spans", {"disable-node-ip-field"});
   args::Flag enable_id_id(*parser, "enable_id_id", "Enables id-id timeseries generation", {"enable-id-id"});
-  args::Flag enable_az_node(*parser, "enable_az_node", "Enables az-node timeseries generation", {"enable-az-node"});
+  args::Flag enable_az_id(*parser, "enable_az_id", "Enables az-id timeseries generation", {"enable-az-id"});
   args::Flag enable_autonomous_system_ip(
       *parser,
       "enable_autonomous_system_ip",
@@ -194,7 +194,7 @@ int main(int argc, char *argv[])
     reducer::aggregation::AggCore::enable_id_id();
   }
 
-  if (enable_az_node.Get()) {
+  if (enable_az_id.Get()) {
     reducer::aggregation::AggCore::enable_az_node();
   }
 
