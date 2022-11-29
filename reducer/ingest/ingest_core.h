@@ -63,9 +63,6 @@ public:
   void stop_sync();
   void wait_for_shutdown();
 
-  // Enables otlp formatted internal metrics.
-  static void enable_otlp_formatted_internal_metrics();
-
 private:
   /* Callback function for stop_async. */
   static void on_stop_async(uv_async_t *handle);
@@ -73,9 +70,6 @@ private:
   /* Core callbacks */
   static void on_write_internal_stats_timer_cb(uv_timer_t *timer);
   static void on_pulse_timer_cb(uv_timer_t *timer);
-
-  // Internal metrics using otlp formatting.
-  static bool otlp_formatted_internal_metrics_enabled_;
 
   /**
    * (internal) called when it's time to drain internal metrics for

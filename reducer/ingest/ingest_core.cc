@@ -37,13 +37,6 @@ constexpr auto WRITE_INTERNAL_STATS_TIMER_REPEAT = 10s;
 constexpr auto PULSE_TIMER_REPEAT = 1s;
 } // namespace
 
-bool IngestCore::otlp_formatted_internal_metrics_enabled_ = false;
-
-void IngestCore::enable_otlp_formatted_internal_metrics()
-{
-  otlp_formatted_internal_metrics_enabled_ = true;
-}
-
 void IngestCore::on_write_internal_stats_timer_cb(uv_timer_t *timer)
 {
   auto const core = reinterpret_cast<IngestCore *>(timer->data);

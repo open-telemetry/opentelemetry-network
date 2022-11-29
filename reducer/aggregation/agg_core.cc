@@ -35,7 +35,6 @@ void AggCore::disable_node_ip_field()
 
 bool AggCore::id_id_enabled_ = false;
 bool AggCore::az_node_enabled_ = false;
-bool AggCore::otlp_formatted_internal_metrics_enabled_ = false;
 
 void AggCore::enable_id_id()
 {
@@ -45,11 +44,6 @@ void AggCore::enable_id_id()
 void AggCore::enable_az_node()
 {
   az_node_enabled_ = true;
-}
-
-void AggCore::enable_otlp_formatted_internal_metrics()
-{
-  otlp_formatted_internal_metrics_enabled_ = true;
 }
 
 AggCore::AggCore(

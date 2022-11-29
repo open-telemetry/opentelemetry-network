@@ -43,9 +43,6 @@ public:
   // created
   static void enable_aws_enrichment(bool enabled);
 
-  // Enables otlp formatted internal metrics.
-  static void enable_otlp_formatted_internal_metrics();
-
   // Enables using IP address for autonomous systems.
   static void enable_autonomous_system_ip();
   // Returns whether using IP addresses for autonomous systems is enabled.
@@ -67,9 +64,6 @@ public:
 private:
   // Flag indicating whether IP addresses should be used for autonomous systems.
   static bool autonomous_system_ip_enabled_;
-
-  // Internal metrics using otlp formatting.
-  static bool otlp_formatted_internal_metrics_enabled_;
 
   // Keeper of ingest->this RPC stats.
   RpcReceiverStats ingest_to_matching_stats_;

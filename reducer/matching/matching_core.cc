@@ -26,13 +26,6 @@
 
 namespace reducer::matching {
 
-bool MatchingCore::otlp_formatted_internal_metrics_enabled_ = false;
-
-void MatchingCore::enable_otlp_formatted_internal_metrics()
-{
-  otlp_formatted_internal_metrics_enabled_ = true;
-}
-
 namespace {
 
 geoip::database make_geoip_db(std::optional<std::string> const &path)

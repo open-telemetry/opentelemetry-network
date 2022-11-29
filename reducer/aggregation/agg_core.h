@@ -56,9 +56,6 @@ public:
   // Enables generating az-node metrics.
   static void enable_az_node();
 
-  // Enables otlp formatted internal metrics.
-  static void enable_otlp_formatted_internal_metrics();
-
   // How many top aggregation role/role pairs to show the count for in the
   // pipeline_aggregation_roles internal stat.
   static void count_top_aggregation_roles(size_t k);
@@ -117,9 +114,6 @@ private:
 
   // Flag indicating whether az-node timeseries should be outputted.
   static bool az_node_enabled_;
-
-  // Internal metrics using otlp formatting.
-  static bool otlp_formatted_internal_metrics_enabled_;
 
   void on_timeslot_complete() override;
 
