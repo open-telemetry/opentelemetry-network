@@ -203,10 +203,7 @@ int main(int argc, char *argv[])
   }
 
   if (enable_otlp_grpc_metrics.Get()) {
-    reducer::aggregation::AggCore::enable_otlp_formatted_internal_metrics();
     reducer::logging::LoggingCore::enable_otlp_formatted_internal_metrics();
-    reducer::matching::MatchingCore::enable_otlp_formatted_internal_metrics();
-    reducer::ingest::IngestCore::enable_otlp_formatted_internal_metrics();
   }
 
   if (enable_otlp_grpc_metric_descriptions.Get()) {
