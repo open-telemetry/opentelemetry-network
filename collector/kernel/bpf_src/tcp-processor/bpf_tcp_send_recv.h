@@ -164,7 +164,11 @@ int handle_kprobe__tcp_sendmsg(struct pt_regs *ctx, struct sock *sk, struct msgh
   // iov_offset is not a thing in older kernels
 #else
   int type = 0;
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 14, 0)
   bpf_probe_read(&type, sizeof(type), &(msg->msg_iter.type));
+#else
+  bpf_probe_read(&type, sizeof(type), &(msg->msg_iter.iter_type));
+#endif
   // ensure this is an IOVEC or KVEC, low bit indicates read/write
   // note: iov_iter.iov and iov_iter.kvec are union and have same layout
   // first condition makes it work on pre-5 kernels where ITER_IOVEC=0
@@ -368,7 +372,11 @@ int handle_kprobe__tcp_recvmsg(
   bpf_probe_read(&iov, sizeof(iov), &(msg->msg_iov));
 #else
   int type = 0;
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 14, 0)
   bpf_probe_read(&type, sizeof(type), &(msg->msg_iter.type));
+#else
+  bpf_probe_read(&type, sizeof(type), &(msg->msg_iter.iter_type));
+#endif
   // ensure this is an IOVEC or KVEC, low bit indicates read/write
   // note: iov_iter.iov and iov_iter.kvec are union and have same layout
   // first condition makes it work on pre-5 kernels where ITER_IOVEC=0
