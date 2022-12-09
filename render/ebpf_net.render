@@ -1185,7 +1185,6 @@ app ingest {
 } /* app ingest */
 
 app matching {
-  jit
 
   span flow impl "reducer::matching::FlowSpan" include "<reducer/matching/flow_span.h>" {
     pool_size 4200000
@@ -1397,7 +1396,6 @@ app matching {
 } /* app matching */
 
 app aggregation {
-  jit
 
   /**
    * a node which is part of a conversation
@@ -1708,7 +1706,6 @@ app cloud_collector {
 } /* app cloud_collector */
 
 app logging {
-  jit
 
   span logger
       impl "reducer::logging::LoggerSpan"

@@ -14,13 +14,13 @@
 #include <generated/ebpf_net/matching/auto_handles.h>
 
 #include <common/client_type.h>
-#include <jitbuf/transform_builder.h>
 #include <platform/userspace-time.h>
 #include <util/short_string.h>
 
 #include <spdlog/fmt/fmt.h>
 
 namespace reducer {
+
 class InternalMetricsEncoder;
 
 // Helper for implementing core classes.
@@ -58,8 +58,6 @@ protected:
     short_string<16> conn_name;
   };
 
-  // Owns and manages the data of LLVM's core infrastructure.
-  llvm::LLVMContext llvm_context_;
   // Transform builder for JIT-ing incoming messages.
   TransformBuilder transform_builder_;
   // Index object belonging to this core.
@@ -70,8 +68,7 @@ protected:
   template <typename... Args>
   CoreBase(std::string_view app_name, size_t shard_num, u64 initial_timestamp, Args &&...args)
       : Core(app_name, shard_num, initial_timestamp),
-        llvm_context_(),
-        transform_builder_(llvm_context_),
+        transform_builder_(),
         index_(std::forward<Args>(args)...)
   {}
 
