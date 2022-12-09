@@ -2,7 +2,8 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
-source "${EBPF_NET_SRC}/dev/script/benv_error_lib.sh"
+OTEL_EBPF_SRC="${OTEL_EBPF_SRC:-$(git rev-parse --show-toplevel)}"
+source "${OTEL_EBPF_SRC}/dev/script/bash-error-lib.sh"
 set -x
 
 vagrant destroy -f || true
@@ -10,14 +11,12 @@ vagrant destroy -f || true
 vagrant box update
 vagrant up --provision
 
-EBPF_NET_SRC="${EBPF_NET_SRC:-$(git rev-parse --show-toplevel)}"
-
 # Check if local docker registry is running
 result=$(docker ps | grep registry:latest | grep local-docker-registry) || true
 if [[ "${result}" == "" ]]
 then
   # local registry isn't running, so start it
-  "${EBPF_NET_SRC}/dev/docker-registry.sh"
+  "${OTEL_EBPF_SRC}/dev/docker-registry.sh"
 fi
 
 # Check that required docker images exist
@@ -42,7 +41,31 @@ result=$(vagrant status | grep ^default | grep running) || true
 if [[ "${result}" == "" ]]
 then
   echo "ERROR: vagrant VM is not running!"
+  vagrant status
   exit 1
 else
   echo "vagrant VM is running!"
 fi
+
+# Sometimes vagrant ssh, as run by subsequent test runners, fails immediately after vagrant up, so wait until it works successfully.
+ready_string="ready to ssh"
+remaining_attempts=10
+while true
+do
+  out=$(vagrant ssh -- -R "5000:localhost:5000" -- echo "${ready_string}") || true
+  if [[ "${out}" == "${ready_string}" ]]
+  then
+    break
+  fi
+
+  remaining_attempts=$(($remaining_attempts-1))
+  if [[ $remaining_attempts == 0 ]]
+  then
+    vagrant status
+    vagrant ssh-config
+    echo "ERROR: vagrant VM is not accepting ssh requests!"
+    exit 1
+  fi
+
+  sleep 1
+done
