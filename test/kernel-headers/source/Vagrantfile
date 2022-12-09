@@ -1,0 +1,90 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# All Vagrant configuration is done below. The "2" in Vagrant.configure
+# configures the configuration version (we support older styles for
+# backwards compatibility). Please don't change it unless you know what
+# you're doing.
+Vagrant.configure("2") do |config|
+  # The most common configuration options are documented and commented below.
+  # For a complete reference, please see the online documentation at
+  # https://docs.vagrantup.com.
+
+  # Every Vagrant development environment requires a box. You can search for
+  # boxes at https://vagrantcloud.com/search.
+  config.vm.box = "PLACEHOLDER_DISTRO_NAME/PLACEHOLDER_DISTRO_VERSION"
+
+  # How long to wait the machine to boot up
+  config.vm.boot_timeout = 600
+
+  # Username to use when logging in through ssh.
+  config.ssh.username = 'vagrant'
+
+  # Ensure insecure keys will be replaced on first provisioning.
+  config.ssh.insert_key = true
+
+  # Disable default vagrant share.
+  config.vm.synced_folder '.', '/vagrant', disabled: true
+
+  config.vm.provider "virtualbox" do |vb|
+    # Display the VirtualBox GUI when booting the machine
+    vb.gui = false
+
+    # Customize the amount of memory on the VM:
+    vb.memory = "8192"
+  end
+
+  config.vm.provision "file",
+    source: "data/test-entrypoint.sh",
+    destination: "test-entrypoint.sh"
+
+  config.vm.provision "file",
+    source: "data/agent.sh",
+    destination: "agent.sh"
+
+  # can be used to get a shell into a running agent container, for debugging purposes
+  config.vm.provision "file",
+    source: "data/get-agent-shell.sh",
+    destination: "get-agent-shell.sh"
+
+  # can be used to get a shell into a new agent container, for debugging purposes
+  config.vm.provision "file",
+    source: "data/run-agent-shell.sh",
+    destination: "run-agent-shell.sh"
+
+  config.vm.provision "file",
+    source: "data/reducer.sh",
+    destination: "reducer.sh"
+
+  config.vm.provision "file",
+    source: "data/PLACEHOLDER_DISTRO_NAME-uninstall-kernel-headers.sh",
+    destination: "uninstall-kernel-headers.sh"
+
+  config.vm.provision "file",
+    source: "data/PLACEHOLDER_DISTRO_NAME-install-kernel-headers.sh",
+    destination: "install-kernel-headers.sh"
+
+  config.vm.provision "shell", inline: <<-SHELL
+    mkdir -p /var/cache/ebpf_net
+  SHELL
+
+  config.vm.provision "shell", env: {
+    KERNEL_VERSION: "PLACEHOLDER_KERNEL_VERSION",
+    DEBIAN_FRONTEND: "noninteractive",
+  }, path: "data/PLACEHOLDER_DISTRO_NAME-provision.sh"
+
+  config.vm.provision "shell", env: {
+    EBPF_NET_INTAKE_PORT: "8000",
+    EBPF_NET_INTAKE_HOST: "127.0.0.1",
+    EBPF_NET_AGENT_NAMESPACE: "#{ENV['EBPF_NET_AGENT_NAMESPACE']}",
+    EBPF_NET_AGENT_CLUSTER: "#{ENV['EBPF_NET_AGENT_CLUSTER']}",
+    EBPF_NET_AGENT_SERVICE: "#{ENV['EBPF_NET_AGENT_SERVICE']}",
+    EBPF_NET_AGENT_HOST: "#{ENV['EBPF_NET_AGENT_HOST']}",
+    EBPF_NET_AGENT_ZONE: "#{ENV['EBPF_NET_AGENT_ZONE']}",
+    EBPF_NET_KERNEL_HEADERS_AUTO_FETCH: "true"
+  }, path: "data/env-provision.sh"
+
+  config.vm.provision "shell", inline: <<-SHELL
+    shutdown -r now
+  SHELL
+end
