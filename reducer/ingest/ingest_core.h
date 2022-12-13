@@ -17,10 +17,6 @@
 
 #include <uv.h>
 
-namespace llvm {
-class LLVMContext;
-}
-
 namespace reducer {
 class RpcQueueMatrix;
 }

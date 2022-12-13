@@ -28,8 +28,7 @@ std::error_code TestChannel::send(const u8 *data, int size)
       binary_messages_.emplace_back(data, data + size);
 
       std::stringstream ss;
-      llvm::LLVMContext llvm;
-      json_converter::WireToJsonConverter<ebpf_net::ingest_metadata> converter(ss, llvm);
+      json_converter::WireToJsonConverter<ebpf_net::ingest_metadata> converter(ss);
 
       if (auto const handled = converter.process(reinterpret_cast<char const *>(data), size); !handled) {
         if (handled.error().value() == EAGAIN) {

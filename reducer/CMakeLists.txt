@@ -13,7 +13,6 @@ target_link_libraries(
   reducer
     reducerlib
     libuv-shared
-    llvm-shared
     shared-executable
     spdlog
 )
@@ -28,7 +27,6 @@ target_link_libraries(
   reducer-static
     reducerlib
     libuv-static
-    llvm
     static-executable
     spdlog
 )
@@ -84,7 +82,6 @@ target_link_libraries(
     fastpass_util
     error_handling
     time_tracker
-    llvm-interface
     json
     lz4_decompressor
     breakpad_client

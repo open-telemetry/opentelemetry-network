@@ -20,7 +20,6 @@
 #include <util/lz4_decompressor.h>
 
 #include <absl/time/time.h>
-#include <llvm/IR/LLVMContext.h>
 #include <uv.h>
 
 #include <memory>
@@ -41,7 +40,6 @@ public:
 
   // Arguments:
   // - index - The ingest index that will be owned by this class.
-  // - llvm_context - The LLVM context used to construct `NpmConnection`s
   // Calling this constructor will set the `local_index()` value.
   IngestWorker(RpcQueueMatrix &ingest_to_logging_queues, RpcQueueMatrix &ingest_to_matching_queues, u32 shard_num);
   ~IngestWorker() override;
@@ -110,7 +108,6 @@ protected:
 
 private:
   OnCloseCallback on_close_cb_;
-  llvm::LLVMContext llvm_context_;
   RpcSenderStats ingest_to_logging_stats_;
   RpcSenderStats ingest_to_matching_stats_;
   std::unique_ptr<::ebpf_net::ingest::Index> index_;

@@ -21,8 +21,6 @@
 
 #include <absl/time/time.h>
 
-#include <llvm/IR/LLVMContext.h>
-
 #include <uv.h>
 
 #include <memory>
@@ -31,8 +29,7 @@
 namespace reducer::ingest {
 
 IngestWorker::IngestWorker(RpcQueueMatrix &ingest_to_logging_queues, RpcQueueMatrix &ingest_to_matching_queues, u32 shard_num)
-    : llvm_context_(),
-      ingest_to_logging_stats_(shard_num, "ingest", "logging", ingest_to_logging_queues),
+    : ingest_to_logging_stats_(shard_num, "ingest", "logging", ingest_to_logging_queues),
       ingest_to_matching_stats_(shard_num, "ingest", "matching", ingest_to_matching_queues),
       index_(std::make_unique<ebpf_net::ingest::Index>(
           ingest_to_logging_queues.make_writers<ebpf_net::logging::Writer>(shard_num, monotonic, get_boot_time()),
@@ -84,7 +81,6 @@ void IngestWorker::on_thread_start()
   set_local_logger(&logger_);
   set_local_core_stats_handle(&core_stats_);
   set_local_ingest_core_stats_handle(&ingest_core_stats_);
-  set_local_llvm_context(&llvm_context_);
 }
 
 void IngestWorker::on_thread_stop()
@@ -96,7 +92,6 @@ void IngestWorker::on_thread_stop()
   set_local_core_stats_handle(nullptr);
   set_local_ingest_core_stats_handle(nullptr);
   set_local_connection(nullptr);
-  set_local_llvm_context(nullptr);
 }
 
 std::unique_ptr<::channel::Callbacks> IngestWorker::create_callbacks(uv_loop_t &loop, ::channel::TCPChannel *const tcp_channel)
@@ -108,9 +103,8 @@ IngestWorker::Callbacks::Callbacks(IngestWorker *worker, channel::TCPChannel *ch
     : worker_(worker), channel_(channel), decompressor_(Worker::kBufferSize)
 {
   assert(local_index() == worker_->index_.get());
-  assert(local_llvm_context() == &worker_->llvm_context_);
 
-  connection_ = std::make_unique<NpmConnection>(worker->llvm_context_, *worker_->index_);
+  connection_ = std::make_unique<NpmConnection>(*worker_->index_);
 
   last_message_seen_ = std::chrono::nanoseconds(fp_get_time_ns());
 }

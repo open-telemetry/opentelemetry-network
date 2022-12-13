@@ -19,7 +19,6 @@ struct LocalState {
   ::ebpf_net::ingest::auto_handles::logger *logger = nullptr;
   ::ebpf_net::ingest::auto_handles::core_stats *core_stats = nullptr;
   ::ebpf_net::ingest::auto_handles::ingest_core_stats *ingest_core_stats = nullptr;
-  llvm::LLVMContext *llvm_context = nullptr;
 };
 
 GlobalState *global_state()
@@ -71,12 +70,6 @@ NpmConnection *local_connection()
   return *(local_state()->ingest_core_stats);
 }
 
-llvm::LLVMContext *local_llvm_context()
-{
-  assert(local_state()->llvm_context != nullptr);
-  return local_state()->llvm_context;
-}
-
 void set_local_index(::ebpf_net::ingest::Index *const index)
 {
   local_state()->index = index;
@@ -100,11 +93,6 @@ void set_local_core_stats_handle(::ebpf_net::ingest::auto_handles::core_stats *c
 void set_local_ingest_core_stats_handle(::ebpf_net::ingest::auto_handles::ingest_core_stats *ingest_core_stats)
 {
   local_state()->ingest_core_stats = ingest_core_stats;
-}
-
-void set_local_llvm_context(llvm::LLVMContext *llvm_context)
-{
-  local_state()->llvm_context = llvm_context;
 }
 
 } // namespace reducer::ingest

@@ -318,8 +318,7 @@ protected:
       ++num_binary_messages;
 
       std::stringstream ss;
-      llvm::LLVMContext llvm;
-      json_converter::WireToJsonConverter<ebpf_net::ingest_metadata> converter(ss, llvm);
+      json_converter::WireToJsonConverter<ebpf_net::ingest_metadata> converter(ss);
 
       converter.process(reinterpret_cast<char const *>(msg.data()), msg.size());
       std::string str = "[" + ss.str() + "]";
