@@ -31,6 +31,9 @@ target_link_libraries(
     spdlog
 )
 
+harden_executable(reducer-static)
+strip_binary(reducer-static)
+
 # Common to both executables
 #
 add_library(
@@ -154,6 +157,7 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
     OUT_DIR srv
     OUTPUT_OF
       reducer-scripts
+      reducer-static-stripped
     ARTIFACTS_OF
       reducer
       reducer-static
@@ -168,8 +172,7 @@ else()
     OUT_DIR srv
     OUTPUT_OF
       reducer-scripts
-    ARTIFACTS_OF
-      reducer-static
+      reducer-static-stripped
     DEPENDENCY_OF
       pipeline
   )
