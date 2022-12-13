@@ -23,7 +23,6 @@
 
 #include <channel/component.h>
 #include <common/client_type.h>
-#include <jitbuf/transformer.h>
 
 #include <geoip/geoip.h>
 
@@ -277,8 +276,6 @@ int main(int argc, char *argv[])
       geoip_path.reset(); // so matching shards don't try loading it for naught
     }
   }
-
-  jitbuf::initialize_llvm();
 
   std::optional<u64> scrape_size_limit_bytes;
   if (scrape_size_limit_bytes_flag) {

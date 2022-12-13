@@ -13,8 +13,6 @@
 
 #include <util/ip_address.h>
 
-#include <llvm/IR/LLVMContext.h>
-
 // This library encapuslates a number of shared, mutable global values that are
 // accessed from many classes.
 // This library is used as a workaround for the inability to effectively pass
@@ -34,7 +32,6 @@ NpmConnection *local_connection();
 ::ebpf_net::ingest::weak_refs::logger local_logger();
 ::ebpf_net::ingest::weak_refs::core_stats local_core_stats_handle();
 ::ebpf_net::ingest::weak_refs::ingest_core_stats local_ingest_core_stats_handle();
-llvm::LLVMContext *local_llvm_context();
 
 // Setters for the above values.
 void set_local_index(::ebpf_net::ingest::Index *index);
@@ -42,6 +39,5 @@ void set_local_connection(NpmConnection *connection);
 void set_local_logger(::ebpf_net::ingest::auto_handles::logger *logger);
 void set_local_core_stats_handle(::ebpf_net::ingest::auto_handles::core_stats *core_stats);
 void set_local_ingest_core_stats_handle(::ebpf_net::ingest::auto_handles::ingest_core_stats *ingest_core_stats);
-void set_local_llvm_context(llvm::LLVMContext *llvm_context);
 
 } // namespace reducer::ingest

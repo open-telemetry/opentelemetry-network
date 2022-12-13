@@ -157,7 +157,6 @@ function(render_compile INPUT_DIR)
       render_${PACKAGE}_${APP}
       PUBLIC
         fixed_hash
-        jitbuf_llvm
         render_${PACKAGE}_artifacts
     )
 

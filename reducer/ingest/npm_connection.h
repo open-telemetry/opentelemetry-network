@@ -13,8 +13,6 @@
 #include <generated/ebpf_net/ingest/transform_builder.h>
 #include <generated/ebpf_net/ingest/weak_refs.h>
 
-#include <jitbuf/transform_builder.h>
-
 #include <reducer/util/time_tracker.h>
 #include <util/fixed_hash.h>
 
@@ -22,7 +20,7 @@ namespace reducer::ingest {
 
 class NpmConnection {
 public:
-  NpmConnection(llvm::LLVMContext &context, ::ebpf_net::ingest::Index &index);
+  NpmConnection(::ebpf_net::ingest::Index &index);
 
   int handle(const char *msg, uint32_t len);
 

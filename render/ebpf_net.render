@@ -284,7 +284,6 @@ app agent_internal {
 } /* app agent_internal */
 
 app ingest {
-  jit
 
   span process impl "reducer::ingest::ProcessSpan" include "<reducer/ingest/process_span.h>" {
     pool_size 10000000

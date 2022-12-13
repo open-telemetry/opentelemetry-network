@@ -5,8 +5,8 @@
 
 namespace reducer::ingest {
 
-NpmConnection::NpmConnection(llvm::LLVMContext &context, ::ebpf_net::ingest::Index &index)
-    : transform_builder_(context), protocol_(transform_builder_), connection_(protocol_, index), time_tracker_()
+NpmConnection::NpmConnection(::ebpf_net::ingest::Index &index)
+    : transform_builder_(), protocol_(transform_builder_), connection_(protocol_, index), time_tracker_()
 {}
 
 int NpmConnection::handle(const char *msg, uint32_t len)
