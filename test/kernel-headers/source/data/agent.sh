@@ -4,16 +4,19 @@
 
 set -xe
 
-container_id_file="/tmp/container.id"
-if [[ -e "${container_id_file}" ]]; then
-  docker stop "$(cat "${container_id_file}")"
-  docker rm "$(cat "${container_id_file}")"
-  rm "${container_id_file}"
+container_name="test-kernel-collector"
+
+if [ "$(docker ps -a -q -f name="${container_name}")" ]
+then
+  docker stop "${container_name}"
+  docker rename "${container_name}" "${container_name}-stopped"
+  docker rm "${container_name}-stopped"
 fi
 
 docker pull localhost:5000/kernel-collector
 
 docker create \
+  --name "${container_name}" \
   --env EBPF_NET_INTAKE_PORT="8000" \
   --env EBPF_NET_INTAKE_HOST="127.0.0.1" \
   --env EBPF_NET_AGENT_NAMESPACE="${EBPF_NET_AGENT_NAMESPACE}" \
@@ -35,14 +38,43 @@ docker create \
   --entrypoint "/srv/test-entrypoint.sh" \
   localhost:5000/kernel-collector \
     --log-console \
-    --debug \
-  > "${container_id_file}"
+    --debug
 
-export container_id="$(cat "${container_id_file}")"
+docker cp ".env" "${container_name}:/srv/.env"
+docker cp "test-entrypoint.sh" "${container_name}:/srv/test-entrypoint.sh"
 
-docker cp ".env" "${container_id}:/srv/.env"
-docker cp "test-entrypoint.sh" "${container_id}:/srv/test-entrypoint.sh"
+docker start "${container_name}"
 
-docker start -i "${container_id}"
+start_string="Telemetry is flowing\!"
 
-rm "${container_id_file}"
+remaining_attempts=24
+while true
+do
+  result=$(docker ps | grep "${container_name}") || true
+  if [[ "${result}" == "" ]]
+  then
+    docker ps -a
+    docker logs "${container_name}"
+    echo "ERROR: kernel-collector container is not running!"
+    exit 1
+  fi
+
+  result=$(docker logs "${container_name}" | grep "${start_string}") || true
+  if [[ "${result}" != "" ]]
+  then
+    break
+  fi
+
+  remaining_attempts=$(($remaining_attempts-1))
+  if [[ $remaining_attempts == 0 ]]
+  then
+    docker ps -a
+    docker logs "${container_name}"
+    echo "ERROR: kernel-collector did not start within the time expected!"
+    exit 1
+  fi
+
+  sleep 5
+done
+
+echo "kernel-collector is running!"

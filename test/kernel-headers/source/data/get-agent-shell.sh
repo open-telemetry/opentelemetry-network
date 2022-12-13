@@ -4,7 +4,5 @@
 
 set -xe
 
-container_id_file="/tmp/container.id"
-export container_id="$(cat "${container_id_file}")"
-
-docker exec -it "${container_id}" bash
+container_name="test-kernel-collector"
+docker exec -it "${container_name}" bash
