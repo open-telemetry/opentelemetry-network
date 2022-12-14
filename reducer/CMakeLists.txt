@@ -3,7 +3,7 @@
 
 add_subdirectory(util)
 
-# Dynamically linked reducer executable
+# Reducer executable
 #
 add_executable(
   reducer
@@ -11,30 +11,16 @@ add_executable(
 )
 target_link_libraries(
   reducer
-    reducerlib
-    libuv-shared
-    shared-executable
-    spdlog
-)
-
-# Statically linked reducer executable
-#
-add_executable(
-  reducer-static
-    main.cc
-)
-target_link_libraries(
-  reducer-static
     reducerlib
     libuv-static
     static-executable
     spdlog
 )
 
-harden_executable(reducer-static)
-strip_binary(reducer-static)
+harden_executable(reducer)
+strip_binary(reducer)
 
-# Common to both executables
+# Reducer library
 #
 add_library(
   reducerlib
@@ -157,10 +143,9 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
     OUT_DIR srv
     OUTPUT_OF
       reducer-scripts
-      reducer-static-stripped
+      reducer-stripped
     ARTIFACTS_OF
       reducer
-      reducer-static
     DEPENDENCY_OF
       pipeline
     ARGS
@@ -172,7 +157,7 @@ else()
     OUT_DIR srv
     OUTPUT_OF
       reducer-scripts
-      reducer-static-stripped
+      reducer-stripped
     DEPENDENCY_OF
       pipeline
   )
