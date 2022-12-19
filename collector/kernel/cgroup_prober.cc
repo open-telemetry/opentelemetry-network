@@ -26,15 +26,24 @@ CgroupProber::CgroupProber(
     : close_dir_error_count_(0)
 {
   // END
-  if (probe_handler.start_probe(bpf_module, "on_kill_css", "kill_css") != 0) {
-    probe_handler.start_probe(bpf_module, "on_cgroup_destroy_locked", "cgroup_destroy_locked");
-  }
+  ProbeAlternatives kill_kss_probe_alternatives{
+      "kill css",
+      {
+          {"on_kill_css", "kill_css"},
+          // try an alternative for kernel versions older than 3.12.
+          {"on_cgroup_destroy_locked", "cgroup_destroy_locked"},
+      }};
+  probe_handler.start_probe(bpf_module, kill_kss_probe_alternatives);
   periodic_cb();
 
   // START
-  if (probe_handler.start_probe(bpf_module, "on_css_populate_dir", "css_populate_dir") != 0) {
-    probe_handler.start_probe(bpf_module, "on_cgroup_populate_dir", "cgroup_populate_dir");
-  }
+  ProbeAlternatives css_populate_dir_probe_alternatives{
+      "css populate dir",
+      {
+          {"on_css_populate_dir", "css_populate_dir"},
+          {"on_cgroup_populate_dir", "cgroup_populate_dir"},
+      }};
+  probe_handler.start_probe(bpf_module, css_populate_dir_probe_alternatives);
   periodic_cb();
 
   // EXISTING

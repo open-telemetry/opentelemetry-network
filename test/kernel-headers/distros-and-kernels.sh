@@ -16,6 +16,8 @@ distros_and_kernels=(
 "ubuntu focal64 5.14.0-1004-oem"
 # this is the kernel version that jammy uses as of November, 2022
 "ubuntu focal64 5.15.0-52-generic"
+# this is the kernel version that jammy uses as of December, 2022
+"ubuntu focal64 5.15.0-56-generic"
 "ubuntu jammy64"
 )
 

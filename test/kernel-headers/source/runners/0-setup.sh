@@ -3,13 +3,21 @@
 # SPDX-License-Identifier: Apache-2.0
 
 OTEL_EBPF_SRC="${OTEL_EBPF_SRC:-$(git rev-parse --show-toplevel)}"
-source "${OTEL_EBPF_SRC}/dev/script/bash-error-lib.sh"
 set -x
 
 vagrant destroy -f || true
 [ -e .vagrant ] && rm -rf .vagrant
 vagrant box update
 vagrant up --provision
+if [[ $? != 0 ]]
+then
+    echo "vagrant up failed"
+    vagrant destroy -f
+    exit 1
+fi
+
+# don't do this until after vagrant up so the script can check the result and cleanup and exit if it fails
+source "${OTEL_EBPF_SRC}/dev/script/bash-error-lib.sh"
 
 # Check if local docker registry is running
 result=$(docker ps | grep registry:latest | grep local-docker-registry) || true

@@ -22,7 +22,7 @@
 #define DATA_CHANNEL_PERF_RING_N_BYTES (256 * 4096)
 #define DATA_CHANNEL_PERF_RING_N_WATERMARK_BYTES (1)
 
-ProbeHandler::ProbeHandler() : stack_trace_count_(0) {}
+ProbeHandler::ProbeHandler(logging::Logger &log) : log_(log), num_failed_probes_(0), stack_trace_count_(0){};
 
 int ProbeHandler::setup_mmap(int cpu, int perf_fd, PerfContainer &perf, bool is_data, u32 n_bytes, u32 n_watermark_bytes)
 {
@@ -142,7 +142,8 @@ int ProbeHandler::register_tail_call(
 
   uint8_t *func_start = bpf_module.function_start(func_name);
   if (func_start == nullptr) {
-    LOG::debug_in(AgentLogKind::BPF, "Could not get function start. funcname:{}", func_name);
+    log_.error("Failed to register tail call for {}, could not get function start", func_name);
+    ++num_failed_probes_;
     return -1;
   }
   size_t func_size = bpf_module.function_size(func_name);
@@ -157,7 +158,8 @@ int ProbeHandler::register_tail_call(
       nullptr,
       0);
   if (prog_fd < 0) {
-    LOG::debug_in(AgentLogKind::BPF, "Failed to load prog. funcname:{} error:{}", func_name, prog_fd);
+    log_.error("Failed to register tail call for {}, could not load program, errno {}", func_name, errno);
+    ++num_failed_probes_;
     return -2;
   }
 
@@ -204,15 +206,16 @@ std::string ProbeHandler::get_stack_trace(ebpf::BPFModule &bpf_module, s32 kerne
 
 #endif
 
-int ProbeHandler::start_probe(
+int ProbeHandler::start_probe_common(
     ebpf::BPFModule &bpf_module,
+    bool is_kretprobe,
     const std::string &func_name,
     const std::string &k_func_name,
     const std::string &event_id_suffix)
 {
   uint8_t *func_start = bpf_module.function_start(func_name);
   if (func_start == nullptr) {
-    LOG::debug_in(AgentLogKind::BPF, "Could not get function start. funcname:{} k_func_name:{}", func_name, k_func_name);
+    LOG::debug_in(AgentLogKind::BPF, "Could not get function start. func_name:{} k_func_name:{}", func_name, k_func_name);
     return -1;
   }
   size_t func_size = bpf_module.function_size(func_name);
@@ -228,17 +231,25 @@ int ProbeHandler::start_probe(
       0);
   if (prog_fd < 0) {
     LOG::debug_in(
-        AgentLogKind::BPF, "Failed to load prog. funcname:{} k_func_name:{} error:{}", func_name, k_func_name, prog_fd);
+        AgentLogKind::BPF, "Failed to load prog. func_name:{} k_func_name:{} error:{}", func_name, k_func_name, prog_fd);
     return -2;
   }
 
   /* attach the probe */
-  std::string probe_name = probe_prefix_ + k_func_name + event_id_suffix;
-  int attach_res = bpf_attach_kprobe(prog_fd, BPF_PROBE_ENTRY, probe_name.c_str(), k_func_name.c_str(), 0, 0);
+  std::string probe_name = (is_kretprobe ? kretprobe_prefix_ : probe_prefix_) + k_func_name + event_id_suffix;
+  int attach_res = bpf_attach_kprobe(
+      prog_fd, (is_kretprobe ? BPF_PROBE_RETURN : BPF_PROBE_ENTRY), probe_name.c_str(), k_func_name.c_str(), 0, 0);
   if (attach_res == -1) {
     // we expect this to be triggered depending on kernel version
     close(prog_fd);
-    LOG::debug_in(AgentLogKind::BPF, "Unable to attach kprobe. funcname:{} k_func_name:{}", func_name, k_func_name);
+    LOG::debug_in(
+        AgentLogKind::BPF,
+        "Unable to attach {}. probe_name:{} func_name:{} k_func_name:{} errno:{}",
+        is_kretprobe ? "kretprobe" : "kprobe",
+        probe_name,
+        func_name,
+        k_func_name,
+        errno);
     return -3;
   }
 
@@ -248,47 +259,82 @@ int ProbeHandler::start_probe(
   return 0;
 }
 
+int ProbeHandler::start_probe(
+    ebpf::BPFModule &bpf_module,
+    const std::string &func_name,
+    const std::string &k_func_name,
+    const std::string &event_id_suffix)
+{
+  auto ret = start_probe_common(bpf_module, false, func_name, k_func_name, event_id_suffix);
+  if (ret != 0) {
+    log_.error("Failed to attach {} kprobe, error {}", k_func_name, ret);
+    ++num_failed_probes_;
+  }
+  return ret;
+}
+
 int ProbeHandler::start_kretprobe(
     ebpf::BPFModule &bpf_module,
     const std::string &func_name,
     const std::string &k_func_name,
     const std::string &event_id_suffix)
 {
-  uint8_t *func_start = bpf_module.function_start(func_name);
-  if (func_start == nullptr) {
-    LOG::debug_in(AgentLogKind::BPF, "Could not get function start. funcname:{} k_func_name:{}", func_name, k_func_name);
-    return -1;
+  auto ret = start_probe_common(bpf_module, true, func_name, k_func_name, event_id_suffix);
+  if (ret != 0) {
+    log_.error("Failed to attach {} kretprobe, error {}", k_func_name, ret);
+    ++num_failed_probes_;
   }
-  size_t func_size = bpf_module.function_size(func_name);
-  int prog_fd = bcc_prog_load(
-      BPF_PROG_TYPE_KPROBE,
-      nullptr,
-      reinterpret_cast<struct bpf_insn *>(func_start),
-      func_size,
-      bpf_module.license(),
-      bpf_module.kern_version(),
-      0,
-      nullptr,
-      0);
-  if (prog_fd < 0) {
-    LOG::debug_in(AgentLogKind::BPF, "Failed to load prog. funcname:{} k_func_name:{}", func_name, k_func_name);
-    return -2;
-  }
+  return ret;
+}
 
-  /* attach the probe */
-  std::string probe_name = kretprobe_prefix_ + k_func_name + event_id_suffix;
-  int attach_res = bpf_attach_kprobe(prog_fd, BPF_PROBE_RETURN, probe_name.c_str(), k_func_name.c_str(), 0, 0);
-  if (attach_res == -1) {
-    close(prog_fd);
-    // we expect this to be triggered depending on kernel version
-    LOG::debug_in(AgentLogKind::BPF, "Unable to attach kretprobe. funcname:{} k_func_name:{}", func_name, k_func_name);
-    return -3;
+std::string ProbeHandler::start_probe_common(
+    ebpf::BPFModule &bpf_module,
+    bool is_kretprobe,
+    const ProbeAlternatives &probe_alternatives,
+    const std::string &event_id_suffix)
+{
+  size_t probe_num = 1;
+  size_t num_alternatives = probe_alternatives.func_names.size();
+  if (num_alternatives == 0) {
+    throw std::runtime_error("ProbeHandler:start_probe_common() no alternatives provided");
   }
+  for (const auto &func_and_kfunc : probe_alternatives.func_names) {
+    int ret =
+        start_probe_common(bpf_module, is_kretprobe, func_and_kfunc.func_name, func_and_kfunc.k_func_name, event_id_suffix);
+    if (ret == 0) {
+      LOG::debug_in(
+          AgentLogKind::BPF,
+          "Successfully attached {} {}, alternative {} of {}, func_name={}, k_func_name={}",
+          probe_alternatives.desc,
+          is_kretprobe ? "kretprobe" : "kprobe",
+          probe_num,
+          num_alternatives,
+          func_and_kfunc.func_name,
+          func_and_kfunc.k_func_name);
+      return func_and_kfunc.k_func_name;
+      break;
+    }
+    ++probe_num;
+  }
+  log_.error(
+      "Failed to attach any {} {}, attempted {} alternatives",
+      probe_alternatives.desc,
+      is_kretprobe ? "kretprobe" : "kprobe",
+      num_alternatives);
+  ++num_failed_probes_;
+  return std::string();
+}
 
-  fds_.push_back(prog_fd);
-  probes_.push_back(attach_res);
-  probe_names_.push_back(probe_name);
-  return 0;
+std::string ProbeHandler::start_probe(
+    ebpf::BPFModule &bpf_module, const ProbeAlternatives &probe_alternatives, const std::string &event_id_suffix)
+{
+  return start_probe_common(bpf_module, false, probe_alternatives, event_id_suffix);
+}
+
+std::string ProbeHandler::start_kretprobe(
+    ebpf::BPFModule &bpf_module, const ProbeAlternatives &probe_alternatives, const std::string &event_id_suffix)
+{
+  return start_probe_common(bpf_module, true, probe_alternatives, event_id_suffix);
 }
 
 void ProbeHandler::cleanup_probes()
@@ -338,16 +384,6 @@ void ProbeHandler::cleanup_tail_calls(ebpf::BPFModule &bpf_module)
   }
 }
 
-void ProbeHandler::cleanup_probe(const std::string &k_func_name)
-{
-  cleanup_probe_common(probe_prefix_ + k_func_name);
-}
-
-void ProbeHandler::cleanup_kretprobe(const std::string &k_func_name)
-{
-  cleanup_probe_common(kretprobe_prefix_ + k_func_name);
-}
-
 void ProbeHandler::cleanup_probe_common(const std::string &probe_name)
 {
   int i = 0;
@@ -380,4 +416,20 @@ void ProbeHandler::cleanup_probe_common(const std::string &probe_name)
   }
 
   LOG::warn("Error removing probe. {} was not found.", probe_name);
+}
+
+void ProbeHandler::cleanup_probe(const std::string &k_func_name)
+{
+  if (k_func_name.empty())
+    return;
+
+  cleanup_probe_common(probe_prefix_ + k_func_name);
+}
+
+void ProbeHandler::cleanup_kretprobe(const std::string &k_func_name)
+{
+  if (k_func_name.empty())
+    return;
+
+  cleanup_probe_common(kretprobe_prefix_ + k_func_name);
 }

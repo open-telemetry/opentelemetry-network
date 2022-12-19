@@ -170,6 +170,7 @@ protected:
     print_message_counts();
 
     // NOTE: use EXPECT_s here because ASSERT_s fail fast, returning from the current function, skipping the cleanup below
+    EXPECT_EQ(0, get_probe_handler().num_failed_probes_);
     EXPECT_TRUE(binary_messages_check_counts());
     EXPECT_EQ(0u, get_test_channel()->get_num_failed_sends());
     EXPECT_EQ(false, timeout_exceeded_);
@@ -341,6 +342,14 @@ protected:
   channel::TestChannel *get_test_channel()
   {
     return dynamic_cast<channel::TestChannel *>(kernel_collector_->primary_channel_.get());
+  }
+
+  ProbeHandler &get_probe_handler()
+  {
+    if (!kernel_collector_->bpf_handler_) {
+      throw std::runtime_error("std::optional bpf_handler_ does not have a value");
+    }
+    return kernel_collector_->bpf_handler_->probe_handler_;
   }
 
   uv_loop_t loop_;
