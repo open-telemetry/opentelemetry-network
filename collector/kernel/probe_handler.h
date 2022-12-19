@@ -9,20 +9,43 @@
 
 #include <bcc/BPFTable.h>
 #include <bcc/bpf_module.h>
+
 #include <collector/kernel/perf_reader.h>
+#include <util/logger.h>
+
 #include <string>
 #include <vector>
+
+/**
+ * ProbeAlternatives encapsulates multiple alternatives to attempt when attaching a probe.  Alternatives may be needed due to
+ * differences in kernel versions or builds.
+ */
+struct ProbeAlternatives {
+  struct FuncAndKfunc {
+    std::string func_name;
+    std::string k_func_name;
+  };
+
+  ProbeAlternatives(std::string desc, std::vector<FuncAndKfunc> func_names)
+      : desc(std::move(desc)), func_names(std::move(func_names))
+  {}
+
+  std::string desc;
+  std::vector<FuncAndKfunc> func_names;
+};
 
 /**
  * Handles the creation of probes and provides info for cleanup to signal
  * handler
  */
 class ProbeHandler {
+  friend class KernelCollectorTest;
+
 public:
   /**
    * c'tor
    */
-  ProbeHandler();
+  ProbeHandler(logging::Logger &log);
 
   int start_bpf_module(std::string full_program, ebpf::BPFModule &bpf_module, PerfContainer &perf);
 
@@ -41,6 +64,7 @@ public:
 
   /**
    * Starts a kprobe
+   * on failure logs error and increments num_failed_probes_
    * @returns 0 on success, negative value on failure
    */
   int start_probe(
@@ -51,12 +75,35 @@ public:
 
   /**
    * Starts a kretprobe
+   * on failure logs error and increments num_failed_probes_
    * @returns 0 on success, negative value on failure
    */
   int start_kretprobe(
       ebpf::BPFModule &bpf_module,
       const std::string &func_name,
       const std::string &k_func_name,
+      const std::string &event_id_suffix = std::string());
+
+  /**
+   * Starts a kprobe from the provided alternatives.
+   * Probes are attempted in order until one succeeds.
+   * If all alternatives fail an error is logged and num_failed_probes_ is incremented.
+   * @returns string containing the k_func_name of the probe that was attached on success, empty string on failure
+   */
+  std::string start_probe(
+      ebpf::BPFModule &bpf_module,
+      const ProbeAlternatives &probe_alternatives,
+      const std::string &event_id_suffix = std::string());
+
+  /**
+   * Starts a kretprobe from the provided alternatives.
+   * Probes are attempted in order until one succeeds.
+   * If all alternatives fail an error is logged and num_failed_probes_ is incremented.
+   * @returns string containing the k_func_name of the probe that was attached on success, empty string on failure
+   */
+  std::string start_kretprobe(
+      ebpf::BPFModule &bpf_module,
+      const ProbeAlternatives &probe_alternatives,
       const std::string &event_id_suffix = std::string());
 
   /**
@@ -87,6 +134,30 @@ public:
 #endif
 
 protected:
+  /**
+   * Common code to start a kprobe or kretprobe
+   * @returns 0 on success, negative value on failure
+   */
+  int start_probe_common(
+      ebpf::BPFModule &bpf_module,
+      bool is_kretprobe,
+      const std::string &func_name,
+      const std::string &k_func_name,
+      const std::string &event_id_suffix);
+
+  /**
+   * Common code to start a kprobe or kretprobe from the provided alternatives
+   * @returns string containing the k_func_name of the probe that was attached on success, empty string on failure
+   */
+  std::string start_probe_common(
+      ebpf::BPFModule &bpf_module,
+      bool is_kretprobe,
+      const ProbeAlternatives &probe_alternatives,
+      const std::string &event_id_suffix = std::string());
+
+  /**
+   * Common code to clean up a single probe
+   */
   void cleanup_probe_common(const std::string &probe_name);
 
   /**
@@ -103,6 +174,8 @@ private:
   static constexpr char probe_prefix_[] = "ebpf_net_p_";
   static constexpr char kretprobe_prefix_[] = "ebpf_net_r_";
 
+  logging::Logger &log_;
+
   struct TailCallTuple {
     TailCallTuple(const std::string &table, const std::string &func, int fd, int index)
         : table_(table), func_(func), fd_(fd), index_(index)
@@ -116,5 +189,6 @@ private:
   std::vector<int> probes_;
   std::vector<TailCallTuple> tail_calls_;
   std::vector<std::string> probe_names_;
+  size_t num_failed_probes_; // number of kprobes, kretprobes, and tail_calls that failed to attach
   size_t stack_trace_count_;
 };

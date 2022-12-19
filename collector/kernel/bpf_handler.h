@@ -17,6 +17,8 @@
 #include <memory>
 
 class BPFHandler {
+  friend class KernelCollectorTest;
+
 public:
   /**
    * c'tor
