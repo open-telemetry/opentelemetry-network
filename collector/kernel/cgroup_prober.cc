@@ -30,7 +30,9 @@ CgroupProber::CgroupProber(
       "kill css",
       {
           {"on_kill_css", "kill_css"},
-          // try an alternative for kernel versions older than 3.12.
+          // Attaching probe to kill_css fails on some distros and kernel builds, for example Ubuntu Jammy.
+          {"on_kill_css", "css_clear_dir"},
+          // If the previous two fail try an alternative for kernel versions older than 3.12.
           {"on_cgroup_destroy_locked", "cgroup_destroy_locked"},
       }};
   probe_handler.start_probe(bpf_module, kill_kss_probe_alternatives);
