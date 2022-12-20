@@ -415,7 +415,7 @@ void ProbeHandler::cleanup_probe_common(const std::string &probe_name)
     ++i;
   }
 
-  LOG::warn("Error removing probe. {} was not found.", probe_name);
+  log_.error("Error removing probe. {} was not found.", probe_name);
 }
 
 void ProbeHandler::cleanup_probe(const std::string &k_func_name)

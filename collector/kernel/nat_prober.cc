@@ -26,7 +26,15 @@ NatProber::NatProber(ProbeHandler &probe_handler, ebpf::BPFModule &bpf_module, s
   periodic_cb();
 
   // EXISTING
-  probe_handler.start_probe(bpf_module, "on_ctnetlink_dump_tuples", "ctnetlink_dump_tuples");
+  ProbeAlternatives probe_alternatives{
+      "ctnetlink_dump_tuples",
+      {
+          {"on_ctnetlink_dump_tuples", "ctnetlink_dump_tuples"},
+          // Attaching probe to ctnetlink_dump_tuples fails on some distros and kernel builds, for example Ubuntu Jammy.
+          {"on_ctnetlink_dump_tuples", "ctnetlink_dump_tuples_ip"},
+      }};
+  std::string ctnetlink_dump_tuples_k_func_name = probe_handler.start_probe(bpf_module, probe_alternatives);
+
   periodic_cb();
   int res = query_kernel();
   if (res != 0) {
@@ -42,7 +50,7 @@ NatProber::NatProber(ProbeHandler &probe_handler, ebpf::BPFModule &bpf_module, s
   periodic_cb();
 
   // Cleanup existing
-  probe_handler.cleanup_probe("ctnetlink_dump_tuples");
+  probe_handler.cleanup_probe(ctnetlink_dump_tuples_k_func_name);
   periodic_cb();
 }
 

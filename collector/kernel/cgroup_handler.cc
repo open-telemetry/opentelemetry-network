@@ -73,7 +73,7 @@ void CgroupHandler::kill_css(u64 timestamp, struct jb_agent_internal__kill_css *
   if (has_cgroup(msg->cgroup)) {
     LOG::debug_in(AgentLogKind::CGROUPS, "Success: cgroup found. \t{}", get_name(msg->cgroup));
   } else {
-    LOG::error("cgroup not found: {:x}", msg->cgroup);
+    log_.warn("kill_css(): cgroup not found: {:x}", msg->cgroup);
   }
 
   auto pos = cgroup_table_.find(msg->cgroup);
@@ -102,8 +102,7 @@ void CgroupHandler::css_populate_dir(u64 timestamp, struct jb_agent_internal__cs
   if (has_cgroup(msg->cgroup_parent)) {
     LOG::debug_in(AgentLogKind::CGROUPS, "Success: cgroup->parent found. \t{}", get_name(msg->cgroup_parent));
   } else {
-    LOG::error(
-        "cgroup->parent not found: cgroup_parent={:x}, cgroup={:x}, name={}", msg->cgroup_parent, msg->cgroup, msg->name);
+    log_.warn("cgroup->parent not found: cgroup_parent={:x}, cgroup={:x}, name={}", msg->cgroup_parent, msg->cgroup, msg->name);
   }
 
   std::string name{(char *)msg->name, strnlen((char *)msg->name, sizeof(msg->name))};
@@ -148,7 +147,7 @@ void CgroupHandler::cgroup_attach_task(u64 timestamp, struct jb_agent_internal__
   if (has_cgroup(msg->cgroup)) {
     LOG::debug_in(AgentLogKind::CGROUPS, "Success: cgroup found. \t{}", get_name(msg->cgroup));
   } else {
-    LOG::error("cgroup not found: {:x}", msg->cgroup);
+    log_.warn("cgroup_attach_task(): cgroup not found: {:x}", msg->cgroup);
   }
 }
 
@@ -169,7 +168,7 @@ void CgroupHandler::handle_pid_info(u32 pid, u64 cgroup, uint8_t comm[16])
   if (has_cgroup(cgroup)) {
     LOG::debug_in(AgentLogKind::CGROUPS, "Success: cgroup found. \t{}", get_name(cgroup));
   } else {
-    LOG::error("cgroup not found: {:x}", cgroup);
+    log_.warn("handle_pid_info(): cgroup not found: {:x}", cgroup);
   }
 }
 
