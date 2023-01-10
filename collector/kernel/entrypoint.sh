@@ -35,7 +35,9 @@ else
 fi
 
 # cleanup kprobes previously created by the kernel collector
+mount -t debugfs none /sys/kernel/debug
 if [[ -f /sys/kernel/debug/tracing/kprobe_events ]]; then
+  echo "cleaning up stale kprobes..."
   tmpfile="${data_dir}/ebpf_net_kprobes"
   grep "ebpf_net_" /sys/kernel/debug/tracing/kprobe_events \
     | cut -d: -f2 | sed -e 's/^/-:/' > "$tmpfile"
