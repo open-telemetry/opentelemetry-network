@@ -8,7 +8,6 @@
 #include <util/log.h>
 
 #include <bcc/BPF.h>
-#include <bcc/common.h>
 #include <bcc/libbpf.h>
 #include <bcc/perf_reader.h>
 #include <bcc/table_storage.h>
@@ -17,17 +16,26 @@
 #include <collector/kernel/bpf_src/render_bpf.h>
 #include <collector/kernel/probe_handler.h>
 
+#include <memory>
+#include <vector>
+
 #define EVENTS_PERF_RING_N_BYTES (1024 * 4096)
 #define EVENTS_PERF_RING_N_WATERMARK_BYTES (512 * 4096)
 #define DATA_CHANNEL_PERF_RING_N_BYTES (256 * 4096)
 #define DATA_CHANNEL_PERF_RING_N_WATERMARK_BYTES (1)
+
+namespace ebpf {
+// This function is declared in BCC's common.h, which is private (doesn't get installed).
+// TODO: remove this when bcc/common.h is made public.
+std::vector<int> get_online_cpus();
+}
 
 ProbeHandler::ProbeHandler(logging::Logger &log) : log_(log), num_failed_probes_(0), stack_trace_count_(0){};
 
 int ProbeHandler::setup_mmap(int cpu, int perf_fd, PerfContainer &perf, bool is_data, u32 n_bytes, u32 n_watermark_bytes)
 {
   /* get mmap'd memory */
-  auto s = ebpf::make_unique<MmapPerfRingStorage>(cpu, n_bytes, n_watermark_bytes);
+  auto s = std::make_unique<MmapPerfRingStorage>(cpu, n_bytes, n_watermark_bytes);
   int mmap_fd = s->fd();
 
   /* add to perf container */
