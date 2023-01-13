@@ -287,7 +287,7 @@ void KernelCollector::probe_holdoff_timeout(uv_timer_t *timer)
   auto potential_troubleshoot_item = TroubleshootItem::bpf_compilation_failed;
   try {
     bpf_handler_.emplace(
-        loop_, full_program_, enable_http_metrics_, enable_userland_tcp_, bpf_dump_file_, log_, encoder_.get());
+        loop_, full_program_, enable_http_metrics_, enable_userland_tcp_, bpf_dump_file_, log_, encoder_.get(), host_info_);
 
     potential_troubleshoot_item = TroubleshootItem::unexpected_exception;
     writer_.bpf_compiled();

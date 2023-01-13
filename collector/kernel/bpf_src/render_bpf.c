@@ -142,7 +142,11 @@ BEGIN_DECLARE_SAVED_ARGS(cgroup_exit)
 pid_t tgid;
 END_DECLARE_SAVED_ARGS(cgroup_exit)
 
-/* cgroups subsystem used for cgroup probing */
+/*
+ * cgroups subsystem used for cgroup probing
+ * This is used by cgroup related probes to filter out cgroups that aren't in the memory hierarchy.
+ * See SUBSYS macro in /linux_kernel/kernel/cgroup/cgroup.c.
+ */
 #pragma passthrough on
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 14, 79)
 #define FLOW_CGROUP_SUBSYS mem_cgroup_subsys_id
@@ -2227,6 +2231,8 @@ static struct cgroup *get_css_parent_cgroup(struct cgroup_subsys_state *css)
 #else
 static u32 get_css_id(struct cgroup_subsys_state *css)
 {
+  if (!css->ss)
+    return 0;
   u32 ssid = (u32)css->ss->id;
   return ssid;
 }
@@ -2257,8 +2263,6 @@ static const char *get_cgroup_name(struct cgroup *cg)
 // For Kernel >= 3.12
 int on_kill_css(struct pt_regs *ctx, struct cgroup_subsys_state *css)
 {
-  // filter out cgroups that aren't in the pid hierarchy.
-  // see SUBSYS macro in /linux_kernel/kernel/cgroup/cgroup.c
   u32 ssid = get_css_id(css);
   if (ssid != FLOW_CGROUP_SUBSYS)
     return 0;
@@ -2274,8 +2278,6 @@ int on_kill_css(struct pt_regs *ctx, struct cgroup_subsys_state *css)
 // For Kernel < 3.12
 int on_cgroup_destroy_locked(struct pt_regs *ctx, struct cgroup *cgrp)
 {
-  // filter out cgroups that aren't in the pid hierarchy.
-  // see SUBSYS macro in /linux_kernel/kernel/cgroup/cgroup.c
   struct cgroup_subsys_state *css = NULL;
   bpf_probe_read(&css, sizeof(css), &(cgrp->subsys[FLOW_CGROUP_SUBSYS]));
   if (css == NULL)
@@ -2293,7 +2295,6 @@ int on_cgroup_destroy_locked(struct pt_regs *ctx, struct cgroup *cgrp)
 // For Kernel >= 4.4
 int on_css_populate_dir(struct pt_regs *ctx, struct cgroup_subsys_state *css)
 {
-  // filter out cgroups that aren't in the pid hierarchy.
   u32 ssid = get_css_id(css);
   if (ssid != FLOW_CGROUP_SUBSYS)
     return 0;
@@ -2309,7 +2310,6 @@ int on_css_populate_dir(struct pt_regs *ctx, struct cgroup_subsys_state *css)
 // For Kernel < 4.4
 int on_cgroup_populate_dir(struct pt_regs *ctx, struct cgroup *cgrp, unsigned long subsys_mask)
 {
-  // filter out cgroups that aren't in the pid hierarchy.
   struct cgroup_subsys_state *css = NULL;
   bpf_probe_read(&css, sizeof(css), &(cgrp->subsys[FLOW_CGROUP_SUBSYS]));
   if (css == NULL)
@@ -2321,13 +2321,55 @@ int on_cgroup_populate_dir(struct pt_regs *ctx, struct cgroup *cgrp, unsigned lo
 }
 #endif
 
-// existing
+// existing cgroups v2
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 6, 0)
+BEGIN_DECLARE_SAVED_ARGS(cgroup_control)
+struct cgroup *cgrp;
+END_DECLARE_SAVED_ARGS(cgroup_control)
+
+int on_cgroup_control(struct pt_regs *ctx, struct cgroup *cgrp)
+{
+  GET_PID_TGID;
+
+  BEGIN_SAVE_ARGS(cgroup_control)
+  SAVE_ARG(cgrp)
+  END_SAVE_ARGS(cgroup_control)
+
+  return 0;
+}
+
+int onret_cgroup_control(struct pt_regs *ctx)
+{
+  GET_PID_TGID;
+
+  GET_ARGS_MISSING_OK(cgroup_control, args)
+  if (args == NULL) {
+    return 0;
+  }
+
+  struct cgroup *cgrp = args->cgrp;
+
+  DELETE_ARGS(cgroup_control);
+
+  u16 subsys_mask = (u16)PT_REGS_RC(ctx);
+  if (!(subsys_mask & 1 << FLOW_CGROUP_SUBSYS))
+    return 0;
+
+  u64 now = get_timestamp();
+  struct cgroup *parent_cgroup = get_css_parent_cgroup(&cgrp->self);
+
+  perf_submit_agent_internal__existing_cgroup_probe(ctx, now, (__u64)cgrp, (__u64)parent_cgroup, (void *)get_cgroup_name(cgrp));
+
+  return 0;
+}
+#endif
+
+// existing cgroups v1
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 12, 0)
 // For Kernel >= 3.12.0
 int on_cgroup_clone_children_read(struct pt_regs *ctx, struct cgroup_subsys_state *css, struct cftype *cft)
 {
-  // make sure this call was triggered by a cgroup in the pids subsystem
   u32 subsys_mask = (u32)css->cgroup->root->subsys_mask;
   if (subsys_mask != 1 << FLOW_CGROUP_SUBSYS)
     return 0;
@@ -2335,7 +2377,7 @@ int on_cgroup_clone_children_read(struct pt_regs *ctx, struct cgroup_subsys_stat
   u64 now = get_timestamp();
   struct cgroup *parent_cgroup = get_css_parent_cgroup(css);
 
-  perf_submit_agent_internal__cgroup_clone_children_read(
+  perf_submit_agent_internal__existing_cgroup_probe(
       ctx, now, (__u64)css->cgroup, (__u64)parent_cgroup, (void *)get_cgroup_name(css->cgroup));
 
   return 0;
@@ -2344,7 +2386,6 @@ int on_cgroup_clone_children_read(struct pt_regs *ctx, struct cgroup_subsys_stat
 // For Kernel < 3.12.0
 int on_cgroup_clone_children_read(struct pt_regs *ctx, struct cgroup *cgrp, struct cftype *cft)
 {
-  // make sure this call was triggered by a cgroup in the pids subsystem
   u32 subsys_mask = (u32)cgrp->root->subsys_mask;
   if (subsys_mask != 1 << FLOW_CGROUP_SUBSYS)
     return 0;
@@ -2352,8 +2393,7 @@ int on_cgroup_clone_children_read(struct pt_regs *ctx, struct cgroup *cgrp, stru
   u64 now = get_timestamp();
   struct cgroup *parent_cgroup = cgrp->parent;
 
-  perf_submit_agent_internal__cgroup_clone_children_read(
-      ctx, now, (__u64)cgrp, (__u64)parent_cgroup, (void *)get_cgroup_name(cgrp));
+  perf_submit_agent_internal__existing_cgroup_probe(ctx, now, (__u64)cgrp, (__u64)parent_cgroup, (void *)get_cgroup_name(cgrp));
 
   return 0;
 }
@@ -2364,8 +2404,6 @@ int on_cgroup_clone_children_read(struct pt_regs *ctx, struct cgroup *cgrp, stru
 // modify
 int on_cgroup_attach_task(struct pt_regs *ctx, struct cgroup *dst_cgrp, struct task_struct *leader, bool threadgroup)
 {
-  // make sure this call was triggered by a task attaching to a group in the
-  // pids subsystem
   u32 subsys_mask = (u32)dst_cgrp->root->subsys_mask;
   if (subsys_mask != 1 << FLOW_CGROUP_SUBSYS)
     return 0;

@@ -62,8 +62,8 @@ void CgroupHandler::kill_css(u64 timestamp, struct jb_agent_internal__kill_css *
       AgentLogKind::CGROUPS,
       "CgroupHandler::kill_css"
       "\n{{"
-      "\n\tcgroup: {}"
-      "\n\tcgroup_parent: {}"
+      "\n\tcgroup: 0x{:x}"
+      "\n\tcgroup_parent: 0x{:x}"
       "\n\tname: "
       "\n}}",
       msg->cgroup,
@@ -73,7 +73,7 @@ void CgroupHandler::kill_css(u64 timestamp, struct jb_agent_internal__kill_css *
   if (has_cgroup(msg->cgroup)) {
     LOG::debug_in(AgentLogKind::CGROUPS, "Success: cgroup found. \t{}", get_name(msg->cgroup));
   } else {
-    log_.warn("kill_css(): cgroup not found: {:x}", msg->cgroup);
+    log_.warn("kill_css(): cgroup not found: 0x{:x}", msg->cgroup);
   }
 
   auto pos = cgroup_table_.find(msg->cgroup);
@@ -91,8 +91,8 @@ void CgroupHandler::css_populate_dir(u64 timestamp, struct jb_agent_internal__cs
       AgentLogKind::CGROUPS,
       "CgroupHandler::css_populate_dir"
       "\n{{"
-      "\n\tcgroup: {}"
-      "\n\tcgroup_parent: {}"
+      "\n\tcgroup: 0x{:x}"
+      "\n\tcgroup_parent: 0x{:x}"
       "\n\tname: {}"
       "\n}}",
       msg->cgroup,
@@ -111,14 +111,15 @@ void CgroupHandler::css_populate_dir(u64 timestamp, struct jb_agent_internal__cs
 }
 
 /* EXISTING */
-void CgroupHandler::cgroup_clone_children_read(u64 timestamp, struct jb_agent_internal__cgroup_clone_children_read *msg)
+void CgroupHandler::existing_cgroup_probe(u64 timestamp, struct jb_agent_internal__existing_cgroup_probe *msg)
 {
+  // msg->cgroup_parent, msg->name);
   LOG::debug_in(
       AgentLogKind::CGROUPS,
-      "CgroupHandler::cgroup_clone_children_read"
+      "CgroupHandler::existing_cgroup_probe"
       "\n{{"
-      "\n\tcgroup: {}"
-      "\n\tcgroup_parent: {}"
+      "\n\tcgroup: 0x{:x}"
+      "\n\tcgroup_parent: 0x{:x}"
       "\n\tname: {}"
       "\n}}",
       msg->cgroup,
@@ -136,7 +137,7 @@ void CgroupHandler::cgroup_attach_task(u64 timestamp, struct jb_agent_internal__
       AgentLogKind::CGROUPS,
       "CgroupHandler::cgroup_attach_task"
       "\n{{"
-      "\n\tcgroup: {}"
+      "\n\tcgroup: 0x{:x}"
       "\n\tpid: {}"
       "\n\tcomm: {}"
       "\n}}",
@@ -147,7 +148,7 @@ void CgroupHandler::cgroup_attach_task(u64 timestamp, struct jb_agent_internal__
   if (has_cgroup(msg->cgroup)) {
     LOG::debug_in(AgentLogKind::CGROUPS, "Success: cgroup found. \t{}", get_name(msg->cgroup));
   } else {
-    log_.warn("cgroup_attach_task(): cgroup not found: {:x}", msg->cgroup);
+    log_.warn("cgroup_attach_task(): cgroup not found: 0x{:x}", msg->cgroup);
   }
 }
 
@@ -158,7 +159,7 @@ void CgroupHandler::handle_pid_info(u32 pid, u64 cgroup, uint8_t comm[16])
       "CgroupHandler::handle_pid_info"
       "\n{{"
       "\n\tpid: {}"
-      "\n\tcgroup: {}"
+      "\n\tcgroup: 0x{:x}"
       "\n\tcomm: {}"
       "\n}}",
       pid,
@@ -168,7 +169,7 @@ void CgroupHandler::handle_pid_info(u32 pid, u64 cgroup, uint8_t comm[16])
   if (has_cgroup(cgroup)) {
     LOG::debug_in(AgentLogKind::CGROUPS, "Success: cgroup found. \t{}", get_name(cgroup));
   } else {
-    log_.warn("handle_pid_info(): cgroup not found: {:x}", cgroup);
+    log_.warn("handle_pid_info(): cgroup not found: 0x{:x}", cgroup);
   }
 }
 
@@ -213,7 +214,7 @@ void CgroupHandler::handle_docker_container(u64 cgroup, std::string const &name)
       AgentLogKind::DOCKER,
       "CgroupHandler::handle_docker_container:"
       "\n{{"
-      "\n\tcgroup: {}"
+      "\n\tcgroup: 0x{:x}"
       "\n\tname: {}"
       "\n}}",
       cgroup,
@@ -254,7 +255,7 @@ void CgroupHandler::data_available_cb(const char *data, size_t data_length, u64 
       AgentLogKind::DOCKER,
       "DataAvailableFn:"
       "\n{{"
-      "\n\tcgroup: {}"
+      "\n\tcgroup: 0x{:x}"
       "\n\tdata_length: {}"
       "\n\ts: {}"
       "\n}}",
@@ -264,7 +265,7 @@ void CgroupHandler::data_available_cb(const char *data, size_t data_length, u64 
 
   auto pos = queries_.find(cgroup);
   if (pos == queries_.end()) {
-    log_.error("query entry for cgroup:{} not found", cgroup);
+    log_.error("query entry for cgroup: 0x{:x} not found", cgroup);
     return;
   }
 
@@ -280,7 +281,7 @@ void CgroupHandler::fetch_done_cb(CurlEngineStatus status, long responseCode, st
       AgentLogKind::DOCKER,
       "FetchDoneFn:"
       "\n{{"
-      "\n\tcgroup: {}"
+      "\n\tcgroup: 0x{:x}"
       "\n\tsuccess: {}"
       "\n}}",
       cgroup,
@@ -288,7 +289,7 @@ void CgroupHandler::fetch_done_cb(CurlEngineStatus status, long responseCode, st
 
   auto pos = queries_.find(cgroup);
   if (pos == queries_.end()) {
-    log_.error("query entry for cgroup:{} not found", cgroup);
+    log_.error("query entry for cgroup: 0x{:x} not found", cgroup);
     return;
   }
 
@@ -519,3 +520,4 @@ void CgroupHandler::handle_docker_response(u64 cgroup, std::string const &respon
 
   writer_.flush();
 }
+

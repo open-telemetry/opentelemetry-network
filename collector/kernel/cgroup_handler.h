@@ -32,7 +32,7 @@ public:
 
   void kill_css(u64 timestamp, struct jb_agent_internal__kill_css *msg);
   void css_populate_dir(u64 timestamp, struct jb_agent_internal__css_populate_dir *msg);
-  void cgroup_clone_children_read(u64 timestamp, struct jb_agent_internal__cgroup_clone_children_read *msg);
+  void existing_cgroup_probe(u64 timestamp, struct jb_agent_internal__existing_cgroup_probe *msg);
   void cgroup_attach_task(u64 timestamp, struct jb_agent_internal__cgroup_attach_task *msg);
   void handle_pid_info(u32 pid, u64 cgroup, uint8_t comm[16]);
 

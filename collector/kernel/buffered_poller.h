@@ -285,7 +285,7 @@ private:
 
   void handle_css_populate_dir(message_metadata const &metadata, jb_agent_internal__css_populate_dir &msg);
 
-  void handle_cgroup_clone_children_read(message_metadata const &metadata, jb_agent_internal__cgroup_clone_children_read &msg);
+  void handle_existing_cgroup_probe(message_metadata const &metadata, jb_agent_internal__existing_cgroup_probe &msg);
 
   void handle_cgroup_attach_task(message_metadata const &metadata, jb_agent_internal__cgroup_attach_task &msg);
 
