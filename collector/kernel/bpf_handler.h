@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <common/host_info.h>
 #include <platform/platform.h>
 
 #include <collector/kernel/buffered_poller.h>
@@ -34,7 +35,8 @@ public:
       bool enable_userland_tcp,
       FileDescriptor &bpf_dump_file,
       logging::Logger &log,
-      ::ebpf_net::ingest::Encoder *encoder);
+      ::ebpf_net::ingest::Encoder *encoder,
+      HostInfo const &host_info_);
 
   /**
    * d'tor
@@ -97,4 +99,5 @@ private:
   FileDescriptor &bpf_dump_file_;
   logging::Logger &log_;
   u64 last_lost_count_;
+  HostInfo const host_info_;
 };

@@ -97,7 +97,7 @@ BufferedPoller::BufferedPoller(
     add_handler<pid_exit_message_metadata, &BufferedPoller::handle_pid_exit>();
     add_handler<kill_css_message_metadata, &BufferedPoller::handle_kill_css>();
     add_handler<css_populate_dir_message_metadata, &BufferedPoller::handle_css_populate_dir>();
-    add_handler<cgroup_clone_children_read_message_metadata, &BufferedPoller::handle_cgroup_clone_children_read>();
+    add_handler<existing_cgroup_probe_message_metadata, &BufferedPoller::handle_existing_cgroup_probe>();
     add_handler<cgroup_attach_task_message_metadata, &BufferedPoller::handle_cgroup_attach_task>();
     add_handler<nf_nat_cleanup_conntrack_message_metadata, &BufferedPoller::handle_nf_nat_cleanup_conntrack>();
     add_handler<nf_conntrack_alter_reply_message_metadata, &BufferedPoller::handle_nf_conntrack_alter_reply>();
@@ -1220,10 +1220,10 @@ void BufferedPoller::handle_css_populate_dir(message_metadata const &metadata, j
   writer_.cgroup_create_tstamp(metadata.timestamp, msg.cgroup, msg.cgroup_parent, msg.name);
 }
 
-void BufferedPoller::handle_cgroup_clone_children_read(
-    message_metadata const &metadata, jb_agent_internal__cgroup_clone_children_read &msg)
+void BufferedPoller::handle_existing_cgroup_probe(
+    message_metadata const &metadata, jb_agent_internal__existing_cgroup_probe &msg)
 {
-  cgroup_handler_.cgroup_clone_children_read(metadata.timestamp, &msg);
+  cgroup_handler_.existing_cgroup_probe(metadata.timestamp, &msg);
 
   writer_.cgroup_create_tstamp(metadata.timestamp, msg.cgroup, msg.cgroup_parent, msg.name);
 }
