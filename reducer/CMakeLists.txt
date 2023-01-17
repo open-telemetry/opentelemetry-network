@@ -146,6 +146,8 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
       reducer-stripped
     ARTIFACTS_OF
       reducer
+    BINARIES
+      debug-info.conf
     DEPENDENCY_OF
       pipeline
     ARGS
@@ -158,6 +160,8 @@ else()
     OUTPUT_OF
       reducer-scripts
       reducer-stripped
+    BINARIES
+      debug-info.conf
     DEPENDENCY_OF
       pipeline
   )
