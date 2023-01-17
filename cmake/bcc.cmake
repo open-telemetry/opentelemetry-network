@@ -36,6 +36,16 @@ find_path(BCC_INCLUDE_DIRS bcc/libbpf.h)
 # BCC libs, see the line that starts with "target_link_libraries(bcc-static"
 #  in bcc/src/cc/MakeLists.txt
 find_library(BCC_LIBS NAMES "libbcc-combined.a")
+if(${BCC_LIBS} STREQUAL "BCC_LIBS-NOTFOUND")
+  set(BCC_LIBS "")
+  foreach(LIB bcc bcc_bpf bcc-loader-static)
+    find_library(BCC_LIB_${LIB} NAMES "lib${LIB}.a")
+    if(${BCC_LIB_${LIB}} STREQUAL "BCC_LIB_${LIB}-NOTFOUND")
+      message(FATAL_ERROR "Unable to find BCC library ${LIB}. Build container should already have that set up")
+    endif()
+    list(APPEND BCC_LIBS ${BCC_LIB_${LIB}})
+  endforeach()
+endif()
 
 set(CMAKE_REQUIRED_INCLUDES ${BCC_INCLUDE_DIRS})
 include(CheckIncludeFile)
