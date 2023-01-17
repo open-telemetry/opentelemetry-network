@@ -2,6 +2,9 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
+# shellcheck disable=SC1091
+[[ ! -e ./debug-info.conf ]] || source ./debug-info.conf
+
 install_dir=${EBPF_NET_INSTALL_DIR:-/srv}
 reducer="${install_dir}/opentelemetry-ebpf-reducer"
 
