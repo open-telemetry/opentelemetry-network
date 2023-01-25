@@ -161,8 +161,8 @@ app agent_internal {
       2: u64 cgroup_parent
       3: u8 name[256] // See kill_css note.
     }
-    14: log cgroup_clone_children_read {
-      description "cgroup_clone_children_read"
+    14: log existing_cgroup_probe {
+      description "existing_cgroup_probe used by kprobe:cgroup_clone_children_read for cgroup v1 and kprobe:cgroup_control for cgroup v2."
       severity 0
       1: u64 cgroup
       2: u64 cgroup_parent

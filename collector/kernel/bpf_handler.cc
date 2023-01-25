@@ -9,6 +9,7 @@
 #include <collector/kernel/nat_prober.h>
 #include <collector/kernel/process_prober.h>
 #include <collector/kernel/socket_prober.h>
+#include <common/host_info.h>
 
 BPFHandler::BPFHandler(
     uv_loop_t &loop,
@@ -17,7 +18,8 @@ BPFHandler::BPFHandler(
     bool enable_userland_tcp,
     FileDescriptor &bpf_dump_file,
     logging::Logger &log,
-    ::ebpf_net::ingest::Encoder *encoder)
+    ::ebpf_net::ingest::Encoder *encoder,
+    HostInfo const &host_info)
     : loop_(loop),
       probe_handler_(log),
       bpf_module_(0),
@@ -28,7 +30,8 @@ BPFHandler::BPFHandler(
       enable_userland_tcp_(enable_userland_tcp),
       bpf_dump_file_(bpf_dump_file),
       log_(log),
-      last_lost_count_(0)
+      last_lost_count_(0),
+      host_info_(host_info)
 {
   if (enable_userland_tcp) {
     full_program = "#define ENABLE_TCP_DATA_STREAM 1\n" + full_program;
@@ -77,6 +80,7 @@ void BPFHandler::load_probes(::ebpf_net::ingest::Writer &writer)
   CgroupProber cgroup_prober(
       probe_handler_,
       bpf_module_,
+      host_info_,
       [this]() { buf_poller_->start(1, 1); },
       [this](std::string error_loc) { check_cb(error_loc); });
 

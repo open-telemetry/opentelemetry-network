@@ -5,13 +5,15 @@
 
 #pragma once
 
+#include <common/host_info.h>
+#include <util/logger.h>
+
 #include <linux/bpf.h>
 
 #include <bcc/BPF.h>
 
 #include <functional>
 #include <string>
-#include <util/logger.h>
 
 /* forward declarations */
 class ProbeHandler;
@@ -33,6 +35,7 @@ public:
   CgroupProber(
       ProbeHandler &probe_handler,
       ebpf::BPFModule &bpf_module,
+      HostInfo const &host_info,
       std::function<void(void)> periodic_cb,
       std::function<void(std::string)> check_cb);
 
@@ -40,19 +43,26 @@ public:
 
 private:
   /**
-   * Locates the cgroup directory that should be used for probing.
+   * Locates the cgroup v1 directory that should be used for probing.
    */
-  static std::string find_cgroup_mountpoint();
+  static std::string find_cgroup_v1_mountpoint();
+
+  /**
+   * Locates the cgroup v2 directory that should be used for probing.
+   */
+  static std::string find_cgroup_v2_mountpoint();
 
   /**
    * Recursively walks through directory structure and triggers the
-   * corresponding cgroup_clone_children_read functions by reading
-   * cgroup.clone_children files.
+   * corresponding existing croup probe by reading the file_name specified.
    *
-   * @param dir_name: path to directory in which to perform the search
+   * @param cgroup_dir_name: path to directory in which to perform the search
+   * @param file_name: file name to read
    * @param periodic_cb: callback to call after doing some work.
    */
-  void trigger_cgroup_clone_children_read(std::string dir_name, std::function<void(void)> periodic_cb);
+  void trigger_existing_cgroup_probe(
+      std::string const &cgroup_dir_name, std::string const &file_name, std::function<void(void)> periodic_cb);
 
+  HostInfo const host_info_;
   int close_dir_error_count_;
 };
