@@ -4,8 +4,8 @@
     "base_checksum": "",
     "guest_os": "Linux_64",
     "box_name": "devbox",
-    "EBPF_NET_SRC": "{{env `EBPF_NET_SRC`}}",
-    "output_dir": "{{user `EBPF_NET_SRC`}}/dev/devbox/boxes/out.{{user `box_name`}}",
+    "OTEL_EBPF_SRC": "{{env `OTEL_EBPF_SRC`}}",
+    "output_dir": "{{user `OTEL_EBPF_SRC`}}/dev/devbox/boxes/out.{{user `box_name`}}",
     "EBPF_NET_AGENT_NAMESPACE": "{{user `box_name`}}",
     "EBPF_NET_AGENT_CLUSTER": "{{user `box_name`}}",
     "EBPF_NET_AGENT_SERVICE": "{{user `box_name`}}",
@@ -28,14 +28,8 @@
         "env | sort",
         "",
         "# create directories for `file` provisioners",
-        "for directory in bin schema; do",
-        "  mkdir -p \"${directory}\"",
-        "done",
         "for directory in prometheus; do",
         "  sudo mkdir -p -m o+w \"/tmp/_${directory}\"",
-        "done",
-        "for directory in flowmill ; do",
-        "  sudo mkdir -p -m o+w \"/tmp/_root/etc/${directory}\"",
         "done"
       ]
     },
@@ -43,22 +37,6 @@
       "type": "file",
       "source": "{{template_dir}}/prometheus.yml",
       "destination": "/tmp/_prometheus/prometheus.yml"
-    },
-    {
-      "type": "shell",
-      "inline_shebang": "/usr/bin/env bash",
-      "inline": [
-        "set -xe",
-        "uname -a",
-        "env | sort",
-        "",
-        "# copy files to root directory",
-        "cd /tmp/_root",
-        "for file in $(find etc -type f); do",
-        "  sudo mkdir -p \"/$(dirname \"${file}\")\"",
-        "  sudo cp \"${file}\" \"/${file}\"",
-        "done"
-      ]
     },
     {
       "type": "shell",
@@ -88,7 +66,7 @@
         "uname -a",
         "env | sort",
         "",
-        "export EBPF_NET_SRC=\"$HOME/src\"",
+        "export OTEL_EBPF_SRC=\"$HOME/src\"",
         "",
         "cat > .env <<EOF",
         "export EBPF_NET_INTAKE_HOST=\"127.0.0.1\"",

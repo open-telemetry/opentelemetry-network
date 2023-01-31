@@ -3,9 +3,9 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-export EBPF_NET_SRC="${EBPF_NET_SRC:-$(git rev-parse --show-toplevel)}"
+export OTEL_EBPF_SRC="${OTEL_EBPF_SRC:-$(git rev-parse --show-toplevel)}"
 
-source "${EBPF_NET_SRC}/dev/script/docker-registry-lib.sh"
+source "${OTEL_EBPF_SRC}/dev/script/docker-registry-lib.sh"
 
 if [ "$#" -lt 1 ]; then
   echo "usage: $0 [options...] registry..."

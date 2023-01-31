@@ -2,7 +2,7 @@ devbox vm
 =========
 
 The devbox VM is offered as a standalone VM capable of running the whole
-Flowmill pipeline.
+OpenTelemetry-eBPF pipeline.
 
 It doesn't run anything by default but provides scripts to run the following
 components within the VM itself, connecting to other components inside the VM:
@@ -14,7 +14,7 @@ components within the VM itself, connecting to other components inside the VM:
 Before using the VM, its vagrant base box must be built. This is a one-time
 step. Refer to the "building a vagrant base devbox" for more details.
 
-Images for Flowmill components are taken from a local docker registry on port
+Images for OpenTelemetry-eBPF components are taken from a local docker registry on port
 `5000`. The intended use case is to reverse forward a docker registry running
 on the host machine into which `benv` built images are pushed using the
 [`dev/push_to_local_registry.sh`](../push_to_local_registry.sh).
@@ -61,7 +61,7 @@ Kubernetes context name `kubernetes-admin@devbox`.
 To deploy the microservices demo, run `~/k8s/demo.sh` within the VM.
 
 To use a different loadgen configuration, pass its filename as an argument to `demo.sh`.
-The configuration file will be looked up relative to `$EBPF_NET_SRC/dev/devbox/source/k8s/loadgen`.
+The configuration file will be looked up relative to `$OTEL_EBPF_SRC/dev/devbox/source/k8s/loadgen`.
 
 # deploying aget images
 

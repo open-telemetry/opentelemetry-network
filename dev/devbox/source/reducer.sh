@@ -77,7 +77,7 @@ while [[ "$#" -gt 0 ]]; do
       ;;
 
     --publish-ports)
-      publish-ports="true"
+      publish_ports="true"
       ;;
 
     --prom)

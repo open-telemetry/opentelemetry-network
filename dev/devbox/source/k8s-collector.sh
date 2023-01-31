@@ -27,7 +27,6 @@ function cleanup_docker {
 }
 trap cleanup_docker SIGINT
 
-docker cp "/etc/flowmill/ca.crt" "${container_id}:/usr/local/share/ca-certificates/Flowmill_dev.crt"
 docker cp ".env" "${container_id}:/srv/.env"
 cp "collector-entrypoint.sh" "/tmp/collector-entrypoint.sh"
 docker cp "/tmp/collector-entrypoint.sh" "${container_id}:/srv/collector-entrypoint.sh"

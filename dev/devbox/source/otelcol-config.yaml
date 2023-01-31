@@ -2,8 +2,10 @@
 # SPDX-License-Identifier: Apache-2.0
 
 extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
   zpages:
-    endpoint: :55679
+    endpoint: 0.0.0.0:55679
 
 receivers:
   otlp:
@@ -19,6 +21,7 @@ receivers:
           metrics_path: ''
           scrape_interval: 10s
           static_configs:
+            - targets: ['localhost:7000']
             - targets: ['localhost:7001']
 
 processors:
@@ -26,27 +29,20 @@ processors:
 
 exporters:
   logging:
-    logLevel: debug
+    verbosity: detailed
   file:
     path: /var/log/otel.log
+
 service:
-  extensions: [zpages]
+  extensions: [health_check, zpages]
   pipelines:
-    traces:
-      receivers: [otlp]
-      processors: [batch]
-      exporters: [logging,file]
-    logs:
-      receivers: [otlp]
-      processors: [batch]
-      exporters: [logging,file]
     metrics:
       receivers: [otlp]
-      #receivers: [otlp, prometheus]
       processors: [batch]
       exporters: [logging,file]
   telemetry:
     logs:
       level: "debug"
+      encoding: "console"
     metrics:
       address: ":8888"

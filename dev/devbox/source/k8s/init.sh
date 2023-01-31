@@ -58,6 +58,6 @@ kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documen
 
 kubectl taint nodes --all node-role.kubernetes.io/master-
 
-kubectl create namespace flowmill
+kubectl create namespace otelebpf
 
 helm plugin install https://github.com/databus23/helm-diff
