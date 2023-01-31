@@ -1,0 +1,138 @@
+{
+  "variables": {
+    "base_box": "",
+    "base_checksum": "",
+    "guest_os": "Linux_64",
+    "box_name": "devbox",
+    "EBPF_NET_SRC": "{{env `EBPF_NET_SRC`}}",
+    "output_dir": "{{user `EBPF_NET_SRC`}}/dev/devbox/boxes/out.{{user `box_name`}}",
+    "EBPF_NET_AGENT_NAMESPACE": "{{user `box_name`}}",
+    "EBPF_NET_AGENT_CLUSTER": "{{user `box_name`}}",
+    "EBPF_NET_AGENT_SERVICE": "{{user `box_name`}}",
+    "EBPF_NET_AGENT_HOST": "{{user `box_name`}}",
+    "EBPF_NET_AGENT_ZONE": "{{user `box_name`}}",
+    "DEVBOX_USERNAME": "vagrant",
+    "DEVBOX_PASSWORD": "vagrant"
+  },
+  "sensitive-variables": [
+    "DEVBOX_USERNAME",
+    "DEVBOX_PASSWORD"
+  ],
+  "provisioners": [
+    {
+      "type": "shell",
+      "inline_shebang": "/usr/bin/env bash",
+      "inline": [
+        "set -xe",
+        "uname -a",
+        "env | sort",
+        "",
+        "# create directories for `file` provisioners",
+        "for directory in bin schema; do",
+        "  mkdir -p \"${directory}\"",
+        "done",
+        "for directory in prometheus; do",
+        "  sudo mkdir -p -m o+w \"/tmp/_${directory}\"",
+        "done",
+        "for directory in flowmill ; do",
+        "  sudo mkdir -p -m o+w \"/tmp/_root/etc/${directory}\"",
+        "done"
+      ]
+    },
+    {
+      "type": "file",
+      "source": "{{template_dir}}/prometheus.yml",
+      "destination": "/tmp/_prometheus/prometheus.yml"
+    },
+    {
+      "type": "shell",
+      "inline_shebang": "/usr/bin/env bash",
+      "inline": [
+        "set -xe",
+        "uname -a",
+        "env | sort",
+        "",
+        "# copy files to root directory",
+        "cd /tmp/_root",
+        "for file in $(find etc -type f); do",
+        "  sudo mkdir -p \"/$(dirname \"${file}\")\"",
+        "  sudo cp \"${file}\" \"/${file}\"",
+        "done"
+      ]
+    },
+    {
+      "type": "shell",
+      "script": "{{template_dir}}/provision/repo.sh"
+    },
+    {
+      "type": "shell",
+      "script": "{{template_dir}}/provision/kernel.sh"
+    },
+    {
+      "type": "shell",
+      "script": "{{template_dir}}/provision/packages.sh"
+    },
+    {
+      "type": "shell",
+      "script": "{{template_dir}}/provision/docker.sh"
+    },
+    {
+      "type": "shell",
+      "script": "{{template_dir}}/provision/upgrade.sh"
+    },
+    {
+      "type": "shell",
+      "inline_shebang": "/usr/bin/env bash",
+      "inline": [
+        "set -xe",
+        "uname -a",
+        "env | sort",
+        "",
+        "export EBPF_NET_SRC=\"$HOME/src\"",
+        "",
+        "cat > .env <<EOF",
+        "export EBPF_NET_INTAKE_HOST=\"127.0.0.1\"",
+        "export EBPF_NET_INTAKE_PORT=\"8000\"",
+        "",
+        "export EBPF_NET_AGENT_NAMESPACE=\"{{user `EBPF_NET_AGENT_NAMESPACE`}}\"",
+        "export EBPF_NET_AGENT_CLUSTER=\"{{user `EBPF_NET_AGENT_CLUSTER`}}\"",
+        "export EBPF_NET_AGENT_SERVICE=\"{{user `EBPF_NET_AGENT_SERVICE`}}\"",
+        "export EBPF_NET_AGENT_HOST=\"{{user `EBPF_NET_AGENT_HOST`}}\"",
+        "export EBPF_NET_AGENT_ZONE=\"{{user `EBPF_NET_AGENT_ZONE`}}\"",
+        "",
+        "export DEVBOX_USERNAME=\"{{user `DEVBOX_USERNAME`}}\"",
+        "export DEVBOX_PASSWORD=\"{{user `DEVBOX_PASSWORD`}}\"",
+        "",
+        "export KUBECONFIG=\"$HOME/.kube/config\"",
+        "EOF",
+        "chmod +x .env",
+        "",
+        "cat >> .bashrc <<EOF",
+        "export PATH=\"\\$PATH:\\$HOME/bin\"",
+        "source \"\\$HOME/.env\"",
+        "EOF"
+      ]
+    },
+    {
+      "type": "shell",
+      "script": "{{template_dir}}/provision/prometheus.sh"
+    },
+    {
+      "type": "shell",
+      "script": "{{template_dir}}/provision/symlinks.sh"
+    }
+  ],
+  "builders": [
+    {
+      "type": "vagrant",
+      "box_name": "{{user `box_name`}}",
+      "communicator": "ssh",
+      "provider": "virtualbox",
+      "source_path": "{{user `base_box`}}",
+      "output_dir": "{{user `output_dir`}}",
+      "add_clean": true,
+      "add_force": true,
+      "output_vagrantfile": "{{template_dir}}/Vagrantfile.packer.box.rb"
+    }
+  ]
+}
