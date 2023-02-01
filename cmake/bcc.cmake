@@ -97,8 +97,8 @@ llvm_expand_dependencies(BCC_LLVM_LIBS_EXPANDED ${BCC_LLVM_LIBS})
 target_compile_definitions(bcc-interface INTERFACE ${LLVM_DEFINITIONS})
 target_link_libraries(bcc-static INTERFACE  bcc-interface
                                             ${BCC_LIBS}
-                                            ${BCC_LLVM_LIBS_EXPANDED}
                                             ${BCC_CLANG_LIBS}
+                                            ${BCC_LLVM_LIBS_EXPANDED}
                                             libelf.a)
 
 # LLVM is built with -ffunctions-sections -fdata-sections so we can remove unused functions
