@@ -1,0 +1,28 @@
+name: build-and-test
+run-name: ${{ github actor }} is running  GitHub Actions
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    paths:
+      - '.github/workflows/build-and-test.yaml'
+      - ' collector/**'
+      - ' render/**'
+      - ' renderc/**'
+      - ' test/kernel-headers'
+
+concurrency:
+  group: build-and-test-${{ github.event.pull_request_number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check-bats-version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '14'
+      - run: npm install -g bats
+      - run: bats -v
