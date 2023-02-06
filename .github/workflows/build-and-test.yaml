@@ -19,9 +19,7 @@ on:
 env:
   PUBLIC_REGISTRY: quay.io/signalfx
   REGISTRY_IMAGE_PREFIX: splunk-network-explorer-
-  BENV_IMAGE: quay.io/splunko11ytest/network-explorer-debug/benv-final
-  MAVEN_REPOSITORY_URL: https://repo.splunk.com/artifactory/maven
-  GOPROXY: https://repo.splunk.com/artifactory/go
+  BENV_IMAGE: $PUBLIC_REGISTRY/network-explorer-debug/benv-final
 
 
 concurrency:
