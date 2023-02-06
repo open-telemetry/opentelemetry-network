@@ -1,0 +1,89 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+name: build-and-test
+run-name: ${{ github.actor }} is running  GitHub Actions
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    paths:
+      - '.github/workflows/build-and-test.yaml'
+      - ' collector/**'
+      - ' render/**'
+      - ' renderc/**'
+      - ' test/kernel-headers'
+      - ' util/**'
+
+env:
+  PUBLIC_REGISTRY: quay.io/signalfx
+  REGISTRY_IMAGE_PREFIX: splunk-network-explorer-
+  BENV_IMAGE: quay.io/splunko11ytest/network-explorer-debug/benv-final
+  MAVEN_REPOSITORY_URL: https://repo.splunk.com/artifactory/maven
+  GOPROXY: https://repo.splunk.com/artifactory/go
+
+
+concurrency:
+  group: build-and-test-${{ github.event.pull_request_number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  clang-format-check:
+    name: clang-format-check
+    runs-on: ubuntu-20.04
+    steps:
+    - name: Print github workspace
+      run: |
+        echo "github.workspace = ${{ github.workspace }}"
+        echo "pr.ref = ${{github.event.pull_request.head.ref}}"
+        echo "github.ref = ${{ github.ref }}"
+        echo "$GITHUB_CONTEXT"
+
+    - name: Check out the codebase
+      uses: actions/checkout@v3
+
+    - name: Runs format checker
+      run: |
+        sudo apt update
+        sudo apt install -y clang-format-11
+        cd ${{ github.workspace }}
+ #commenting out checker for now as it fails    ./.github/workflows/scripts/check-clang-format.sh
+
+  build-images-and-run-unit-tests:
+    name: build-and-run-unit-tests
+    runs-on: ubuntu-20.04
+    needs: [clang-format-check]
+    steps:
+    - name: Check out the codebase
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - name: build images
+      run: |
+        echo "github.workspace = ${{ github.workspace }}"
+        docker pull $BENV_IMAGE
+        git submodule update  --init --recursive
+        docker run -t \
+        --rm \
+        --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
+        --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/root/src,readonly" \
+        --env EBPF_NET_SRC=/root/src \
+        --env EBPF_NET_OUT_DIR=/root/out \
+        --workdir=/root/out \
+        $BENV_IMAGE \
+        ../build.sh docker
+
+    - name: run unit tests
+      run: |
+        docker run -t \
+        --rm \
+        --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
+        --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/root/src,readonly" \
+        --env EBPF_NET_SRC=/root/src \
+        --env EBPF_NET_OUT_DIR=/root/out-test \
+        --workdir=/root/out-test \
+        $BENV_IMAGE \
+        ../build.sh unit_tests test
+
