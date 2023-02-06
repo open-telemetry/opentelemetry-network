@@ -18,7 +18,7 @@ function print_help {
   echo "  --splunk: run the Splunk distribution of OpenTelemetry Collector"
 }
 
-OTEL_EBPF_SRC="${OTEL_EBPF_SRC:-$HOME/src}"
+EBPF_NET_SRC_ROOT="${EBPF_NET_SRC_ROOT:-$HOME/src}"
 
 # Default to opentelemetry-collector-contrib
 otelcol_to_use="otelcol-contrib"
@@ -60,7 +60,7 @@ while [[ "$#" -gt 0 ]]; do
 done
 
 # Defaults
-OTEL_COLLECTOR_CONFIG_FILE="${OTEL_EBPF_SRC}/dev/devbox/source/otelcol-config.yaml"
+OTEL_COLLECTOR_CONFIG_FILE="${EBPF_NET_SRC_ROOT}/dev/devbox/source/otelcol-config.yaml"
 OTEL_COLLECTOR_CONFIG_FILE_INTERNAL="/etc/otelcol/config.yaml"
 OTEL_COLLECTOR_CONTAINER_NAME="otelcol"
 OTEL_COLLECTOR_ENV_VARS=""

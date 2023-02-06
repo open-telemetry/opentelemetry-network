@@ -20,15 +20,15 @@ Vagrant.configure("2") do |config|
   # config.vm.box_check_update = false
 
   # source repo
-  otel_ebpf_src = "#{ENV['OTEL_EBPF_SRC']}"
-  if (not otel_ebpf_src.empty?) and File.exist?(otel_ebpf_src)
-    config.vm.synced_folder "#{ENV['OTEL_EBPF_SRC']}", "/home/vagrant/src", type: "sshfs"
+  ebpf_net_src_root = "#{ENV['EBPF_NET_SRC_ROOT']}"
+  if (not ebpf_net_src_root.empty?) and File.exist?(ebpf_net_src_root)
+    config.vm.synced_folder "#{ENV['EBPF_NET_SRC_ROOT']}", "/home/vagrant/src", type: "sshfs"
   end
 
   # benv build artifacts
-  otel_ebpf_benv_out = "#{ENV['OTEL_EBPF_BENV_OUT']}"
-  if File.exist?(otel_ebpf_benv_out)
-    config.vm.synced_folder otel_ebpf_benv_out, "/home/vagrant/out", type: "sshfs"
+  ebpf_net_out_dir = "#{ENV['EBPF_NET_OUT_DIR']}"
+  if File.exist?(ebpf_net_out_dir)
+    config.vm.synced_folder ebpf_net_out_dir, "/home/vagrant/out", type: "sshfs"
   end
 
   config.vm.synced_folder '.', '/vagrant', disabled: true

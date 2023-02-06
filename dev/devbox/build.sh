@@ -3,8 +3,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-export OTEL_EBPF_SRC="${OTEL_EBPF_SRC:-$(git rev-parse --show-toplevel)}"
-export DEVBOX_DIR="${OTEL_EBPF_SRC}/dev/devbox"
+export EBPF_NET_SRC_ROOT="${EBPF_NET_SRC_ROOT:-$(git rev-parse --show-toplevel)}"
+export DEVBOX_DIR="${EBPF_NET_SRC_ROOT}/dev/devbox"
 export DEVBOX_BOXES_SOURCE="${DEVBOX_DIR}/source"
 export DEVBOX_BOXES_DIR="${DEVBOX_DIR}/boxes"
 

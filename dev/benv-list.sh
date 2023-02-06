@@ -2,9 +2,9 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
-export EBPF_NET_SRC="${EBPF_NET_SRC:-$(git rev-parse --show-toplevel)}"
+export EBPF_NET_SRC_ROOT="${EBPF_NET_SRC_ROOT:-$(git rev-parse --show-toplevel)}"
 # shellcheck source=/dev/null
-source "${EBPF_NET_SRC}/dev/script/benv_error_lib.sh"
+source "${EBPF_NET_SRC_ROOT}/dev/script/bash-error-lib.sh"
 
 # determine benv container IDs
 container_ids=$(docker ps | grep -E "build-env|benv-final" | awk '{print $1}') || true

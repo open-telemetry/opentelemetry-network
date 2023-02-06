@@ -61,7 +61,7 @@ Kubernetes context name `kubernetes-admin@devbox`.
 To deploy the microservices demo, run `~/k8s/demo.sh` within the VM.
 
 To use a different loadgen configuration, pass its filename as an argument to `demo.sh`.
-The configuration file will be looked up relative to `$OTEL_EBPF_SRC/dev/devbox/source/k8s/loadgen`.
+The configuration file will be looked up relative to `$EBPF_NET_SRC_ROOT/dev/devbox/source/k8s/loadgen`.
 
 # deploying aget images
 

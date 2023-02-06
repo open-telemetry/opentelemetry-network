@@ -2,5 +2,5 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
-export OTEL_EBPF_SRC="${OTEL_EBPF_SRC:-$(git rev-parse --show-toplevel)}"
-"${OTEL_EBPF_SRC}/dev/devbox/build.sh" --base_box debian/stretch64 --box_name debian-stretch
+export EBPF_NET_SRC_ROOT="${EBPF_NET_SRC_ROOT:-$(git rev-parse --show-toplevel)}"
+"${EBPF_NET_SRC_ROOT}/dev/devbox/build.sh" --base_box debian/stretch64 --box_name debian-stretch

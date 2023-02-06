@@ -2,8 +2,8 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
-OTEL_EBPF_SRC="${OTEL_EBPF_SRC:-$(git rev-parse --show-toplevel)}"
-source "${OTEL_EBPF_SRC}/dev/script/bash-error-lib.sh"
+EBPF_NET_SRC_ROOT="${EBPF_NET_SRC_ROOT:-$(git rev-parse --show-toplevel)}"
+source "${EBPF_NET_SRC_ROOT}/dev/script/bash-error-lib.sh"
 set -x
 
 vagrant ssh -- -- sudo rm -rf /var/cache/ebpf_net/kernel-headers || true
