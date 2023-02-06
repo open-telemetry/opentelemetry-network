@@ -9,9 +9,6 @@ on:
       - '.github/workflows/trivy-scans.yml'
       - '.trivyignore'
 
-env:
-  GO_VERSION: '1.19.4'
-
 jobs:
   trivy-fs-scan:
     # Use 20.04.5 until https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/16450 is resolved
@@ -23,39 +20,11 @@ jobs:
         with:
           scan-type: 'fs'
           scan-ref: '.'
-          skip-dirs: 'deployments,examples,instrumentation/packaging,internal/buildscripts/packaging,tests'
+          skip-dirs: 'docs,cmake'
           format: 'table'
           exit-code: '1'
           severity: 'CRITICAL,HIGH'
           ignore-unfixed: true
-
-  trivy-image-scan:
-    # Use 20.04.5 until https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/16450 is resolved
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-go@v3
-        with:
-          go-version: ${{ env.GO_VERSION }}
-      - id: module-cache
-        uses: actions/cache@v3
-        env:
-          cache-name: cache-go-modules
-        with:
-          path: |
-            /home/runner/go/pkg/mod
-            /home/runner/.cache/go-build
-          key: v1-go-pkg-mod-${{ runner.os }}-${{ hashFiles('**/go.mod', '**/go.sum') }}
-      - run: make docker-otelcol
-        env:
-          DOCKER_BUILDKIT: '1'
-      - name: Run trivy image scan
-        uses: aquasecurity/trivy-action@0.8.0
-        with:
-          scan-type: 'image'
-          image-ref: 'otelcol:latest'
-          format: 'table'
-          exit-code: '1'
-          severity: 'CRITICAL,HIGH'
-          ignore-unfixed: true
-
+          vuln-type: 'os,library'
+          timeout: 10m
+          

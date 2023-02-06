@@ -19,7 +19,7 @@ on:
 env:
   PUBLIC_REGISTRY: quay.io/signalfx
   REGISTRY_IMAGE_PREFIX: splunk-network-explorer-
-  BENV_IMAGE: quay.io/signalfx/network-explorer-debug/benv-final
+  BENV_IMAGE: quay.io/splunko11ytest/network-explorer-debug/benv-final
 
 
 concurrency:
