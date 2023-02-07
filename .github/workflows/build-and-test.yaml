@@ -17,8 +17,6 @@ on:
       - ' util/**'
 
 env:
-  PUBLIC_REGISTRY: quay.io/signalfx
-  REGISTRY_IMAGE_PREFIX: splunk-network-explorer-
   BENV_IMAGE: quay.io/splunko11ytest/network-explorer-debug/benv-final
 
 
@@ -153,7 +151,7 @@ jobs:
   build-run-unit-tests:
     name: build-run-unit-tests
     runs-on: ubuntu-20.04
-    needs: [clang-format-check]
+    needs: [clang-format-check, build-reducer-image, build-cloud-collector-image, build-k8s-relay-image, build-kernel-collector-image]
     steps:
     - name: Check out the codebase
       uses: actions/checkout@v3
@@ -170,4 +168,3 @@ jobs:
         --workdir=/root/out-test \
         $BENV_IMAGE \
         ../build.sh unit_tests test
-
