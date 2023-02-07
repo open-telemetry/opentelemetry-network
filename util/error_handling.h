@@ -56,7 +56,11 @@ struct Panicker {
   template <typename... Args> Panicker &else_log(std::string_view format, Args &&... args)
   {
     fmt::memory_buffer out;
+#if FMT_VERSION >= 60000
+    fmt::format_to(std::back_inserter(out), format, std::forward<Args>(args)...);
+#else
     fmt::format_to(out, format, std::forward<Args>(args)...);
+#endif
     custom_message_ = fmt::to_string(out);
     return *this;
   }

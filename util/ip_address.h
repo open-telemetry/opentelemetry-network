@@ -116,7 +116,7 @@ template <> struct formatter<IPv6Address> {
 
   template <typename FormatContext> auto format(const IPv6Address &p, FormatContext &ctx)
   {
-    return format_to(ctx.begin(), "{}", p.str());
+    return format_to(ctx.out(), "{}", p.str());
   }
 };
 } // namespace fmt
