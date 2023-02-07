@@ -65,7 +65,7 @@ void Core::run()
   // save thread-local instance
   instance_ = this;
 
-  set_self_thread_name(fmt::format("{}_{}", app_name_, shard_num_)).on_error([=](auto const &error) {
+  set_self_thread_name(fmt::format("{}_{}", app_name_, shard_num_)).on_error([this](auto const &error) {
     LOG::warn("unable to set name for {} core thread {}: {}", app_name_, shard_num_, error);
   });
 

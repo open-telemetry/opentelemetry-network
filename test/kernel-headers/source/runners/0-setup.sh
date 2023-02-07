@@ -2,7 +2,7 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
-OTEL_EBPF_SRC="${OTEL_EBPF_SRC:-$(git rev-parse --show-toplevel)}"
+EBPF_NET_SRC_ROOT="${EBPF_NET_SRC_ROOT:-$(git rev-parse --show-toplevel)}"
 set -x
 
 vagrant destroy -f || true
@@ -17,14 +17,14 @@ then
 fi
 
 # don't do this until after vagrant up so the script can check the result and cleanup and exit if it fails
-source "${OTEL_EBPF_SRC}/dev/script/bash-error-lib.sh"
+source "${EBPF_NET_SRC_ROOT}/dev/script/bash-error-lib.sh"
 
 # Check if local docker registry is running
 result=$(docker ps | grep registry:latest | grep local-docker-registry) || true
 if [[ "${result}" == "" ]]
 then
   # local registry isn't running, so start it
-  "${OTEL_EBPF_SRC}/dev/docker-registry.sh"
+  "${EBPF_NET_SRC_ROOT}/dev/docker-registry.sh"
 fi
 
 # Check that required docker images exist

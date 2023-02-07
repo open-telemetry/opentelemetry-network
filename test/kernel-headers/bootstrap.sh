@@ -2,11 +2,11 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
-OTEL_EBPF_SRC="${OTEL_EBPF_SRC:-$(git rev-parse --show-toplevel)}"
-source "${OTEL_EBPF_SRC}/dev/script/bash-error-lib.sh"
+EBPF_NET_SRC_ROOT="${EBPF_NET_SRC_ROOT:-$(git rev-parse --show-toplevel)}"
+source "${EBPF_NET_SRC_ROOT}/dev/script/bash-error-lib.sh"
 set -x
 
-src_path="${OTEL_EBPF_SRC}/test/kernel-headers/source"
+src_path="${EBPF_NET_SRC_ROOT}/test/kernel-headers/source"
 
 distro_name="$1"; shift
 distro_version="$1"; shift
