@@ -118,14 +118,14 @@ std::vector<FileMeta> list_directory_files(char const *directory)
 {
   std::vector<FileMeta> result;
   list_directory_contents(directory, &result, nullptr);
-  return std::move(result);
+  return result;
 }
 
 std::vector<DirMeta> list_directory_subdirs(char const *directory)
 {
   std::vector<DirMeta> result;
   list_directory_contents(directory, nullptr, &result);
-  return std::move(result);
+  return result;
 }
 
 uint64_t calculate_directory_size(char const *directory, size_t max_depth)
