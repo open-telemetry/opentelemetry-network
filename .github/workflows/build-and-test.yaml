@@ -47,8 +47,8 @@ jobs:
         cd ${{ github.workspace }}
  #commenting out checker for now as it fails    ./.github/workflows/scripts/check-clang-format.sh
 
-  build-reducer-image:
-    name: build-reducer-image
+  build-reducer:
+    name: build-reducer
     runs-on: ubuntu-20.04
     needs: [clang-format-check]
     steps:
@@ -57,7 +57,7 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: build reducer-docker-image
+    - name: build reducer
       run: |
         echo "github.workspace = ${{ github.workspace }}"
         docker pull $BENV_IMAGE
@@ -70,11 +70,11 @@ jobs:
         --env EBPF_NET_OUT_DIR=/root/out \
         --workdir=/root/out \
         $BENV_IMAGE \
-        ../build.sh reducer-docker
+        ../build.sh reducer
 
 
-  build-kernel-collector-image:
-    name: build-kernel-collector-image
+  build-kernel-collector:
+    name: build-kernel-collector
     runs-on: ubuntu-20.04
     needs: [clang-format-check]
     steps:
@@ -83,7 +83,7 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: build kernel-collector-docker-image
+    - name: build kernel-collector
       run: |
         echo "github.workspace = ${{ github.workspace }}"
         docker pull $BENV_IMAGE
@@ -96,10 +96,10 @@ jobs:
         --env EBPF_NET_OUT_DIR=/root/out \
         --workdir=/root/out \
         $BENV_IMAGE \
-        ../build.sh kernel-collector-docker
+        ../build.sh kernel-collector
 
-  build-k8s-relay-image:
-    name: build-k8s-relay-image
+  build-k8s-relay:
+    name: build-k8s-relay
     runs-on: ubuntu-20.04
     needs: [clang-format-check]
     steps:
@@ -108,7 +108,7 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: build k8s-relay-docker-image
+    - name: build k8s-relay
       run: |
         echo "github.workspace = ${{ github.workspace }}"
         docker pull $BENV_IMAGE
@@ -121,10 +121,10 @@ jobs:
         --env EBPF_NET_OUT_DIR=/root/out \
         --workdir=/root/out \
         $BENV_IMAGE \
-        ../build.sh k8s-relay-docker
+        ../build.sh k8s-relay
 
-  build-cloud-collector-image:
-    name: build-cloud-collector-image
+  build-cloud-collector:
+    name: build-cloud-collector
     runs-on: ubuntu-20.04
     needs: [clang-format-check]
     steps:
@@ -133,7 +133,7 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: build cloud-collector-docker-image
+    - name: build cloud-collector
       run: |
         echo "github.workspace = ${{ github.workspace }}"
         docker pull $BENV_IMAGE
@@ -146,12 +146,12 @@ jobs:
         --env EBPF_NET_OUT_DIR=/root/out \
         --workdir=/root/out \
         $BENV_IMAGE \
-        ../build.sh k8s-relay-docker
+        ../build.sh cloud-collector
 
   build-run-unit-tests:
     name: build-run-unit-tests
     runs-on: ubuntu-20.04
-    needs: [clang-format-check, build-reducer-image, build-cloud-collector-image, build-k8s-relay-image, build-kernel-collector-image]
+    needs: [clang-format-check]
     steps:
     - name: Check out the codebase
       uses: actions/checkout@v3
@@ -159,6 +159,9 @@ jobs:
         fetch-depth: 0
     - name: run unit tests
       run: |
+        echo "github.workspace = ${{ github.workspace }}"
+        docker pull $BENV_IMAGE
+        git submodule update  --init --recursive
         docker run -t \
         --rm \
         --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
