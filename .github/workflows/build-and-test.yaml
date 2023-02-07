@@ -28,8 +28,7 @@ concurrency:
 
 jobs:
   clang-format-check:
-    runs-on: 
-      group: ubuntu-runners
+    runs-on: ubuntu-20.04
     name: clang-format-check
 
     steps:
@@ -52,8 +51,7 @@ jobs:
 
   build-reducer-image:
     name: build-reducer-image
-    runs-on: 
-      group: ubuntu-runners
+    runs-on: ubuntu-20.04
     needs: [clang-format-check]
     steps:
     - name: Check out the codebase
