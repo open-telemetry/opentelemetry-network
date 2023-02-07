@@ -48,8 +48,8 @@ jobs:
         cd ${{ github.workspace }}
  #commenting out checker for now as it fails    ./.github/workflows/scripts/check-clang-format.sh
 
-  build-images-and-run-unit-tests:
-    name: build-and-run-unit-tests
+  build-reducer-image:
+    name: build-reducer
     runs-on: ubuntu-20.04
     needs: [clang-format-check]
     steps:
@@ -58,7 +58,7 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: build images
+    - name: build reducer-docker-image
       run: |
         echo "github.workspace = ${{ github.workspace }}"
         docker pull $BENV_IMAGE
@@ -71,8 +71,93 @@ jobs:
         --env EBPF_NET_OUT_DIR=/root/out \
         --workdir=/root/out \
         $BENV_IMAGE \
-        ../build.sh docker
+        ../build.sh reducer
 
+
+  build-kernel-collector-image:
+    name: build-reducer
+    runs-on: ubuntu-20.04
+    needs: [clang-format-check]
+    steps:
+    - name: Check out the codebase
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - name: build kernel-collector-docker-image
+      run: |
+        echo "github.workspace = ${{ github.workspace }}"
+        docker pull $BENV_IMAGE
+        git submodule update  --init --recursive
+        docker run -t \
+        --rm \
+        --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
+        --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/root/src,readonly" \
+        --env EBPF_NET_SRC=/root/src \
+        --env EBPF_NET_OUT_DIR=/root/out \
+        --workdir=/root/out \
+        $BENV_IMAGE \
+        ../build.sh kernel-collector
+
+  build-k8s-relay-image:
+    name: build-reducer
+    runs-on: ubuntu-20.04
+    needs: [clang-format-check]
+    steps:
+    - name: Check out the codebase
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - name: build k8s-relay-docker-image
+      run: |
+        echo "github.workspace = ${{ github.workspace }}"
+        docker pull $BENV_IMAGE
+        git submodule update  --init --recursive
+        docker run -t \
+        --rm \
+        --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
+        --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/root/src,readonly" \
+        --env EBPF_NET_SRC=/root/src \
+        --env EBPF_NET_OUT_DIR=/root/out \
+        --workdir=/root/out \
+        $BENV_IMAGE \
+        ../build.sh k8s-relay
+
+  build-cloud-collector-image:
+    name: build-reducer
+    runs-on: ubuntu-20.04
+    needs: [clang-format-check]
+    steps:
+    - name: Check out the codebase
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - name: build cloud-collector-docker-image
+      run: |
+        echo "github.workspace = ${{ github.workspace }}"
+        docker pull $BENV_IMAGE
+        git submodule update  --init --recursive
+        docker run -t \
+        --rm \
+        --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
+        --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/root/src,readonly" \
+        --env EBPF_NET_SRC=/root/src \
+        --env EBPF_NET_OUT_DIR=/root/out \
+        --workdir=/root/out \
+        $BENV_IMAGE \
+        ../build.sh k8s-relay
+
+  build-run-unit-tests:
+    name: build-reducer
+    runs-on: ubuntu-20.04
+    needs: [clang-format-check]
+    steps:
+    - name: Check out the codebase
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
     - name: run unit tests
       run: |
         docker run -t \
