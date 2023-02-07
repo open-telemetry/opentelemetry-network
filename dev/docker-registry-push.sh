@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-export EBPF_NET_SRC="${EBPF_NET_SRC:-$(git rev-parse --show-toplevel)}"
+export EBPF_NET_SRC_ROOT="${EBPF_NET_SRC_ROOT:-$(git rev-parse --show-toplevel)}"
 
 function print_help {
   echo "usage: $0 image tag docker_registry [options...]"
@@ -46,7 +46,7 @@ image_tag="${args[1]}"
   || docker_registry="localhost:5000"
 
 if [[ "${do_login}" == true ]]; then
-  "${EBPF_NET_SRC}/dev/docker-registry-login.sh" "${login_args}" "${docker_registry}"
+  "${EBPF_NET_SRC_ROOT}/dev/docker-registry-login.sh" "${login_args}" "${docker_registry}"
 fi
 
 (set -x; \

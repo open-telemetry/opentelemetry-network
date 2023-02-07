@@ -4,8 +4,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-export OTEL_EBPF_SRC="${OTEL_EBPF_SRC:-$(git rev-parse --show-toplevel)}"
-source "${OTEL_EBPF_SRC}/dev/script/bash-error-lib.sh"
+export EBPF_NET_SRC_ROOT="${EBPF_NET_SRC_ROOT:-$(git rev-parse --show-toplevel)}"
+source "${EBPF_NET_SRC_ROOT}/dev/script/bash-error-lib.sh"
 set -x
 
 function print {
@@ -20,7 +20,7 @@ kernel_version=$3
 name=${distro}-${version}
 [ "$kernel_version" != "" ] && name=${name}-${kernel_version}
 print "Testing ${name}"
-${OTEL_EBPF_SRC}/test/kernel-headers/bootstrap.sh ${distro} ${version} ${kernel_version}
+${EBPF_NET_SRC_ROOT}/test/kernel-headers/bootstrap.sh ${distro} ${version} ${kernel_version}
 
 cd ${name}
 print "running 0-setup.sh"

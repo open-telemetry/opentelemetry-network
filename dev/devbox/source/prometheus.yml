@@ -1,0 +1,17 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+global:
+  scrape_interval: 10s
+rule_files:
+- "rules.yaml"
+scrape_configs:
+- job_name: 'otelebpf-server'
+  static_configs:
+  - targets:
+    - 'localhost:7001'
+    - 'localhost:7002'
+    - 'localhost:7003'
+- job_name: 'otelebpf-server-internal'
+  static_configs:
+  - targets: ['localhost:7000']

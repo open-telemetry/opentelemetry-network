@@ -78,6 +78,7 @@ add_subdirectory(jitbuf)
 add_subdirectory(collector)
 add_subdirectory(reducer)
 add_subdirectory(otlp)
+add_subdirectory(dev)
 
 configure_file(config.h.cmake_in config.h)
 
