@@ -48,11 +48,6 @@ template <typename T> typename ArgsParser::ArgProxy<T>::proxy_ref ArgsParser::Ar
   }
 }
 
-template <typename T> template <typename> T *ArgsParser::ArgProxy<T>::operator->()
-{
-  return &arg_.Get();
-}
-
 template <typename T>
 ArgsParser::ArgProxy<T>
 ArgsParser::add_arg(std::string const &name, std::string const &description, char const *env_var, T default_value)

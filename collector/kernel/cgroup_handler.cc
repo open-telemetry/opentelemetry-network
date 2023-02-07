@@ -58,6 +58,8 @@ std::string_view CgroupHandler::get_name(u64 cgroup)
 /* END */
 void CgroupHandler::kill_css(u64 timestamp, struct jb_agent_internal__kill_css *msg)
 {
+  std::string name{(char *)msg->name, strnlen((char *)msg->name, sizeof(msg->name))};
+
   LOG::debug_in(
       AgentLogKind::CGROUPS,
       "CgroupHandler::kill_css"
@@ -68,7 +70,7 @@ void CgroupHandler::kill_css(u64 timestamp, struct jb_agent_internal__kill_css *
       "\n}}",
       msg->cgroup,
       msg->cgroup_parent,
-      msg->name);
+      name);
 
   if (has_cgroup(msg->cgroup)) {
     LOG::debug_in(AgentLogKind::CGROUPS, "Success: cgroup found. \t{}", get_name(msg->cgroup));
@@ -87,6 +89,8 @@ void CgroupHandler::kill_css(u64 timestamp, struct jb_agent_internal__kill_css *
 /* START */
 void CgroupHandler::css_populate_dir(u64 timestamp, struct jb_agent_internal__css_populate_dir *msg)
 {
+  std::string name{(char *)msg->name, strnlen((char *)msg->name, sizeof(msg->name))};
+
   LOG::debug_in(
       AgentLogKind::CGROUPS,
       "CgroupHandler::css_populate_dir"
@@ -97,15 +101,13 @@ void CgroupHandler::css_populate_dir(u64 timestamp, struct jb_agent_internal__cs
       "\n}}",
       msg->cgroup,
       msg->cgroup_parent,
-      msg->name);
+      name);
 
   if (has_cgroup(msg->cgroup_parent)) {
     LOG::debug_in(AgentLogKind::CGROUPS, "Success: cgroup->parent found. \t{}", get_name(msg->cgroup_parent));
   } else {
-    log_.warn("cgroup->parent not found: cgroup_parent={:x}, cgroup={:x}, name={}", msg->cgroup_parent, msg->cgroup, msg->name);
+    log_.warn("cgroup->parent not found: cgroup_parent={:x}, cgroup={:x}, name={}", msg->cgroup_parent, msg->cgroup, name);
   }
-
-  std::string name{(char *)msg->name, strnlen((char *)msg->name, sizeof(msg->name))};
 
   handle_cgroup(msg->cgroup, msg->cgroup_parent, name);
 }
@@ -113,6 +115,8 @@ void CgroupHandler::css_populate_dir(u64 timestamp, struct jb_agent_internal__cs
 /* EXISTING */
 void CgroupHandler::existing_cgroup_probe(u64 timestamp, struct jb_agent_internal__existing_cgroup_probe *msg)
 {
+  std::string name{(char *)msg->name, strnlen((char *)msg->name, sizeof(msg->name))};
+
   // msg->cgroup_parent, msg->name);
   LOG::debug_in(
       AgentLogKind::CGROUPS,
@@ -124,9 +128,7 @@ void CgroupHandler::existing_cgroup_probe(u64 timestamp, struct jb_agent_interna
       "\n}}",
       msg->cgroup,
       msg->cgroup_parent,
-      msg->name);
-
-  std::string name{(char *)msg->name, strnlen((char *)msg->name, sizeof(msg->name))};
+      name);
 
   handle_cgroup(msg->cgroup, msg->cgroup_parent, name);
 }
@@ -143,7 +145,7 @@ void CgroupHandler::cgroup_attach_task(u64 timestamp, struct jb_agent_internal__
       "\n}}",
       msg->cgroup,
       msg->pid,
-      msg->comm);
+      std::string_view((char*)msg->comm, strnlen((char*)msg->comm, sizeof(msg->comm))));
 
   if (has_cgroup(msg->cgroup)) {
     LOG::debug_in(AgentLogKind::CGROUPS, "Success: cgroup found. \t{}", get_name(msg->cgroup));
@@ -164,7 +166,7 @@ void CgroupHandler::handle_pid_info(u32 pid, u64 cgroup, uint8_t comm[16])
       "\n}}",
       pid,
       cgroup,
-      comm);
+      std::string_view((char*)comm, strnlen((char*)comm, 16)));
 
   if (has_cgroup(cgroup)) {
     LOG::debug_in(AgentLogKind::CGROUPS, "Success: cgroup found. \t{}", get_name(cgroup));

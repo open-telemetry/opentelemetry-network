@@ -366,7 +366,7 @@ void BufferedPoller::handle_dns_message(message_metadata const &metadata, jb_age
 
   if (!is_response) {
     DnsRequests::dns_request_key key{
-        .qid = qid_out, .type = type_out, .name = std::string(hostname_out, hostname_len), .is_rx = msg.is_rx};
+        .qid = qid_out, .type = type_out, .name = std::string(hostname_out, hostname_len), .is_rx = (bool)msg.is_rx};
 
     // Add request to table, for later processing when response shows up
     DnsRequests::dns_request_value value{.timestamp_ns = metadata.timestamp, .sk = sk};

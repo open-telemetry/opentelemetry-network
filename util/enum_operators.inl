@@ -86,7 +86,7 @@ template <> struct enum_traits<ENUM_FULLY_QUALIFIED_NAME> {
 
   static constexpr type min()
   {
-    constexpr std::initializer_list<type> values = {
+    std::initializer_list<type> values = {
 #define LIST_ENUM_VALUES(K, V, S) type::K,
         ENUM_ELEMENTS(LIST_ENUM_VALUES)
 #undef LIST_ENUM_VALUES
@@ -96,7 +96,7 @@ template <> struct enum_traits<ENUM_FULLY_QUALIFIED_NAME> {
 
   static constexpr type max()
   {
-    constexpr std::initializer_list<type> values = {
+    std::initializer_list<type> values = {
 #define LIST_ENUM_VALUES(K, V, S) type::K,
         ENUM_ELEMENTS(LIST_ENUM_VALUES)
 #undef LIST_ENUM_VALUES

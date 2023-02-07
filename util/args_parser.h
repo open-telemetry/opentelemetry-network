@@ -96,8 +96,6 @@ public:
 
     proxy_ref operator*();
 
-    template <typename = std::enable_if_t<needs_proxy>> T *operator->();
-
   private:
     using arg_type = std::conditional_t<std::is_enum_v<T>, std::string, T>;
     args::ValueFlag<arg_type> arg_;
