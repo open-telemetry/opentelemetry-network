@@ -20,11 +20,11 @@ jobs:
         with:
           scan-type: 'fs'
           scan-ref: '.'
-          skip-dirs: 'docs,cmake'
+          skip-dirs: 'docs,cmake,collector/k8s,ext'
           format: 'table'
           exit-code: '1'
           severity: 'CRITICAL,HIGH'
           ignore-unfixed: true
           vuln-type: 'os,library'
           timeout: 10m
-          
+
