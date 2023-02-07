@@ -50,7 +50,7 @@ void K8sContainerSpan::set_container_pod(
         NodeResolutionType::K8S_CONTAINER,
         "matching::K8sContainerSpan::set_container_pod: failed to"
         " reference a pod: uid_suffix='{}'",
-        msg->pod_uid_suffix);
+        std::string_view((char *)k8s_pod_key.uid_suffix.data(), k8s_pod_key.uid_suffix.size()));
     local_core<MatchingCore>().logger().k8s_container_pod_not_found(msg->pod_uid_suffix, msg->pod_uid_hash);
     return;
   }
