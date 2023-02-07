@@ -37,7 +37,7 @@ std::vector<ElementQueueStoragePtr> make_queue_buffers(size_t n)
     result.emplace_back(std::make_shared<MemElementQueueStorage>(queue_n_elems, queue_buf_len));
   }
 
-  return std::move(result);
+  return result;
 }
 
 template <typename... Args>
