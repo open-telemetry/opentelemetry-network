@@ -19,7 +19,7 @@ jobs:
         uses: aquasecurity/trivy-action@0.8.0
         with:
           scan-type: 'fs'
-          scan-ref: 'reducer/, collector/kernel'
+          scan-ref: '.'
           skip-dirs: 'docs,cmake,collector/k8s,ext'
           format: 'table'
           exit-code: '1'
