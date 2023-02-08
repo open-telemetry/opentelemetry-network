@@ -28,7 +28,7 @@ namespace ebpf {
 // This function is declared in BCC's common.h, which is private (doesn't get installed).
 // TODO: remove this when bcc/common.h is made public.
 std::vector<int> get_online_cpus();
-}
+} // namespace ebpf
 
 ProbeHandler::ProbeHandler(logging::Logger &log) : log_(log), num_failed_probes_(0), stack_trace_count_(0){};
 

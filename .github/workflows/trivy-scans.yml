@@ -1,0 +1,30 @@
+name: trivy scans
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    paths:
+      - '.github/workflows/trivy-scans.yml'
+      - '.trivyignore'
+
+jobs:
+  trivy-fs-scan:
+    # Use 20.04.5 until https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/16450 is resolved
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run trivy filesystem scan
+        uses: aquasecurity/trivy-action@0.8.0
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          skip-dirs: 'docs,cmake,collector/k8s,ext'
+          format: 'table'
+          exit-code: '1'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          timeout: 10m
+
