@@ -408,10 +408,8 @@ int main(int argc, char *argv[])
     matching_cores.push_back(std::move(matching_core));
   }
 
-  auto ingest_core = std::make_unique<reducer::ingest::IngestCore>(
-      ingest_to_logging_queues,
-      ingest_to_matching_queues,
-      telemetry_port.Get());
+  auto ingest_core =
+      std::make_unique<reducer::ingest::IngestCore>(ingest_to_logging_queues, ingest_to_matching_queues, telemetry_port.Get());
 
   // all writers created
   assert(stat_writer_num == num_stat_writers);

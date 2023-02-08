@@ -189,9 +189,7 @@ std::string CgroupProber::find_cgroup_v1_mountpoint()
 
 std::string CgroupProber::find_cgroup_v2_mountpoint()
 {
-  static const std::vector<std::string> cgroup_v2_mountpoints = {
-      "/hostfs/sys/fs/cgroup", "/sys/fs/cgroup"
-  };
+  static const std::vector<std::string> cgroup_v2_mountpoints = {"/hostfs/sys/fs/cgroup", "/sys/fs/cgroup"};
 
   for (auto const &mountpoint : cgroup_v2_mountpoints) {
     if (is_cgroup_v2_mountpoint(mountpoint)) {
