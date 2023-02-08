@@ -508,7 +508,6 @@ int onret_get_pid_task(struct pt_regs *ctx)
   return 0;
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////////
 /* TCP SOCKETS */
 static inline u32 tcp_get_delivered(struct sock *sk)

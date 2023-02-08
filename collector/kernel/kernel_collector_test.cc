@@ -12,7 +12,6 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <jitbuf/jb.h>
-#include <util/json_converter.h>
 #include <util/aws_instance_metadata.h>
 #include <util/boot_time.h>
 #include <util/code_timing.h>
@@ -20,6 +19,7 @@
 #include <util/curl_engine.h>
 #include <util/gcp_instance_metadata.h>
 #include <util/json.h>
+#include <util/json_converter.h>
 #include <util/log.h>
 #include <util/logger.h>
 #include <util/system_ops.h>
@@ -163,7 +163,8 @@ protected:
     uv_run(&loop_, UV_RUN_DEFAULT);
   }
 
-  void stop_kernel_collector() {
+  void stop_kernel_collector()
+  {
     stop_workloads();
 
     print_json_messages();

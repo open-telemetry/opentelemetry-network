@@ -56,10 +56,7 @@ void IngestCore::on_stop_async(uv_async_t *handle)
 }
 
 IngestCore::IngestCore(
-    RpcQueueMatrix &ingest_to_logging_queues,
-    RpcQueueMatrix &ingest_to_matching_queues,
-    u32 telemetry_port,
-    bool localhost)
+    RpcQueueMatrix &ingest_to_logging_queues, RpcQueueMatrix &ingest_to_matching_queues, u32 telemetry_port, bool localhost)
 {
   auto const ingest_shard_count = ingest_to_matching_queues.num_senders();
   int res;
@@ -221,9 +218,11 @@ void IngestCore::on_write_internal_stats_timer()
         client_handle_utilization("socket", conn->socket__hash.size(), conn->socket__hash.capacity());
         client_handle_utilization("udp_socket", conn->udp_socket__hash.size(), conn->udp_socket__hash.capacity());
         client_handle_utilization("process", conn->process__hash.size(), conn->process__hash.capacity());
-        client_handle_utilization("tracked_process", conn->tracked_process__hash.size(), conn->tracked_process__hash.capacity());
+        client_handle_utilization(
+            "tracked_process", conn->tracked_process__hash.size(), conn->tracked_process__hash.capacity());
         client_handle_utilization("cgroup", conn->cgroup__hash.size(), conn->cgroup__hash.capacity());
-        client_handle_utilization("aws_network_interface", conn->aws_network_interface__hash.size(), conn->aws_network_interface__hash.capacity());
+        client_handle_utilization(
+            "aws_network_interface", conn->aws_network_interface__hash.size(), conn->aws_network_interface__hash.capacity());
 
         /* write message statistics */
         conn->message_stats.foreach ([&](std::string_view module, std::string_view msg, int severity, u64 count) {

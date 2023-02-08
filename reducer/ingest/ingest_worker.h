@@ -11,8 +11,8 @@
 #include <reducer/worker.h>
 
 #include <generated/ebpf_net/ingest/index.h>
-#include <generated/ebpf_net/logging/writer.h>
 #include <generated/ebpf_net/ingest/span_base.h>
+#include <generated/ebpf_net/logging/writer.h>
 
 #include <channel/callbacks.h>
 

@@ -145,7 +145,7 @@ void CgroupHandler::cgroup_attach_task(u64 timestamp, struct jb_agent_internal__
       "\n}}",
       msg->cgroup,
       msg->pid,
-      std::string_view((char*)msg->comm, strnlen((char*)msg->comm, sizeof(msg->comm))));
+      std::string_view((char *)msg->comm, strnlen((char *)msg->comm, sizeof(msg->comm))));
 
   if (has_cgroup(msg->cgroup)) {
     LOG::debug_in(AgentLogKind::CGROUPS, "Success: cgroup found. \t{}", get_name(msg->cgroup));
@@ -166,7 +166,7 @@ void CgroupHandler::handle_pid_info(u32 pid, u64 cgroup, uint8_t comm[16])
       "\n}}",
       pid,
       cgroup,
-      std::string_view((char*)comm, strnlen((char*)comm, 16)));
+      std::string_view((char *)comm, strnlen((char *)comm, 16)));
 
   if (has_cgroup(cgroup)) {
     LOG::debug_in(AgentLogKind::CGROUPS, "Success: cgroup found. \t{}", get_name(cgroup));
@@ -306,8 +306,7 @@ void CgroupHandler::fetch_done_cb(CurlEngineStatus status, long responseCode, st
   if ((responseCode >= 200) && (responseCode <= 299)) {
     // success
     handle_docker_response(cgroup, response_data);
-  }
-  else if ((responseCode >= 500) && (responseCode <= 599)) { 
+  } else if ((responseCode >= 500) && (responseCode <= 599)) {
     // server error
     log_.error("docker fetch failed with response {}", responseCode);
   }
@@ -522,4 +521,3 @@ void CgroupHandler::handle_docker_response(u64 cgroup, std::string const &respon
 
   writer_.flush();
 }
-

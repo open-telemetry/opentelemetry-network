@@ -3,8 +3,8 @@
 
 #include "process_span.h"
 
-#include <reducer/ingest/shared_state.h>
 #include <reducer/ingest/component.h>
+#include <reducer/ingest/shared_state.h>
 
 #include <generated/ebpf_net/ingest/modifiers.h>
 

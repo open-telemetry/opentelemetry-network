@@ -67,9 +67,7 @@ protected:
 
   template <typename... Args>
   CoreBase(std::string_view app_name, size_t shard_num, u64 initial_timestamp, Args &&...args)
-      : Core(app_name, shard_num, initial_timestamp),
-        transform_builder_(),
-        index_(std::forward<Args>(args)...)
+      : Core(app_name, shard_num, initial_timestamp), transform_builder_(), index_(std::forward<Args>(args)...)
   {}
 
   void add_rpc_clients(std::vector<ElementQueue> const &queues, ClientType client_type, RpcReceiverStats &receiver_stats)
