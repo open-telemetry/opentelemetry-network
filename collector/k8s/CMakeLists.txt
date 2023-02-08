@@ -3,8 +3,19 @@
 
 setup_go_module(collector "ebpf.net" VENDORED)
 
-build_protobuf(collector GO collector CPP GRPC)
-build_protobuf(kubernetes_info GO collector CPP)
+build_protobuf(
+  kubernetes_info
+  CPP
+  GO collector
+)
+
+build_protobuf(
+  collector
+  CPP GRPC
+  GO collector
+  DEPENDS
+    kubernetes_info-protobuf
+)
 
 #############
 # k8s-relay #
