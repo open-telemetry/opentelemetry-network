@@ -3,7 +3,7 @@
 
 # Note that in order to change the base image to something more recent than minideb:buster, kernel_headers.sh
 # needs to be refactored to use dnf instead of yum, which is deprecated and its package no longer available.
-FROM bitnami/minideb:buster
+FROM bitnami/minideb:bullseye
 
 LABEL org.label-schema.name="opentelemetry-ebpf-kernel-collector"
 LABEL org.label-schema.description="OpenTelemetry eBPF kernel information collector"
@@ -21,7 +21,7 @@ ENV EBPF_NET_DATA_DIR=/var/run/ebpf_net
 ENTRYPOINT [ "/srv/entrypoint.sh" ]
 
 # required by kernel_headers.sh script
-RUN install_packages coreutils curl sed tar yum yum-utils
+RUN install_packages coreutils curl sed tar dnf rpm
 
 ARG BUILD_TYPE
 RUN if [ "$BUILD_TYPE" = "Debug" ]; then \

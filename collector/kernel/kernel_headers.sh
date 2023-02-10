@@ -226,11 +226,11 @@ function install_yum_kernel_headers {
     fi
   done
 
-  if ! yum list > /dev/null; then
+  if ! dnf list > /dev/null; then
     entrypoint_error="kernel_headers_misconfigured_repo"
     
     # show the repo list for debugging later
-    yum repolist -v || true
+    dnf repolist -v || true
 
     # dump repo settings in a compact way
     printf "repo settings (decode with \`| tr '|' '\\\\n' | base64 -d | tar xzv\`)\\n"
@@ -242,14 +242,16 @@ function install_yum_kernel_headers {
   fi
 
   # show available kernel headers versions for debuging purposes
-  yum list | grep kernel-devel || true
+  dnf list | grep kernel-devel || true
 
   # we can't `yum install` here - it would install the whole base system
   # given that we're installing packages from a foreign OS. Instead we
   # download the RPM package and install it without its dependencies
 
-  download_dir="$(mktemp -d yum-pkg-XXXXX)"
-  if ! yumdownloader "--destdir=${download_dir}" "${kernel_headers_pkg_name}"; then
+  download_dir="$(mktemp -d yum-pkg-XXXXX --tmpdir)"
+  if ! dnf install -y --downloadonly --setopt=install_weak_deps=False \
+       "--destdir=${download_dir}" "${kernel_headers_pkg_name}";
+  then
     # dump repo settings in a compact way
     printf "repo settings (decode with \`| tr '|' '\\\\n' | base64 -d | tar xzv\`)\\n"
     tar cz --dereference --hard-dereference "${repo_files_path[@]}" \
