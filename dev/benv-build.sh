@@ -150,6 +150,12 @@ done
 
 while [[ "$#" -gt 0 ]]; do make_args+=("$1"); shift; done
 
+# Add the source directory to git's list of safe directories.
+# Prevents "fatal: detected dubious ownership in repository at ..." error.
+if [[ $(git config --global --get-all safe.directory | grep -ce "^${source_dir}\$") == "0" ]]; then
+  git config --global --add safe.directory $source_dir
+fi
+
 cd "${source_dir}"
 echo -n "version being built: "
 source ./version.sh
