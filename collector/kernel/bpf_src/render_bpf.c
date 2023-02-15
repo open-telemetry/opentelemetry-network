@@ -4,7 +4,10 @@
  */
 
 #include <uapi/linux/ptrace.h>
-#define KBUILD_MODNAME "latency_trace_bpf"
+
+#ifndef KBUILD_MODNAME
+#define KBUILD_MODNAME "ebpf_net"
+#endif
 
 /* include net/sock, ignore the enum-conversion warning */
 #pragma clang diagnostic push
