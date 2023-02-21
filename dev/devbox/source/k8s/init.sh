@@ -1,63 +1,40 @@
-#!/bin/bash -xe
+#!/bin/bash -e
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
+source /etc/os-release
+if [[ "${ID}" != "ubuntu" ]]
+then
+  echo "k8s is currently only supported in Ubuntu devboxes."
+  exit 1
+fi
 
-sudo swapoff -a
+echo -e "\n---------- Starting microk8s ----------"
+set -x
+microk8s start
+microk8s status --wait-ready
+microk8s enable dns
+microk8s enable hostpath-storage
+microk8s enable registry
 
-cat <<EOF | sudo tee "/etc/docker/daemon.json"
-{
-  "storage-opts": [ "overlay2.override_kernel_check=true" ],
-  "storage-driver": "overlay2",
-  "log-opts": { "max-size": "100m" },
-  "log-driver": "json-file",
-  "exec-opts": [ "native.cgroupdriver=systemd" ]
-}
-EOF
 
-sudo service docker restart
+set +x
+echo
+echo -e "\nTo change the microk8s install to a different version/snap channel, for example:"
+echo "  sudo snap refresh microk8s --channel=latest/edge"
+echo "  OR"
+echo "  sudo snap refresh microk8s --channel=1.25"
+echo "To see the currently available channels:"
+echo "  snap info microk8s"
+echo
 
-curl -sfL 'https://packages.cloud.google.com/apt/doc/apt-key.gpg' | sudo -E apt-key add - 
+echo -e "\n---------- Installing stern ----------"
+set -x
+microk8s kubectl krew update
+microk8s kubectl krew install stern
 
-sudo tee /etc/apt/sources.list.d/kubernetes.list <<EOF
-deb https://apt.kubernetes.io/ kubernetes-xenial main
-EOF
+set +x
+echo -e "\n---------- Installing helm diff ----------"
+set -x
+microk8s helm plugin install https://github.com/databus23/helm-diff
 
-sudo apt-get update -y
-sudo apt-get install -y kubeadm
-
-curl -sfL 'https://get.helm.sh/helm-v3.5.4-linux-amd64.tar.gz' \
-  | sudo tar xzv -C /usr/local/bin --strip-components=1
-
-cat <<EOF | tee /tmp/k8s-config.yaml
-apiVersion: kubeadm.k8s.io/v1beta2
-kind: InitConfiguration
-localAPIendpoint:
-  advertiseAddress: "192.168.56.33"
-nodeRegistration:
-  name: "master"
-  kubeletExtraArgs:
-    node-ip: "192.168.56.33"
----
-apiVersion: kubeadm.k8s.io/v1beta2
-kind: ClusterConfiguration
-clusterName: "devbox"
-apiServer:
-  certSANs:
-  - "192.168.56.33"
-networking:
-  podSubnet: "192.168.64.0/24"
-EOF
-
-sudo kubeadm init --config /tmp/k8s-config.yaml
-
-mkdir -p "$HOME/.kube"
-sudo install --mode=644 --group "$(id -g)" --owner "$(id -u)" /etc/kubernetes/admin.conf "$HOME/.kube/config"
-
-kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
-
-kubectl taint nodes --all node-role.kubernetes.io/master-
-
-kubectl create namespace otelebpf
-
-helm plugin install https://github.com/databus23/helm-diff

@@ -1,0 +1,34 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+################################################################################
+# Override splunk-otel-collector default values to deploy OpenTelemetry-eBPF
+# components
+################################################################################
+
+clusterName: "devbox-cluster"
+
+agent:
+  enabled: false
+
+clusterReceiver:
+  enabled: false
+
+gateway:
+  enabled: true
+  replicaCount: 1
+
+  config:
+    exporters:
+      logging:
+        verbosity: detailed
+
+networkExplorer:
+  enabled: true
+  log:
+    console: true
+    # possible values: { error | warning | info | debug | trace }
+    level: info
+
+  podSecurityPolicy:
+    enabled: false

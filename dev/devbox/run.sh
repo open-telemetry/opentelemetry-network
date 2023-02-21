@@ -11,4 +11,4 @@ source "${EBPF_NET_SRC_ROOT}/dev/script/benv-lib.sh"
 export EBPF_NET_OUT_DIR="$(get_benv_build_dir)"
 
 vagrant up
-vagrant ssh -- -R 5000:localhost:5000 -L 59090:localhost:9090
+vagrant ssh -- -R 5000:localhost:5000 -L 58080:localhost:8080 -L 59090:localhost:9090

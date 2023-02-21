@@ -1,0 +1,28 @@
+# https://github.com/dikiaap/dotfiles/blob/master/.ripgreprc
+
+# Search hidden files and directories.
+--hidden
+
+# Don't respect ignore files (.gitignore, .ignore, etc.).
+--no-ignore
+
+# Exclude directories.
+--glob=!{build,build-env,ext,.attic,.git,.svn,.tldr,node_modules,Trash,vendor}
+
+# Exclude file types.
+--glob=!*.{lock}
+
+# Exclude files.
+--glob=!{package-lock.json}
+
+# Don't print lines longer than this limit.
+--max-columns=10000
+
+# Searches case insensitively.
+--smart-case
+
+# Sort by file path.
+--sort=path
+
+# This makes "tail -f | rg A | rb B" work as expected without long buffering delays
+--line-buffered
