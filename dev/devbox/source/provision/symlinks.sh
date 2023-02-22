@@ -19,6 +19,7 @@ files=( \
   kernel-collector.sh
   otelcol-gateway.sh
   reducer.sh
+  .rgrc
 )
 
 for file in "${files[@]}"; do

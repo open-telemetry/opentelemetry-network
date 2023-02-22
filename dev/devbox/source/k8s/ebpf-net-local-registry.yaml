@@ -1,0 +1,40 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+################################################################################
+# Override splunk-otel-collector default values to use OpenTelemetry-eBPF
+# images from local registry
+# localhost:32000 is private image registry from microk8s registry addon
+################################################################################
+
+networkExplorer:
+  kernelCollector:
+    image:
+      name: kernel-collector
+      tag: latest
+      repository: localhost:32000
+
+  cloudCollector:
+    image:
+      name: cloud-collector
+      tag: latest
+      repository: localhost:32000
+
+  k8sCollector:
+    relay:
+      image:
+        name: k8s-relay
+        tag: latest
+        repository: localhost:32000
+    watcher:
+      image:
+        name: k8s-watcher
+        tag: latest
+        repository: localhost:32000
+
+  reducer:
+    image:
+      name: reducer
+      tag: latest
+      repository: localhost:32000
+

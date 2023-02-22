@@ -56,6 +56,10 @@
     },
     {
       "type": "shell",
+      "script": "{{template_dir}}/provision/k8s.sh"
+    },
+    {
+      "type": "shell",
       "script": "{{template_dir}}/provision/upgrade.sh"
     },
     {
@@ -88,6 +92,12 @@
         "cat >> .bashrc <<EOF",
         "export PATH=\"\\$PATH:\\$HOME/bin\"",
         "source \"\\$HOME/.env\"",
+        "export RIPGREP_CONFIG_PATH=\"$HOME/.rgrc\"",
+        "set -o vi",
+        "EOF",
+        "cat >> .bash_aliases <<EOF",
+        "alias h='history'",
+        "alias ll='ls -al'",
         "EOF"
       ]
     },
