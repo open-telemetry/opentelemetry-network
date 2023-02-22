@@ -94,7 +94,7 @@ As requested, refusing to automatically fetch kernel headers for the hosts's Lin
 
 In order to allow it, follow the instructions below:
 
-  - for deployments using our helm charts from https://github.com/Flowmill/splunk-otel-network-explorer-chart,
+  - for deployments using the helm charts from https://github.com/signalfx/splunk-otel-collector-chart,
     set `kernelCollector.installKernelHeaders` to `true` in `values.yaml`:
 
       kernelCollector:
