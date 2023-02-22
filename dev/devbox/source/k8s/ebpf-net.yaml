@@ -18,6 +18,11 @@ gateway:
   enabled: true
   replicaCount: 1
 
+  resources:
+    limits:
+      cpu: 500m
+      memory: 1Gi
+
   config:
     exporters:
       logging:
