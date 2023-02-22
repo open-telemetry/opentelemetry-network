@@ -79,6 +79,7 @@ add_subdirectory(collector)
 add_subdirectory(reducer)
 add_subdirectory(otlp)
 add_subdirectory(dev)
+add_subdirectory(tools)
 
 configure_file(config.h.cmake_in config.h)
 

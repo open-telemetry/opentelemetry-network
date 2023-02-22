@@ -21,7 +21,7 @@ function check_file
 }
 
 # Check that C and C++ source files are properly clang-formatted
-FILES=$(find ./geoip ./reducer ./test ./collector/kernel ./common        \
+FILES=$(find ./geoip ./reducer ./test ./collector/kernel ./common ./tools \
 	-type f                                                           \
 	\( -name "*.c"                                                    \
 	-o -name "*.cc"                                                   \
