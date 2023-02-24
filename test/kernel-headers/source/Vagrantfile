@@ -34,6 +34,15 @@ Vagrant.configure("2") do |config|
     vb.memory = "8192"
   end
 
+  config.vm.provider "virtualbox" do |vb|  
+    vb.customize ["modifyvm", :id, "--natdnsproxy1", "on"]
+    vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+  end  
+
+  config.vm.provider :virtualbox do |v|  
+    v.customize [ "guestproperty", "set", :id, "/VirtualBox/GuestAdd/VBoxService/--timesync-set-threshold", 10000 ]
+  end  
+
   config.vm.provision "file",
     source: "data/test-entrypoint.sh",
     destination: "test-entrypoint.sh"

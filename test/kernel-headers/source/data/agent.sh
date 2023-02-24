@@ -3,7 +3,9 @@
 # SPDX-License-Identifier: Apache-2.0
 
 set -xe
+echo $DOCKER_HUB_PATH
 
+image_loc="localhost:5000/kernel-collector"
 container_name="test-kernel-collector"
 
 if [ "$(docker ps -a -q -f name="${container_name}")" ]
@@ -13,7 +15,18 @@ then
   docker rm "${container_name}-stopped"
 fi
 
-docker pull localhost:5000/kernel-collector
+if [ $# -eq 0 ]
+then
+  sudo docker pull ${image_loc}
+elif [ $# -eq 2 ]
+then
+  tag=":$1"
+  docker_hub_path="$2"
+  image_loc="$docker_hub_path/kernel-collector${tag}"
+  echo $image_loc
+  sudo docker pull ${image_loc}    
+fi
+
 
 docker create \
   --name "${container_name}" \
@@ -36,7 +49,7 @@ docker create \
   --volume /var/cache:/hostfs/cache \
   --volume /var/run/docker.sock:/var/run/docker.sock \
   --entrypoint "/srv/test-entrypoint.sh" \
-  localhost:5000/kernel-collector \
+  "${image_loc}" \
     --log-console \
     --debug
 

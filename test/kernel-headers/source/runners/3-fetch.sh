@@ -8,4 +8,12 @@ set -x
 
 vagrant ssh -- -- ./uninstall-kernel-headers.sh
 vagrant ssh -- -- sudo rm -rf /var/cache/ebpf_net/kernel-headers || true
-vagrant ssh -- -R "5000:localhost:5000" -- ./agent.sh
+
+if [ $# -eq 2 ]
+then
+    vagrant ssh -- -R "5000:localhost:5000" -- ./agent.sh $1 $2
+elif [ $# -eq 0 ]    
+then
+    vagrant ssh -- -R "5000:localhost:5000" -- ./agent.sh      
+fi
+
