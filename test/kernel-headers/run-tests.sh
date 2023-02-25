@@ -18,7 +18,7 @@ echo "Saving test results in ${test_dir}"
 
 num_run=0
 num_failed=0
-empty_placeholder="github_runner"
+
 for ((i = 0; i < ${#distros_and_kernels[@]}; i++))
 do
   num_run=$((num_run+1))
@@ -27,7 +27,7 @@ do
   echo "Running kernel header tests for \"${distro_and_kernel}\"." | tee -a ${test_dir}/summary.log
   if [[ $# == 1  ]]
   then
-    ${EBPF_NET_SRC_ROOT}/test/kernel-headers/run-test.sh ${distro_and_kernel} $1 $empty_placeholder 2>&1 | tee ${log_file}
+    ${EBPF_NET_SRC_ROOT}/test/kernel-headers/run-test.sh ${distro_and_kernel} $1 $1 2>&1 | tee ${log_file}
   else
     ${EBPF_NET_SRC_ROOT}/test/kernel-headers/run-test.sh ${distro_and_kernel} 2>&1 | tee ${log_file}
   fi
@@ -43,7 +43,7 @@ done
 
 echo -e "Ran ${num_run} tests, with ${num_failed} failure(s).\n" | tee -a ${test_dir}/summary.log
 
-echo "Test results are in ${test_dir}.
+echo "Test results are in ${test_dir}. "
 
 if [[ ${num_failed} -gt 0 ]]
 then

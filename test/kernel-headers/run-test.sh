@@ -33,8 +33,6 @@ ${EBPF_NET_SRC_ROOT}/test/kernel-headers/bootstrap.sh ${distro} ${version} ${ker
 cd ${name}
 print "running 0-setup.sh"
 ./0-setup.sh ${tag}
-print "running 1-start-reducer.sh"
-./1-start-reducer.sh ${tag} $DOCKER_HUB_PATH
 
 ## this script should only be run for SE linux. Currently only centos-7 is an SE. 
 if [ "$distro" == "centos" ] 
@@ -42,6 +40,10 @@ then
   print "running 2-apply-selinux-policy.sh"
   ./2-apply-selinux-policy.sh
 fi  
+
+print "running 1-start-reducer.sh"
+./1-start-reducer.sh ${tag} $DOCKER_HUB_PATH
+
 # Ubuntu Jammy cannot automatically fetch headers currently because kernel-collector with bitnami/minideb:buster
 # base image does not support zstd compression
 is_jammy=$(grep jammy <<<$version) || true
