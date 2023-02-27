@@ -1,6 +1,3 @@
-// Copyright The OpenTelemetry Authors
-// SPDX-License-Identifier: Apache-2.0
-
 package jsoniter
 
 import (
@@ -68,7 +65,7 @@ func (iter *Iterator) ReadVal(obj interface{}) {
 	decoder := iter.cfg.getDecoderFromCache(cacheKey)
 	if decoder == nil {
 		typ := reflect2.TypeOf(obj)
-		if typ.Kind() != reflect.Ptr {
+		if typ == nil || typ.Kind() != reflect.Ptr {
 			iter.ReportError("ReadVal", "can only unmarshal into pointer")
 			return
 		}
