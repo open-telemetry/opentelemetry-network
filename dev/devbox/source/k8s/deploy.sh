@@ -3,11 +3,14 @@
 # SPDX-License-Identifier: Apache-2.0
 
 function print_help {
-  echo "usage: $0 [--demo|--ebpf-net|--ebpf-net-debug|--ebpf-net-local|--ebpf-net-trace|--ebpf-net-logging-exporter|"
-  echo "                    --help|--otel-demo|--splunk-realm <REALM>|--splunk-token <TOKEN>]"
+  echo "usage: $0 [--demo|--dev1|--dev2|--dev3|--ebpf-net|--ebpf-net-debug|--ebpf-net-local|--ebpf-net-logging-exporter|"
+  echo "                    --ebpf-net-trace|--help|--otel-demo|--splunk-realm <REALM>|--splunk-token <TOKEN>]"
   echo
   echo "  --demo: deploy the Google Online Boutique Microservices Demo"
   echo "          see https://github.com/GoogleCloudPlatform/microservices-demo"
+  echo "  --dev1: --ebpf-net --ebpf-net-debug --ebpf-net-local --ebpf-net-logging-exporter"
+  echo "  --dev2: --demo --ebpf-net --ebpf-net-debug --ebpf-net-local --ebpf-net-logging-exporter"
+  echo "  --dev3: --ebpf-net --ebpf-net-debug --ebpf-net-local --ebpf-net-logging-exporter --otel-demo"
   echo "  --ebpf-net: deploy OpenTelementry eBPF"
   echo "  --ebpf-net-debug: enable debug logging for OpenTelemetry eBPF"
   echo "  --ebpf-net-local: use local docker registry to deploy OpenTelementry eBPF images (default is to use public quay.io/signalfx images)"
@@ -30,6 +33,29 @@ while [[ "$#" -gt 0 ]]; do
       deploy_microservices_demo="true"
       ;;
 
+    --dev1)
+      deploy_ebpf_net="true"
+      ebpf_net_log_level="--set=networkExplorer.log.level=debug"
+      ebpf_net_use_local_registry="true"
+      ebpf_net_use_logging_exporter="true"
+      ;;
+
+    --dev2)
+      deploy_ebpf_net="true"
+      ebpf_net_log_level="--set=networkExplorer.log.level=debug"
+      ebpf_net_use_local_registry="true"
+      ebpf_net_use_logging_exporter="true"
+      deploy_microservices_demo="true"
+      ;;
+
+    --dev3)
+      deploy_ebpf_net="true"
+      ebpf_net_log_level="--set=networkExplorer.log.level=debug"
+      ebpf_net_use_local_registry="true"
+      ebpf_net_use_logging_exporter="true"
+      deploy_otel_demo="true"
+      ;;
+
     --ebpf-net)
       deploy_ebpf_net="true"
       ;;
@@ -43,7 +69,7 @@ while [[ "$#" -gt 0 ]]; do
       ;;
 
     --ebpf-net-logging-exporter)
-      ebpf_net_logging_exporter="--set=gateway.config.service.pipelines.metrics.exporters=logging"
+      ebpf_net_use_logging_exporter="true"
       ;;
 
     --ebpf-net-trace)
@@ -113,6 +139,7 @@ if [[ "$deploy_ebpf_net" == "true" ]]
   microk8s helm repo update
 
   ebpf_net_yaml="-f ebpf-net.yaml"
+
   if [[ "${ebpf_net_use_local_registry}" == "true" ]]
   then
     # pull from local registry, tag, push to microk8s registry
@@ -125,13 +152,25 @@ if [[ "$deploy_ebpf_net" == "true" ]]
     docker tag $(docker images | grep localhost:5000/reducer | awk '{print $3'}) localhost:32000/reducer:latest
     docker push localhost:32000/reducer:latest
 
+    docker pull localhost:5000/k8s-relay:latest
+    docker tag $(docker images | grep localhost:5000/k8s-relay | awk '{print $3'}) localhost:32000/k8s-relay:latest
+    docker push localhost:32000/k8s-relay:latest
+
+    docker pull localhost:5000/k8s-watcher:latest
+    docker tag $(docker images | grep localhost:5000/k8s-watcher | awk '{print $3'}) localhost:32000/k8s-watcher:latest
+    docker push localhost:32000/k8s-watcher:latest
+
     ebpf_net_yaml="${ebpf_net_yaml} -f ebpf-net-local-registry.yaml"
+  fi
+
+  if [[ "${ebpf_net_use_local_registry}" == "true" ]]
+  then
+    ebpf_net_yaml="${ebpf_net_yaml} -f ebpf-net-logging-exporter.yaml"
   fi
 
   microk8s helm install ebpf-net \
     ${ebpf_net_yaml} \
     ${ebpf_net_log_level} \
-    ${ebpf_net_logging_exporter} \
     ${splunk_args} \
     splunk-otel-collector-chart/splunk-otel-collector
 fi
