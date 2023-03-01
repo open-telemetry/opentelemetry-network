@@ -1,6 +1,3 @@
-# Copyright The OpenTelemetry Authors
-# SPDX-License-Identifier: Apache-2.0
-
 #
 # This Dockerfile builds a recent curl with HTTP/2 client support, using
 # a recent nghttp2 build.
@@ -41,7 +38,7 @@ RUN make
 RUN make install
 
 WORKDIR /root
-RUN wget http://curl.haxx.se/download/curl-7.45.0.tar.gz
+RUN wget https://curl.se/download/curl-7.45.0.tar.gz
 RUN tar -zxvf curl-7.45.0.tar.gz
 WORKDIR /root/curl-7.45.0
 RUN ./configure --with-ssl --with-nghttp2=/usr/local
