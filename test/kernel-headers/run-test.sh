@@ -34,7 +34,7 @@ cd ${name}
 print "running 0-setup.sh"
 ./0-setup.sh ${tag}
 
-## This should only be run for SE linux and other distrobutions using NetworkManager instead of static network configuration.
+## This should only be run for CentOS and other distributions using NetworkManager instead of static network configuration.
 
 if [ "$distro" == "centos" ] 
 then
