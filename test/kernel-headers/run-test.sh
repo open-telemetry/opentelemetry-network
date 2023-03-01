@@ -38,8 +38,8 @@ print "running 0-setup.sh"
 
 if [ "$distro" == "centos" ] 
 then
-  vagrant scp ${EBPF_NET_SRC_ROOT}/dev/selinux-resolv-conf.sh /tmp
-  vagrant ssh -- sudo /tmp/selinux-resolv-conf.sh
+  vagrant scp ${EBPF_NET_SRC_ROOT}/dev/networkmanager-resolv-conf.sh /tmp
+  vagrant ssh -- sudo /tmp/networkmanager-resolv-conf.sh
 fi  
 
 print "running 1-start-reducer.sh"
