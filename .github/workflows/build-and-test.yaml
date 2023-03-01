@@ -256,6 +256,18 @@ jobs:
         filters: |
           kernel:
             - 'collector/kernel/**'
+            - 'channel/**'
+            - 'common/**'
+            - 'cmake/**'
+            - 'config/**'
+            - 'ext/**'
+            - 'geoip/**'
+            - 'jitbuf/**'
+            - 'platform/**'
+            - 'render/**'
+            - 'renderc/**'
+            - 'scheduling/**'
+            - 'util/**'
           github:
             - '.github/**'
 

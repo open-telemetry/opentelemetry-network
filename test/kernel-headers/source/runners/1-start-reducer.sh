@@ -8,14 +8,4 @@ set -x
 
 echo $DOCKER_HUB_PATH
 
-if [ $# -eq 2 ]
-  then
-    vagrant ssh -- -R "5000:localhost:5000" -- ./reducer.sh $1 $2
-elif [ $# -eq 0 ]
-then
-    vagrant ssh -- -R "5000:localhost:5000" -- ./reducer.sh 
-fi
-
-
-
-
+vagrant ssh -- -R "5000:localhost:5000" -- ./reducer.sh $@

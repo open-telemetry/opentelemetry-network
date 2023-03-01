@@ -11,8 +11,3 @@ set -x
 
 vagrant scp ${EBPF_NET_SRC_ROOT}/dev/selinux-bpf.sh /tmp
 vagrant ssh -- sudo /tmp/selinux-bpf.sh
-
-
-
-vagrant scp ${EBPF_NET_SRC_ROOT}/dev/selinux-resolv-conf.sh /tmp
-vagrant ssh -- sudo /tmp/selinux-resolv-conf.sh

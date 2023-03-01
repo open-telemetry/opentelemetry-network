@@ -34,15 +34,19 @@ cd ${name}
 print "running 0-setup.sh"
 ./0-setup.sh ${tag}
 
-## this script should only be run for SE linux. Currently only centos-7 is an SE. 
+## This should only be run for SE linux and other distrobutions using NetworkManager instead of static network configuration.
+
 if [ "$distro" == "centos" ] 
 then
-  print "running 2-apply-selinux-policy.sh"
-  ./2-apply-selinux-policy.sh
+  vagrant scp ${EBPF_NET_SRC_ROOT}/dev/selinux-resolv-conf.sh /tmp
+  vagrant ssh -- sudo /tmp/selinux-resolv-conf.sh
 fi  
 
 print "running 1-start-reducer.sh"
 ./1-start-reducer.sh ${tag} $DOCKER_HUB_PATH
+
+print "running 2-apply-selinux-policy.sh"
+  ./2-apply-selinux-policy.sh
 
 # Ubuntu Jammy cannot automatically fetch headers currently because kernel-collector with bitnami/minideb:buster
 # base image does not support zstd compression
