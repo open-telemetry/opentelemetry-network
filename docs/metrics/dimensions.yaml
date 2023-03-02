@@ -1,0 +1,113 @@
+availability_zone:
+  brief: Availability zone name in AWS (or similar) cloud environments.
+  description: If the associated metric comes from a monitored AWS (or similar) cloud instance running the cloud-collector, the metric may note the source and destination availability zones that the traffic being measured moved between.  Availability zone naming is documented and provided by AWS, or the cloud service in use.
+  example: us-east-1d
+
+source.availability_zone:
+  brief: See availability_zone
+  description: See availability_zone
+
+dest.availability_zone:
+  brief: See availability_zone
+  description: See availability_zone
+
+az_equal:
+  brief: Boolean set true if the source and destination zones are the same.
+  description: If the associated metric has both source and destination availability_zone dimensions, the metric will also have this dimension available.  If the values of the source and destination are equal, the value of this dimension will be 'true', otherwise, 'false'.  This may be used to quickly group or filter for cross-zone metrics.
+  example: true, false
+
+workload.name:
+  brief: Kubernetes workload or application name.
+  description: If the associated metric comes from a monitored Kubernetes cluster running the k8-collector, the metric may note the source and destination workload that the traffic being measured moved between.  The workload name is optionally set by the administrator configuring Kubernetes.  Sometimes referred to as the 'service name.'
+  example: loadgenerator, (unknown), ip-172-12-19-222.ec2.internal
+
+source.workload.name:
+  brief: See workload.name
+  description: See workload.name
+
+dest.workload.name:
+  brief: See workload.name
+  description: See workload.name
+
+image_version:
+  brief: Kubernetes pod version label of the workload.
+  description: If the associated metric comes from a monitored Kubernetes cluster running the k8-collector, the metric may note the source and destination versions that the traffic being measured moved between.  The version label is optionally set by the administrator configuring Kubernetes.  Sometimes referred to as the 'service version.'  May be found in the docker (pod) image or Kubernetes metadata.
+  example: latest, -, v0.3.6
+
+source.image_version:
+  brief: See image_version
+  description: See image_version
+
+dest.image_version:
+  brief: See image_version
+  description: See image_version
+
+environment:
+  brief: Kubernetes cluster name the workload resides in.
+  description: If the associated metric comes from a monitored Kubernetes cluster running the k8-collector, the metric may note the source and destination clusters that the traffic being measured moved between.  The cluster label is optionally set by the administrator configuring Kubernetes.  This will often be the same as the k8s.cluster.name dimension if it is available.
+  example: kubernetes, staging, production, (no agent)
+
+source.environment:
+  brief: See environment
+  description: See environment
+
+dest.environment:
+  brief: See environment
+  description: See environment
+
+namespace.name:
+  brief: Kubernetes namespace name the workload resides in.
+  description: If the associated metric comes from a monitored Kubernetes cluster running the k8-collector, the metric may note the source and destination namespaces that the traffic being measured moved between.  The namespace name is optionally set by the administrator configuring Kubernetes.
+  example: staging, -, kube-system, cert-manager
+
+source.namespace.name:
+  brief: See namespace.name
+  description: See namespace.name
+
+dest.namespace.name:
+  brief: See namespace.name
+  description: See namespace.name
+
+resolution_type:
+  brief: Level of detail available for the metric.
+  description: The source and the destination will be tagged with the level of detail that the system was able to extract and associate with the measurement.  For instance, a resolution of 'IP' for a destination means that we know that some information was 'sent' to a specific IP, but likely have no other information about that system, potentially because it is outside of our monitored cloud environment.  A 'CONTAINER' means we have metadata from the pod or workload, whereas 'K8S_CONTAINER' means we also have additional Kubernetes metadata associated with the workload.  Certain resolutions are special, such as 'DNS', which indicates communication from or to a DNS service.
+  example: AWS, CONTAINER, DNS, INSTANCE_METADATA, IP, K8S_CONTAINER, LOCALHOST, NOMAD, PROCESS
+
+source.resolution_type:
+  brief: See resolution_type
+  description: See resolution_type
+
+dest.resolution_type:
+  brief: See resolution_type
+  description: See resolution_type
+
+process.name:
+  brief: A specific UNIX process name.
+  description: A specific process running on a monitored machine, or within a monitored pod, which is generating or receiving traffic.  This would be similar to the string a user might see locally if using the 'ps' command.
+  example: bind, -, etcd, checkoutservice
+
+source.process.name:
+  brief: See process.name
+  description: See process.name
+
+dest.process.name:
+  brief: See process.name
+  description: See process.name
+
+container.name:
+  brief: Docker container name.
+  description: If the associated metric comes from a monitored Kubernetes cluster or Dockerized service, the Docker image names associated with the source and destination may be recorded.  These names are set by the docker image creators.
+  example: kubedns, -, kube-proxy, nginx-ingress
+
+source.container.name:
+  brief: See container.name
+  description: See container.name
+
+dest.container.name:
+  brief: See container.name
+  description: See container.name
+
+status_code:
+  brief: HTTP response code.
+  description: For HTTP metrics, the captured response code being reported on in aggregate.  Codes are bucketed, so any 2XX code is counted as a '200'.  Buckets are 200, 400, 500 and any other code outside of these ranges.
+  example: 200, 400, 500, other
