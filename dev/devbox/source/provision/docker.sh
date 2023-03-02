@@ -14,15 +14,7 @@ case "${ID}" in
   debian | ubuntu)
     export DEBIAN_FRONTEND="noninteractive"
 
-    curl -sfL 'https://download.docker.com/linux/debian/gpg' | sudo -E apt-key add - 
-
-    case "${VERSION_CODENAME}" in
-      stretch)
-        echo 'deb [arch=amd64] https://download.docker.com/linux/debian stretch stable' \
-          | sudo tee /etc/apt/sources.list.d/docker.list
-        sudo apt-get update -y
-        ;;
-    esac
+    curl -sfL 'https://download.docker.com/linux/debian/gpg' | sudo -E apt-key add -
 
     if [[ -n "$(apt-cache search '^docker\.io$')" ]]; then
       sudo apt-get install -y --no-install-recommends --allow-change-held-packages docker.io
