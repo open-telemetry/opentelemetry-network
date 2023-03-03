@@ -78,6 +78,8 @@ protected:
   void start_kernel_collector(
       IntakeEncoder intake_encoder, StopConditions const &stop_conditions, std::string const &bpf_dump_file = "")
   {
+    stop_conditions_.emplace(stop_conditions);
+
     // This mostly duplicates the KernelCollector setup done in collector/kernel/main.cc.
 
     /* Read our BPF program*/
@@ -156,7 +158,7 @@ protected:
         host_info,
         EntrypointError::none);
 
-    run_test_stopper(stop_conditions);
+    run_test_stopper();
     run_workload_starter();
 
     LOG::info("starting event loop...");
@@ -168,6 +170,9 @@ protected:
     stop_workloads();
 
     print_json_messages();
+    if (timeout_exceeded_) {
+      print_stop_conditions();
+    }
     print_message_counts();
 
     // NOTE: use EXPECT_s here because ASSERT_s fail fast, returning from the current function, skipping the cleanup below
@@ -176,6 +181,9 @@ protected:
     EXPECT_EQ(0u, get_test_channel()->get_num_failed_sends());
     EXPECT_EQ(false, timeout_exceeded_);
 
+    auto &message_counts = get_test_channel()->get_message_counts();
+    EXPECT_EQ(0, message_counts["bpf_log"]);
+
     kernel_collector_.reset();
 
     uv_stop(&loop_);
@@ -183,17 +191,17 @@ protected:
     print_code_timings();
   }
 
-  void run_test_stopper(StopConditions const &stop_conditions)
+  void run_test_stopper()
   {
     auto stop_test_check = [&]() {
       SCOPED_TIMING(StopTestCheck);
 
       if (stopwatch_) {
-        timeout_exceeded_ = stopwatch_->elapsed(stop_conditions.timeout_sec);
+        timeout_exceeded_ = stopwatch_->elapsed(stop_conditions_->get().timeout_sec);
         LOG::trace(
-            "stop_test_check() stop_conditions.timeout_sec {} exceeded {}", stop_conditions.timeout_sec, timeout_exceeded_);
+            "stop_test_check() stop_conditions timeout_sec {} exceeded {}", stop_conditions_->get().timeout_sec, timeout_exceeded_);
         if (timeout_exceeded_) {
-          LOG::error("stop_test_check() test timeout of {} exceeded", stop_conditions.timeout_sec);
+          LOG::error("stop_test_check() test timeout of {} exceeded", stop_conditions_->get().timeout_sec);
           stop_kernel_collector();
           return;
         }
@@ -202,19 +210,19 @@ protected:
       auto channel = get_test_channel();
       auto num_sends = channel->get_num_sends();
       LOG::trace(
-          "stop_test_check() channel->get_num_sends() = {} stop_conditions.num_sends = {}",
+          "stop_test_check() channel->get_num_sends() = {} stop_conditions num_sends = {}",
           num_sends,
-          stop_conditions.num_sends);
-      if (num_sends < stop_conditions.num_sends) {
+          stop_conditions_->get().num_sends);
+      if (num_sends < stop_conditions_->get().num_sends) {
         stop_test_timer_->defer(std::chrono::seconds(1));
         return;
       }
 
       auto &message_counts = channel->get_message_counts();
       bool reschedule = false;
-      for (auto const &[name, count] : stop_conditions.names_and_counts) {
+      for (auto const &[name, count] : stop_conditions_->get().names_and_counts) {
         auto message_count = message_counts[name];
-        LOG::trace("stop_test_check() message_counts[{}] = {} stop count = {}", name, message_count, count);
+        LOG::trace("stop_test_check() message_counts[{}] = {}  \tstop count = {}", name, message_count, count);
         if (message_count < count) {
           reschedule = true;
         }
@@ -254,12 +262,22 @@ protected:
 
     start_workload([]() {
       system(
-          "exec 1> /tmp/workload-sockets.log 2>&1; echo starting workload; /root/src/test/workload/sockets/sockets.py 10 20; echo workload complete");
+          "exec 1> /tmp/workload-curl-otel.log 2>&1; echo starting workload; for n in $(seq 1 10); do curl https://opentelemetry.io; done; echo workload complete");
     });
 
     start_workload([]() {
-      system(
-          "exec 1> /tmp/workload-curl.log 2>&1; echo starting workload; for n in $(seq 1 10); do curl google.com; done; echo workload complete");
+      auto pid = fork();
+      if(pid == 0) {
+        int fd = open("/dev/null", O_WRONLY);
+        dup2(fd, 1);  // redirect stdout
+        dup2(fd, 2);  // redirect stderr
+        execl("/usr/bin/python3", "python3", "-m", "http.server", "28099", nullptr);
+        exit(1);
+      }
+
+      system("exec 1> /tmp/workload-curl-localhost.log 2>&1; echo starting workload; for n in $(seq 1 100); do curl localhost:28099; done; echo workload complete");
+
+      kill(pid, SIGTERM);
     });
   };
 
@@ -293,11 +311,21 @@ protected:
     }
   };
 
+  void print_stop_conditions()
+  {
+    auto &message_counts = get_test_channel()->get_message_counts();
+    LOG::debug("stop conditions:");
+    for (auto const &[name, count] : stop_conditions_->get().names_and_counts) {
+      auto message_count = message_counts[name];
+      LOG::debug("stop_conditions[\"{}\"] = {}  \t({} received) {}", name, count, message_count, message_count < count ? " FAILED" : "");
+    }
+  }
+
   void print_message_counts()
   {
     LOG::debug("message_counts:");
-    for (auto const &name_and_count : get_test_channel()->get_message_counts()) {
-      LOG::debug("message_counts[\"{}\"] = {}", name_and_count.first, name_and_count.second);
+    for (auto const &[name, count] : get_test_channel()->get_message_counts()) {
+      LOG::debug("message_counts[\"{}\"] = {}", name, count);
     }
   }
 
@@ -333,8 +361,8 @@ protected:
     get_test_channel()->binary_messages_for_each(count_message);
 
     LOG::trace("check_message_counts:");
-    for (auto const &name_and_count : check_message_counts) {
-      LOG::trace("check_message_counts[\"{}\"] = {}", name_and_count.first, name_and_count.second);
+    for (auto const &[name, count] : check_message_counts) {
+      LOG::trace("check_message_counts[\"{}\"] = {}", name, count);
     }
 
     return num_binary_messages ? check_message_counts == get_test_channel()->get_message_counts() : true;
@@ -366,6 +394,8 @@ protected:
 
   std::vector<std::thread> workload_threads_;
   size_t workload_index_ = 0;
+
+  std::optional<std::reference_wrapper<const StopConditions>> stop_conditions_;
 };
 
 // clang-format off
