@@ -199,7 +199,9 @@ protected:
       if (stopwatch_) {
         timeout_exceeded_ = stopwatch_->elapsed(stop_conditions_->get().timeout_sec);
         LOG::trace(
-            "stop_test_check() stop_conditions timeout_sec {} exceeded {}", stop_conditions_->get().timeout_sec, timeout_exceeded_);
+            "stop_test_check() stop_conditions timeout_sec {} exceeded {}",
+            stop_conditions_->get().timeout_sec,
+            timeout_exceeded_);
         if (timeout_exceeded_) {
           LOG::error("stop_test_check() test timeout of {} exceeded", stop_conditions_->get().timeout_sec);
           stop_kernel_collector();
@@ -267,15 +269,16 @@ protected:
 
     start_workload([]() {
       auto pid = fork();
-      if(pid == 0) {
+      if (pid == 0) {
         int fd = open("/dev/null", O_WRONLY);
-        dup2(fd, 1);  // redirect stdout
-        dup2(fd, 2);  // redirect stderr
+        dup2(fd, 1); // redirect stdout
+        dup2(fd, 2); // redirect stderr
         execl("/usr/bin/python3", "python3", "-m", "http.server", "28099", nullptr);
         exit(1);
       }
 
-      system("exec 1> /tmp/workload-curl-localhost.log 2>&1; echo starting workload; for n in $(seq 1 100); do curl localhost:28099; done; echo workload complete");
+      system(
+          "exec 1> /tmp/workload-curl-localhost.log 2>&1; echo starting workload; for n in $(seq 1 100); do curl localhost:28099; done; echo workload complete");
 
       kill(pid, SIGTERM);
     });
@@ -317,7 +320,12 @@ protected:
     LOG::debug("stop conditions:");
     for (auto const &[name, count] : stop_conditions_->get().names_and_counts) {
       auto message_count = message_counts[name];
-      LOG::debug("stop_conditions[\"{}\"] = {}  \t({} received) {}", name, count, message_count, message_count < count ? " FAILED" : "");
+      LOG::debug(
+          "stop_conditions[\"{}\"] = {}  \t({} received) {}",
+          name,
+          count,
+          message_count,
+          message_count < count ? " FAILED" : "");
     }
   }
 
