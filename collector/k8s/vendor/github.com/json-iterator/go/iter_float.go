@@ -1,6 +1,3 @@
-// Copyright The OpenTelemetry Authors
-// SPDX-License-Identifier: Apache-2.0
-
 package jsoniter
 
 import (
@@ -291,6 +288,9 @@ non_decimal_loop:
 				return iter.readFloat64SlowPath()
 			}
 			value = (value << 3) + (value << 1) + uint64(ind)
+			if value > maxFloat64 {
+				return iter.readFloat64SlowPath()
+			}
 		}
 	}
 	return iter.readFloat64SlowPath()

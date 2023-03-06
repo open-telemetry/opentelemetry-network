@@ -1,0 +1,158 @@
+## Notes:
+##  * In most cases, any metric measurement should have all dimensions available from the dimensions document available in both source and destination form.
+##  * Often, dimensions that are not available will have a value of '(unknown)', '-' or similar.
+##  * All metrics from Network Explorer are currently provided with 30 second resolution.
+
+tcp.bytes:
+  brief: Total TCP bytes in the prior 30 seconds.
+  description: |
+    The total number of TCP bytes between the source and destination measured for the prior thirty seconds.
+  metric_type: counter
+  title: tcp.bytes
+
+tcp.active:
+  brief: The number of active TCP connections.
+  description: |
+    The number of TCP connections considered to be open and alive between the source and destination at the point the measurement was taken.
+  metric_type: gauge
+  title: tcp.active
+
+tcp.packets:
+  brief: Total TCP packets in the prior 30 seconds.
+  description: |
+    The total number of TCP packets between the source and destination measured for the prior thirty seconds.
+  metric_type: counter
+  title: tcp.packets
+
+tcp.retrans:
+  brief: Total TCP retransmissions in the prior 30 seconds.
+  description: |
+    The total number of TCP retransmission requests between the source and destination measured for the prior thirty seconds.
+  metric_type: counter
+  title: tcp.retrans
+
+tcp.syn.timeouts:
+  brief: Total TCP SYN timeouts in the prior 30 seconds.
+  description: |
+    The total number of TCP SYN timeouts between the source and destination measured for the prior thirty seconds.
+  metric_type: counter
+  title: tcp.syn.timeouts
+
+tcp.new_sockets:
+  brief: Total new TCP sockets in the prior 30 seconds.
+  description: |
+    The total number of new TCP sockets opened between the source and destination measured for the prior thirty seconds.
+  metric_type: counter
+  title: tcp.new_sockets
+
+tcp.resets:
+  brief: Total TCP resets in the prior 30 seconds.
+  description: |
+    The total number of TCP resets sent between the source and destination measured for the prior thirty seconds.
+  metric_type: counter
+  title: tcp.resets
+
+tcp.rtt.num_measurements:
+  brief: The number of RTT measurements made.
+  description: |
+    The number of measurements made in calculating the current RTT average value.
+  metric_type: gauge
+  title: tcp.rtt.num_measurements
+
+tcp.rtt.average:
+  brief: The average round trip time in ms.
+  description: |
+    The computed average round trip time between the source and destination as measured in microseconds.
+  metric_type: gauge
+  title: tcp.rtt.average
+
+udp.bytes:
+  brief: Total UDP bytes in the prior 30 seconds.
+  description: |
+    The total number of UDP bytes between the source and destination measured for the prior thirty seconds.
+  metric_type: counter
+  title: udp.bytes
+
+udp.packets:
+  brief: Total UDP packets in the prior 30 seconds.
+  description: |
+    The total number of UDP packets between the source and destination measured for the prior thirty seconds.
+  metric_type: counter
+  title: udp.packets
+
+udp.active:
+  brief: The number of active UDP connections.
+  description: |
+    The number of UDP connections considered to be open and alive between the source and destination at the point the measurement was taken.
+  metric_type: gauge
+  title: udp.active
+
+udp.drops:
+  brief: Total UDP dropped connections in the prior 30 seconds.
+  description: |
+    The total number of UDP connections dropped between the source and destination measured for the prior thirty seconds.
+  metric_type: counter
+  title: udp.drops
+
+http.status_code:
+  brief: Count of HTTP server response code in the prior 30 seconds.
+  description: |
+    For a given class of response code (see 'response_code' dimension), the number of times an unencrypted server sent an HTTPv1 status code between the source and destination measured for the prior thirty seconds.
+  metric_type: counter
+  title: http.status_code
+
+http.active_sockets:
+  brief: The number of HTTP sockets in the prior interval for which metrics have been reported.
+  description: |
+    The number of unencrypted HTTPv1 connections for which measurements were taken in the prior thirty seconds.
+  metric_type: count
+  title: http.active_sockets
+
+http.client.duration_average:
+  brief: Average client HTTP response time in ms.
+  description: |
+    This metric is the average duration in microseconds from when the client sends an HTTP request, until the response is received back from the server.  As such, it includes the communication round-trip times, plus the server processing latency.  Computed by summation of all times, divided by http.active_sockets.
+  metric_type: counter
+  title: http.client.duration_average
+
+http.server.duration_average:
+  brief: Average server HTTP response time in ms.
+  description: |
+     This metric is the average duration in microseconds for the server to respond to a request received locally.  Thus, it does not include the network latency from or to the client.  Computed by summation of all times, divided by http.active_sockets.
+  metric_type: counter
+  title: http.server.duration_average
+
+dns.active_sockets:
+  brief: The number of DNS sockets in the prior interval for which metrics have been reported.
+  description: |
+    The number of DNS connections for which measurements were taken in the prior thirty seconds.
+  metric_type: gauge
+  title: dns.active_sockets
+
+dns.responses:
+  brief: DNS responses sent in the prior 30 seconds.
+  description: |
+    The total number of DNS responses sent between the source and destination measured for the prior thirty seconds.
+  metric_type: counter
+  title: dns.responses
+
+dns.timeouts:
+  brief: Total DNS timeouts in the prior 30 seconds.
+  description: |
+    The total number of	DNS timeouts between the source and destination measured for the prior thirty seconds.
+  metric_type: counter
+  title: dns.timeouts
+
+dns.client.duration_average:
+  brief:  Average client DNS response time in ms.
+  description: |
+    This metric is the average duration in microseconds from when the client sends a DNS request, until the response is received back from the server.  As such, it includes the communication round-trip times, plus the server processing latency.  Computed by the summation of all times, divided by dns.responses.
+  metric_type: counter
+  title: dns.client.duration_average
+
+dns.server.duration_average:
+  brief: Average server DNS response time in ms.
+  description: |
+    This metric is the average duration in microseconds for the server to respond to a request received locally.  Thus, it does not include the network latency from or to the client.  Computed by the summation of all times, divided by dns.responses.
+  metric_type: counter
+  title: dns.server.duration_average

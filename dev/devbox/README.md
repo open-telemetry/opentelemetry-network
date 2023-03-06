@@ -33,8 +33,9 @@ script.
 # using pre-spec'ed devboxes
 
 There are some pre-spec'ed devboxes for a few distros, including:
-- [Debian 9: `stretch`](boxes/debian-stretch)
+- [Debian 11: `bullseye`](boxes/debian-bullseye)
 - [Ubuntu 20.04: `focal`](boxes/ubuntu-focal)
+- [Ubuntu 22.04: `jammy`](boxes/ubuntu-jammy)
 
 Before using those, perform a one-time build of the base vagrant box by running
 the `build.sh` script from the distro directory.
