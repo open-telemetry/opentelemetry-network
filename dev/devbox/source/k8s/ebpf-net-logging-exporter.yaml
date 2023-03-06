@@ -1,0 +1,15 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+################################################################################
+# Override splunk-otel-collector default values to use logging exporter
+################################################################################
+
+gateway:
+  config:
+    service:
+      pipelines:
+        metrics:
+          exporters: [logging]
+        metrics/collector:
+          exporters: [logging]

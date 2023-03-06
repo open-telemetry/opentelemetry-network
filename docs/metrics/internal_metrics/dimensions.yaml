@@ -1,0 +1,166 @@
+az:
+  brief: availability zone
+  description: availability zone
+  associated_metrics: ebpf_net.time_since_last_message_ns, ebpf_net.pipeline_message_error, ebpf_net.message, ebpf_net.entrypoint_info, ebpf_net.collector_log_count, ebpf_net.client_handle_pool, ebpf_net.client_handle_pool_fraction, ebpf_net.clock_offset_ns, ebpf_net.codetiming_avg_ns, ebpf_net.collector_health
+  example: us-east-1a
+
+c_host:
+  brief: Client host machine name.
+  description: Collector host machine name. This is a span or state that is reported by collector to reducer.
+  associated_metrics: ebpf_net.time_since_last_message_ns, ebpf_net.pipeline_message_error, ebpf_net.message, ebpf_net.entrypoint_info, ebpf_net.collector_log_count, ebpf_net.client_handle_pool, ebpf_net.client_handle_pool_fraction, ebpf_net.clock_offset_ns, ebpf_net.collector_health
+  example: ip-192-168-110-244.ec2.internal
+
+c_type:
+  brief: Client type
+  description: Client types are numbers desginating different client types. Different types are kernel(1), cloud(2), k8s(3), ingest(4), matching(5), aggregation(6), liveness_probe (7), readiness_probe(8).
+  associated_metrics: ebpf_net.time_since_last_message_ns, ebpf_net.pipeline_message_error, ebpf_net.message, ebpf_net.entrypoint_info, ebpf_net.collector_log_count, ebpf_net.client_handle_pool, ebpf_net.client_handle_pool_fraction, ebpf_net.clock_offset_ns, ebpf_net.collector_health
+  example: 1
+
+cloud:
+  brief: Cloud type
+  description: Cloud provider type where network explorer is installed. Different types are unknown(1), aws(1), gcp(2).
+  associated_metrics: ebpf_net.time_since_last_message_ns, ebpf_net.pipeline_message_error, ebpf_net.message, ebpf_net.collector_log_count, ebpf_net.client_handle_pool, ebpf_net.client_handle_pool_fraction, ebpf_net.collector_health
+  example: 1
+
+detail:
+  brief: Detail delineates collector health status
+  description: Detail delineates collector health status. It can have these values healthy(0), unknown(1), aws_describe_region_error(2), aws_describe_network_interfaces_error(3)
+  associated_metrics: ebpf_net.collector_health
+  example: 0
+
+env:
+  brief: environment
+  description: environment where network explorer was installed.
+  associated_metrics: ebpf_net.time_since_last_message_ns, ebpf_net.pipeline_message_error, ebpf_net.message, ebpf_net.entrypoint_info, ebpf_net.collector_log_count, ebpf_net.bpf_log, ebpf_net.client_handle_pool, ebpf_net.client_handle_pool_fraction, ebpf_net.collector_health
+  example: network-explorer-staging.
+
+error:
+  brief: error type
+  description: error type
+  associated_metrics: ebpf_net.pipeline_message_error, ebpf_net.entrypoint_info
+  example: fetched/unknown
+
+field:
+  brief: Field name
+  description: Field name.
+  associated_metrics: ebpf_net.bpf_log
+  example: pod_name, id, ip, az etc
+
+filename:
+  brief: Filename of the source code file.
+  description: File name of the source code file.
+  associated_metrics: ebpf_net.codetiming_min_ns, ebpf_net.codetiming_max_ns, ebpf_net.codetiming_sum_ns, ebpf_net.codetiming_avg_ns, ebpf_net.codetiming_count
+  example: agg_core.cc
+
+index:
+  brief: Index key
+  description:  Index key make sure CodeTimings in templated functions have a unique key for the CodeTimingRegistry.
+  associated_metrics: ebpf_net.codetiming_min_ns, ebpf_net.codetiming_max_ns, ebpf_net.codetiming_sum_ns, ebpf_net.codetiming_avg_ns, ebpf_net.codetiming_count
+  example: 5
+
+id:
+  brief: Id
+  description: Id is the node identifier.
+  associated_metrics: ebpf_net.time_since_last_message_ns, ebpf_net.pipeline_message_error, ebpf_net.message, ebpf_net.entrypoint_info, ebpf_net.collector_log_count, ebpf_net.client_handle_pool, ebpf_net.client_handle_pool_fraction, ebpf_net.clock_offset_ns, ebpf_net.collector_health
+  example: network-explorer-splunk-otel-network-explorer-k8s-collectos4wnt
+
+kernel:
+  brief: Linux kernel version
+  description: Linux kernel version
+  associated_metrics: ebpf_net.time_since_last_message_ns, ebpf_net.pipeline_message_error, ebpf_net.message, ebpf_net.entrypoint_info, ebpf_net.collector_log_count, ebpf_net.bpf_log, ebpf_net.client_handle_pool, ebpf_net.client_handle_pool_fraction, ebpf_net.clock_offset_ns, ebpf_net.collector_health
+  example: 5.4.219-126.411.amzn2.x86_64
+
+kernel_header_source:
+  brief: Linux Kernel header source
+  description: Linux headers is a package. These are part of the kernel, although they are shipped separately. The headers act as an interface between internal kernel components and also between userspace and the kernel. Packages like sys-libs/glibc depend on the kernel headers.
+  associated_metrics: ebpf_net.entrypoint_info
+  example: 5.4.219-126.411.amzn2.x86_64
+
+k8s.cluster.name:
+  brief: Kubernetes Cluster name.
+  description: Kubernetes Cluster name.
+  associated_metrics: ebpf_net.up, ebpf_net.time_since_last_message_ns, ebpf_net.span_utilization, ebpf_net.span_utilization_fraction, ebpf_net.span_utilization_max, ebpf_net.rpc_queue_elem_utilization_fraction, ebpf_net.rpc_queue_buf_utilization, ebpf_net.rpc_queue_buf_utilization_fraction, ebpf_net.rpc_latency_ns, ebpf_net.pipeline_metric_bytes_discarded, ebpf_net.pipeline_metric_bytes_written, ebpf_net.pipeline_message_error, ebpf_net.otlp_grpc.unknown_response_tags, ebpf_net.otlp_grpc.requests_sent, ebpf_net.otlp_grpc.bytes_sent, ebpf_net.otlp_grpc.bytes_failed, ebpf_net.message, ebpf_net.entrypoint_info, ebpf_net.connections, ebpf_net.disconnects, ebpf_net.collector_log_count, ebpf_net.collector_health, ebpf_net.bpf_log, ebpf_net.agg_root_truncation, ebpf_net.client_handle_pool, ebpf_net.client_handle_pool_fraction, ebpf_net.codetiming_min_ns, ebpf_net.codetiming_max_ns, ebpf_net.codetiming_sum_ns, ebpf_net.codetiming_avg_ns, ebpf_net.codetiming_count
+  example: staging.
+
+line:
+  brief: Line number of the code block instrumented.
+  description: Line number of the code block instrumented.
+  associated_metrics: ebpf_net.bpf_log, ebpf_net.codetiming_min_ns, ebpf_net.codetiming_max_ns, ebpf_net.codetiming_sum_ns, ebpf_net.codetiming_avg_ns, ebpf_net.codetiming_count
+  example: 170
+
+message:
+  brief: Message type
+  description: Message type extracted by collector at the linux kernel level.
+  associated_metrics: ebpf_net.message, ebpf_net.pipeline_message_error
+  example: task_info, set_cgroup, pid_close_info
+
+module:
+  brief: Name of the Reducer core
+  description: Name of the Reducer core.
+  associated_metrics: ebpf_net.up, ebpf_net.span_utilization, ebpf_net.span_utilization_fraction, ebpf_net.span_utilization_max, ebpf_net.rpc_queue_elem_utilization_fraction, ebpf_net.rpc_queue_buf_utilization, ebpf_net.rpc_queue_buf_utilization_fraction, ebpf_net.rpc_latency_ns, ebpf_net.pipeline_metric_bytes_discarded, ebpf_net.pipeline_metric_bytes_written, ebpf_net.pipeline_message_error, ebpf_net.otlp_grpc.unknown_response_tags, ebpf_net.otlp_grpc.requests_sent, ebpf_net.otlp_grpc.bytes_sent, ebpf_net.otlp_grpc.bytes_failed, ebpf_net.message, ebpf_net.entrypoint_info, ebpf_net.connections, ebpf_net.disconnects, ebpf_net.collector_log_count, ebpf_net.bpf_log, ebpf_net.agg_root_truncation, ebpf_net.client_handle_pool, ebpf_net.client_handle_pool_fraction, ebpf_net.codetiming_min_ns, ebpf_net.codetiming_max_ns, ebpf_net.codetiming_sum_ns, ebpf_net.codetiming_avg_ns
+  example: ingest
+
+name:
+  brief: Name of the instrumented codeblock.
+  description: Name of the instrumented codeblock.
+  associated_metrics: ebpf_net.bpf_log, ebpf_net.codetiming_min_ns, ebpf_net.codetiming_max_ns, ebpf_net.codetiming_sum_ns, ebpf_net.codetiming_avg_ns, ebpf_net.codetiming_count
+  example: OtlpGrpcFormatterFormatLabelsChanged
+
+namespace.name:
+  brief: Kubernetes namespace name the workload resides in.
+  description: If the associated metric comes from a monitored Kubernetes cluster running the k8-collector, the metric may note the source and destination namespaces that the traffic being measured moved between.  The namespace name is optionally set by the administrator configuring Kubernetes.
+  example: staging, -, kube-system, cert-manager
+
+os:
+  brief: Operating Systems
+  description: Name of the  Operating System
+  associated_metrics: ebpf_net.time_since_last_message_ns, ebpf_net.pipeline_message_error, ebpf_net.message, ebpf_net.entrypoint_info, ebpf_net.collector_log_count, ebpf_net.collector_health, ebpf_net.bpf_log, ebpf_net.client_handle_pool, ebpf_net.client_handle_pool_fraction, ebpf_net.clock_offset_ns
+  example: Linux
+
+os_version:
+  brief: Operating Systems Version
+  description: Version of the  Operating System
+  associated_metrics: ebpf_net.time_since_last_message_ns, ebpf_net.pipeline_message_error, ebpf_net.message, ebpf_net.entrypoint_info, ebpf_net.collector_log_count, ebpf_net.collector_health, ebpf_net.client_handle_pool, ebpf_net.client_handle_pool_fraction
+  example: 5.2.14, unknown
+
+peer:
+  brief: peer module
+  description: See module
+  associated_metrics: ebpf_net.rpc_queue_elem_utilization_fraction, ebpf_net.rpc_latency_ns, ebpf_net.rpc_queue_buf_utilization, ebpf_net.rpc_queue_buf_utilization_fraction
+  example: ingest
+
+program:
+  brief: Program
+  description: Program
+  associated_metrics: ebpf_net.up
+  example: reducer
+
+role:
+  brief: role
+  description: Name of the cloud Identity access managment (IAM) role.
+  associated_metrics: ebpf_net.time_since_last_message_ns, ebpf_net.pipeline_message_error, ebpf_net.message, ebpf_net.entrypoint_info, ebpf_net.collector_log_count, ebpf_net.collector_log_count, ebpf_net.collector_health, ebpf_net.client_handle_pool, ebpf_net.client_handle_pool_fraction
+  example: network-explorer-staging-node-group-more
+
+severity:
+  brief: Log severity level
+  description: The severity level of an event is in the network-explorer logs and is used by indicate how severe or important an event is. The levels are critical, error, warning, debug, info, ignored.
+  associated_metrics: ebpf_net.collector_log_count, ebpf_net.message
+  example: critical
+
+shard:
+  brief: Shard number
+  description: Shard number; Reducer cores for e.g. Ingest and others can be configured to run with multiple shards. Please note shard number starts from 0.
+  associated_metrics: ebpf_net.up, ebpf_net.span_utilization, ebpf_net.span_utilization_fraction, ebpf_net.span_utilization_max, ebpf_net.rpc_queue_buf_utilization, ebpf_net.rpc_queue_buf_utilization_fraction, ebpf_net.rpc_queue_elem_utilization_fraction, ebpf_net.pipeline_metric_bytes_discarded, ebpf_net.pipeline_metric_bytes_written, ebpf_net.pipeline_message_error, ebpf_net.otlp_grpc.unknown_response_tags, ebpf_net.otlp_grpc.requests_sent, ebpf_net.otlp_grpc.bytes_sent, ebpf_net.otlp_grpc.bytes_failed, ebpf_net.message, ebpf_net.entrypoint_info, ebpf_net.collector_log_count, ebpf_net.bpf_log, ebpf_net.agg_root_truncation, ebpf_net.client_handle_pool, ebpf_net.client_handle_pool_fraction
+  example: 0
+
+span:
+  brief: Span name
+  description: Name of the Span. Ingest shards do not just ingest rather their main task is to keep track of all the entities that collector is reporting on. Entities such as TCP and UDP sockets, processes, cgroups etc. These  entities are spans.
+  associated_metrics: ebpf_net.span_utilization, ebpf_net.span_utilization_fraction, ebpf_net.span_utilization_max, ebpf_net.client_handle_pool, ebpf_net.client_handle_pool_fraction
+  example: tracked_process, process, cgroup
+
+version:
+  brief: Network Explorer release version
+  description: Network Explorer release version. This allows to pinpoint which of the code is running in the installation.
+  associated_metrics: ebpf_net.up, ebpf_net.time_since_last_message_ns, ebpf_net.rpc_latency_ns, ebpf_net.pipeline_message_error, ebpf_net.message, ebpf_net.entrypoint_info, ebpf_net.collector_log_count, ebpf_net.bpf_log, ebpf_net.client_handle_pool, ebpf_net.client_handle_pool_fraction
+  example: 0.9.4217

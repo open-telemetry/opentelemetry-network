@@ -20,7 +20,7 @@ jobs:
         with:
           scan-type: 'fs'
           scan-ref: '.'
-          skip-dirs: 'docs,cmake,collector/k8s,ext'
+          skip-dirs: 'docs,cmake,ext'
           format: 'table'
           exit-code: '1'
           severity: 'CRITICAL,HIGH'
