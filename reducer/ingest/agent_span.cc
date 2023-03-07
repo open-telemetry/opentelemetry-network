@@ -536,7 +536,7 @@ void AgentSpan::public_to_private_ipv4(
 
   auto &addr_map = global_private_to_public_address_map();
 
-  if (auto existing_public = addr_map.get(private_addr); existing_public) {
+  if (auto existing_public = addr_map.get(private_addr); existing_public && !(*existing_public == public_addr)) {
     local_logger().rewriting_private_to_public_ip_mapping(
         jb_blob(private_addr.str()), jb_blob(existing_public->str()), jb_blob(public_addr.str()));
   }
