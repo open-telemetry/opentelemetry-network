@@ -11,7 +11,7 @@ ubsan="false"
 jobs="$(((`nproc --all` + 1) / 2))"
 
 # must match the mount destination of $host_build_dir in benv script
-source_dir="${EBPF_NET_SRC}"
+source_dir="${EBPF_NET_SRC:-${EBPF_NET_SRC_ROOT}}"
 build_dir="${EBPF_NET_OUT_DIR}"
 
 show_help() {
