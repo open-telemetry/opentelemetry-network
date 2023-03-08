@@ -29,16 +29,10 @@ Options:
   --ubsan: enable the undefined behavior sanitizer (which can have false positives: https://stackoverflow.com/a/57304113)
   --py-static-check: enables static checks for python
   --go-static-linking: enables static linking for Go binaries
-  --go-static-check: enables static checks for golang
-  --go-static-check-extra: 'enables honnef.co/go/tools/cmd/staticcheck' checks for golang
-  --upload-symbols: uploads debug symbols
-  --export-symbols: export debug symbols to local symbols directory
-  --docker: start docker daemon within build environment
   --no-docker: don't run docker commands on docker build targets (needed when using an external docker build tool like CI/CD)
   --fail-fast: fail on the first error instead of building as much as possible
   --dep-tree: produce a dot-file output of the build graph
   --list-targets: print the list of targets that can be built using cmake by passing target(s) to this build script
-  --cicd: use preset settings for building in CI/CD
   -v | --verbose: verbose build output
 
 Targets:
@@ -103,36 +97,13 @@ while :; do
     --go-static-linking)
       cmake_args+=(-DGO_STATIC_LINK=ON)
       ;;
-    --go-static-check)
-      cmake_args+=(-DGO_STATIC_CHECK=ON)
-      ;;
-    --go-static-check-extra)
-      cmake_args+=(-DGO_STATIC_CHECK=ON -DGO_STATIC_CHECK_EXTRA=ON)
-      ;;
-    --export-symbols)
-      cmake_args+=(-DEXPORT_DEBUG_SYMBOLS=ON)
-      ;;
-    --upload-symbols)
-      cmake_args+=(-DUPLOAD_DEBUG_SYMBOLS=ON)
-      ;;
     -v | --verbose)
       make_args+=(VERBOSE=1)
-      ;;
-    --docker)
-      service docker start
       ;;
     --no-docker)
       cmake_args+=(-DRUN_DOCKER_COMMANDS=OFF)
       ;;
     --fail-fast)
-      fail_fast=true
-      ;;
-    --cicd)
-      # --no-docker
-      cmake_args+=(-DRUN_DOCKER_COMMANDS=OFF)
-      # --verbose
-      make_args+=(VERBOSE=1)
-      # --fail-fast
       fail_fast=true
       ;;
     --)
