@@ -11,7 +11,7 @@ on:
     paths:
 
 env:
-  BENV_IMAGE: ${{ vars.DOCKER_HUB_URL }}/benv-final
+  BENV_IMAGE: quay.io/splunko11ytest/network-explorer-debug/benv-final
 
 concurrency:
   group: build-and-test-${{ github.event.pull_request_number || github.ref }}
@@ -47,8 +47,8 @@ jobs:
     outputs:
       date: ${{ steps.date.outputs.date }}
 
-  build-and-push-reducer-docker-image:
-    name: build-and-push-reducer-docker-image
+  build-and-push-reducer:
+    name: build-and-push-reducer
     runs-on: ubuntu-20.04
     needs: [clang-format-check]
     steps:
@@ -57,9 +57,9 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: build-and-push-reducer-docker-image
+    - name: build-and-push-reducer
       env:
-        PASS: ${{ secrets.DOCKER_HUB_PASSWORD }}
+        PASS: ${{ secrets.DOCKER_PASSWORD }}
       run: |
         echo $BENV_IMAGE
         echo "github.workspace = ${{ github.workspace }}"
@@ -74,16 +74,16 @@ jobs:
         --workdir=/root/out \
         $BENV_IMAGE \
         ../build.sh reducer-docker
-        docker login ${{ vars.DOCKER_HUB }} -u ${{ secrets.DOCKER_HUB_USERNAME }} -p "$PASS"
-        reducer_image=${{ vars.DOCKER_HUB_URL }}/reducer:${{ needs.clang-format-check.outputs.date }}-${{github.event.pull_request.head.ref}}-${GITHUB_SHA:0:7}
+        docker login ${{ vars.DOCKER_REGISTRY }} -u ${{ secrets.DOCKER_USERNAME }} -p "$PASS"
+        reducer_image=${{ vars.DOCKER_NAMESPACE }}/reducer:${{ needs.clang-format-check.outputs.date }}-${{github.event.pull_request.head.ref}}-${GITHUB_SHA:0:7}
         echo $reducer_image
         docker tag reducer:latest $reducer_image
         docker push $reducer_image
     outputs:
       date: ${{ needs.clang-format-check.outputs.date }}
 
-  build-and-push-kernel-collector-docker-image:
-    name: build-and-push-kernel-collector-docker-image
+  build-and-push-kernel-collector:
+    name: build-and-push-kernel-collector
     runs-on: ubuntu-20.04
     needs: [clang-format-check]
     steps:
@@ -92,9 +92,9 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: build-and-push-kernel-collector-docker-image
+    - name: build-and-push-kernel-collector
       env:
-        PASS: ${{ secrets.DOCKER_HUB_PASSWORD }}
+        PASS: ${{ secrets.DOCKER_PASSWORD }}
       run: |
         echo "github.workspace = ${{ github.workspace }}"
         docker pull $BENV_IMAGE
@@ -108,8 +108,8 @@ jobs:
         --workdir=/root/out \
         $BENV_IMAGE \
         ../build.sh kernel-collector-docker
-        docker login ${{ vars.DOCKER_HUB }} -u ${{ secrets.DOCKER_HUB_USERNAME }} -p "$PASS"
-        kernel_collector_image=${{ vars.DOCKER_HUB_URL }}/kernel-collector:${{ needs.clang-format-check.outputs.date }}-${{github.event.pull_request.head.ref}}-${GITHUB_SHA:0:7}
+        docker login ${{ vars.DOCKER_REGISTRY }} -u ${{ secrets.DOCKER_USERNAME }} -p "$PASS"
+        kernel_collector_image=${{ vars.DOCKER_NAMESPACE }}/kernel-collector:${{ needs.clang-format-check.outputs.date }}-${{github.event.pull_request.head.ref}}-${GITHUB_SHA:0:7}
         echo $kernel_collector_image
         docker tag kernel-collector:latest $kernel_collector_image
         docker push $kernel_collector_image
@@ -243,7 +243,7 @@ jobs:
     runs-on: macos-12
     env:
       EBPF_NET_SRC_ROOT: ${{ github.workspace }}
-      DOCKER_HUB_PATH: ${{ vars.DOCKER_HUB_URL }}
+      DOCKER_HUB_PATH: ${{ vars.DOCKER_NAMESPACE }}
     steps:
     - name: Check out the codebase
       uses: actions/checkout@v3
