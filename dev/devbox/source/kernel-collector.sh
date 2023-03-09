@@ -2,6 +2,7 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
+image="localhost:5000/kernel-collector"
 
 bpf_dump_file='bpf.render.raw'
 bpf_src_export_file='bpf.src.c'
@@ -50,9 +51,11 @@ function print_help {
   echo '  --cgdb: run the kernel collector under `cgdb`'
   echo "  --bpf-dump: dump eBPF messages into file '${host_data_mount_path}/${bpf_dump_file}'"
   echo "  --bpf-pipe: dump eBPF messages into named pipe '${host_data_mount_path}/${bpf_dump_file}'"
+  echo "  --entrypoint-error <ERROR>: force entrypoint error with the specified EntrypointError <ERROR>"
   echo "  --ingest-dump: dump ingest messages into file '${host_data_mount_path}/${ingest_dump_file}'"
   echo "  --ingest-pipe: dump ingest messages into named pipe '${host_data_mount_path}/${ingest_dump_file}'"
-  echo "  --tag: use the kernel-collector image with the specified tag (--tag <TAG>)"
+  echo "  --public: use the public kernel-collector image from quay.io (default is to use localhost:5000/kernel-collector image from local registry)"
+  echo "  --tag <TAG>: use the kernel-collector image with the specified <TAG>"
   echo '  --valgrind-memcheck: run the kernel collector under `valgrind` using the memcheck tool'
   echo '  --valgrind-massif: run the kernel collector under `valgrind` using the massif tool'
   echo
@@ -93,6 +96,15 @@ while [[ "$#" -gt 0 ]]; do
       app_args+=("--bpf-dump-file=${container_data_mount_path}/${bpf_dump_file}")
       ;;
 
+    --entrypoint-error)
+      if [[ "$#" -lt 1 ]]; then
+        echo "missing argument for --entrypoint-error"
+	exit 1
+      fi
+      app_args+=(--entrypoint-error $1)
+      shift
+      ;;
+
     --ingest-dump)
       [[ ! -e "${host_data_mount_path}/${ingest_dump_file}" ]] \
         || rm -rf "${host_data_mount_path}/${ingest_dump_file}"
@@ -105,6 +117,14 @@ while [[ "$#" -gt 0 ]]; do
         || rm -rf "${host_data_mount_path}/${ingest_dump_file}"
       mkfifo "${host_data_mount_path}/${ingest_dump_file}"
       docker_args+=(--env EBPF_NET_RECORD_INTAKE_OUTPUT_PATH="${container_data_mount_path}/${ingest_dump_file}")
+      ;;
+
+    --public)
+      image="quay.io/signalfx/splunk-network-explorer-kernel-collector"
+      if [[ "${tag}" == "" ]]
+      then
+        tag=":latest-v0.9"
+      fi
       ;;
 
     --tag)
@@ -147,11 +167,11 @@ docker_args+=(
 
 set -x
 
-docker pull localhost:5000/kernel-collector${tag}
+docker pull "${image}${tag}"
 
 export container_id="$( \
   docker create -t --rm "${docker_args[@]}" \
-    localhost:5000/kernel-collector${tag} "${app_args[@]}" \
+    "${image}${tag}" "${app_args[@]}" \
 )"
 
 function cleanup_docker {

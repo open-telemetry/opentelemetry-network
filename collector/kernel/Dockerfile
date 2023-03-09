@@ -1,8 +1,6 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
-# Note that in order to change the base image to something more recent than minideb:buster, kernel_headers.sh
-# needs to be refactored to use dnf instead of yum, which is deprecated and its package no longer available.
 FROM bitnami/minideb:bullseye
 
 LABEL org.label-schema.name="opentelemetry-ebpf-kernel-collector"
