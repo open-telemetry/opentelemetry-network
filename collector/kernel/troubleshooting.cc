@@ -38,7 +38,9 @@ void close_agent(int exit_code, std::function<void()> flush_and_close, std::chro
   if (flush_and_close) {
     flush_and_close();
   }
+#if NDEBUG // delay exit for release builds but not for debug builds to prevent test failures from blocking
   std::this_thread::sleep_for(exit_sleep_sec);
+#endif
   exit(exit_code);
 }
 
