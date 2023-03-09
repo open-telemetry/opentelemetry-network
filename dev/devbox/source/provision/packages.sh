@@ -59,6 +59,9 @@ case "${ID}" in
     )
 
     sudo yum install -y "${pkg_list[@]}"
+
+    sudo pip3 install setuptools-rust
+    sudo pip3 install --upgrade pip
     sudo pip3 install bcrypt
     ;;
 esac

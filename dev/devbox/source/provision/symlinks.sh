@@ -7,8 +7,17 @@ source /etc/os-release
 uname -a
 env | sort
 
-###########################################
-# set up symlinks based off of EBPF_NET_SRC
+################################################
+# set up symlinks based off of EBPF_NET_SRC_ROOT
+
+source_dir="${HOME}/src/dev"
+files=( \
+  selinux-bpf.sh
+)
+
+for file in "${files[@]}"; do
+  ln -s "${source_dir}/${file}" "${HOME}/${file}"
+done
 
 source_dir="${HOME}/src/dev/devbox/source"
 files=( \

@@ -14,10 +14,6 @@
     "DEVBOX_USERNAME": "vagrant",
     "DEVBOX_PASSWORD": "vagrant"
   },
-  "sensitive-variables": [
-    "DEVBOX_USERNAME",
-    "DEVBOX_PASSWORD"
-  ],
   "provisioners": [
     {
       "type": "shell",
