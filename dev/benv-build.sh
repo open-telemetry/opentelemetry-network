@@ -4,7 +4,7 @@
 
 
 # Defaults
-dirty="false"
+clean="false"
 cmake_only="false"
 asan="false"
 ubsan="false"
@@ -20,7 +20,7 @@ Usage:
   ${0##*/} [options...] [targets...]
 
 Options:
-  --dirty: don't clean previous build artifacts before building
+  --clean: clean previous build artifacts before building
   -j N | --jobs N: use N parallel jobs for building (default: auto-detect)
   --debug: build with CMAKE_BUILD_TYPE="Debug" which includes debug code and turns off compiler
            optimization that prevents readable single stepping
@@ -56,8 +56,8 @@ while :; do
       show_help
       exit
       ;;
-    -d|--dirty)
-      dirty="true"
+    --clean)
+      clean="true"
       ;;
     -j|--jobs)
       if [ "$2" ]; then
@@ -148,9 +148,9 @@ if (("$jobs" <= 0)); then
   die "ERROR: --jobs requires a positive numeric argument; you gave ($jobs)"
 fi
 
-if [ "$dirty" != "true" ]; then
+if [[ "$clean" == "true" ]]; then
   if [ -d "$build_dir" ]; then
-    rm -rf "$build_dir/*" || true
+    rm -rf $build_dir/* || true
   fi
   mkdir -p "$build_dir"
 fi
