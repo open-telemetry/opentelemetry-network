@@ -1,0 +1,243 @@
+ebpf_net.agg_root_truncation:
+  brief:  Agg root truncation.
+  description: |
+    Total number of Aggregation root truncations in Aggregation core of the reducer component.
+  title:  ebpf_net.agg_root_truncation
+
+ebpf_net.bpf_log:
+  brief: eBPF log count.
+  description: |
+     Total eBPF log count in the prior 30 seconds. bpf_logs are error messages from kernel-collector eBPF code that indicate unexpected or unhandled behavior. This is enabled by default.
+  metric_type: counter
+  title: ebpf_net.bpf_log
+
+ebpf_net.client_handle_pool:
+  brief: Client handle pool in the prior 30 seconds.
+  description: |
+    Client handle pool for the prior thirty seconds.
+  metric_type: counter
+  title: ebpf_net.client_handle_pool
+
+ebpf_net.client_handle_pool_fraction:
+  brief:  Client handle pool fraction.
+  description: |
+    Client handle pool fraction.
+  metric_type: counter
+  title:  ebpf_net.client_handle_pool_fraction
+
+ebpf_net.clock_offset_ns:
+  brief:  Clock offset in ns.
+  description: |
+    Clock offset in nanoseconds.
+  metric_type: counter
+  title:  ebpf_net.clock_offset_ns
+
+ebpf_net.codetiming_avg_ns:
+  brief: The average code timing time in ns.
+  description: |
+    The average time for a particular instrumented code block in nanoseconds.
+  metric_type: counter
+  title: ebpf_net.codetiming_avg_ns
+
+ebpf_net.codetiming_count:
+  brief: The number of codetiming blocks.
+  description: |
+     The number of codetiming blocks.
+  metric_type: counter
+  title: ebpf_net.codetiming_count
+
+ebpf_net.codetiming_max_ns:
+  brief: Maximum code timing in nanoseconds.
+  description: |
+    Maximum code timing in nanoseconds.
+  metric_type: counter
+  title: ebpf_net.codetiming_max_ns
+
+ebpf_net.codetiming_min_ns:
+  brief: The minimum code timing in the prior 30 seconds.
+  description: |
+    The minimum code timing for an instrumented block of code for the prior 30 seconds.
+  metric_type: counter
+  title: ebpf_net.codetiming_min_ns
+
+ebpf_net.codetiming_sum_ns:
+  brief: Code timing sum in nanoseconds.
+  description: |
+    Code timing sum in nanoseconds.
+  metric_type: counter
+  title: ebpf_net.codetiming_sum_ns
+
+ebpf_net.collector_health:
+  brief: Collector health status
+  description: |
+    Collector health status. This metrics shows if Network Explorer collectors are up and running to properly extract information  at the kernel level. The healthy value is 0. This is enabled by default.
+  metric_type: counter
+  title: ebpf_net.collector_health
+
+ebpf_net.collector_log_count:
+  brief: eBPF collector log count
+  description: |
+     eBPF collector log count
+  metric_type: counter
+  title: ebpf_net.collector_log_count
+
+ebpf_net.connections:
+  brief: Total number of connections in the prior 30 seconds.
+  description: |
+    The total number of connections for the prior 30 seconds.
+  metric_type: counter
+  title: ebpf_net.connections
+
+ebpf_net.disconnects:
+  brief: The total number of disconnects made during the last 30 seconds.
+  description: |
+    The total number of disconnects made during the last 30 seconds.
+  metric_type: counter
+  title: ebpf_net.disconnects
+
+ebpf_net.entrypoint_info:
+  brief: Entry point information.
+  description: |
+    Entry point information.
+  metric_type: counter
+  title:  ebpf_net.entrypoint_info
+
+ebpf_net.message:
+  brief: Message count.
+  description: |
+     Message count for the prior 30 seconds. These are events extracted by eBPF hook at the linux kernel level.
+  metric_type: counter
+  title: ebpf_net.message
+
+ebpf_net.otlp_grpc.bytes_failed:
+  brief: Total number of OTLP bytes failed.
+  description: |
+    Total number of OTLP bytes failed. This is enabled by default.
+  metric_type: counter
+  title: ebpf_net.otlp_grpc.bytes_failed
+
+ebpf_net.otlp_grpc.bytes_sent:
+  brief: Total number of OTLP bytes sent.
+  description: |
+    Total number of OTLP bytes sent.  This is enabled by default.
+  metric_type: counter
+  title: ebpf_net.otlp_grpc.bytes_sent
+
+ebpf_net.otlp_grpc.failed_requests:
+  brief: Total number of failed OTLP requests.
+  description: |
+    Total number of failed OTLP requests.
+  metric_type: counter
+  title: ebpf_net.otlp_grpc.failed_requests
+
+ebpf_net.otlp_grpc.metrics_failed:
+  brief:  Total number of OTLP grpc metrics failed.
+  description: |
+    Total number of unknown OTLP grpc metrics failed. This is enabled by default.
+  metric_type: counter
+  title:  ebpf_net.otlp_grpc.metrics_failed
+
+ebpf_net.otlp_grpc.metrics_sent:
+  brief:  Total number of OTLP grpc metrics sent.
+  description: |
+    Total number of OTLP grpc metrics sent. This is enabled by default.
+  metric_type: counter
+  title:  ebpf_net.otlp_grpc.metrics_sent
+
+ebpf_net.otlp_grpc.requests_sent:
+  brief: Total number otlp requests sent.
+  description: |
+    The total number of OTLP (Open Telemetry Protocol) requests sent. This is enabled by default.
+  title: ebpf_net.otlp_grpc.requests_sent
+
+ebpf_net.otlp_grpc.unknown_response_tags:
+  brief:  Total number of unknown OTLP grpc response tags.
+  description: |
+    Total number of unknown OTLP grpc response tags. A non-zero value would indicate a logic error in the code or a configuration error. This is enabled by default.
+  metric_type: counter
+  title:  ebpf_net.otlp_grpc.unknown_response_tags
+
+ebpf_net.pipeline_message_error:
+  brief:  Pipeline message error.
+  description: |
+    Total number of pipeline message errors. These are the errors seen while trying to send messages downstreams within Reducer cores.
+  metric_type: counter
+  title:  ebpf_net.pipeline_message_error
+
+ebpf_net.pipeline_metric_bytes_discarded:
+  brief: The total number of discarded metrics bytes in the pipeline.
+  description: |
+    The number of bytes discarded by the pipeline for the prior 30 seconds.
+  metric_type: counter
+  title: ebpf_net.pipeline_metric_bytes_discarded
+
+ebpf_net.pipeline_metric_bytes_written:
+  brief:  Total number of pipeline metric bytes written.
+  description: |
+    Total number of pipeline metric bytes written.
+  metric_type: counter
+  title:  ebpf_net.pipeline_metric_bytes_written
+
+ebpf_net.rpc_latency_ns:
+  brief:  RPC latency in ns.
+  description: |
+    Remote Procedure Calls (RPC) latencies in ns
+  metric_type: counter
+  title:  ebpf_net.rpc_latency_ns
+
+ebpf_net.rpc_queue_buf_utilization:
+  brief: RCP queue buffer utilization fraction.
+  description: |
+    Total utilization of RPC buffer.
+  metric_type: counter
+  title: ebpf_net.rpc_queue_buf_utilization
+
+ebpf_net.rpc_queue_buf_utilization_fraction:
+  brief: RPC queue buffer utilization fraction for the last 30 seconds.
+  description: |
+    RPC queue buffer utilization fraction for the last 30 seconds.
+  metric_type: counter
+  title: ebpf_net.rpc_queue_buf_utilization_fraction
+
+ebpf_net.rpc_queue_elem_utilization_fraction:
+  brief: RPC queue utilization fraction in the prior 30 seconds.
+  description: |
+    RPC queue utiliation fraction for the prior thirty seconds.
+  metric_type: counter
+  title: ebpf_net.rpc_queue_elem_utilization_fraction
+
+ebpf_net.span_utilization:
+  brief: The span utilization in the last 30 seconds.
+  description: |
+    The span utilization in the last 30 seconds.
+  metric_type: counter
+  title: ebpf_net.span_utilization
+
+ebpf_net.span_utilization_fraction:
+  brief: Span Utilization fraction in the prior 30 seconds.
+  description: |
+     The span utilization fraction in the  prior thirty seconds.
+  metric_type: counter
+  title:  ebpf_net.span_utilization_fraction
+
+ebpf_net.span_utilization_max:
+  brief:  Maximum span utlization
+  description: |
+    Maximum span utlization.
+  metric_type: counter
+  title:  ebpf_net.span_utilization_max
+
+ebpf_net.time_since_last_message_ns:
+  brief: Time since last message in ns.
+  description: |
+    Time since last message in ns.
+  metric_type: counter
+  title: ebpf_net.time_since_last_message_ns
+
+ebpf_net.up:
+  brief: Total number of apps in the reducer running in the prior 30 seconds.
+  description: |
+    Total number of apps in the reducer running in the prior 30 seconds. This is enabled by default.
+  metric_type: counter
+  title: ebpf_net.up
+

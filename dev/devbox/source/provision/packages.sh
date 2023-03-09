@@ -22,28 +22,18 @@ common_debian_packages=( \
   apt-transport-https
   git
   valgrind
+  ripgrep
+  selinux-utils
 )
 
 additional_ubuntu_packages=( \
   bcc
   bpfcc-tools
-  ripgrep
 )
 
 case "${ID}" in
   debian)
     export DEBIAN_FRONTEND="noninteractive"
-
-    pkg_list=("${common_debian_packages[@]}" selinux-utils)
-
-    case "${VERSION_CODENAME}" in
-      stretch)
-        ;;
-
-      *)
-        pkg_list+=(ripgrep)
-        ;;
-    esac
 
     sudo -E apt-get install -y --no-install-recommends --allow-change-held-packages "${pkg_list[@]}"
     ;;

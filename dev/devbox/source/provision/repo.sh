@@ -25,23 +25,7 @@ deb http://deb.debian.org/debian/ unstable main non-free contrib
 EOF
         ;;
 
-      stretch)
-        sudo -E apt-get update -y
-        sudo tee /etc/apt/sources.list <<EOF
-deb http://deb.debian.org/debian/ ${VERSION_CODENAME} main non-free contrib
-deb http://deb.debian.org/debian-security/ ${VERSION_CODENAME}/updates main non-free contrib
-deb http://deb.debian.org/debian/ ${VERSION_CODENAME}-updates main non-free contrib
-deb http://deb.debian.org/debian/ ${VERSION_CODENAME}-backports main non-free contrib
-EOF
-        ;;
-
       *)
-        sudo tee /etc/apt/sources.list <<EOF
-deb http://deb.debian.org/debian/ ${VERSION_CODENAME} main non-free contrib
-deb http://deb.debian.org/debian-security/ ${VERSION_CODENAME}/updates main non-free contrib
-deb http://deb.debian.org/debian/ ${VERSION_CODENAME}-updates main non-free contrib
-deb http://deb.debian.org/debian/ ${VERSION_CODENAME}-backports main non-free contrib
-EOF
         ;;
     esac
 
