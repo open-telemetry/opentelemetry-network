@@ -239,7 +239,7 @@ jobs:
 
   run-kernel-header-tests:
     name: run-kernel-header-tests
-    needs: [build-and-push-reducer-docker-image, build-and-push-kernel-collector-docker-image]
+    needs: [build-and-push-reducer, build-and-push-kernel-collector]
     runs-on: macos-12
     env:
       EBPF_NET_SRC_ROOT: ${{ github.workspace }}
@@ -275,4 +275,4 @@ jobs:
       id: run-kernel-header-tests
       if: steps.changes.outputs.kernel == 'true' || steps.changes.outputs.github == 'true'
       run: |
-        ./test/kernel-headers/run-tests.sh ${{ needs.build-and-push-reducer-docker-image.outputs.date }}-${{github.event.pull_request.head.ref}}-${GITHUB_SHA:0:7}
+        ./test/kernel-headers/run-tests.sh ${{ needs.build-and-push-reducer.outputs.date }}-${{github.event.pull_request.head.ref}}-${GITHUB_SHA:0:7}
