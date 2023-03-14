@@ -217,6 +217,7 @@ lint_shell_script_bundle(
   kernel-collector-scripts
   SOURCES
     entrypoint.sh
+    entrypoint-kct.sh
     kernel_headers.sh
 )
 
@@ -241,6 +242,26 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
     ARGS
       BUILD_TYPE="Debug"
   )
+
+  build_custom_docker_image(
+    kernel-collector-test
+    DOCKERFILE_PATH
+      "${CMAKE_CURRENT_SOURCE_DIR}/kernel_collector_test_docker"
+    OUT_DIR srv
+    ARTIFACTS_OF
+      bpf_wire_to_json
+      intake_wire_to_json
+      kernel_collector_test
+    OUTPUT_OF
+      kernel-collector-scripts
+    FILES
+      ../../NOTICE.txt
+      ../../LICENSE.txt
+    DEPENDENCY_OF
+      collectors
+    ARGS
+      BUILD_TYPE="Debug"
+  )
 else()
   build_custom_docker_image(
     kernel-collector
@@ -250,6 +271,24 @@ else()
       kernel-collector-stripped
     BINARIES
       debug-info.conf
+    FILES
+      ../../NOTICE.txt
+      ../../LICENSE.txt
+    DEPENDENCY_OF
+      collectors
+  )
+
+  build_custom_docker_image(
+    kernel-collector-test
+    DOCKERFILE_PATH
+      "${CMAKE_CURRENT_SOURCE_DIR}/kernel_collector_test_docker"
+    OUT_DIR srv
+    ARTIFACTS_OF
+      bpf_wire_to_json
+      intake_wire_to_json
+      kernel_collector_test
+    OUTPUT_OF
+      kernel-collector-scripts
     FILES
       ../../NOTICE.txt
       ../../LICENSE.txt
