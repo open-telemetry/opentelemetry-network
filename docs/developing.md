@@ -162,7 +162,7 @@ Example (inside the build-env container):
 
 ```
 cd $HOME/out
-make unit_test
+make unit_tests
 make test
 ```
 
