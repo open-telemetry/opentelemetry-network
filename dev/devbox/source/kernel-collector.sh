@@ -59,7 +59,7 @@ function print_help {
   echo '  --valgrind-memcheck: run the kernel collector under `valgrind` using the memcheck tool'
   echo '  --valgrind-massif: run the kernel collector under `valgrind` using the massif tool'
   echo
-  echo "note: use '$HOME/out/tools/bpf_wire_to_json' to decode eBPF messages"
+  echo "note: use '$HOME/out/tools/opentelemetry-ebpf/bpf_wire_to_json' to decode eBPF messages"
   sleep 5
 }
 
