@@ -21,6 +21,7 @@ done
 
 source_dir="${HOME}/src/dev/devbox/source"
 files=( \
+  .rgrc
   cloud-collector.sh
   collector-entrypoint.sh
   k8s
@@ -28,7 +29,7 @@ files=( \
   kernel-collector.sh
   otelcol-gateway.sh
   reducer.sh
-  .rgrc
+  test-kernel-collector.sh
 )
 
 for file in "${files[@]}"; do
