@@ -171,10 +171,10 @@ make test
 
 See the documentation for individual components:
 
-- [reducer](docs/reducer.md)
-- [kernel-collector](docs/kernel-collector.md)
-- [cloud-collector](docs/cloud-collector.md)
-- [k8s-collector](docs/k8s-collector.md)
+- [reducer](reducer.md)
+- [kernel-collector](kernel-collector.md)
+- [cloud-collector](cloud-collector.md)
+- [k8s-collector](k8s-collector.md)
 
 
 ## Development VMs ##
