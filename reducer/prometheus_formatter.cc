@@ -65,26 +65,6 @@ template <typename T> std::string_view prom_format_suffix(char *buf_ptr, size_t 
   return std::string_view(buf_ptr, std::min(len, buf_size));
 }
 
-/*
- * Apparently the g++ version, g++ (Debian 8.3.0-6) 8.3.0, in benv-final:v10 has a bug that can result in
- *
- * In lambda function,
- *     inlined from 'reducer::{anonymous}::prom_format_prefix(char*, size_t, std::string_view, std::string_view, const
- * rollup_t&)::<lambda(std::string_view)>' at /root/src/reducer/prometheus_formatter.cc:84:57, inlined from 'std::string_view
- * reducer::{anonymous}::prom_format_prefix(char*, size_t, std::string_view, std::string_view, const rollup_t&)' at
- * /root/src/reducer/prometheus_formatter.cc:86:12, inlined from 'virtual void
- * reducer::PrometheusFormatter::format(std::string_view, reducer::TsdbFormatter::value_t, std::string_view, bool,
- * reducer::TsdbFormatter::rollup_t, bool, reducer::TsdbFormatter::labels_t, bool, reducer::TsdbFormatter::timestamp_t, bool,
- * const WriterPtr&)' at /root/src/reducer/prometheus_formatter.cc:135:119: /root/src/reducer/prometheus_formatter.cc:79:13:
- * error: 'void* memcpy(void*, const void*, size_t)' forming offset [8, 1024] is out of the bounds [0, 7] [-Werror=array-bounds]
- *        memcpy(buff_ptr + written, ptr, n);
- *        ~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~
- *
- * Changing optimization from the default of -O2 to -O1 avoids the issue.  This is a temporary workaround until the benv base
- * image/g++ version/etc. are updated.
- */
-#pragma GCC push_options
-#pragma GCC optimize("01")
 std::string_view prom_format_prefix(
     char *buff_ptr,
     size_t buff_size,
@@ -111,7 +91,6 @@ std::string_view prom_format_prefix(
 
   return std::string_view(buff_ptr, written);
 }
-#pragma GCC pop_options
 
 } // namespace
 
