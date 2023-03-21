@@ -49,7 +49,7 @@ void IngestCoreStatsSpan::client_handle_pool_stats(
 
   LOG::debug_in(
       reducer::logging::Component::internal_metrics,
-      "IngestCoreStatsSpan::ingest_metric_bytes_stats module={} shard={}  version={} cloud={} env={} role={} az={} node_id={} kernel_version={} client_type={} agent_hostname={} os={} os_version={} client_handle_pool={} client_handle_pool_fraction ={}  timestamp={}",
+      "IngestCoreStatsSpan::client_handle_pool_stats: module={} shard={}  version={} cloud={} env={} role={} az={} node_id={} kernel_version={} client_type={} agent_hostname={} os={} os_version={} client_handle_pool={} client_handle_pool_fraction ={}  timestamp={}",
       msg->module,
       msg->shard,
       msg->version,
@@ -97,7 +97,7 @@ void IngestCoreStatsSpan::agent_connection_message_stats(
 
   LOG::debug_in(
       reducer::logging::Component::internal_metrics,
-      "IngestCoreStatsSpan::ingest_metric_bytes_stats module={} shard={}  version={} cloud={} env={} role={} az={} node_id={} kernel_version={} client_type={} agent_hostname={} os={} os_version={} client_handle_pool={} client_handle_pool_fraction={} message={} severity_={} count={}  timestamp={}",
+      "IngestCoreStatsSpan::agent_connection_message_stats: module={} shard={}  version={} cloud={} env={} role={} az={} node_id={} kernel_version={} client_type={} agent_hostname={} os={} os_version={} client_handle_pool={} client_handle_pool_fraction={} message={} severity_={} count={}  timestamp={}",
       msg->module,
       msg->shard,
       msg->version,
@@ -146,7 +146,7 @@ void IngestCoreStatsSpan::agent_connection_message_error_stats(
 
   LOG::debug_in(
       reducer::logging::Component::internal_metrics,
-      "IngestCoreStatsSpan::ingest_metric_bytes_stats module={} shard={}  version={} cloud={} env={} role={} az={} node_id={} kernel_version={} client_type={} agent_hostname={} os={} os_version={} client_handle_pool={} client_handle_pool_fraction={} message={} error={} count={}  timestamp={}",
+      "IngestCoreStatsSpan::agent_connection_message_error_stats: module={} shard={}  version={} cloud={} env={} role={} az={} node_id={} kernel_version={} client_type={} agent_hostname={} os={} os_version={} client_handle_pool={} client_handle_pool_fraction={} message={} error={} count={}  timestamp={}",
       msg->module,
       msg->shard,
       msg->version,
@@ -192,7 +192,7 @@ void IngestCoreStatsSpan::connection_stats(
 
   LOG::debug_in(
       reducer::logging::Component::internal_metrics,
-      "IngestCoreStatsSpan::ingest_metric_bytes_stats module={} shard={}  version={} cloud={} env={} role={} az={} node_id={} kernel_version={} client_type={} agent_hostname={} os={} os_version={} client_handle_pool={} client_handle_pool_fraction={} time_since_last_message_ns={} clock_offset_ns={}  timestamp={}",
+      "IngestCoreStatsSpan::connection_stats: module={} shard={}  version={} cloud={} env={} role={} az={} node_id={} kernel_version={} client_type={} agent_hostname={} os={} os_version={} client_handle_pool={} client_handle_pool_fraction={} time_since_last_message_ns={} clock_offset_ns={}  timestamp={}",
       msg->module,
       msg->shard,
       msg->version,
@@ -237,7 +237,7 @@ void IngestCoreStatsSpan::collector_log_stats(
 
   LOG::debug_in(
       reducer::logging::Component::internal_metrics,
-      "IngestCoreStatsSpan::ingest_metric_bytes_stats module={} shard={}  version={} cloud={} env={} role={} az={} node_id={} kernel_version={} client_type={} agent_hostname={} os={} os_version={} severity_={} count={}  timestamp={}",
+      "IngestCoreStatsSpan::collector_log_stats: module={} shard={}  version={} cloud={} env={} role={} az={} node_id={} kernel_version={} client_type={} agent_hostname={} os={} os_version={} severity_={} count={}  timestamp={}",
       msg->module,
       msg->shard,
       msg->version,
@@ -283,7 +283,7 @@ void IngestCoreStatsSpan::entry_point_stats(
 
   LOG::debug_in(
       reducer::logging::Component::internal_metrics,
-      "IngestCoreStatsSpan::ingest_metric_bytes_stats module={} shard={}  version={} cloud={} env={} role={} az={} node_id={} kernel_version={} client_type={} agent_hostname={} os={} os_version={} kernel_headers_source={} entrypoint_error={} entrypoint_info={}  timestamp={}",
+      "IngestCoreStatsSpan::entry_point_stats: module={} shard={}  version={} cloud={} env={} role={} az={} node_id={} kernel_version={} client_type={} agent_hostname={} os={} os_version={} kernel_headers_source={} entrypoint_error={} entrypoint_info={}  timestamp={}",
       msg->module,
       msg->shard,
       msg->version,
@@ -329,7 +329,7 @@ void IngestCoreStatsSpan::collector_health_stats(
 
   LOG::debug_in(
       reducer::logging::Component::internal_metrics,
-      "IngestCoreStatsSpan::ingest_metric_bytes_stats module={} shard={}  version={} cloud={} env={} role={} az={} node_id={} kernel_version={} client_type={} agent_hostname={} os={} os_version={} status={} status_detail={}  timestamp={}",
+      "IngestCoreStatsSpan::collector_health_stats: module={} shard={}  version={} cloud={} env={} role={} az={} node_id={} kernel_version={} client_type={} agent_hostname={} os={} os_version={} status={} status_detail={}  timestamp={}",
       msg->module,
       msg->shard,
       msg->version,
@@ -379,7 +379,7 @@ void IngestCoreStatsSpan::bpf_log_stats(
 
   LOG::debug_in(
       reducer::logging::Component::internal_metrics,
-      "IngestCoreStatsSpan::ingest_metric_bytes_stats module={} shard={}  version={} cloud={} env={} role={} az={} node_id={} kernel_version={} client_type={} agent_hostname={} os={} os_version={} filename={} line={} code={} arg0={} arg1={} arg2={} timestamp={}",
+      "IngestCoreStatsSpan::bpf_log_stats: module={} shard={}  version={} cloud={} env={} role={} az={} node_id={} kernel_version={} client_type={} agent_hostname={} os={} os_version={} filename={} line={} code={} arg0={} arg1={} arg2={} timestamp={}",
       msg->module,
       msg->shard,
       msg->version,
@@ -416,7 +416,7 @@ void IngestCoreStatsSpan::server_stats(
 
   LOG::debug_in(
       reducer::logging::Component::internal_metrics,
-      "IngestCoreStatsSpan::ingest_metric_bytes_stats module={} connection_counter={} disconnect_counter={}  timestamp={}",
+      "IngestCoreStatsSpan::server_stats: module={} connection_counter={} disconnect_counter={}  timestamp={}",
       msg->module,
       msg->connection_counter,
       msg->disconnect_counter,

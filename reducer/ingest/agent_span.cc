@@ -55,6 +55,8 @@ u64 create_random_agent_id()
 AgentSpan::AgentSpan()
     : agent_id_(create_random_agent_id()),
       hostname_(kUnknown),
+      namespace_(kUnknown),
+      cluster_(kUnknown),
       node_id_("unknown-" + std::to_string(++agent_counter)),
       node_az_(kUnknown),
       node_role_(kUnknown),
@@ -148,8 +150,17 @@ void AgentSpan::collect_blob(::ebpf_net::ingest::weak_refs::agent span_ref, u64 
 
 void AgentSpan::set_node_info(::ebpf_net::ingest::weak_refs::agent span_ref, u64 timestamp, jsrv_ingest__set_node_info *msg)
 {
-  // node az, role and id is pre-set to unknown on construction as a fallback
-  // when resolution fails
+  // node az, role, id, namespace, and cluster are pre-set to unknown on construction as a fallback when resolution fails
+
+  if (!namespace_override_.empty()) {
+    // use namespace label override if available
+    namespace_ = namespace_override_;
+  }
+
+  if (!cluster_override_.empty()) {
+    // use cluster label override if available
+    cluster_ = cluster_override_;
+  }
 
   if (!zone_override_.empty()) {
     // use zone label override if available
@@ -200,11 +211,11 @@ void AgentSpan::set_config_label(
   if (key == "namespace") {
     LOG::trace_in(Component::agent, "\"namespace\" override detected!");
     namespace_override_.assign(value.data(), value.size());
-  };
+  }
   if (key == "environment" || key == "cluster") {
     LOG::trace_in(Component::agent, "\"cluster\" override detected!");
     cluster_override_.assign(value.data(), value.size());
-  };
+  }
   if (key == "service") {
     LOG::trace_in(Component::agent, "\"service\" override detected!");
     service_override_.assign(value.data(), value.size());
