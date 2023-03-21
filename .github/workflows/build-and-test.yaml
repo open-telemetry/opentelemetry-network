@@ -71,7 +71,7 @@ jobs:
         --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/root/src,readonly" \
         --env EBPF_NET_SRC_ROOT=/root/src \
         $BENV_IMAGE \
-        ../build.sh reducer-docker
+        ./build.sh reducer-docker
         docker login ${{ vars.DOCKER_REGISTRY }} -u ${{ secrets.DOCKER_USERNAME }} -p "$PASS"
         reducer_image=${{ vars.DOCKER_NAMESPACE }}/reducer:${{ needs.clang-format-check.outputs.date }}-${{github.event.pull_request.head.ref}}-${GITHUB_SHA:0:7}
         echo $reducer_image
@@ -103,7 +103,7 @@ jobs:
         --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/root/src,readonly" \
         --env EBPF_NET_SRC_ROOT=/root/src \
         $BENV_IMAGE \
-        ../build.sh kernel-collector-docker
+        ./build.sh kernel-collector-docker
         docker login ${{ vars.DOCKER_REGISTRY }} -u ${{ secrets.DOCKER_USERNAME }} -p "$PASS"
         kernel_collector_image=${{ vars.DOCKER_NAMESPACE }}/kernel-collector:${{ needs.clang-format-check.outputs.date }}-${{github.event.pull_request.head.ref}}-${GITHUB_SHA:0:7}
         echo $kernel_collector_image
