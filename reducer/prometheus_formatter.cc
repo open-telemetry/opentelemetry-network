@@ -14,12 +14,7 @@
 namespace reducer {
 namespace {
 
-std::string_view prom_format_labels(
-    char *buff_ptr,
-    size_t buff_size,
-    std::string_view aggregation,
-    TsdbFormatter::rollup_t const &rollup,
-    TsdbFormatter::labels_t const &labels)
+std::string_view prom_format_labels(char *buff_ptr, size_t buff_size, TsdbFormatter::labels_t const &labels)
 {
   size_t written = 0;
   auto write = [&written, buff_ptr, buff_size](void const *ptr, size_t len) {
@@ -65,33 +60,6 @@ template <typename T> std::string_view prom_format_suffix(char *buf_ptr, size_t 
   return std::string_view(buf_ptr, std::min(len, buf_size));
 }
 
-std::string_view prom_format_prefix(
-    char *buff_ptr,
-    size_t buff_size,
-    std::string_view metric,
-    std::string_view aggregation,
-    TsdbFormatter::rollup_t const &rollup)
-{
-  size_t written = 0;
-  auto write = [&written, buff_ptr, buff_size](void const *ptr, size_t len) {
-    size_t const n = std::min(len, (buff_size - written));
-    if (n > 0) {
-      memcpy(buff_ptr + written, ptr, n);
-      written += n;
-    }
-  };
-
-  auto write_str = [write](std::string_view str) { write(str.data(), str.size()); };
-
-  write_str("#TYPE ");
-  write_str(metric);
-
-  write_str(" gauge\n");
-  write_str(metric);
-
-  return std::string_view(buff_ptr, written);
-}
-
 } // namespace
 
 void PrometheusFormatter::format(
@@ -113,24 +81,22 @@ void PrometheusFormatter::format(
   }
 
   if (aggregation_changed || rollup_changed || labels_changed || labels_.empty()) {
-    labels_ = prom_format_labels(labels_buf_, sizeof(labels_buf_), aggregation, rollup, labels);
+    labels_ = prom_format_labels(labels_buf_, sizeof(labels_buf_), labels);
   }
 
   auto suffix = std::visit(
       [&](auto &&val) -> std::string_view { return prom_format_suffix(suffix_buf_, sizeof(suffix_buf_), val, timestamp_str_); },
       value);
 
-  // TODO DSB for phase0 POC only.  Remove me afterward, revert out(prefix...) invocation to out(metric, labels_, suffix) below
   std::string metric_name_sanitized;
   std::transform(
       metric.name.begin(), metric.name.end(), std::back_inserter(metric_name_sanitized), [](unsigned char c) -> unsigned char {
         return c == '.' ? '_' : c;
       });
-  std::string_view prefix = prom_format_prefix(prefix_buf_, sizeof(prefix_buf_), metric_name_sanitized, aggregation, rollup);
   STOP_TIMING(PrometheusFormatterFormat);
 
   SCOPED_TIMING(PrometheusFormatterFormatWriterWrite);
-  writer->write(prefix, labels_, suffix);
+  writer->write(metric_name_sanitized, labels_, suffix);
 }
 
 } // namespace reducer
