@@ -71,12 +71,7 @@ jobs:
         --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/root/src,readonly" \
         --env EBPF_NET_SRC_ROOT=/root/src \
         $BENV_IMAGE \
-        ./build.sh reducer-docker
-        echo $reducer_image
-        reducer_image=reducer:${{ needs.clang-format-check.outputs.date }}-${{github.event.pull_request.head.ref}}-${GITHUB_SHA:0:7}
-        docker tag reducer:latest $reducer_image
-    outputs:
-      date: ${{ needs.clang-format-check.outputs.date }}
+        ./build.sh reducer
 
   build-and-push-kernel-collector:
     name: build-and-push-kernel-collector
@@ -101,10 +96,7 @@ jobs:
         --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/root/src,readonly" \
         --env EBPF_NET_SRC_ROOT=/root/src \
         $BENV_IMAGE \
-        ./build.sh kernel-collector-docker
-        kernel_collector_image=kernel-collector:${{ needs.clang-format-check.outputs.date }}-${{github.event.pull_request.head.ref}}-${GITHUB_SHA:0:7}
-        echo $kernel_collector_image
-        docker tag kernel-collector:latest $kernel_collector_image
+        ./build.sh kernel-collector
 
   build-k8s-relay:
     name: build-k8s-relay
@@ -220,7 +212,7 @@ jobs:
 
   run-kernel-header-tests:
     name: run-kernel-header-tests
-    needs: [build-and-push-reducer, build-and-push-kernel-collector]
+    needs: [clang-format-check]
     runs-on: macos-12
     env:
       EBPF_NET_SRC_ROOT: ${{ github.workspace }}
@@ -255,4 +247,15 @@ jobs:
       id: run-kernel-header-tests
       if: steps.changes.outputs.kernel == 'true' || steps.changes.outputs.github == 'true'
       run: |
-        ./test/kernel-headers/run-tests.sh ${{ needs.build-and-push-reducer.outputs.date }}-${{github.event.pull_request.head.ref}}-${GITHUB_SHA:0:7}
+        docker run -t \
+        --rm \
+        --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
+        --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/root/src,readonly" \
+        --env EBPF_NET_SRC_ROOT=/root/src \
+        $BENV_IMAGE \
+        ./build.sh kernel-collector-docker reducer-docker
+        reducer_image=reducer:${{ needs.clang-format-check.outputs.date }}-${{github.event.pull_request.head.ref}}-${GITHUB_SHA:0:7}
+        docker tag reducer:latest $reducer_image
+        kernel_collector_image=kernel-collector:${{ needs.clang-format-check.outputs.date }}-${{github.event.pull_request.head.ref}}-${GITHUB_SHA:0:7}
+        docker tag kernel-collector:latest $kernel_collector_image
+        ./test/kernel-headers/run-tests.sh ${{ needs.clang-format-check.outputs.date }}-${{github.event.pull_request.head.ref}}-${GITHUB_SHA:0:7}
