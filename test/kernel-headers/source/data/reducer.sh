@@ -19,9 +19,7 @@ elif [ $# -eq 2 ]
 then
   cat /etc/resolv.conf
   tag=":$1"
-  docker_hub_path="$2"
-  image_loc="$docker_hub_path/reducer${tag}"
-  docker pull ${image_loc}
+  image_loc="reducer${tag}"
 fi
 
 docker run --detach --rm \

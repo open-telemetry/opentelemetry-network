@@ -8,8 +8,6 @@ export EBPF_NET_SRC_ROOT="${EBPF_NET_SRC_ROOT:-$(git rev-parse --show-toplevel)}
 source "${EBPF_NET_SRC_ROOT}/dev/script/bash-error-lib.sh"
 set -x
 
-echo $DOCKER_HUB_PATH
-
 function print {
   echo "===================================== $1 ====================================="
 }
@@ -43,7 +41,7 @@ then
 fi  
 
 print "running 1-start-reducer.sh"
-./1-start-reducer.sh ${tag} $DOCKER_HUB_PATH
+./1-start-reducer.sh ${tag}
 
 print "running 2-apply-selinux-policy.sh"
   ./2-apply-selinux-policy.sh
@@ -56,12 +54,12 @@ then
   print "SKIPPING 3-fetch.sh and 4-cached.sh for ${name}"
 else
   print "running 3-fetch.sh"
-  ./3-fetch.sh ${tag} $DOCKER_HUB_PATH
+  ./3-fetch.sh ${tag}
   print "running 4-cached.sh"
-  ./4-cached.sh ${tag} $DOCKER_HUB_PATH
+  ./4-cached.sh ${tag}
 fi
 print "running 5-pre-installed.sh"
-./5-pre-installed.sh ${tag} $DOCKER_HUB_PATH
+./5-pre-installed.sh ${tag}
 print "running 6-cleanup.sh"
 ./6-cleanup.sh
 print "Testing of ${name} succeeded"

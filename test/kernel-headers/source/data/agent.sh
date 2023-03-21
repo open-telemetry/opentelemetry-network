@@ -21,10 +21,8 @@ then
 elif [ $# -eq 2 ]
 then
   tag=":$1"
-  docker_hub_path="$2"
-  image_loc="$docker_hub_path/kernel-collector${tag}"
+  image_loc="kernel-collector${tag}"
   echo $image_loc
-  sudo docker pull ${image_loc}    
 fi
 
 
