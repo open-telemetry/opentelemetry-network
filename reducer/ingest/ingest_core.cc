@@ -193,8 +193,8 @@ void IngestCore::on_write_internal_stats_timer()
         AgentSpan &agent = conn->agent().impl();
 
         // skip internal stats for AgentSpans that are not initialized (unknown) and for short-lived probe agents
-        if (agent.type_ == ClientType::unknown || agent.type_ == ClientType::liveness_probe ||
-            agent.type_ == ClientType::readiness_probe) {
+        if (agent.client_type() == ClientType::unknown || agent.client_type() == ClientType::liveness_probe ||
+            agent.client_type() == ClientType::readiness_probe) {
           return;
         }
 
