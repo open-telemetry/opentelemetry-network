@@ -15,8 +15,7 @@ catch() {
 if [ $# -eq 0 ]
 then
   sudo docker pull ${image_loc}
-elif [ $# -eq 2 ]
-then
+else
   cat /etc/resolv.conf
   tag=":$1"
   image_loc="reducer${tag}"

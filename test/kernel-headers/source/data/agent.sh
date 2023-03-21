@@ -18,8 +18,7 @@ fi
 if [ $# -eq 0 ]
 then
   sudo docker pull ${image_loc}
-elif [ $# -eq 2 ]
-then
+else
   tag=":$1"
   image_loc="kernel-collector${tag}"
   echo $image_loc
