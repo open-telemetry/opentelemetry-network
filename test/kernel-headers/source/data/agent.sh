@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 set -xe
-echo $DOCKER_HUB_PATH
+
 
 image_loc="localhost:5000/kernel-collector"
 container_name="test-kernel-collector"

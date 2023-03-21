@@ -72,12 +72,9 @@ jobs:
         --env EBPF_NET_SRC_ROOT=/root/src \
         $BENV_IMAGE \
         ./build.sh reducer-docker
-       # docker login ${{ vars.DOCKER_REGISTRY }} -u ${{ secrets.DOCKER_USERNAME }} -p "$PASS"
-      #  reducer_image=${{ vars.DOCKER_NAMESPACE }}/reducer:${{ needs.clang-format-check.outputs.date }}-${{github.event.pull_request.head.ref}}-${GITHUB_SHA:0:7}
         echo $reducer_image
         reducer_image=reducer:${{ needs.clang-format-check.outputs.date }}-${{github.event.pull_request.head.ref}}-${GITHUB_SHA:0:7}
         docker tag reducer:latest $reducer_image
-      #  docker push $reducer_image
     outputs:
       date: ${{ needs.clang-format-check.outputs.date }}
 
@@ -105,13 +102,9 @@ jobs:
         --env EBPF_NET_SRC_ROOT=/root/src \
         $BENV_IMAGE \
         ./build.sh kernel-collector-docker
-       # docker login ${{ vars.DOCKER_REGISTRY }} -u ${{ secrets.DOCKER_USERNAME }} -p "$PASS"
-       # kernel_collector_image=${{ vars.DOCKER_NAMESPACE }}/kernel-collector:${{ needs.clang-format-check.outputs.date }}-${{github.event.pull_request.head.ref}}-${GITHUB_SHA:0:7}
         kernel_collector_image=kernel-collector:${{ needs.clang-format-check.outputs.date }}-${{github.event.pull_request.head.ref}}-${GITHUB_SHA:0:7}
         echo $kernel_collector_image
         docker tag kernel-collector:latest $kernel_collector_image
-        #docker push $kernel_collector_image
-
 
   build-k8s-relay:
     name: build-k8s-relay
@@ -231,7 +224,6 @@ jobs:
     runs-on: macos-12
     env:
       EBPF_NET_SRC_ROOT: ${{ github.workspace }}
-      DOCKER_HUB_PATH: ${{ vars.DOCKER_NAMESPACE }}
     steps:
     - name: Check out the codebase
       uses: actions/checkout@v3
