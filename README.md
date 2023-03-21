@@ -15,7 +15,7 @@ The reducer outputs metrics to the OpenTelemetry collector.
 
 ## Building ##
 
-For instructions on how to build the repository, see the [building](docs/building.md) page.
+For instructions on how to build the repository, see the [Developer Guide](docs/developing.md).
 
 ## Running ##
 
@@ -27,6 +27,8 @@ the individual components:
 - [k8s-collector](docs/k8s-collector.md)
 
 ## Contributing ##
+
+Check out the [Developer Guide](docs/developing.md).
 
 Maintainers ([@open-telemetry/ebpf-maintainers](https://github.com/orgs/open-telemetry/teams/ebpf-maintainers)):
 

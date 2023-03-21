@@ -168,7 +168,7 @@ while true
 do
   num_pods=$(microk8s kubectl get pods -A | grep -v "^NAME" | wc -l)
   num_not_running=$(microk8s kubectl get pods -A | egrep -v "^NAME|Running" | wc -l)
-  if [[ ${num_pods} > ${num_pods_before_deploy} && ${num_not_running} == 0 ]]
+  if [ ${num_pods} -gt ${num_pods_before_deploy} ] && [ ${num_not_running} -eq 0 ]
   then
     break
   fi

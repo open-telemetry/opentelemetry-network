@@ -70,8 +70,6 @@ jobs:
         --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
         --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/root/src,readonly" \
         --env EBPF_NET_SRC_ROOT=/root/src \
-        --env EBPF_NET_OUT_DIR=/root/out \
-        --workdir=/root/out \
         $BENV_IMAGE \
         ../build.sh reducer-docker
         docker login ${{ vars.DOCKER_REGISTRY }} -u ${{ secrets.DOCKER_USERNAME }} -p "$PASS"
@@ -104,8 +102,6 @@ jobs:
         --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
         --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/root/src,readonly" \
         --env EBPF_NET_SRC_ROOT=/root/src \
-        --env EBPF_NET_OUT_DIR=/root/out \
-        --workdir=/root/out \
         $BENV_IMAGE \
         ../build.sh kernel-collector-docker
         docker login ${{ vars.DOCKER_REGISTRY }} -u ${{ secrets.DOCKER_USERNAME }} -p "$PASS"
@@ -135,10 +131,8 @@ jobs:
         --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
         --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/root/src,readonly" \
         --env EBPF_NET_SRC_ROOT=/root/src \
-        --env EBPF_NET_OUT_DIR=/root/out \
-        --workdir=/root/out \
         $BENV_IMAGE \
-        ../build.sh k8s-relay
+        ./build.sh k8s-relay
 
   build-cloud-collector:
     name: build-cloud-collector
@@ -160,10 +154,8 @@ jobs:
         --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
         --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/root/src,readonly" \
         --env EBPF_NET_SRC_ROOT=/root/src \
-        --env EBPF_NET_OUT_DIR=/root/out \
-        --workdir=/root/out \
         $BENV_IMAGE \
-        ../build.sh cloud-collector
+        ./build.sh cloud-collector
 
   build-k8s-watcher:
     name: build-k8s-watcher
@@ -185,10 +177,8 @@ jobs:
         --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
         --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/root/src,readonly" \
         --env EBPF_NET_SRC_ROOT=/root/src \
-        --env EBPF_NET_OUT_DIR=/root/out \
-        --workdir=/root/out \
         $BENV_IMAGE \
-        ../build.sh k8s-watcher
+        ./build.sh k8s-watcher
 
   build-run-unit-tests:
     name: build-run-unit-tests
@@ -209,10 +199,8 @@ jobs:
         --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
         --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/root/src,readonly" \
         --env EBPF_NET_SRC_ROOT=/root/src \
-        --env EBPF_NET_OUT_DIR=/root/out-test \
-        --workdir=/root/out-test \
         $BENV_IMAGE \
-        ../build.sh unit_tests test
+        ./build.sh unit_tests test
 
   build-run-unit-tests-with-asan-and-debug-flags:
     name: build-run-unit-tests-with-asan-and-debug-flags
@@ -232,10 +220,8 @@ jobs:
         --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
         --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/root/src,readonly" \
         --env EBPF_NET_SRC_ROOT=/root/src \
-        --env EBPF_NET_OUT_DIR=/root/out-test \
-        --workdir=/root/out-test \
         $BENV_IMAGE \
-        ../build.sh --debug --asan unit_tests test
+        ./build.sh --debug --asan unit_tests test
 
   run-kernel-header-tests:
     name: run-kernel-header-tests

@@ -12,7 +12,7 @@ jobs="$(((`nproc --all` + 1) / 2))"
 
 # must match the mount destination of $host_build_dir in benv script
 source_dir="${EBPF_NET_SRC:-${EBPF_NET_SRC_ROOT}}"
-build_dir="${EBPF_NET_OUT_DIR}"
+build_dir="${EBPF_NET_OUT_DIR:-$HOME/out}"
 
 show_help() {
   cat << EOF
@@ -152,11 +152,13 @@ if [[ "$clean" == "true" ]]; then
   if [ -d "$build_dir" ]; then
     rm -rf $build_dir/* || true
   fi
-  mkdir -p "$build_dir"
 fi
 
+mkdir -p "$build_dir"
 cd "$build_dir"
+
 set -e
+
 (set -x; cmake \
   "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}" \
   "${CMAKE_FLAGS[@]}" \

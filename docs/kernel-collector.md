@@ -41,7 +41,6 @@ docker run -it --rm \
   --privileged \
   --pid host \
   --network host \
-  --log-console \
   --volume /var/run/docker.sock:/var/run/docker.sock \
   --volume /sys/fs/cgroup:/hostfs/sys/fs/cgroup \
   --volume /etc:/hostfs/etc \
