@@ -13,7 +13,7 @@ namespace reducer {
 //
 // Output:
 // - prefix: `<metric_name>`
-// - labels: `[_<aggregation>][_<rollup>]{label1="xxx",label2="yyy",...}`
+// - labels: `{label1="xxx",label2="yyy",...}`
 // - suffix: ` <value> <milliseconds>`
 //
 class PrometheusFormatter : public TsdbFormatter {
@@ -36,9 +36,6 @@ private:
   char labels_buf_[8192];
   // Large enough for value and timestamp.
   char suffix_buf_[64];
-
-  // ought to be plenty. e.g. #TYPE tcp_retrans_az_az_30 gauge
-  char prefix_buf_[1024];
 
   // Cached labels string, points to labels_buf_ when initialized.
   std::string_view labels_;
