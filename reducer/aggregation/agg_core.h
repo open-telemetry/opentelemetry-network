@@ -54,7 +54,7 @@ public:
   static void enable_id_id();
 
   // Enables generating az-node metrics.
-  static void enable_az_node();
+  static void enable_az_id();
 
   // How many top aggregation role/role pairs to show the count for in the
   // pipeline_aggregation_roles internal stat.
@@ -109,11 +109,11 @@ private:
   // Flag indicating whether using IP addresses in node spans is disabled.
   static bool node_ip_field_disabled_;
 
-  // Flag indicating whether node-node (id-id) timeseries should be outputted.
+  // Flag indicating whether id-id timeseries should be outputted.
   static bool id_id_enabled_;
 
-  // Flag indicating whether az-node timeseries should be outputted.
-  static bool az_node_enabled_;
+  // Flag indicating whether az-id timeseries should be outputted.
+  static bool az_id_enabled_;
 
   void on_timeslot_complete() override;
 

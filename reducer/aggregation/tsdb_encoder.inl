@@ -42,7 +42,7 @@ void TsdbEncoder::operator()(
 void TsdbEncoder::operator()(
     u64 t, ::ebpf_net::aggregation::weak_refs::az_node &az_node, ::ebpf_net::metrics::METRICS &metrics, u64 interval)
 {
-  if (az_node_enabled_) {
+  if (az_id_enabled_) {
     if (!metric_writers_.empty()) {
       auto writer_num = az_node.loc() % metric_writers_.size();
       auto &metric_writer = metric_writers_[writer_num];
