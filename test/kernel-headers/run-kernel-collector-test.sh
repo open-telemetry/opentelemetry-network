@@ -19,32 +19,33 @@ kernel_version=$3
 
 name=${distro}-${version}
 [ "$kernel_version" != "" ] && name=${name}-${kernel_version}
-print "Testing ${name}"
+print "Running kernel-collector-test on ${name}"
 ${EBPF_NET_SRC_ROOT}/test/kernel-headers/bootstrap.sh ${distro} ${version} ${kernel_version}
 
 cd ${name}
 print "running 0-setup.sh"
 ./0-setup.sh
-print "running 1-start-reducer.sh"
-./1-start-reducer.sh
+
 print "running 2-apply-selinux-policy.sh"
 ./2-apply-selinux-policy.sh
-# Ubuntu Jammy cannot automatically fetch headers currently because kernel-collector with bitnami/minideb:bullseye
-# base image does not support zstd compression
-is_jammy=$(grep jammy <<<$version) || true
-if [[ "${is_jammy}" != "" ]]
+
+print "running run-kernel-collector-test.sh"
+if ! ./run-kernel-collector-test.sh
 then
-  print "SKIPPING 3-fetch.sh and 4-cached.sh for ${name}"
-else
-  print "running 3-fetch.sh"
-  ./3-fetch.sh
-  print "running 4-cached.sh"
-  ./4-cached.sh
+  test_failed="true"
 fi
-print "running 5-pre-installed.sh"
-./5-pre-installed.sh
+
 print "running 6-cleanup.sh"
 ./6-cleanup.sh
-print "Testing of ${name} succeeded"
+
 cd ..
+
+if [[ "${test_failed}" == "true" ]]
+then
+  print "Testing of ${name} FAILED"
+  exit 1
+else
+  print "Testing of ${name} succeeded"
+fi
+
 
