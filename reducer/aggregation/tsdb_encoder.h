@@ -34,6 +34,7 @@ public:
       Publisher::WriterPtr &otlp_metric_writer,
       std::chrono::nanoseconds timestamp,
       bool id_id_enabled,
+      bool az_id_enabled,
       const DisabledMetrics &disabled_metrics,
       std::optional<int> rollup_count = std::nullopt);
 
@@ -71,7 +72,7 @@ private:
 
   std::chrono::nanoseconds timestamp_;
   bool id_id_enabled_{false};
-  bool az_node_enabled_{false};
+  bool az_id_enabled_{false};
   int reverse_{0};
 
   const DisabledMetrics &disabled_metrics_;

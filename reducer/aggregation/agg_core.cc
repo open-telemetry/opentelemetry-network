@@ -34,16 +34,16 @@ void AggCore::disable_node_ip_field()
 }
 
 bool AggCore::id_id_enabled_ = false;
-bool AggCore::az_node_enabled_ = false;
+bool AggCore::az_id_enabled_ = false;
 
 void AggCore::enable_id_id()
 {
   id_id_enabled_ = true;
 }
 
-void AggCore::enable_az_node()
+void AggCore::enable_az_id()
 {
-  az_node_enabled_ = true;
+  az_id_enabled_ = true;
 }
 
 AggCore::AggCore(
@@ -128,6 +128,7 @@ void AggCore::write_standard_metrics(u64 t)
       otlp_metric_writer_,
       std::chrono::nanoseconds(metric_timestamp),
       id_id_enabled_,
+      az_id_enabled_,
       disabled_metrics_);
 
   auto az_az_writer = [&encoder, this](auto &&...args) {
