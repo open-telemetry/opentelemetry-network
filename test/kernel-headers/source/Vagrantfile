@@ -52,6 +52,10 @@ Vagrant.configure("2") do |config|
     destination: "reducer.sh"
 
   config.vm.provision "file",
+    source: "#{ENV['EBPF_NET_SRC_ROOT']}/dev/devbox/source/test-kernel-collector.sh",
+    destination: "test-kernel-collector.sh"
+
+  config.vm.provision "file",
     source: "data/PLACEHOLDER_DISTRO_NAME-uninstall-kernel-headers.sh",
     destination: "uninstall-kernel-headers.sh"
 

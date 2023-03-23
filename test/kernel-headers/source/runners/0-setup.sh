@@ -44,7 +44,7 @@ docker push localhost:5000/reducer
 
 vagrant up --no-provision
 
-# Confirm tha the vagrant VM is running
+# Confirm that the vagrant VM is running
 result=$(vagrant status | grep ^default | grep running) || true
 if [[ "${result}" == "" ]]
 then

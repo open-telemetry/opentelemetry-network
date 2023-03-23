@@ -21,17 +21,17 @@ do
   num_run=$((num_run+1))
   distro_and_kernel="${distros_and_kernels[$i]}"
   log_file=${test_dir}/"$(sed 's/ /-/g' <<<$distro_and_kernel)".log
-  echo "Running kernel header tests for \"${distro_and_kernel}\"." | tee -a ${test_dir}/summary.log
-  ${EBPF_NET_SRC_ROOT}/test/kernel-headers/run-test.sh ${distro_and_kernel} 2>&1 | tee ${log_file}
+  echo "Running kernel-collector-test for \"${distro_and_kernel}\"." | tee -a ${test_dir}/summary.log
+  ${EBPF_NET_SRC_ROOT}/test/kernel-headers/run-kernel-collector-test.sh ${distro_and_kernel} 2>&1 | tee ${log_file}
   if [[ $? == 0 ]]
   then
-    echo -e "Tests succeeded for \"${distro_and_kernel}\".\n" | tee -a ${test_dir}/summary.log
+    echo -e "kernel-collector-test succeeded for \"${distro_and_kernel}\".\n" | tee -a ${test_dir}/summary.log
   else
     num_failed=$((num_failed+1))
-    echo -e "Tests FAILED for \"${distro_and_kernel}\".\n" | tee -a ${test_dir}/summary.log
+    echo -e "kernel-collector-test FAILED for \"${distro_and_kernel}\".\n" | tee -a ${test_dir}/summary.log
   fi
 done
 
 set +x
-echo -e "Ran ${num_run} tests, with ${num_failed} failure(s).\n" | tee -a ${test_dir}/summary.log
+echo -e "Ran ${num_run} kernel-collector-tests, with ${num_failed} failure(s).\n" | tee -a ${test_dir}/summary.log
 echo "Test results are in ${test_dir}"

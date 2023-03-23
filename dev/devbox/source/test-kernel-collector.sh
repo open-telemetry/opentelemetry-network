@@ -121,8 +121,6 @@ done
 
 set -x
 
-sudo ./selinux-bpf.sh
-
 docker pull "${image}${tag}"
 
 export container_id="$( \
