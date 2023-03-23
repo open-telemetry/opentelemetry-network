@@ -244,7 +244,6 @@ jobs:
             - '.github/**'
 
     - name: Run kernel headers test for multiple linux distributions
-      needs: [clang-format-check]
       id: run-kernel-header-tests
       if: steps.changes.outputs.kernel == 'true' || steps.changes.outputs.github == 'true'
       run: |
