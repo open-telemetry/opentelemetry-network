@@ -276,11 +276,11 @@ jobs:
         ./build.sh reducer-docker kernel-collector-docker
         
         reducer_image=reducer:${{ needs.clang-format-check.outputs.date }}-${{github.event.pull_request.head.ref}}-${GITHUB_SHA:0:7}
-        docker tag reducer:latest localhost:5000/$reducer_image
+        podman tag reducer:latest localhost:5000/$reducer_image
         kernel_collector_image=kernel-collector:${{ needs.clang-format-check.outputs.date }}-${{github.event.pull_request.head.ref}}-${GITHUB_SHA:0:7}
-        docker tag kernel-collector:latest localhost:5000/$kernel_collector_image
+        podman tag kernel-collector:latest localhost:5000/$kernel_collector_image
         
-        docker push localhost:5000/$reducer_image
-        docker push localhost:5000/$kernel_collector_image
+        podman push localhost:5000/$reducer_image
+        podman push localhost:5000/$kernel_collector_image
         
         ./test/kernel-headers/run-tests.sh ${{ needs.clang-format-check.outputs.date }}-${{github.event.pull_request.head.ref}}-${GITHUB_SHA:0:7}
