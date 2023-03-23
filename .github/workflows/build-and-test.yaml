@@ -244,18 +244,33 @@ jobs:
             - '.github/**'
 
     - name: Run kernel headers test for multiple linux distributions
+      needs: [clang-format-check]
       id: run-kernel-header-tests
       if: steps.changes.outputs.kernel == 'true' || steps.changes.outputs.github == 'true'
       run: |
-        docker run -t \
-        --rm \
-        --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
-        --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/root/src,readonly" \
+        sudo spctl --add /usr/local/bin/brew
+        brew install podman
+        sudo spctl --add /usr/local/bin/podman
+        poman machine init --rootful
+        podman machine start
+        podman pull $BENV_IMAGE
+        podman container run -dt -p 5000:5000 --name registry docker.io/library/registry:2
+        
+        podman run -t --rm \
+        --mount type=bind,source=$PWD,destination=/root/src,readonly \
+        --mount type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock \
         --env EBPF_NET_SRC_ROOT=/root/src \
-        $BENV_IMAGE \
-        ./build.sh kernel-collector-docker reducer-docker
+        --name benv \
+        --privileged \
+        quay.io/splunko11ytest/network-explorer-debug/build-env:latest \
+        ./build.sh reducer-docker-registry kernel-collector-docker
+        
         reducer_image=reducer:${{ needs.clang-format-check.outputs.date }}-${{github.event.pull_request.head.ref}}-${GITHUB_SHA:0:7}
-        docker tag reducer:latest $reducer_image
+        docker tag reducer:latest localhost:5000/$reducer_image
         kernel_collector_image=kernel-collector:${{ needs.clang-format-check.outputs.date }}-${{github.event.pull_request.head.ref}}-${GITHUB_SHA:0:7}
-        docker tag kernel-collector:latest $kernel_collector_image
+        docker tag kernel-collector:latest localhost:5000/$kernel_collector_image
+        
+        docker push localhost:5000/$reducer_image
+        docker push localhost:5000/$kernel_collector_image
+        
         ./test/kernel-headers/run-tests.sh ${{ needs.clang-format-check.outputs.date }}-${{github.event.pull_request.head.ref}}-${GITHUB_SHA:0:7}
