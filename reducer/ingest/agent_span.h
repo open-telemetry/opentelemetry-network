@@ -132,12 +132,10 @@ public:
 
   std::string const &node_id() const { return node_id_; }
   std::string const &node_az() const { return node_az_; }
-  std::string const &ns() const { return namespace_override_; }
-  std::string const &cluster() const { return cluster_override_; }
+  std::string const &ns() const { return namespace_; }
+  std::string const &cluster() const { return cluster_; }
   std::string const &role() const { return node_role_; }
   std::string const &instance_type() const { return instance_type_; }
-
-  const std::string &pod_name() const { return pod_name_; }
 
   // Returns true if the Agent's traffic (excluding version info) requires
   // Lz4 decompression.
@@ -209,6 +207,8 @@ private:
   CloudPlatform cloud_platform_ = CloudPlatform::unknown;
   std::string_view entrypoint_error_;
 
+  std::string namespace_;
+  std::string cluster_;
   std::string node_id_;
   std::string node_az_;
   std::string node_role_;
@@ -221,7 +221,6 @@ private:
   std::string service_override_;
   std::string host_override_;
   std::string zone_override_;
-  std::string pod_name_;
 
   // Addresses belonging to the host on which the agent is running.
   absl::flat_hash_set<IPv6Address> host_ips_;

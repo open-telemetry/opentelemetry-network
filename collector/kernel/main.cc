@@ -482,7 +482,7 @@ int main(int argc, char *argv[])
     configuration_data.labels()["namespace"] = override_agent_namespace;
   }
   if (!override_agent_cluster.empty()) {
-    LOG::debug("overriding agent cluter with '{}'", override_agent_cluster);
+    LOG::debug("overriding agent cluster with '{}'", override_agent_cluster);
     configuration_data.labels()["cluster"] = override_agent_cluster;
   }
   if (!override_agent_zone.empty()) {

@@ -21,6 +21,7 @@ TsdbEncoder::TsdbEncoder(
     Publisher::WriterPtr &otlp_metric_writer,
     std::chrono::nanoseconds timestamp,
     bool id_id_enabled,
+    bool az_id_enabled,
     const DisabledMetrics &disabled_metrics,
     std::optional<int> rollup_count)
     : metric_writers_(metric_writers),
@@ -28,6 +29,7 @@ TsdbEncoder::TsdbEncoder(
       otlp_metric_writer_(otlp_metric_writer),
       timestamp_(timestamp),
       id_id_enabled_(id_id_enabled),
+      az_id_enabled_(az_id_enabled),
       disabled_metrics_(disabled_metrics)
 {
   if (!metric_writers.empty()) {

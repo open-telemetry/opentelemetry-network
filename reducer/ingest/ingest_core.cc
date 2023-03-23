@@ -192,6 +192,12 @@ void IngestCore::on_write_internal_stats_timer()
         auto *conn = ftconn->ingest_connection();
         AgentSpan &agent = conn->agent().impl();
 
+        // skip internal stats for AgentSpans that are not initialized (unknown) and for short-lived probe agents
+        if (agent.client_type() == ClientType::unknown || agent.client_type() == ClientType::liveness_probe ||
+            agent.client_type() == ClientType::readiness_probe) {
+          return;
+        }
+
         /* write client span utilization statistics */
 
         auto const client_handle_utilization = [&](std::string_view span_name, u64 size, u64 capacity) {

@@ -12,7 +12,7 @@ c_host:
 
 c_type:
   brief: Client type
-  description: Client types are numbers desginating different client types. Different types are kernel(1), cloud(2), k8s(3), ingest(4), matching(5), aggregation(6), liveness_probe (7), readiness_probe(8).
+  description: Client types are numbers designating different client types. Different types are kernel(1), cloud(2), k8s(3), ingest(4), matching(5), aggregation(6), liveness_probe (7), readiness_probe(8).
   associated_metrics: ebpf_net.time_since_last_message_ns, ebpf_net.pipeline_message_error, ebpf_net.message, ebpf_net.entrypoint_info, ebpf_net.collector_log_count, ebpf_net.client_handle_pool, ebpf_net.client_handle_pool_fraction, ebpf_net.clock_offset_ns, ebpf_net.collector_health
   example: 1
 

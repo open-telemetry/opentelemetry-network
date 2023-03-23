@@ -194,7 +194,7 @@ int main(int argc, char *argv[])
   }
 
   if (enable_az_id.Get()) {
-    reducer::aggregation::AggCore::enable_az_node();
+    reducer::aggregation::AggCore::enable_az_id();
   }
 
   if (enable_autonomous_system_ip.Get()) {
