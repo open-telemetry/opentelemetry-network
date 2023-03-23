@@ -248,13 +248,14 @@ jobs:
       if: steps.changes.outputs.kernel == 'true' || steps.changes.outputs.github == 'true'
       run: |
         sudo spctl --add /usr/local/bin/brew
-        brew update && brew upgrade
+        brew update
         brew install podman
         sudo spctl --add /usr/local/bin/podman
         podman machine init --rootful
         podman machine start
         podman pull $BENV_IMAGE
         podman container run -dt -p 5000:5000 --name registry docker.io/library/registry:2
+        git submodule update  --init --recursive
         
         podman run -t --rm \
         --mount type=bind,source=$PWD,destination=/root/src,readonly \
