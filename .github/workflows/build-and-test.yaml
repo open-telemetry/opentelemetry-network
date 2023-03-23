@@ -47,7 +47,7 @@ jobs:
     outputs:
       date: ${{ steps.date.outputs.date }}
 
-  build-and-push-reducer:
+  build-reducer:
     name: build-and-push-reducer
     runs-on: ubuntu-20.04
     needs: [clang-format-check]
@@ -73,7 +73,7 @@ jobs:
         $BENV_IMAGE \
         ./build.sh reducer
 
-  build-and-push-kernel-collector:
+  build-kernel-collector:
     name: build-and-push-kernel-collector
     runs-on: ubuntu-20.04
     needs: [clang-format-check]
@@ -83,7 +83,7 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: build-and-push-kernel-collector
+    - name: build-kernel-collector
       env:
         PASS: ${{ secrets.DOCKER_PASSWORD }}
       run: |
@@ -251,7 +251,7 @@ jobs:
         brew update
         brew install podman
         sudo spctl --add /usr/local/bin/podman
-        podman machine init --rootful
+        podman machine init --rootful --cpus 3 --disk-size 8 --memory 8196 
         podman machine start
         podman pull $BENV_IMAGE
         podman container run -dt -p 5000:5000 --name registry docker.io/library/registry:2
