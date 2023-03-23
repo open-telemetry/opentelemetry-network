@@ -38,8 +38,6 @@ fi
 print "running 6-cleanup.sh"
 ./6-cleanup.sh
 
-cd ..
-
 if [[ "${test_failed}" == "true" ]]
 then
   print "Testing of ${name} FAILED"
@@ -47,5 +45,3 @@ then
 else
   print "Testing of ${name} succeeded"
 fi
-
-
