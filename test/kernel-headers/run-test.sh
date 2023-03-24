@@ -32,14 +32,6 @@ cd ${name}
 print "running 0-setup.sh"
 ./0-setup.sh ${arg}
 
-## This should only be run for CentOS and other distributions using NetworkManager instead of static network configuration.
-
-if [ "$distro" == "centos" ]
-then
-  vagrant scp ${EBPF_NET_SRC_ROOT}/dev/networkmanager-resolv-conf.sh /tmp
-  vagrant ssh -- sudo /tmp/networkmanager-resolv-conf.sh
-fi
-
 print "running 1-start-reducer.sh"
 ./1-start-reducer.sh
 
