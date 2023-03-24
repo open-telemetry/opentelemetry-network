@@ -274,4 +274,4 @@ jobs:
         quay.io/splunko11ytest/network-explorer-debug/build-env:latest \
         ./build.sh -j 3 reducer-docker-registry kernel-collector-docker-registry
         
-        ./test/kernel-headers/run-tests.sh
+        ./test/kernel-headers/run-tests.sh github-runner
