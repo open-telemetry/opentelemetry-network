@@ -18,7 +18,7 @@ then
 else
   cat /etc/resolv.conf
   tag=":$1"
-  image_loc="${image_loc$}{tag}"
+  image_loc="${image_loc}${tag}"
 fi
 
 docker run --detach --rm \
