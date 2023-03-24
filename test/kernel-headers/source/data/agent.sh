@@ -20,7 +20,7 @@ then
   sudo docker pull ${image_loc}
 else
   tag=":$1"
-  image_loc="image_loc${tag}"
+  image_loc="${image_loc}${tag}"
   echo $image_loc
 fi
 

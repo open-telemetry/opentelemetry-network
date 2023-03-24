@@ -48,7 +48,7 @@ jobs:
       date: ${{ steps.date.outputs.date }}
 
   build-reducer:
-    name: build-and-push-reducer
+    name: build-reducer
     runs-on: ubuntu-20.04
     needs: [clang-format-check]
     steps:
@@ -57,7 +57,7 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: build-and-push-reducer
+    - name: build-and-reducer
       env:
         PASS: ${{ secrets.DOCKER_PASSWORD }}
       run: |
@@ -74,7 +74,7 @@ jobs:
         ./build.sh reducer
 
   build-kernel-collector:
-    name: build-and-push-kernel-collector
+    name: build-kernel-collector
     runs-on: ubuntu-20.04
     needs: [clang-format-check]
     steps:
