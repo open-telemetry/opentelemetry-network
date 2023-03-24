@@ -187,3 +187,9 @@ particular Linux distribution.
 
 Check out the [DevBox](../dev/devbox/README.md) documentation on how to build
 and use devboxes.
+
+
+## Further Reading ##
+
+- [Render Framework](./render.md)
+- [Reducer Architecture Overview](./reducer/architecture.md)

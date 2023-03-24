@@ -181,7 +181,21 @@ In this example the `ingest::flow` is a proxy for `matching::flow` span. When we
 a flow span in the `ingest` app, a flow span will automatically be instantiated in the
 `matching` app.
 
-Calling message functions on the proxy span sends messages to its target span.
+Calling message functions on the proxy span sends messages to its target span. For example:
+
+```
+// reducer/ingest/flow_updater.cc
+
+ebpf_net::ingest::keys::flow flow_key = {...};
+auto flow = local_index()->flow.by_key(flow_key);
+
+auto process = process_handle_.access(*local_index());
+
+flow.task_info(
+    (u8)side_,
+    jb_blob(process.comm()),
+    jb_blob(process.cgroup().name()));
+```
 
 
 ### Span Implementations ###
