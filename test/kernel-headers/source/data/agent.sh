@@ -4,8 +4,6 @@
 
 set -xe
 
-
-image_loc="localhost:5000/kernel-collector"
 container_name="test-kernel-collector"
 
 if [ "$(docker ps -a -q -f name="${container_name}")" ]
@@ -15,15 +13,7 @@ then
   docker rm "${container_name}-stopped"
 fi
 
-if [ $# -eq 0 ]
-then
-  sudo docker pull ${image_loc}
-else
-  tag=":$1"
-  image_loc="${image_loc}${tag}"
-  echo $image_loc
-fi
-
+docker pull localhost:5000/kernel-collector
 
 docker create \
   --name "${container_name}" \
@@ -46,7 +36,7 @@ docker create \
   --volume /var/cache:/hostfs/cache \
   --volume /var/run/docker.sock:/var/run/docker.sock \
   --entrypoint "/srv/test-entrypoint.sh" \
-  "${image_loc}" \
+  localhost:5000/kernel-collector \
     --log-console \
     --debug
 

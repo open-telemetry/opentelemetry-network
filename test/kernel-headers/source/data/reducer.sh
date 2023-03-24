@@ -4,26 +4,17 @@
 
 set -xeE
 
-image_loc="localhost:5000/reducer"
-
 trap 'catch $? $LINENO' ERR
 catch() {
   echo "Error $1 occurred at $0 line $2"
   exit $1
 }
 
-if [ $# -eq 0 ]
-then
-  sudo docker pull ${image_loc}
-else
-  cat /etc/resolv.conf
-  tag=":$1"
-  image_loc="${image_loc}${tag}"
-fi
+docker pull localhost:5000/reducer
 
 docker run --detach --rm \
   --network=host \
-  "${image_loc}" \
+  localhost:5000/reducer \
   --port 8000 \
   --prom 0.0.0.0:7000 \
   --partitions-per-shard 1 \

@@ -265,7 +265,6 @@ jobs:
         podman info
         git submodule update  --init --recursive
         
-        
         podman run -t --rm \
         --mount type=bind,source=$PWD,destination=/root/src,readonly \
         --mount type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock \
@@ -273,14 +272,6 @@ jobs:
         --name benv \
         --privileged \
         quay.io/splunko11ytest/network-explorer-debug/build-env:latest \
-        ./build.sh reducer-docker kernel-collector-docker
+        ./build.sh -j 3 reducer-docker-registry kernel-collector-docker-registry
         
-        reducer_image=reducer:${{ needs.clang-format-check.outputs.date }}-${{github.event.pull_request.head.ref}}-${GITHUB_SHA:0:7}
-        podman tag reducer:latest localhost:5000/$reducer_image
-        kernel_collector_image=kernel-collector:${{ needs.clang-format-check.outputs.date }}-${{github.event.pull_request.head.ref}}-${GITHUB_SHA:0:7}
-        podman tag kernel-collector:latest localhost:5000/$kernel_collector_image
-        
-        podman push localhost:5000/$reducer_image
-        podman push localhost:5000/$kernel_collector_image
-        
-        ./test/kernel-headers/run-tests.sh ${{ needs.clang-format-check.outputs.date }}-${{github.event.pull_request.head.ref}}-${GITHUB_SHA:0:7}
+        ./test/kernel-headers/run-tests.sh
