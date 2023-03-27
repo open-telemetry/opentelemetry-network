@@ -60,12 +60,13 @@ sudo /snap/bin/microk8s stop
 
 cat >> ~/.bash_aliases <<EOF
 alias helm='microk8s helm'
-alias k='microk8s kubectl'
 alias kubectl='microk8s kubectl'
+alias k='kubectl'
 alias kgc='k config get-contexts'
-alias kgp='microk8s kubectl get pods'
-alias kgpa='microk8s kubectl get pods -A'
-alias kns='kubectl config set-context --current --namespace'
+alias kgns='k get ns'
+alias kgp='k get pods'
+alias kgpa='k get pods -A'
+alias kns='k config set-context --current --namespace'
 EOF
 
 # configure microk8s to be able to access the local docker registry

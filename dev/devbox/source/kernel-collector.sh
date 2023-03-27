@@ -18,6 +18,7 @@ touch "${host_data_mount_path}/${bpf_src_export_file}"
 mkdir -p "${host_data_mount_path}/${minidump_dir}"
 
 docker_args=( \
+  --name kernel-collector
   --env EBPF_NET_INTAKE_HOST="127.0.0.1"
   --env EBPF_NET_HOST_DIR="/hostfs"
   --privileged
