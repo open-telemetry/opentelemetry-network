@@ -39,6 +39,8 @@ do
   fi
 done
 
+set +x
+
 echo -e "Ran ${num_run} tests, with ${num_failed} failure(s).\n" | tee -a ${test_dir}/summary.log
 
 echo "Test results are in ${test_dir}. "

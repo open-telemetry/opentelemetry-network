@@ -23,10 +23,6 @@ fi
 # don't do this until after vagrant up so the script can check the result and cleanup and exit if it fails
 source "${EBPF_NET_SRC_ROOT}/dev/script/bash-error-lib.sh"
 
-vagrant plugin install vagrant-sshfs
-
-vagrant plugin install vagrant-scp
-
 if [ $# -eq 0 ]
   then
     # Check if local docker registry is running
@@ -57,7 +53,7 @@ fi
 
 vagrant up --no-provision
 
-# Confirm tha the vagrant VM is running
+# Confirm that the vagrant VM is running
 result=$(vagrant status | grep ^default | grep running) || true
 if [[ "${result}" == "" ]]
 then
