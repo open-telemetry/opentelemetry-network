@@ -144,7 +144,7 @@ if [[ "$deploy_ebpf_net" == "true" ]]
     ebpf_net_yaml="${ebpf_net_yaml} -f ebpf-net-local-registry.yaml"
   fi
 
-  if [[ "${ebpf_net_use_local_registry}" == "true" ]]
+  if [[ "${ebpf_net_use_logging_exporter}" == "true" ]]
   then
     ebpf_net_yaml="${ebpf_net_yaml} -f ebpf-net-logging-exporter.yaml"
   fi

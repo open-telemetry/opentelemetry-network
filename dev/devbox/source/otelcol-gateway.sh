@@ -60,60 +60,60 @@ while [[ "$#" -gt 0 ]]; do
 done
 
 # Defaults
-OTEL_COLLECTOR_CONFIG_FILE="${EBPF_NET_SRC_ROOT}/dev/devbox/source/otelcol-config.yaml"
-OTEL_COLLECTOR_CONFIG_FILE_INTERNAL="/etc/otelcol/config.yaml"
-OTEL_COLLECTOR_CONTAINER_NAME="otelcol"
-OTEL_COLLECTOR_ENV_VARS=""
-OTEL_COLLECTOR_LOG_FILE="${PWD}/otel.log"
-OTEL_COLLECTOR_PORTS="-p 4317:4317 -p 4318:4318 -p 8888:8888 -p 13133:13133"
+otel_collector_config_file="${EBPF_NET_SRC_ROOT}/dev/devbox/source/otelcol-config.yaml"
+otel_collector_config_file_internal="/etc/otelcol/config.yaml"
+otel_collector_container_name="otelcol"
+otel_collector_env_vars=""
+otel_collector_log_file="${PWD}/otel.log"
+otel_collector_ports="-p 4317:4317 -p 4318:4318 -p 8888:8888 -p 13133:13133"
 
 if [[ ${use_prom_receiver} == "true" ]]
 then
-  sed -i "s/receivers: \[otlp\]/receivers: \[otlp, prometheus\]/" ${OTEL_COLLECTOR_CONFIG_FILE}
+  sed -i "s/receivers: \[otlp\]/receivers: \[otlp, prometheus\]/" ${otel_collector_config_file}
 else
-  sed -i "s/receivers: \[otlp, prometheus\]/receivers: \[otlp\]/" ${OTEL_COLLECTOR_CONFIG_FILE}
+  sed -i "s/receivers: \[otlp, prometheus\]/receivers: \[otlp\]/" ${otel_collector_config_file}
 fi
 
 if [[ ${use_network_host} == "true" ]]
 then
-  OTEL_COLLECTOR_PORTS="--network=host"
+  otel_collector_ports="--network=host"
 fi
 
 case "${otelcol_to_use}" in
   otelcol)
     # https://hub.docker.com/r/otel/opentelemetry-collector/tags
-    OTEL_COLLECTOR_IMAGE="otel/opentelemetry-collector:latest"
+    otel_collector_image="otel/opentelemetry-collector:latest"
     ;;
   otelcol-contrib)
     # https://hub.docker.com/r/otel/opentelemetry-collector-contrib/tags
-    OTEL_COLLECTOR_IMAGE="otel/opentelemetry-collector-contrib:latest"
-    OTEL_COLLECTOR_CONFIG_FILE_INTERNAL="/etc/otelcol-contrib/config.yaml"
+    otel_collector_image="otel/opentelemetry-collector-contrib:latest"
+    otel_collector_config_file_internal="/etc/otelcol-contrib/config.yaml"
     ;;
   splunk-otelcol)
     # https://github.com/signalfx/splunk-otel-collector/blob/main/docs/getting-started/linux-manual.md
     # https://quay.io/repository/signalfx/splunk-otel-collector?tab=tags
-    OTEL_COLLECTOR_IMAGE="quay.io/signalfx/splunk-otel-collector:latest"
-    OTEL_COLLECTOR_ENV_VARS="-e SPLUNK_ACCESS_TOKEN=YOUR_TOKEN_HERE -e SPLUNK_REALM=YOUR_REALM_HERE -e SPLUNK_CONFIG=${OTEL_COLLECTOR_CONFIG_FILE_INTERNAL}"
+    otel_collector_image="quay.io/signalfx/splunk-otel-collector:latest"
+    otel_collector_env_vars="-e SPLUNK_ACCESS_TOKEN=YOUR_TOKEN_HERE -e SPLUNK_REALM=YOUR_REALM_HERE -e SPLUNK_CONFIG=${otel_collector_config_file_internal}"
     ;;
 esac
 
-echo "OTEL_COLLECTOR_IMAGE ${OTEL_COLLECTOR_IMAGE}"
-echo "OTEL_COLLECTOR_CONFIG_FILE ${OTEL_COLLECTOR_CONFIG_FILE}"
-echo "OTEL_COLLECTOR_CONFIG_FILE_INTERNAL ${OTEL_COLLECTOR_CONFIG_FILE_INTERNAL}"
-echo "OTEL_COLLECTOR_ENV_VARS ${OTEL_COLLECTOR_ENV_VARS}"
-echo "OTEL_COLLECTOR_PORTS ${OTEL_COLLECTOR_PORTS}"
-echo "OTEL_COLLECTOR_LOG_FILE ${OTEL_COLLECTOR_LOG_FILE}"
+echo "otel_collector_image ${otel_collector_image}"
+echo "otel_collector_config_file ${otel_collector_config_file}"
+echo "otel_collector_config_file_internal ${otel_collector_config_file_internal}"
+echo "otel_collector_env_vars ${otel_collector_env_vars}"
+echo "otel_collector_ports ${otel_collector_ports}"
+echo "otel_collector_log_file ${otel_collector_log_file}"
 
 set -x
 
-touch "${OTEL_COLLECTOR_LOG_FILE}"
-chmod 666 "${OTEL_COLLECTOR_LOG_FILE}"
+touch "${otel_collector_log_file}"
+chmod 666 "${otel_collector_log_file}"
 
 docker run \
   --rm \
-  ${OTEL_COLLECTOR_ENV_VARS} \
-  ${OTEL_COLLECTOR_PORTS} \
-  -v "${OTEL_COLLECTOR_CONFIG_FILE}:${OTEL_COLLECTOR_CONFIG_FILE_INTERNAL}" \
-  -v "${OTEL_COLLECTOR_LOG_FILE}:/var/log/otel.log" \
-  --name ${OTEL_COLLECTOR_CONTAINER_NAME} \
-  ${OTEL_COLLECTOR_IMAGE}
+  ${otel_collector_env_vars} \
+  ${otel_collector_ports} \
+  -v "${otel_collector_config_file}:${otel_collector_config_file_internal}" \
+  -v "${otel_collector_log_file}:/var/log/otel.log" \
+  --name ${otel_collector_container_name} \
+  ${otel_collector_image}

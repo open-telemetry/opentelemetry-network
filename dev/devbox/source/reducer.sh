@@ -2,6 +2,8 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
+image="localhost:5000/reducer"
+
 num_shards="1"
 publish_ports="false"
 start_prometheus="false"
@@ -9,10 +11,10 @@ publish_otlp_grpc_metrics="true"
 publish_prometheus_metrics="false"
 
 docker_args=( \
+  --name reducer
   --env EBPF_NET_RUN_UNDER_GDB="${EBPF_NET_RUN_UNDER_GDB}"
   --volume "$HOME/src/:/root/src"
   --volume "$HOME/out/:/root/out"
-  --privileged
 )
 
 app_args=( \
@@ -26,7 +28,7 @@ app_args=( \
 )
 
 function print_help {
-  echo "usage: $0 [--cgdb|--disable-otlp-grpc-metrics|--enable-prometheus-metrics|--env|--gdb|--help|--num-shards <num>|--prom|--publish-ports] args..."
+  echo "usage: $0 [--cgdb|--disable-otlp-grpc-metrics|--enable-prometheus-metrics|--env|--gdb|--help|--num-shards <num>|--prom|--public|--publish-ports] args..."
   echo
   echo '  --cgdb: run the pipeline server under `cgdb`'
   echo "  --disable-otlp-grpc-metrics: do not publish metrics via OTLP gRPC"
@@ -36,6 +38,7 @@ function print_help {
   echo "  --help: display this help message and the container's help message"
   echo "  --num-shards <num>: the number of shards to run per reducer core"
   echo "  --prom: start prometheus"
+  echo "  --public: use the public reducer image from quay.io (default is to use localhost:5000/reducer image from local registry)"
   echo "  --publish-ports: publish individual ports (instead of running with --network=host)"
   echo "  --tag: use the reducer image with the specified tag (--tag <TAG>)"
   echo "  args...: any additional arguments are forwarded to the container"
@@ -74,6 +77,14 @@ while [[ "$#" -gt 0 ]]; do
     --num-shards)
       num_shards="$1"
       shift;
+      ;;
+
+    --public)
+      image="quay.io/signalfx/splunk-network-explorer-reducer"
+      if [[ "${tag}" == "" ]]
+      then
+        tag=":latest-v0.9"
+      fi
       ;;
 
     --publish-ports)
@@ -140,11 +151,11 @@ then
   )
 fi
 
-docker pull localhost:5000/reducer${tag}
+docker pull "${image}${tag}"
 
 export container_id="$( \
   docker create -t --rm "${docker_args[@]}" \
-    localhost:5000/reducer${tag} "${app_args[@]}" \
+    "${image}${tag}" "${app_args[@]}" \
 )"
 
 function cleanup_docker {
