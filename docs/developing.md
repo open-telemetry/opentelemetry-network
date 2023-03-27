@@ -44,6 +44,7 @@ To save time and space, the latest version can be pulled from from
 
 ```
 docker pull quay.io/splunko11ytest/network-explorer-debug/build-env
+docker tag quay.io/splunko11ytest/network-explorer-debug/build-env build-env:latest
 ```
 
 
