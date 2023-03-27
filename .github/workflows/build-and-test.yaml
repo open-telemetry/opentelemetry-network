@@ -8,10 +8,10 @@ on:
     branches:
       - main
   pull_request:
+    paths:
 
 env:
-  BENV_IMAGE: quay.io/splunko11ytest/network-explorer-debug/benv-final
-
+  BENV_IMAGE: quay.io/splunko11ytest/network-explorer-debug/build-env
 
 concurrency:
   group: build-and-test-${{ github.event.pull_request_number || github.ref }}
@@ -33,12 +33,19 @@ jobs:
     - name: Check out the codebase
       uses: actions/checkout@v3
 
+    - name: Get current date
+      id: date
+      run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+
     - name: Runs format checker
       run: |
         sudo apt update
         sudo apt install -y clang-format-11
         cd ${{ github.workspace }}
         ./.github/workflows/scripts/check-clang-format.sh
+
+    outputs:
+      date: ${{ steps.date.outputs.date }}
 
   build-reducer:
     name: build-reducer
@@ -50,7 +57,9 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: build reducer
+    - name: build-reducer
+      env:
+        PASS: ${{ secrets.DOCKER_PASSWORD }}
       run: |
         echo "github.workspace = ${{ github.workspace }}"
         docker pull $BENV_IMAGE
@@ -63,7 +72,6 @@ jobs:
         $BENV_IMAGE \
         ./build.sh reducer
 
-
   build-kernel-collector:
     name: build-kernel-collector
     runs-on: ubuntu-20.04
@@ -74,7 +82,9 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: build kernel-collector
+    - name: build-kernel-collector
+      env:
+        PASS: ${{ secrets.DOCKER_PASSWORD }}
       run: |
         echo "github.workspace = ${{ github.workspace }}"
         docker pull $BENV_IMAGE
@@ -189,7 +199,6 @@ jobs:
         fetch-depth: 0
     - name: build unit tests with asan and debug flags on then run all tests
       run: |
-        echo "github.workspace = ${{ github.workspace }}"
         docker pull $BENV_IMAGE
         git submodule update  --init --recursive
         docker run -t \
@@ -200,3 +209,72 @@ jobs:
         $BENV_IMAGE \
         ./build.sh --debug --asan unit_tests test
 
+  run-kernel-header-tests:
+    name: run-kernel-header-tests
+    needs: [clang-format-check]
+    runs-on: macos-12
+    env:
+      EBPF_NET_SRC_ROOT: ${{ github.workspace }}
+    steps:
+    - name: Check out the codebase
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - uses: dorny/paths-filter@v2
+      id: changes
+      with:
+        filters: |
+          kernel:
+            - 'collector/kernel/**'
+            - 'channel/**'
+            - 'common/**'
+            - 'cmake/**'
+            - 'config/**'
+            - 'ext/**'
+            - 'geoip/**'
+            - 'jitbuf/**'
+            - 'platform/**'
+            - 'render/**'
+            - 'renderc/**'
+            - 'scheduling/**'
+            - 'util/**'
+          github:
+            - '.github/**'
+
+    - name: Run kernel headers test for multiple linux distributions
+      id: run-kernel-header-tests
+      if: steps.changes.outputs.kernel == 'true' || steps.changes.outputs.github == 'true'
+      run: |
+        sudo spctl --add /usr/local/bin/brew
+        brew update
+        brew install podman
+        sudo spctl --add /usr/local/bin/podman
+        podman machine init --rootful --cpus 3 --disk-size 12 --memory 8196 
+        podman machine start
+        podman pull $BENV_IMAGE
+
+        podman machine ssh 'cat > /etc/containers/registries.conf.d/localhost.conf' <<EOF
+        [[registry]]
+        location = "localhost:5000"
+        insecure = true
+        EOF
+        podman machine ssh systemctl restart podman
+        podman container run -dt -p 5000:5000 --name registry docker.io/library/registry:2
+        podman info
+        git submodule update  --init --recursive
+
+        podman run -t --rm \
+        --mount type=bind,source=$PWD,destination=/root/src,readonly \
+        --mount type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock \
+        --env EBPF_NET_SRC_ROOT=/root/src \
+        --name benv \
+        --privileged \
+        $BENV_IMAGE \
+        ./build.sh -j 3 reducer-docker-registry kernel-collector-docker-registry
+
+        vagrant plugin install vagrant-sshfs
+        vagrant plugin install vagrant-scp
+
+        
+        ./test/kernel-headers/run-tests.sh github-runner

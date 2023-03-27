@@ -12,10 +12,16 @@ function print {
   echo "===================================== $1 ====================================="
 }
 
-# Takes 2 to 3 arguments: distro, version, and optional kernel version
+# Takes 2 to 4 arguments: distro, version, and optional kernel version, tag
 distro=$1
 version=$2
-kernel_version=$3
+if [ $# -eq 3 ];
+then
+  kernel_version=$3
+elif [ $# -eq 4 ] || [ $# -eq 5 ];
+then
+  arg=$4
+fi
 
 name=${distro}-${version}
 [ "$kernel_version" != "" ] && name=${name}-${kernel_version}
@@ -24,12 +30,15 @@ ${EBPF_NET_SRC_ROOT}/test/kernel-headers/bootstrap.sh ${distro} ${version} ${ker
 
 cd ${name}
 print "running 0-setup.sh"
-./0-setup.sh
+./0-setup.sh ${arg}
+
 print "running 1-start-reducer.sh"
 ./1-start-reducer.sh
+
 print "running 2-apply-selinux-policy.sh"
-./2-apply-selinux-policy.sh
-# Ubuntu Jammy cannot automatically fetch headers currently because kernel-collector with bitnami/minideb:bullseye
+  ./2-apply-selinux-policy.sh
+
+# Ubuntu Jammy cannot automatically fetch headers currently because kernel-collector with bitnami/minideb:buster
 # base image does not support zstd compression
 is_jammy=$(grep jammy <<<$version) || true
 if [[ "${is_jammy}" != "" ]]
