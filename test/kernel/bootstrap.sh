@@ -6,7 +6,7 @@ EBPF_NET_SRC_ROOT="${EBPF_NET_SRC_ROOT:-$(git rev-parse --show-toplevel)}"
 source "${EBPF_NET_SRC_ROOT}/dev/script/bash-error-lib.sh"
 set -x
 
-src_path="${EBPF_NET_SRC_ROOT}/test/kernel-headers/source"
+src_path="${EBPF_NET_SRC_ROOT}/test/kernel/source"
 
 distro_name="$1"; shift
 distro_version="$1"; shift

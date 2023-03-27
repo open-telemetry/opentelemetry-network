@@ -129,12 +129,15 @@ To view the the metrics output from the OpenTelemetry eBPF pipeline:
 
         tail -f ~/otel.log | jq .
 
-The default when the `--public` option is not specified as in the above examples is to use Docker images from the local Docker registry running on the host that is running the devbox VM at `localhost:5000`.  The typical use case is for developers to build and publish images to the local registry for testing in a devbox.  [Click here for more information on building.](https://github.com/open-telemetry/opentelemetry-ebpf/blob/main/docs/developing.md#building-the-project)  To list available build targets that will publish images to the local registry, from within the `build-env` container:
-  - `make help | grep docker-registry`  
-  or
-  - `../build.sh --list-targets | grep docker-registry`
+The default when the `--public` option is not specified as in the above examples is to use Docker images from the local Docker registry running on the host that is running the devbox VM at `localhost:5000`.  The typical use case is for developers to build and publish images to the local registry for testing in a devbox.  [Click here for more information on building.](../../docs/developing.md#building-the-project)  To list available build targets that will publish images to the local registry, from within the `build-env` container:
 
-  Some examples to build and publish the kernel-collector, reducer, and all pipeline images respectively:
+    make help | grep docker-registry
+
+  or
+
+    ../build.sh --list-targets | grep docker-registry
+
+  Some examples to build and publish the kernel-collector, reducer, and all OpenTelemetry eBPF component images respectively:
 
         ../build.sh kernel-collector-docker-registry
         ../build.sh reducer-docker-registry
