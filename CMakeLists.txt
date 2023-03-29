@@ -51,6 +51,7 @@ include(breakpad)
 include(abseil)
 include(yamlcpp)
 include(render)
+include(CodeCoverage)
 
 include_directories(
   ${PROJECT_SOURCE_DIR}
@@ -86,3 +87,9 @@ configure_file(config.h.cmake_in config.h)
 add_dependencies(pipeline collectors reducer)
 add_dependencies(pipeline-docker collectors-docker)
 add_dependencies(pipeline-docker-registry collectors-docker-registry)
+
+if(CMAKE_COMPILER_IS_GNUCXX)
+    include(CodeCoverage)
+    append_coverage_compiler_flags()
+    setup_target_for_coverage_gcovr_xml("coverage")
+endif()
