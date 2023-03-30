@@ -54,7 +54,6 @@ CgroupProber::CgroupProber(
 
   // EXISTING cgroups v1
   probe_handler.start_probe(bpf_module, "on_cgroup_clone_children_read", "cgroup_clone_children_read");
-  probe_handler.start_probe(bpf_module, "on_cgroup_attach_task", "cgroup_attach_task");
 
   periodic_cb();
   check_cb("cgroup prober startup");
