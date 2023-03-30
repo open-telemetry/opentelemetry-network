@@ -1,0 +1,17 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+################################################################################
+# Override OpenTelemetry Demo default values to give grafana and the otelcol
+# more memory.
+################################################################################
+
+grafana:
+  resources:
+    limits:
+      memory: 500Mi
+
+opentelemetry-collector:
+  resources:
+    limits:
+      memory: 500Mi
