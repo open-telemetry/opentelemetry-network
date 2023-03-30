@@ -101,7 +101,7 @@ done
 
 splunk_args="--set=splunkObservability.realm=${splunk_realm} --set=splunkObservability.accessToken=${splunk_token}"
 
-if [[ "$deploy_microservices_demo" == "" && "$deploy_otel_demo" == "" && "$deploy_ebpf_net" == "" ]]
+if [[ "${deploy_microservices_demo}" == "" && "${deploy_otel_demo}" == "" && "${deploy_ebpf_net}" == "" ]]
 then
   echo -e "Need to specify what to deploy.\n"
   print_help
@@ -112,7 +112,7 @@ set -x
 
 num_pods_before_deploy=$(microk8s kubectl get pods -A | grep -v "^NAME" | wc -l)
 
-if [[ "$deploy_microservices_demo" == "true" ]]
+if [[ "${deploy_microservices_demo}" == "true" ]]
 then
   microk8s kubectl create ns demo-ns || true
   microk8s kubectl config set-context --current --namespace demo-ns
@@ -120,7 +120,7 @@ then
   microk8s kubectl apply -f ~/microservices-demo/release/kubernetes-manifests.yaml
 fi
 
-if [[ "$deploy_otel_demo" == "true" ]]
+if [[ "${deploy_otel_demo}" == "true" ]]
 then
   microk8s kubectl create ns otel-demo-ns || true
   microk8s kubectl config set-context --current --namespace otel-demo-ns
@@ -129,7 +129,7 @@ then
   microk8s helm -n otel-demo-ns install otel-demo open-telemetry/opentelemetry-demo
 fi
 
-if [[ "$deploy_ebpf_net" == "true" ]]
+if [[ "${deploy_ebpf_net}" == "true" ]]
  then
   microk8s kubectl create ns ebpf-net-ns || true
   microk8s kubectl config set-context --current --namespace ebpf-net-ns
@@ -173,8 +173,8 @@ do
     break
   fi
 
-  remaining_attempts=$(($remaining_attempts-1))
-  if [[ $remaining_attempts == 0 ]]
+  remaining_attempts=$((${remaining_attempts}-1))
+  if [ ${remaining_attempts} -eq 0 ]
   then
     echo
     microk8s kubectl get pods -A

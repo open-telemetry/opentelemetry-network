@@ -182,13 +182,19 @@ See the documentation for individual components:
 
 OpenTelemetry-eBPF needs to support multiple Linux kernels and flavors
 (distributions). This is particulary true for the kernel collector component,
-which is heavily dependent on the intricacies of particualar Linux kernel
+which is heavily dependent on the intricacies of particular Linux kernel
 versions. To support this, we use a number of devboxes, which are VMs of a
 particular Linux distribution.
 
-Check out the [DevBox](../dev/devbox/README.md) documentation on how to build
+Check out the [devbox](../dev/devbox/README.md) documentation on how to build
 and use devboxes.
 
+## OpenTelemetry eBPF Linux kernel tests ##
+
+There are some tests that are run as part of GitHub Actions for each PR and
+merge to main, and that can be run manually, to validate OpenTelemetry eBPF
+components against various Linux distributions and kernel versions.
+See [test/kernel](../test/kernel/README.md)
 
 ## Further Reading ##
 
