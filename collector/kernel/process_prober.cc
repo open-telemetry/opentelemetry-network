@@ -21,6 +21,9 @@ ProcessProber::ProcessProber(
   probe_handler.start_probe(bpf_module, "on_cgroup_exit", "cgroup_exit");
   probe_handler.start_kretprobe(bpf_module, "onret_cgroup_exit", "cgroup_exit");
 
+  // STATE CHANGE (pid->cgroup)
+  probe_handler.start_probe(bpf_module, "on_cgroup_attach_task", "cgroup_attach_task");
+
   // START
   /* probe for new process info
    * Note that other functions we considered were:
