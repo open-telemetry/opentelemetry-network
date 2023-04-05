@@ -257,8 +257,6 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
     FILES
       ../../NOTICE.txt
       ../../LICENSE.txt
-    DEPENDENCY_OF
-      collectors
     ARGS
       BUILD_TYPE="Debug"
   )
@@ -292,8 +290,6 @@ else()
     FILES
       ../../NOTICE.txt
       ../../LICENSE.txt
-    DEPENDENCY_OF
-      collectors
   )
 endif()
 
