@@ -27,8 +27,16 @@ fi
 mkdir -p "${distro_path}"
 pushd "${distro_path}"
 
+if [[ "${distro_name}" == "bento" && "${distro_version}" == "amazonlinux-2" ]]
+then
+  script_distro_name="centos"
+else
+  script_distro_name="${distro_name}"
+fi
+
 sed_args=( \
-  -e "s/PLACEHOLDER_DISTRO_NAME/${distro_name}/g"
+  -e "s/PLACEHOLDER_BOX_DISTRO_NAME/${distro_name}/g"
+  -e "s/PLACEHOLDER_DISTRO_NAME/${script_distro_name}/g"
   -e "s/PLACEHOLDER_DISTRO_VERSION/${distro_version}/g"
   -e "s/PLACEHOLDER_KERNEL_VERSION/${kernel_version}/g"
 )

@@ -24,16 +24,22 @@ common_debian_packages=( \
   valgrind
   ripgrep
   selinux-utils
+  bcc
+  bpfcc-tools
+  bpftrace
+  cgroup-tools
+  gdb cgdb
 )
 
 additional_ubuntu_packages=( \
-  bcc
-  bpfcc-tools
+  linux-tools-common linux-tools-generic # bpftool
 )
 
 case "${ID}" in
   debian)
     export DEBIAN_FRONTEND="noninteractive"
+
+    pkg_list=("${common_debian_packages[@]}")
 
     sudo -E apt-get install -y --no-install-recommends --allow-change-held-packages "${pkg_list[@]}"
     ;;

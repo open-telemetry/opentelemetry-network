@@ -47,14 +47,13 @@ docker start "${container_name}"
 
 start_string="Telemetry is flowing\!"
 
-remaining_attempts=24
+remaining_attempts=60
 while true
 do
   result=$(docker ps | grep "${container_name}") || true
   if [[ "${result}" == "" ]]
   then
     docker ps -a
-    docker logs "${container_name}"
     echo "ERROR: kernel-collector container is not running!"
     exit 1
   fi
@@ -69,6 +68,7 @@ do
   if [[ $remaining_attempts == 0 ]]
   then
     docker ps -a
+    docker inspect "${container_name}"
     docker logs "${container_name}"
     echo "ERROR: kernel-collector did not start within the time expected!"
     exit 1
