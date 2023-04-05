@@ -41,29 +41,37 @@ void SocketSpan::set_state_ipv4(::ebpf_net::ingest::weak_refs::socket span_ref, 
 
   auto local_addr = IPv4Address::from(msg->src);
   auto remote_addr = IPv4Address::from(msg->dest);
+  auto local_port = msg->sport;
+  auto remote_port = msg->dport;
 
   LOG::trace_in(
       Component::socket,
       "SocketSpan::set_state_ipv4: sk={}, src={}:{}, dst={}:{}, tx_rx={}",
       msg->sk,
       local_addr,
-      msg->sport,
+      local_port,
       remote_addr,
-      msg->dport,
+      remote_port,
       msg->tx_rx);
 
+  auto local_addr6 = local_addr.to_ipv6();
+  auto remote_addr6 = remote_addr.to_ipv6();
+
   if (flow_updater_ && flow_updater_->valid()) {
-    local_logger().socket_address_already_assigned();
+    if (std::tie(local_addr6, local_port, remote_addr6, remote_port) !=
+        std::tie(local_addr_, local_port_, remote_addr_, remote_port_)) {
+      local_logger().socket_address_already_assigned();
+    }
     return;
   }
 
   /* save the IP addresses as IPv6-mapped IPv4 */
-  local_addr_ = local_addr.to_ipv6();
-  remote_addr_ = remote_addr.to_ipv6();
+  local_addr_ = local_addr6;
+  remote_addr_ = remote_addr6;
 
   /* save ports */
-  local_port_ = msg->sport;
-  remote_port_ = msg->dport;
+  local_port_ = local_port;
+  remote_port_ = remote_port;
 
   /* connector/acceptor */
   is_connector_ = msg->tx_rx;
@@ -90,22 +98,26 @@ void SocketSpan::set_state_ipv6(::ebpf_net::ingest::weak_refs::socket span_ref, 
   auto *conn = local_connection()->ingest_connection();
   AgentSpan &agent = conn->agent().impl();
 
-  /* get the ipv6 addresses */
   auto local_addr = IPv6Address::from(msg->src);
   auto remote_addr = IPv6Address::from(msg->dest);
+  auto local_port = msg->sport;
+  auto remote_port = msg->dport;
 
   LOG::trace_in(
       Component::socket,
       "SocketSpan::set_state_ipv6: sk={}, src={}:{}, dst={}:{}, tx_rx={}",
       msg->sk,
       local_addr,
-      msg->sport,
+      local_port,
       remote_addr,
-      msg->dport,
+      remote_port,
       msg->tx_rx);
 
   if (flow_updater_ && flow_updater_->valid()) {
-    local_logger().socket_address_already_assigned();
+    if (std::tie(local_addr, local_port, remote_addr, remote_port) !=
+        std::tie(local_addr_, local_port_, remote_addr_, remote_port_)) {
+      local_logger().socket_address_already_assigned();
+    }
     return;
   }
 
@@ -114,8 +126,8 @@ void SocketSpan::set_state_ipv6(::ebpf_net::ingest::weak_refs::socket span_ref, 
   remote_addr_ = remote_addr;
 
   /* save ports */
-  local_port_ = msg->sport;
-  remote_port_ = msg->dport;
+  local_port_ = local_port;
+  remote_port_ = remote_port;
 
   /* connector/acceptor */
   is_connector_ = msg->tx_rx;
