@@ -226,18 +226,20 @@ jobs:
       with:
         filters: |
           kernel:
-            - 'collector/kernel/**'
             - 'channel/**'
-            - 'common/**'
             - 'cmake/**'
+            - 'collector/kernel/**'
+            - 'common/**'
             - 'config/**'
             - 'ext/**'
             - 'geoip/**'
             - 'jitbuf/**'
+            - 'otlp/**'
             - 'platform/**'
             - 'render/**'
             - 'renderc/**'
             - 'scheduling/**'
+            - 'test/kernel/**'
             - 'util/**'
           github:
             - '.github/**'
@@ -295,18 +297,20 @@ jobs:
       with:
         filters: |
           kernel:
-            - 'collector/kernel/**'
             - 'channel/**'
-            - 'common/**'
             - 'cmake/**'
+            - 'collector/kernel/**'
+            - 'common/**'
             - 'config/**'
             - 'ext/**'
             - 'geoip/**'
             - 'jitbuf/**'
+            - 'otlp/**'
             - 'platform/**'
             - 'render/**'
             - 'renderc/**'
             - 'scheduling/**'
+            - 'test/kernel/**'
             - 'util/**'
           github:
             - '.github/**'
