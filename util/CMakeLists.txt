@@ -64,16 +64,6 @@ target_link_libraries(
 )
 
 add_library(
-  url
-  STATIC
-    url.cc
-)
-target_link_libraries(
-  url
-    logging
-)
-
-add_library(
   base64
   STATIC
     base64.cc
@@ -182,7 +172,6 @@ add_library(
 )
 target_link_libraries(
   agent_id
-    url
     curl_engine
 )
 
