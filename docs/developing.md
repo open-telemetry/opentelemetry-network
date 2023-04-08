@@ -167,6 +167,27 @@ make unit_tests
 make test
 ```
 
+### Running Kernel Collector tests ###
+
+By default, unit tests do not run all kernel collector tests.
+
+To run these tests, you will need to run the Docker container with the `--privileged` flag, additional mount points and the environment variable `RUN_EBPF_TESTS` set to `true`.
+
+Taken together, the docker run command will now look like the following:
+```
+docker run -it --rm \
+  --env EBPF_NET_SRC_ROOT=/root/src \
+  --mount type=bind,source=$PWD,destination=/root/src,readonly \
+  --mount type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock \
+  --mount "type=bind,source=/lib/modules,destination=/lib/modules,readonly" \
+  --mount "type=bind,source=/usr/src,destination=/usr/src,readonly" \
+  --mount "type=bind,source=/sys/kernel,destination=/sys/kernel,readonly" \
+  --mount "type=bind,source=/sys/fs/cgroup,destination=/hostfs/sys/fs/cgroup" \
+  --privileged \
+  -e RUN_EBPF_TESTS=true \
+  --name benv \
+  build-env bash
+```
 
 ## Running ##
 
