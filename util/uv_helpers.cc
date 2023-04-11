@@ -24,6 +24,13 @@ void close_uv_loop_cleanly(uv_loop_t *const loop)
   CHECK_UV(uv_loop_close(loop));
 }
 
+void close_uv_handle_cleanly(uv_handle_t *handle, void (*cb)(uv_handle_t *))
+{
+  if (!uv_is_closing(handle)) {
+    uv_close(handle, cb);
+  }
+}
+
 void sync_uv_run(::uv_loop_t &loop, std::function<void()> fn)
 {
   std::mutex lock;

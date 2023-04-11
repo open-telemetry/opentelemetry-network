@@ -184,7 +184,7 @@ protected:
     auto &message_counts = get_test_channel()->get_message_counts();
     EXPECT_EQ(0, message_counts["bpf_log"]);
 
-    kernel_collector_.reset();
+    kernel_collector_->on_close();
 
     uv_stop(&loop_);
 
