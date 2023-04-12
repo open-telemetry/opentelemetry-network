@@ -5,7 +5,7 @@
 function print_help {
   echo "usage: $0 [--demo|--dev1|--dev2|--dev3|--dev4|"
   echo "                    --ebpf-net|--ebpf-net-debug|--ebpf-net-local-registry|--ebpf-net-local-helm-chart|"
-  echo "                    --ebpf-net-use-otel-demo-otelcol|--ebpf-net-trace|"
+  echo "                    --ebpf-net-trace|--ebpf-net-use-otel-demo-otelcol"
   echo "                    --help|--logging-exporter|--otel-demo|"
   echo "                    --splunk-realm <REALM>|--splunk-token <TOKEN>]"
   echo "  --demo: deploy the Google Online Boutique Microservices Demo"
