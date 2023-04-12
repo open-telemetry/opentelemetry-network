@@ -173,7 +173,8 @@ Each devbox[^3] has microk8s installed as a convenient Kubernetes environment fo
 1. Deploy the OpenTelemetry eBPF pipeline using the public [Splunk Distribution of OpenTelemetry Collector helm chart](https://signalfx.github.io/splunk-otel-collector-chart) (addition of OpenTelemetry eBPF to upstream helm chart TBD)
     - To see all options:
 
-            ~/k8s/deploy.sh --help
+            cd ~/k8s
+            ./deploy.sh --help
 
     - Deploy OpenTelemetry eBPF, with the OpenTelemetry Collector configured to use the logging exporter
 
@@ -197,6 +198,14 @@ Each devbox[^3] has microk8s installed as a convenient Kubernetes environment fo
 
             k logs -f ebpf-net-splunk-otel-collector-<COMPLETE_YOUR_POD_NAME> | rg "Name:|Value:"
 
+    - Examples of how to modify component(s) of previously deployed OpenTelemetry eBPF:
+
+            cd ~/k8s
+            ./modify.sh --ebpf-net ./ebpf-net-modify-reducer.yaml
+
+      or
+
+            ./modify.sh --ebpf-net ./ebpf-net-modify-otelcol.yaml
 
     - To uninstall the OpenTelemetry eBPF pipeline
 
