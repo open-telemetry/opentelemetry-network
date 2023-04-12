@@ -1,0 +1,11 @@
+# Example of modifying the OpenTelemetry eBPF Reducer that was previously deployed with ebpf-net to
+# use more shards then the default of 1, to disable all udp metrics, and to enable the ebpf_net.message
+# internal metric.
+
+networkExplorer:
+  reducer:
+    ingestShards: 2
+    matchingShards: 2
+    aggregationShards: 2
+    disableMetrics: [udp.all]
+    enableMetrics: [ebpf_net.message]

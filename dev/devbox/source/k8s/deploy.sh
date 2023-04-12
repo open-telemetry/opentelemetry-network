@@ -4,7 +4,8 @@
 
 function print_help {
   echo "usage: $0 [--demo|--dev1|--dev2|--dev3|--dev4|"
-  echo "                    --ebpf-net|--ebpf-net-debug|--ebpf-net-local|--ebpf-net-trace|--ebpf-net-use-otel-demo-otelcol"
+  echo "                    --ebpf-net|--ebpf-net-debug|--ebpf-net-local-registry|--ebpf-net-local-helm-chart|"
+  echo "                    --ebpf-net-use-otel-demo-otelcol|--ebpf-net-trace|"
   echo "                    --help|--logging-exporter|--otel-demo|"
   echo "                    --splunk-realm <REALM>|--splunk-token <TOKEN>]"
   echo "  --demo: deploy the Google Online Boutique Microservices Demo"
@@ -15,7 +16,10 @@ function print_help {
   echo "  --dev4: --ebpf-net --ebpf-net-debug --ebpf-net-use-otel-demo-otelcol --otel-demo"
   echo "  --ebpf-net: deploy OpenTelementry eBPF"
   echo "  --ebpf-net-debug | -d: enable debug logging for OpenTelemetry eBPF"
-  echo "  --ebpf-net-local | -l: use local docker registry to deploy OpenTelementry eBPF images (default is to use public quay.io/signalfx images)"
+  echo "  --ebpf-net-local-registry | -l: use local docker registry to deploy OpenTelementry eBPF"
+  echo "                                  (default is to use public quay.io/signalfx docker registry)"
+  echo "  --ebpf-net-local-helm-chart | -C: use local helm chart to deploy OpenTelementry eBPF"
+  echo "                                    (default is to use public splunk-otel-collector-chart/splunk-otel-collector)"
   echo "  --ebpf-net-trace | -t: enable trace logging for OpenTelemetry eBPF"
   echo "  --ebpf-net-use-otel-demo-otelcol: deploy OpenTelemetry eBPF using the OpenTelemetry Collector deployed with the otel-demo"
   echo "  --help: display this help message and the container's help message"
@@ -71,8 +75,12 @@ while [[ "$#" -gt 0 ]]; do
       ebpf_net_log_level="--set=networkExplorer.log.level=debug"
       ;;
 
-    --ebpf-net-local | -l)
+    --ebpf-net-local-registry | -l)
       ebpf_net_use_local_registry="true"
+      ;;
+
+    --ebpf-net-local-helm-chart | -C)
+      ebpf_net_use_local_helm_chart="true"
       ;;
 
     --logging-exporter | -L)
@@ -131,7 +139,7 @@ then
   microk8s kubectl create ns demo-ns || true
   microk8s kubectl config set-context --current --namespace demo-ns
 
-  microk8s kubectl apply -f ~/microservices-demo/release/kubernetes-manifests.yaml
+  microk8s kubectl apply -f $HOME/microservices-demo/release/kubernetes-manifests.yaml
 fi
 
 if [[ "${deploy_otel_demo}" == "true" ]]
@@ -166,8 +174,14 @@ then
     microk8s kubectl config set-context --current --namespace ebpf-net-ns
   fi
 
-  microk8s helm repo add splunk-otel-collector-chart https://signalfx.github.io/splunk-otel-collector-chart
-  microk8s helm repo update
+  if [[ "${ebpf_net_use_local_helm_chart}" == "true" ]]
+  then
+    chart="$HOME/splunk-otel-collector-chart/helm-charts/splunk-otel-collector"
+  else
+    microk8s helm repo add splunk-otel-collector-chart https://signalfx.github.io/splunk-otel-collector-chart
+    microk8s helm repo update
+    chart="splunk-otel-collector-chart/splunk-otel-collector"
+  fi
 
   ebpf_net_yaml="-f ebpf-net.yaml"
 
@@ -190,7 +204,7 @@ then
     ${ebpf_net_yaml} \
     ${ebpf_net_log_level} \
     ${splunk_args} \
-    splunk-otel-collector-chart/splunk-otel-collector
+    ${chart}
 fi
 
 microk8s helm list -A
