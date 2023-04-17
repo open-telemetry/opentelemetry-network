@@ -79,6 +79,7 @@ add_library(
     nat_handler.cc
     troubleshooting.cc
     tcp_data_handler.cc
+    kernel_symbols.cc
     protocols/protocol_handler_base.cc
     protocols/protocol_handler_unknown.cc
     protocols/protocol_handler_http.cc
@@ -296,4 +297,5 @@ endif()
 # Unit Tests
 #
 add_unit_test(cgroup_handler LIBS agentlib test_channel)
+add_unit_test(kernel_symbols LIBS agentlib)
 add_ebpf_unit_test(kernel_collector LIBS signal_handler agentlib agentxxdlib fastpass_util file_ops bcc-interface bcc-static config_file libuv-static system_ops static-executable test_channel)
