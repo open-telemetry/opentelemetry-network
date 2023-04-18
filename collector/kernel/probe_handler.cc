@@ -32,6 +32,27 @@ std::vector<int> get_online_cpus();
 
 ProbeHandler::ProbeHandler(logging::Logger &log) : log_(log), num_failed_probes_(0), stack_trace_count_(0){};
 
+void ProbeHandler::load_kernel_symbols()
+{
+  KernelSymbols ks;
+  try {
+    ks = read_proc_kallsyms();
+  } catch (std::exception &exc) {
+    log_.error("Failed to load kernel symbols: {}", exc.what());
+    return;
+  }
+
+  if (!ks.empty()) {
+    LOG::info("Kernel symbols list loaded");
+    kernel_symbols_ = std::move(ks);
+  }
+}
+
+void ProbeHandler::clear_kernel_symbols()
+{
+  kernel_symbols_.reset();
+}
+
 int ProbeHandler::setup_mmap(int cpu, int perf_fd, PerfContainer &perf, bool is_data, u32 n_bytes, u32 n_watermark_bytes)
 {
   /* get mmap'd memory */
@@ -221,6 +242,12 @@ int ProbeHandler::start_probe_common(
     const std::string &k_func_name,
     const std::string &event_id_suffix)
 {
+  // Consult the kernel symbols list only if it was successfully loaded.
+  if (kernel_symbols_ && !kernel_symbols_->contains(k_func_name)) {
+    LOG::debug("Kernel function not found: {}", k_func_name);
+    return -4;
+  }
+
   uint8_t *func_start = bpf_module.function_start(func_name);
   if (func_start == nullptr) {
     LOG::debug_in(AgentLogKind::BPF, "Could not get function start. func_name:{} k_func_name:{}", func_name, k_func_name);
