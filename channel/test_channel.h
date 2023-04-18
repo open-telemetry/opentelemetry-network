@@ -48,12 +48,15 @@ public:
   using BinaryMessageType = std::vector<u8>;
   using BinaryMessagesType = std::vector<BinaryMessageType>; // vector of messages sent in binary format
   BinaryMessagesType &get_binary_messages();
-  void binary_messages_for_each(std::function<void(BinaryMessageType const &)> cb);
+  void binary_messages_for_each(std::function<void(BinaryMessageType const &)> const &cb);
 
   using JsonMessageType = nlohmann::json;
   using JsonMessagesType = std::vector<JsonMessageType>; // vector of messages sent in JSON format
   JsonMessagesType &get_json_messages();
-  void json_messages_for_each(std::function<void(JsonMessageType const &)> cb);
+  void json_messages_for_each(std::function<void(JsonMessageType const &)> const &cb);
+
+  // Used to specify a function for the TestChannel to call for every render message processed by send().
+  void set_sent_msg_cb(std::function<void(nlohmann::json const &)> const &sent_msg_cb_);
 
 private:
   std::optional<std::reference_wrapper<uv_loop_t>> loop_;
@@ -69,6 +72,8 @@ private:
 
   BinaryMessagesType binary_messages_;
   JsonMessagesType json_messages_;
+
+  std::function<void(nlohmann::json const &)> sent_msg_cb_;
 };
 
 } // namespace channel

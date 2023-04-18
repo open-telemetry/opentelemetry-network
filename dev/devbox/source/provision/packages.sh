@@ -29,6 +29,7 @@ common_debian_packages=( \
   bpftrace
   cgroup-tools
   gdb cgdb
+  stress-ng
 )
 
 additional_ubuntu_packages=( \
