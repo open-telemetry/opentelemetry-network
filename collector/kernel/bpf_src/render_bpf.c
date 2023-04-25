@@ -671,19 +671,11 @@ static int add_tcp_open_socket(struct pt_regs *ctx, struct sock *sk, u32 tgid, u
   return 1;
 }
 
-// remove tcp_open_socket
-//
-// call this at the end of the socket's lifetime
-// note: this function is only called atomically from on_security_sk_free
 static void remove_tcp_open_socket(struct pt_regs *ctx, struct sock *sk)
 {
-  struct tcp_open_socket_t *sk_info;
-  sk_info = tcp_open_sockets.lookup(&sk);
-  if (!sk_info) {
-#if DEBUG_TCP_SOCKET_ERRORS
-    bpf_trace_printk("remove_tcp_open_socket of non-existent socket: %llx\n", sk);
-#endif
-    bpf_log(ctx, BPF_LOG_TABLE_BAD_REMOVE, BPF_TABLE_TCP_OPEN_SOCKETS, (u64)sk, 0);
+  struct tcp_open_socket_t *sk_info_p;
+  sk_info_p = tcp_open_sockets.lookup(&sk);
+  if (!sk_info_p) {
     return;
   }
 
@@ -691,20 +683,21 @@ static void remove_tcp_open_socket(struct pt_regs *ctx, struct sock *sk)
   bpf_trace_printk("remove_tcp_open_socket: %llx\n", sk);
 #endif
 
-  // always report last rtt estimator before close
-  // for short-lived connections, we won't see any data otherwise
-  u64 now = get_timestamp();
-  report_rtt_estimator(ctx, sk, sk_info, now, true);
+  // The lookup was successful.  Make a copy before deleting the entry, and only send related telemetry if the delete is
+  // successful.
+  struct tcp_open_socket_t sk_info = *sk_info_p;
 
   // do some cleanup from our hashmap
   int ret = tcp_open_sockets.delete(&sk);
   if (ret != 0) {
-#if DEBUG_TCP_SOCKET_ERRORS
-    bpf_trace_printk("remove_tcp_open_socket: failed to remove sk=%llx, ret=%d\n", sk, ret);
-#endif
-    bpf_log(ctx, BPF_LOG_TABLE_BAD_REMOVE, BPF_TABLE_TCP_OPEN_SOCKETS, abs_val(ret), 0);
+    // Another thread must have already deleted the entry for this sk.
     return;
   }
+
+  // always report last rtt estimator before close
+  // for short-lived connections, we won't see any data otherwise
+  u64 now = get_timestamp();
+  report_rtt_estimator(ctx, sk, &sk_info, now, true);
 
   perf_submit_agent_internal__close_sock_info(ctx, now, (__u64)sk);
 }
@@ -1297,13 +1290,9 @@ static void udp_send_stats_if_nonempty(struct pt_regs *ctx, u64 now, struct sock
 
 static void remove_udp_open_socket(struct pt_regs *ctx, struct sock *sk)
 {
-  struct udp_open_socket_t *sk_info;
-  sk_info = udp_open_sockets.lookup(&sk);
-  if (!sk_info) {
-#if DEBUG_UDP_SOCKET_ERRORS
-    bpf_trace_printk("remove_udp_open_socket of non-existent socket: %llx\n", sk);
-#endif
-    bpf_log(ctx, BPF_LOG_TABLE_BAD_REMOVE, BPF_TABLE_UDP_OPEN_SOCKETS, (u64)sk, 0);
+  struct udp_open_socket_t *sk_info_p;
+  sk_info_p = udp_open_sockets.lookup(&sk);
+  if (!sk_info_p) {
     return;
   }
 
@@ -1311,19 +1300,19 @@ static void remove_udp_open_socket(struct pt_regs *ctx, struct sock *sk)
   bpf_trace_printk("remove_udp_open_socket: %llx (cpu=%u)\n", sk, bpf_get_smp_processor_id());
 #endif
 
-  u64 now = get_timestamp();
-
-  udp_send_stats_if_nonempty(ctx, now, sk, &sk_info->stats[0], 0);
-  udp_send_stats_if_nonempty(ctx, now, sk, &sk_info->stats[1], 1);
+  // The lookup was successful.  Make a copy before deleting the entry, and only send related telemetry if the delete is
+  // successful.
+  struct udp_open_socket_t sk_info = *sk_info_p;
 
   int ret = udp_open_sockets.delete(&sk);
   if (ret != 0) {
-#if DEBUG_UDP_SOCKET_ERRORS
-    bpf_trace_printk("remove_udp_open_socket: failed to remove sk=%llx, ret=%d\n", sk, ret);
-#endif
-    bpf_log(ctx, BPF_LOG_TABLE_BAD_REMOVE, BPF_TABLE_UDP_OPEN_SOCKETS, abs_val(ret), 0);
+    // Another thread must have already deleted the entry for this sk.
     return;
   }
+
+  u64 now = get_timestamp();
+  udp_send_stats_if_nonempty(ctx, now, sk, &sk_info.stats[0], 0);
+  udp_send_stats_if_nonempty(ctx, now, sk, &sk_info.stats[1], 1);
 
   perf_submit_agent_internal__udp_destroy_socket(ctx, now, (__u64)sk);
 }
@@ -1455,9 +1444,17 @@ int onret_udp_v46_get_port(struct pt_regs *ctx)
   return 0;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// socket lifetime end
-
+/*
+ * socket lifetime end
+ * Note:  This function is called from on_security_sk_free() and on_inet_release().  Historically, only the security_sk_free()
+ * kprobe was used, but there were some unexplained missing socket close events that seemed to be due to security_sk_free()
+ * probes not being triggered from certain kernel thread states/contexts.  The inet_release() kprobe was added to make sure all
+ * socket close events were captured.  inet_release() calls security_sk_free(), synchronously in some cases and asynchronously
+ * via call_rcu() in other cases. Asynchronous calls can result in multiple threads executing this and subsequent functions
+ * concurrently, so they need to deal with tcp/udp_open_sockets map lookup and delete failures appropriately to make sure only
+ * one of the calls sends the final socket telemetry. (i.e. If a lookup or delete fails, assume that the other thread already
+ * successfully deleted the entry, and only send the final telemetry if the delete is successful.)
+ */
 static inline void remove_open_socket(struct pt_regs *ctx, struct sock *sk)
 {
   {

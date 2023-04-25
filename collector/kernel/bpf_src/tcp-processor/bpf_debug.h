@@ -8,6 +8,9 @@
 //
 
 #pragma once
+
+#include "tcp-processor/bpf_types.h"
+
 #if DEBUG_LOG
 #define DEBUG_PRINTK bpf_trace_printk
 #else
