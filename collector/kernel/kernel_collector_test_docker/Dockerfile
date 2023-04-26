@@ -14,7 +14,7 @@ ENV EBPF_NET_DATA_DIR=/var/run/ebpf_net
 ENTRYPOINT [ "/srv/entrypoint-kct.sh" ]
 
 # required by kernel_headers.sh script
-RUN install_packages coreutils curl sed tar dnf rpm
+RUN install_packages coreutils curl sed tar dnf rpm stress-ng
 
 RUN install_packages bc cgdb gawk gdb gzip iputils-ping jq netcat-openbsd procps python3 ripgrep vim valgrind
 

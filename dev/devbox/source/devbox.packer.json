@@ -104,6 +104,10 @@
     {
       "type": "shell",
       "script": "{{template_dir}}/provision/symlinks.sh"
+    },
+    {
+      "type": "shell",
+      "script": "{{template_dir}}/provision/core.sh"
     }
   ],
   "builders": [

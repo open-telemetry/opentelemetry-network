@@ -39,7 +39,8 @@ function print_help {
   echo "usage: $0 [--help|...] args..."
   echo
   echo "  args...: any additional arguments are forwarded to the container"
-  echo "  --delay-exit-sec: number of seconds to sleep after test completes before exiting the docker container"
+  echo "  --delay-exit: sleep forever after test completes to prevent the docker container from exiting"
+  echo "  --delay-exit-on-failure: if test fails, sleep forever to prevent the docker container from exiting"
   echo "  --help: display this help message and the container's help message"
   echo "  --env: export environment variable to container (--env VAR=VALUE)"
   echo '  --gdb: run the kernel collector under `gdb`'
@@ -56,12 +57,12 @@ function print_help {
 while [[ "$#" -gt 0 ]]; do
   arg="$1"; shift
   case "${arg}" in
-    --delay-exit-sec)
-      if [[ "$#" -lt 1 ]]; then
-        echo "expected: seconds to delay before exiting docker container"
-	exit 1
-      fi
-      docker_args+=(--env DELAY_BEFORE_EXITING_SEC="$1"); shift
+    --delay-exit)
+      docker_args+=(--env DELAY_EXIT="true")
+      ;;
+
+    --delay-exit-on-failure)
+      docker_args+=(--env DELAY_EXIT_ON_FAILURE="true")
       ;;
 
     --env)

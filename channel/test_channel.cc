@@ -45,6 +45,9 @@ std::error_code TestChannel::send(const u8 *data, int size)
         for (auto const &object : objects) {
           ++message_counts_[object["name"]];
           json_messages_.push_back(object);
+          if (sent_msg_cb_) {
+            sent_msg_cb_(object);
+          }
         }
       }
     } break;
@@ -88,7 +91,7 @@ TestChannel::MessageCountsType &TestChannel::get_message_counts()
   return message_counts_;
 }
 
-void TestChannel::binary_messages_for_each(std::function<void(BinaryMessageType const &)> cb)
+void TestChannel::binary_messages_for_each(std::function<void(BinaryMessageType const &)> const &cb)
 {
   for (auto const &msg : binary_messages_) {
     cb(msg);
@@ -100,11 +103,16 @@ TestChannel::JsonMessagesType &TestChannel::get_json_messages()
   return json_messages_;
 }
 
-void TestChannel::json_messages_for_each(std::function<void(JsonMessageType const &)> cb)
+void TestChannel::json_messages_for_each(std::function<void(JsonMessageType const &)> const &cb)
 {
   for (auto const &msg : json_messages_) {
     cb(msg);
   }
+}
+
+void TestChannel::set_sent_msg_cb(std::function<void(nlohmann::json const &)> const &sent_msg_cb)
+{
+  sent_msg_cb_ = sent_msg_cb;
 }
 
 void TestChannel::connect(Callbacks &callbacks)

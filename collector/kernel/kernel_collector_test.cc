@@ -17,6 +17,7 @@
 #include <util/code_timing.h>
 #include <util/common_test.h>
 #include <util/curl_engine.h>
+#include <util/error_handling.h>
 #include <util/gcp_instance_metadata.h>
 #include <util/json.h>
 #include <util/json_converter.h>
@@ -54,9 +55,10 @@ class TestIntakeConfig : public config::IntakeConfig {
 
 // Conditions to be met before stopping test
 struct StopConditions {
+  std::chrono::seconds timeout_sec;
   u64 num_sends;
   std::map<std::string, u64> names_and_counts;
-  std::chrono::seconds timeout_sec;
+  bool wait_for_all_workloads_to_complete;
 };
 
 class KernelCollectorTest : public CommonTest {
@@ -76,7 +78,10 @@ protected:
   }
 
   void start_kernel_collector(
-      IntakeEncoder intake_encoder, StopConditions const &stop_conditions, std::string const &bpf_dump_file = "")
+      IntakeEncoder intake_encoder,
+      StopConditions const &stop_conditions,
+      std::string const &bpf_dump_file = "",
+      std::function<void(nlohmann::json const &)> const &ingest_msg_cb = {})
   {
     stop_conditions_.emplace(stop_conditions);
 
@@ -158,6 +163,10 @@ protected:
         host_info,
         EntrypointError::none);
 
+    if (ingest_msg_cb) {
+      get_test_channel()->set_sent_msg_cb(ingest_msg_cb);
+    }
+
     run_test_stopper();
     run_workload_starter();
 
@@ -184,7 +193,7 @@ protected:
     auto &message_counts = get_test_channel()->get_message_counts();
     EXPECT_EQ(0, message_counts["bpf_log"]);
 
-    kernel_collector_.reset();
+    kernel_collector_->on_close();
 
     uv_stop(&loop_);
 
@@ -196,33 +205,44 @@ protected:
     auto stop_test_check = [&]() {
       SCOPED_TIMING(StopTestCheck);
 
+      auto const &stop_conditions = stop_conditions_->get();
+
+      // check for test timeout
       if (stopwatch_) {
-        timeout_exceeded_ = stopwatch_->elapsed(stop_conditions_->get().timeout_sec);
+        timeout_exceeded_ = stopwatch_->elapsed(stop_conditions.timeout_sec);
         LOG::trace(
-            "stop_test_check() stop_conditions timeout_sec {} exceeded {}",
-            stop_conditions_->get().timeout_sec,
-            timeout_exceeded_);
+            "stop_test_check() stop_conditions timeout_sec {} exceeded {}", stop_conditions.timeout_sec, timeout_exceeded_);
         if (timeout_exceeded_) {
-          LOG::error("stop_test_check() test timeout of {} exceeded", stop_conditions_->get().timeout_sec);
+          LOG::error("stop_test_check() test timeout of {} exceeded", stop_conditions.timeout_sec);
           stop_kernel_collector();
           return;
         }
       }
 
+      // wait for all workloads to complete if requested
+      if (stop_conditions.wait_for_all_workloads_to_complete) {
+        if (num_remaining_workloads_) {
+          stop_test_timer_->defer(std::chrono::seconds(1));
+          return;
+        }
+      }
+
+      // check num_sends
       auto channel = get_test_channel();
       auto num_sends = channel->get_num_sends();
       LOG::trace(
           "stop_test_check() channel->get_num_sends() = {} stop_conditions num_sends = {}",
           num_sends,
-          stop_conditions_->get().num_sends);
-      if (num_sends < stop_conditions_->get().num_sends) {
+          stop_conditions.num_sends);
+      if (num_sends < stop_conditions.num_sends) {
         stop_test_timer_->defer(std::chrono::seconds(1));
         return;
       }
 
+      // check names_and_counts
       auto &message_counts = channel->get_message_counts();
       bool reschedule = false;
-      for (auto const &[name, count] : stop_conditions_->get().names_and_counts) {
+      for (auto const &[name, count] : stop_conditions.names_and_counts) {
         auto message_count = message_counts[name];
         LOG::trace("stop_test_check() message_counts[{}] = {}  \tstop count = {}", name, message_count, count);
         if (message_count < count) {
@@ -234,7 +254,6 @@ protected:
         return;
       }
 
-      SCOPED_TIMING(StopTestCheckStopKernelCollector);
       LOG::trace("stop_test_check() stop_conditions have been met - calling stop_kernel_collector()");
       stop_kernel_collector();
     };
@@ -243,31 +262,42 @@ protected:
     stop_test_timer_->defer(std::chrono::seconds(1));
   }
 
-  void start_workload(std::function<void(void)> workload_cb)
+  void start_workload(std::function<void()> workload_cb)
   {
-    auto workload_wrapper = [this, workload_cb]() {
-      auto index = workload_index_++;
+    auto index = workload_index_++;
+    ++num_remaining_workloads_;
+
+    auto workload_wrapper = [this, workload_cb, index]() {
       LOG::info("workload {} starting", index);
       workload_cb();
       LOG::info("workload {} complete", index);
+      --num_remaining_workloads_;
     };
 
     workload_threads_.emplace_back(workload_wrapper);
   }
 
-  void start_workloads()
+  void add_workload(std::function<void()> workload) { workloads_.push_back(std::move(workload)); }
+
+  void add_workload_processes()
   {
-    start_workload([]() {
+    add_workload([]() {
       system(
           "exec 1> /tmp/workload-processes.log 2>&1; echo starting workload; set -x; whoami; pwd; ls; cd /tmp; pwd; ls; cd /; pwd; ls; cd ~; pwd; ls; echo workload complete");
     });
+  }
 
-    start_workload([]() {
+  void add_workload_curl_otel()
+  {
+    add_workload([]() {
       system(
           "exec 1> /tmp/workload-curl-otel.log 2>&1; echo starting workload; for n in $(seq 1 10); do curl https://opentelemetry.io; done; echo workload complete");
     });
+  }
 
-    start_workload([]() {
+  void add_workload_curl_localhost()
+  {
+    add_workload([]() {
       auto pid = fork();
       if (pid == 0) {
         int fd = open("/dev/null", O_WRONLY);
@@ -282,6 +312,23 @@ protected:
 
       kill(pid, SIGTERM);
     });
+  }
+
+  void add_workload_stress_ng_sock()
+  {
+    add_workload([]() {
+      system(
+          "exec 1> /tmp/workload-stress-ng-sock.log 2>&1; echo starting workload; for n in $(seq 1 30); do stress-ng --sock 2 --sock-domain ipv4 --sock-ops 2000 --sock-port 6787; sleep .1; done; echo workload complete");
+    });
+  }
+
+  void start_workloads()
+  {
+    num_remaining_workloads_ = 0;
+
+    for (auto workload : workloads_) {
+      start_workload(workload);
+    }
   };
 
   void run_workload_starter()
@@ -290,7 +337,7 @@ protected:
 
     auto start_workloads_check = [&]() {
       LOG::trace("in start_workloads_check()");
-      if ((message_counts["bpf_compiled"] >= 1) || (message_counts["socket_steady_state"] >= 1) ||
+      if ((message_counts["bpf_compiled"] >= 1) && (message_counts["socket_steady_state"] >= 1) &&
           (message_counts["process_steady_state"] >= 1)) {
         LOG::trace("start_workloads_check() STARTING");
         start_workloads();
@@ -402,12 +449,16 @@ protected:
 
   std::vector<std::thread> workload_threads_;
   size_t workload_index_ = 0;
+  std::atomic<size_t> num_remaining_workloads_ = std::numeric_limits<size_t>::max();
+  std::vector<std::function<void()>> workloads_;
 
   std::optional<std::reference_wrapper<const StopConditions>> stop_conditions_;
 };
 
 // clang-format off
 #define NAMES_AND_COUNTS_COMMON      \
+  {"bpf_compiled", 1},               \
+  {"begin_telemetry", 1},            \
   {"close_sock_info", 100},          \
   {"cloud_platform", 1},             \
   {"dns_response", 10},              \
@@ -431,9 +482,35 @@ protected:
 TEST_F(KernelCollectorTest, binary)
 {
   StopConditions stop_conditions{
-      .num_sends = 25, .names_and_counts = {NAMES_AND_COUNTS_COMMON}, .timeout_sec = std::chrono::seconds(60)};
-  stop_conditions.names_and_counts["bpf_compiled"] = 1;
-  stop_conditions.names_and_counts["begin_telemetry"] = 1;
+      .timeout_sec = std::chrono::seconds(60),
+      .num_sends = 25,
+      .names_and_counts = {NAMES_AND_COUNTS_COMMON},
+      .wait_for_all_workloads_to_complete = true};
+
+  add_workload_processes();
+  add_workload_curl_otel();
+  add_workload_curl_localhost();
 
   start_kernel_collector(IntakeEncoder::binary, stop_conditions, BPF_DUMP_FILE);
+}
+
+// This test is disabled currently to avoid running it automatically in GitHub actions because it reproduces a bug,
+// bpf_logs from remove_tcp_open_socket().
+TEST_F(KernelCollectorTest, DISABLED_bpf_log)
+{
+  StopConditions stop_conditions{
+      .timeout_sec = std::chrono::minutes(10),
+      .num_sends = 1000,
+      .names_and_counts = {},
+      .wait_for_all_workloads_to_complete = true};
+
+  add_workload_stress_ng_sock();
+
+  // This will be called for each render message sent from the kernel-collector to 'ingest' (by the reducer in a real system)
+  auto ingest_msg_cb = [&](nlohmann::json const &object) {
+    SCOPED_TIMING(BpfLogTestIngestMsgCb);
+    ASSUME(object["name"] != "bpf_log").else_log("got bpf_log {}", to_string(object));
+  };
+
+  start_kernel_collector(IntakeEncoder::binary, stop_conditions, BPF_DUMP_FILE, ingest_msg_cb);
 }

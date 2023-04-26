@@ -5,6 +5,8 @@
 
 #pragma once
 
+#include "kernel_symbols.h"
+
 #include <linux/bpf.h>
 
 #include <bcc/BPFTable.h>
@@ -13,6 +15,7 @@
 #include <collector/kernel/perf_reader.h>
 #include <util/logger.h>
 
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -46,6 +49,18 @@ public:
    * c'tor
    */
   ProbeHandler(logging::Logger &log);
+
+  /**
+   * Loads the list of available kernel symbols from /proc/kallsyms.
+   * This list is then used to determine if a kernel function can be instrumented.
+   */
+  void load_kernel_symbols();
+
+  /**
+   * Clears the list of kernel symbols.
+   * Used to free up memory after all probes are started.
+   */
+  void clear_kernel_symbols();
 
   int start_bpf_module(std::string full_program, ebpf::BPFModule &bpf_module, PerfContainer &perf);
 
@@ -191,4 +206,6 @@ private:
   std::vector<std::string> probe_names_;
   size_t num_failed_probes_; // number of kprobes, kretprobes, and tail_calls that failed to attach
   size_t stack_trace_count_;
+
+  std::optional<KernelSymbols> kernel_symbols_;
 };
