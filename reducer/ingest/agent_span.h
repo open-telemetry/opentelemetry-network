@@ -137,10 +137,6 @@ public:
   std::string const &role() const { return node_role_; }
   std::string const &instance_type() const { return instance_type_; }
 
-  // Returns true if the Agent's traffic (excluding version info) requires
-  // Lz4 decompression.
-  bool lz4_required() const;
-
   // Returns true if the Agent is in socket steady state.
   bool is_socket_steady_state() const { return is_socket_steady_state_; }
 
