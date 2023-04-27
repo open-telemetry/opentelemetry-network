@@ -6,7 +6,6 @@
 #include "otlp_grpc_formatter.h"
 
 #include <common/constants.h>
-#include <otlp/otlp_grpc_metrics_client.h>
 #include <otlp/otlp_util.h>
 #include <util/code_timing.h>
 #if !NDEBUG
@@ -39,7 +38,10 @@ bool OtlpGrpcFormatter::metric_description_field_enabled()
 
 OtlpGrpcFormatter::OtlpGrpcFormatter(Publisher::WriterPtr const &writer) : writer_(writer)
 {
-  auto resource_metrics = request_.add_resource_metrics();
+  auto resource_logs = logs_request_.add_resource_logs();
+  scope_logs_ = resource_logs->add_scope_logs();
+
+  auto resource_metrics = metrics_request_.add_resource_metrics();
   scope_metrics_ = resource_metrics->add_scope_metrics();
 
   sum_.set_aggregation_temporality(opentelemetry::proto::metrics::v1::AggregationTemporality::AGGREGATION_TEMPORALITY_DELTA);
@@ -152,32 +154,58 @@ void OtlpGrpcFormatter::format(
   *scope_metrics_->add_metrics() = std::move(metric);
   STOP_TIMING(OtlpGrpcFormatterFormat);
 
+  if (scope_logs_->log_records_size() >= global_otlp_grpc_batch_size) {
+    send_logs_request();
+  }
+
   if (scope_metrics_->metrics_size() >= global_otlp_grpc_batch_size) {
-    send_request();
+    send_metrics_request();
   }
 }
 
 void OtlpGrpcFormatter::flush()
 {
   SCOPED_TIMING(OtlpGrpcFormatterFlush);
+  if (scope_logs_->log_records_size()) {
+    send_logs_request();
+  }
+
   if (scope_metrics_->metrics_size()) {
-    send_request();
+    send_metrics_request();
   }
 }
 
-void OtlpGrpcFormatter::send_request()
-{
-  SCOPED_TIMING(OtlpGrpcFormatterSendRequest);
-
 #define DEBUG_OTLP_JSON_PRINT 0
+
+void OtlpGrpcFormatter::send_logs_request()
+{
+  SCOPED_TIMING(OtlpGrpcFormatterSendLogsRequest);
+
 #if DEBUG_OTLP_JSON_PRINT
-  LOG::trace("JSON view of ExportMetricsServiceRequest being sent: {}", log_waive(otlp_client::get_request_json(request_)));
+  LOG::trace("JSON view of ExportLogsServiceRequest being sent: {}", log_waive(otlp_client::get_request_json(logs_request_)));
 #endif
 
-  writer_->write(request_);
+  writer_->write(logs_request_);
 
-  // clear the metrics portion of request_, leaving the common portions to reuse
-  scope_metrics_->clear_metrics();
+  // clear the metrics portion of metrics_request_, leaving the common portions to reuse
+  scope_logs_->clear_log_records();
+}
+
+void OtlpGrpcFormatter::send_metrics_request()
+{
+  {
+    SCOPED_TIMING(OtlpGrpcFormatterSendMetricsRequest);
+
+#if DEBUG_OTLP_JSON_PRINT
+    LOG::trace(
+        "JSON view of ExportMetricsServiceRequest being sent: {}", log_waive(otlp_client::get_request_json(metrics_request_)));
+#endif
+
+    writer_->write(metrics_request_);
+
+    // clear the metrics portion of metrics_request_, leaving the common portions to reuse
+    scope_metrics_->clear_metrics();
+  }
 }
 
 } // namespace reducer

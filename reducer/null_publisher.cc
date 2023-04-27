@@ -29,6 +29,7 @@ NullPublisher::Writer::Writer(size_t thread_num, std::string const &server_addre
 
 NullPublisher::Writer::~Writer() {}
 
+void NullPublisher::Writer::write(ExportLogsServiceRequest &request) {}
 void NullPublisher::Writer::write(ExportMetricsServiceRequest &request) {}
 
 void NullPublisher::Writer::write(std::stringstream &ss) {}

@@ -13,7 +13,7 @@
 
 #include <platform/types.h>
 
-#include "otlp_grpc_metrics_client.h"
+#include "otlp_grpc_client.h"
 
 namespace otlp_client {
 

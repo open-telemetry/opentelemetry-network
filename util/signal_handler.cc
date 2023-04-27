@@ -17,7 +17,6 @@
 #include <common/constants.h>
 
 #include <otlp/otlp_emitter.h>
-#include <otlp/otlp_grpc_metrics_client.h>
 #include <otlp/otlp_request_builder.h>
 
 #include <util/aws_instance_metadata.h>

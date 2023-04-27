@@ -9,7 +9,7 @@
 
 #include "publisher.h"
 
-#include <otlp/otlp_grpc_metrics_client.h>
+#include <otlp/otlp_grpc_client.h>
 
 #include <optional>
 #include <string>
@@ -18,11 +18,11 @@
 namespace reducer {
 class InternalMetricsEncoder;
 
-// Class used to publish time-series data via OTLP gRPC.
+// Class used to publish logs and metrics via OTLP gRPC.
 //
-// Objects of this class instantiate an OtlpGrpcMetricsClient to send OTLP gRPC messages.
+// Objects of this class instantiate OtlpGrpcClient(s) to send OTLP gRPC messages.
 //
-// To write time-series data the |make_writer| method is first used.
+// To write logs and metrics the |make_writer| method is first used.
 // It creates an object that exposes various writing functions.
 // Each such writer can only be used from a single thread.
 //
@@ -30,7 +30,7 @@ class OtlpGrpcPublisher : public Publisher {
 public:
   class Writer;
 
-  // Constructs the object and creates an OtlpGrpcMetricsClient.
+  // Constructs the object and creates OtlpGrpcClient(s).
   //
   // \param num_writer_threads the number of threads that will be writing
   // \param server_address_and_port IP address and port of OTLP gRPC server
@@ -60,6 +60,7 @@ public:
 
   ~Writer();
 
+  void write(ExportLogsServiceRequest &request) override;
   void write(ExportMetricsServiceRequest &request) override;
 
   // Note that there are no buffered metrics in this Writer to send when flush is called - OtlpGrpcFormatter::flush() deals with
@@ -67,10 +68,10 @@ public:
   void flush() override;
 
   // Number of bytes successfully written.
-  u64 bytes_written() const override { return client_.bytes_sent() - client_.bytes_failed(); }
+  u64 bytes_written() const override { return metrics_client_.bytes_sent() - metrics_client_.bytes_failed(); }
 
   // Number of bytes that were not written.
-  u64 bytes_failed_to_write() const override { return client_.bytes_failed(); }
+  u64 bytes_failed_to_write() const override { return metrics_client_.bytes_failed(); }
 
   // Gets this writer's stats encoded for TSDB output.
   void write_internal_stats(InternalMetricsEncoder &encoder, u64 time_ns, int shard, std::string_view module) const override;
@@ -78,7 +79,8 @@ public:
 private:
   size_t thread_num_;
   std::string server_address_and_port_;
-  otlp_client::OtlpGrpcMetricsClient client_;
+  otlp_client::OtlpGrpcClient<LogsService, ExportLogsServiceRequest, ExportLogsServiceResponse> logs_client_;
+  otlp_client::OtlpGrpcClient<MetricsService, ExportMetricsServiceRequest, ExportMetricsServiceResponse> metrics_client_;
 };
 
 } // namespace reducer

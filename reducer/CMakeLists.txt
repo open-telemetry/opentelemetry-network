@@ -123,7 +123,7 @@ target_link_libraries(
     civetweb-interface
     yaml-cpp
     time
-    otlp_grpc_metrics_client
+    otlp_grpc_proto
 )
 
 # Shell scripts

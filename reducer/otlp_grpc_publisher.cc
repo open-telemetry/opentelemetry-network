@@ -31,19 +31,26 @@ void OtlpGrpcPublisher::write_internal_stats(InternalMetricsEncoder &encoder, u6
 OtlpGrpcPublisher::Writer::Writer(size_t thread_num, std::string const &server_address_and_port)
     : thread_num_(thread_num),
       server_address_and_port_(server_address_and_port),
-      client_(grpc::CreateChannel(server_address_and_port, grpc::InsecureChannelCredentials()))
+      logs_client_(grpc::CreateChannel(server_address_and_port, grpc::InsecureChannelCredentials())),
+      metrics_client_(grpc::CreateChannel(server_address_and_port, grpc::InsecureChannelCredentials()))
 {}
 
 OtlpGrpcPublisher::Writer::~Writer() {}
 
+void OtlpGrpcPublisher::Writer::write(ExportLogsServiceRequest &request)
+{
+  logs_client_.AsyncExport(request);
+}
+
 void OtlpGrpcPublisher::Writer::write(ExportMetricsServiceRequest &request)
 {
-  client_.AsyncExport(request);
+  metrics_client_.AsyncExport(request);
 }
 
 void OtlpGrpcPublisher::Writer::flush()
 {
-  client_.process_async_responses();
+  logs_client_.process_async_responses();
+  metrics_client_.process_async_responses();
 }
 
 void OtlpGrpcPublisher::Writer::write_internal_stats(
@@ -52,13 +59,13 @@ void OtlpGrpcPublisher::Writer::write_internal_stats(
   OtlpGrpcStats stats;
   stats.labels.shard = std::to_string(shard);
   stats.labels.module = module;
-  stats.metrics.bytes_failed = client_.bytes_failed();
-  stats.metrics.bytes_sent = client_.bytes_sent();
-  stats.metrics.metrics_failed = client_.metrics_failed();
-  stats.metrics.metrics_sent = client_.metrics_sent();
-  stats.metrics.requests_failed = client_.requests_failed();
-  stats.metrics.requests_sent = client_.requests_sent();
-  stats.metrics.unknown_response_tags = client_.unknown_response_tags();
+  stats.metrics.bytes_failed = metrics_client_.bytes_failed();
+  stats.metrics.bytes_sent = metrics_client_.bytes_sent();
+  stats.metrics.metrics_failed = metrics_client_.entries_failed();
+  stats.metrics.metrics_sent = metrics_client_.entries_sent();
+  stats.metrics.requests_failed = metrics_client_.requests_failed();
+  stats.metrics.requests_sent = metrics_client_.requests_sent();
+  stats.metrics.unknown_response_tags = metrics_client_.unknown_response_tags();
   encoder.write_internal_stats(stats, time_ns);
 }
 

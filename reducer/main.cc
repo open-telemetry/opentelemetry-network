@@ -26,8 +26,6 @@
 
 #include <geoip/geoip.h>
 
-#include <otlp/otlp_grpc_metrics_client.h>
-
 #include <util/args_parser.h>
 #include <util/boot_time.h>
 #include <util/debug.h>

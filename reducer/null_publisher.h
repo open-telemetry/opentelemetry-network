@@ -47,6 +47,7 @@ public:
 
   ~Writer();
 
+  void write(ExportLogsServiceRequest &request) override;
   void write(ExportMetricsServiceRequest &request) override;
 
   // Writes provided stream's content.

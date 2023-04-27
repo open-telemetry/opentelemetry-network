@@ -36,6 +36,10 @@ exporters:
 service:
   extensions: [health_check, zpages]
   pipelines:
+    logs:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [logging,file]
     metrics:
       receivers: [otlp]
       processors: [batch]
