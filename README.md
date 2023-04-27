@@ -32,6 +32,7 @@ Check out the [Developer Guide](docs/developing.md).
 
 Triagers ([@open-telemetry/ebpf-triagers](https://github.com/orgs/open-telemetry/teams/ebpf-triagers))
 
+- [Antoine Toulme](https://github.com/atoulme), Splunk
 - Actively seeking contributors to triage issues
 
 Approvers ([@open-telemetry/ebpf-approvers](https://github.com/orgs/open-telemetry/teams/ebpf-approvers)):
