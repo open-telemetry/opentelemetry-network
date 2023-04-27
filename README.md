@@ -36,6 +36,7 @@ Triagers ([@open-telemetry/ebpf-triagers](https://github.com/orgs/open-telemetry
 
 Approvers ([@open-telemetry/ebpf-approvers](https://github.com/orgs/open-telemetry/teams/ebpf-approvers)):
 
+- [Samiur Arif](https://github.com/samiura), Splunk
 - Actively seeking approvers to review pull requests
 
 Maintainers ([@open-telemetry/ebpf-maintainers](https://github.com/orgs/open-telemetry/teams/ebpf-maintainers)):
