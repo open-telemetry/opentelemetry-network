@@ -331,7 +331,7 @@ void KernelCollector::send_connection_metadata()
 {
   // send a version_info message
   upstream_connection_.set_compression(false);
-  writer_.version_info(versions::release.major(), versions::release.minor(), versions::release.build());
+  writer_.version_info(versions::release.major(), versions::release.minor(), versions::release.patch());
   upstream_connection_.flush();
   upstream_connection_.set_compression(true);
 
