@@ -81,6 +81,7 @@ else
     cp /srv/core-* /hostfs/data || true
     if [[ -n "${DELAY_EXIT_ON_FAILURE}" ]]
     then
+      echo "DELAY_EXIT_ON_FAILURE is set, doing 'sleep inf'"
       sleep inf
     fi
   fi
@@ -98,5 +99,6 @@ fi
 
 if [[ -n "${DELAY_EXIT}" ]]
 then
+  echo "DELAY_EXIT is set, doing 'sleep inf'"
   sleep inf
 fi

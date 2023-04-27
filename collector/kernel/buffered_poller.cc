@@ -1278,7 +1278,7 @@ void BufferedPoller::handle_stack_trace(message_metadata const &metadata, jb_age
       msg.kernel_stack_id,
       msg.user_stack_id,
       msg.tgid,
-      msg.comm,
+      std::string_view((char *)msg.comm, strnlen((char *)msg.comm, sizeof(msg.comm))),
       stacktrace);
 #endif
 }

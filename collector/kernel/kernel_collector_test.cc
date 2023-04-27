@@ -221,6 +221,7 @@ protected:
 
       // wait for all workloads to complete if requested
       if (stop_conditions.wait_for_all_workloads_to_complete) {
+        LOG::trace("stop_test_check() num_remaining_workloads_ = {}", num_remaining_workloads_);
         if (num_remaining_workloads_) {
           stop_test_timer_->defer(std::chrono::seconds(1));
           return;
@@ -479,6 +480,8 @@ protected:
   {"socket_steady_state", 1},
 // clang-format on
 
+// Test basic kernel-collector functionality, validating that a minimum number of messages are seen as expected from running
+// process and network workloads.
 TEST_F(KernelCollectorTest, binary)
 {
   StopConditions stop_conditions{
@@ -494,9 +497,9 @@ TEST_F(KernelCollectorTest, binary)
   start_kernel_collector(IntakeEncoder::binary, stop_conditions, BPF_DUMP_FILE);
 }
 
-// This test is disabled currently to avoid running it automatically in GitHub actions because it reproduces a bug,
-// bpf_logs from remove_tcp_open_socket().
-TEST_F(KernelCollectorTest, DISABLED_bpf_log)
+// This test was originally used to reproduce a race condition in the eBPF code that handles socket close events that would
+// cause extraneous bpf_log messages by running a socket stress workload.
+TEST_F(KernelCollectorTest, bpf_log)
 {
   StopConditions stop_conditions{
       .timeout_sec = std::chrono::minutes(10),
@@ -509,6 +512,7 @@ TEST_F(KernelCollectorTest, DISABLED_bpf_log)
   // This will be called for each render message sent from the kernel-collector to 'ingest' (by the reducer in a real system)
   auto ingest_msg_cb = [&](nlohmann::json const &object) {
     SCOPED_TIMING(BpfLogTestIngestMsgCb);
+    // Fail immediately if a bpf_log is encountered.
     ASSUME(object["name"] != "bpf_log").else_log("got bpf_log {}", to_string(object));
   };
 
