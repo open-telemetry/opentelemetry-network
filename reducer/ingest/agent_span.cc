@@ -96,7 +96,7 @@ void AgentSpan::socket_steady_state(
 
 void AgentSpan::version_info(::ebpf_net::ingest::weak_refs::agent span_ref, u64 timestamp, jsrv_ingest__version_info *msg)
 {
-  version_.set(msg->major, msg->minor, msg->build);
+  version_.set(msg->major, msg->minor, msg->patch);
 
   LOG::info("agent version: {}", version_);
 

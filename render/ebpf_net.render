@@ -607,7 +607,7 @@ app ingest {
 
       1: u32 major
       2: u32 minor
-      3: u32 build
+      3: u32 patch
     }
     57: log set_node_info {
       description "reports node information from agent"
