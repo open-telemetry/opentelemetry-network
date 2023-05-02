@@ -1,0 +1,10 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+# Modify the OpenTelemetry eBPF Reducer that was previously deployed with ebpf-net,
+# to pass it additional argument(s), in this case '--enable-flow-logs'
+
+networkExplorer:
+  reducer:
+    additionalArgs:
+      - --enable-flow-logs

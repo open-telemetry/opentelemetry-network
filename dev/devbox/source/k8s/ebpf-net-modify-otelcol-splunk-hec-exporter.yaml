@@ -1,0 +1,48 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+# Modify the OpenTelemetry Collector that was previously deployed with ebpf-net to export
+# logs using splunk_hec exporter.
+
+gateway:
+  config:
+    exporters:
+      splunk_hec:
+        # Splunk HTTP Event Collector token.
+        token: "<YOUR-TOKEN>"
+        # URL to a Splunk instance to send data to.
+        endpoint: "https://<YOUR-HOST>:8088/services/collector/event"
+        # Optional Splunk source: https://docs.splunk.com/Splexicon:Source
+        source: "otel"
+        # Optional Splunk source type: https://docs.splunk.com/Splexicon:Sourcetype
+        sourcetype: "otel"
+        # Splunk index, optional name of the Splunk index targeted.
+        #index: "metrics"
+        tls:
+          # Whether to skip checking the certificate of the HEC endpoint when sending data over HTTPS. Defaults to false.
+          insecure_skip_verify: true
+          # Path to the CA cert to verify the server being connected to.
+          #ca_file: /certs/ExampleCA.crt
+          # Path to the TLS cert to use for client connections when TLS client auth is required.
+          #cert_file: /certs/HECclient.crt
+          # Path to the TLS key to use for TLS required connections.
+          #key_file: /certs/HECclient.key
+        # Application name is used to track telemetry information for Splunk App's using HEC by App name.
+        splunk_app_name: "OpenTelemetry-Collector Splunk Exporter"
+        # Application version is used to track telemetry information for Splunk App's using HEC by App version.
+        splunk_app_version: "v0.0.1"
+        heartbeat:
+          interval: 30s
+        telemetry:
+          enabled: true
+          override_metrics_names:
+            otelcol_exporter_splunkhec_heartbeats_sent: app_heartbeats_success_total
+            otelcol_exporter_splunkhec_heartbeats_failed: app_heartbeats_failed_total
+
+    service:
+      pipelines:
+        logs:
+          exporters:
+          - logging
+          - splunk_hec
+

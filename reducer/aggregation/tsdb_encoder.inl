@@ -25,6 +25,12 @@ void TsdbEncoder::operator()(
     }
   }
 
+  if (flow_logs_enabled_ && otlp_metric_writer_) {
+    NodeLabels k[2] = {span.node1(), span.node2()};
+
+    encode_and_write_otlp_grpc_flow_log({k[reverse_], k[1 - reverse_]}, metrics);
+  }
+
   // If there was activity in this timeslot, start a new timeslot
   // so there is a zero report at the end.
   // Also this keeps handles for another interval so should reduce

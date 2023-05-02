@@ -96,6 +96,17 @@ public:
   // Writes the formatted entry using the provided publisher writer object.
   void write(MetricInfo const &metric, value_t value, Publisher::WriterPtr const &writer);
 
+  // Writes the formatted entry as a flow log.
+  template <typename TMetrics> void write_flow_log(TMetrics const &metrics)
+  {
+    format_flow_log(metrics, labels_, labels_changed_, timestamp_, timestamp_changed_);
+
+    aggregation_changed_ = false;
+    rollup_changed_ = false;
+    labels_changed_ = false;
+    timestamp_changed_ = false;
+  };
+
 protected:
   // Subclasses implement this function to do the actual formatting.
   virtual void format(
@@ -110,6 +121,14 @@ protected:
       timestamp_t timestamp,
       bool timestamp_changed,
       Publisher::WriterPtr const &writer) = 0;
+
+  // Subclasses that support formatting metrics as flow logs implement this function to do the actual formatting.
+  virtual void format_flow_log(
+      ebpf_net::metrics::tcp_metrics const &tcp_metrics,
+      labels_t labels,
+      bool labels_changed,
+      timestamp_t timestamp,
+      bool timestamp_changed){};
 
 private:
   std::string aggregation_;

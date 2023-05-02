@@ -1,6 +1,9 @@
-# Example of modifying the OpenTelemetry Collector that was previously deployed with ebpf-net to use the
-# metricstransform processor to aggregate metrics named ebpf_net.message by aggregating away all labels
-# except 'message' and 'module' using summation.
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+# Modify the OpenTelemetry Collector that was previously deployed with ebpf-net to use the
+# metricstransform processor to aggregate metrics named ebpf_net.message by aggregating away
+# all labels except 'message' and 'module' using summation.
 
 gateway:
   config:

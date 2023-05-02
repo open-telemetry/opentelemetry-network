@@ -14,7 +14,7 @@ function print_help {
   echo "  --help: display this help message and the container's help message"
   echo "  --host: run with --network=host"
   echo "  --otel: run the OpenTelemetry Collector"
-  echo "  --prom: run use Prometheus receiver to scrape metrics (default is OTLP gRPC receiver)"
+  echo "  --prom: use Prometheus receiver to scrape metrics (default is OTLP gRPC receiver)"
   echo "  --splunk: run the Splunk distribution of OpenTelemetry Collector"
 }
 

@@ -34,6 +34,7 @@ public:
       std::chrono::nanoseconds timestamp,
       bool id_id_enabled,
       bool az_id_enabled,
+      bool flow_logs_enabled,
       const DisabledMetrics &disabled_metrics,
       std::optional<int> rollup_count = std::nullopt);
 
@@ -72,6 +73,7 @@ private:
   std::chrono::nanoseconds timestamp_;
   bool id_id_enabled_{false};
   bool az_id_enabled_{false};
+  bool flow_logs_enabled_{false};
   int reverse_{0};
 
   const DisabledMetrics &disabled_metrics_;
@@ -102,6 +104,13 @@ private:
     otlp_grpc_formatter_->set_labels(labels);
     otlp_grpc_formatter_->assign_label(std::string_view(kProductIdDimName), std::string_view(kProductIdDimValue));
     write_metrics(metrics, writer, *otlp_grpc_formatter_, disabled_metrics_);
+  }
+
+  // encode_and_write for exporting metrics as flow logs with OTLP (push) style publisher writers
+  template <typename Metrics> void encode_and_write_otlp_grpc_flow_log(const FlowLabels &labels, Metrics const &metrics)
+  {
+    otlp_grpc_formatter_->set_labels(labels);
+    write_flow_log(metrics, *otlp_grpc_formatter_, disabled_metrics_);
   }
 
   void encode_and_write_p_latencies(const std::string &proto, const PercentileLatencies::LatencyAccumulator &accum);

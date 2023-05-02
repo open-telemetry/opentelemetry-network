@@ -46,6 +46,14 @@ protected:
       bool timestamp_changed,
       Publisher::WriterPtr const &unused_writer) override;
 
+  // Format tcp_metrics as a flow log.
+  void format_flow_log(
+      ebpf_net::metrics::tcp_metrics const &tcp_metrics,
+      labels_t labels,
+      bool labels_changed,
+      timestamp_t timestamp,
+      bool timestamp_changed) override;
+
   void send_logs_request();
   void send_metrics_request();
 

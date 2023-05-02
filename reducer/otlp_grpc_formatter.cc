@@ -17,6 +17,8 @@
 
 #include <spdlog/fmt/fmt.h>
 
+#include <generated/ebpf_net/metrics.h>
+
 #include <ctime>
 #include <stdexcept>
 
@@ -67,7 +69,7 @@ void OtlpGrpcFormatter::format(
     bool timestamp_changed,
     Publisher::WriterPtr const &unused_writer)
 {
-  START_TIMING(OtlpGrpcFormatterFormat);
+  START_TIMING(OtlpGrpcFormatterFormatMetric);
   opentelemetry::proto::metrics::v1::Metric metric;
 
 #if !NDEBUG
@@ -152,26 +154,69 @@ void OtlpGrpcFormatter::format(
   *metric.mutable_sum() = sum_;
 
   *scope_metrics_->add_metrics() = std::move(metric);
-  STOP_TIMING(OtlpGrpcFormatterFormat);
-
-  if (scope_logs_->log_records_size() >= global_otlp_grpc_batch_size) {
-    send_logs_request();
-  }
+  STOP_TIMING(OtlpGrpcFormatterFormatMetric);
 
   if (scope_metrics_->metrics_size() >= global_otlp_grpc_batch_size) {
     send_metrics_request();
   }
 }
 
-void OtlpGrpcFormatter::flush()
+void OtlpGrpcFormatter::format_flow_log(
+    ebpf_net::metrics::tcp_metrics const &tcp_metrics,
+    labels_t labels,
+    bool labels_changed,
+    timestamp_t timestamp,
+    bool timestamp_changed)
 {
-  SCOPED_TIMING(OtlpGrpcFormatterFlush);
-  if (scope_logs_->log_records_size()) {
+  START_TIMING(OtlpGrpcFormatterFormatFlowLog);
+
+  opentelemetry::proto::logs::v1::LogRecord log_record;
+  log_record.set_time_unix_nano(integer_time<std::chrono::nanoseconds>(timestamp));
+
+  log_record.set_severity_text("INFO");
+  log_record.set_severity_number(opentelemetry::proto::logs::v1::SeverityNumber::SEVERITY_NUMBER_INFO);
+
+  double sum_srtt = double(tcp_metrics.sum_srtt) / 8 / 1'000'000; // RTTs are measured in units of 1/8 microseconds.
+
+  auto message = fmt::format(
+      "{} {} {} {} {} {} {} {} {} {} {} {} {}",
+      labels["source.ip"],
+      labels["source.workload.name"],
+      labels["dest.ip"],
+      labels["dest.workload.name"],
+      tcp_metrics.sum_bytes,
+      tcp_metrics.active_rtts,
+      tcp_metrics.active_sockets,
+      tcp_metrics.active_rtts ? sum_srtt / tcp_metrics.active_rtts : 0.0,
+      tcp_metrics.sum_delivered,
+      tcp_metrics.sum_retrans,
+      tcp_metrics.syn_timeouts,
+      tcp_metrics.new_sockets,
+      tcp_metrics.tcp_resets);
+  log_record.mutable_body()->set_string_value(message.data(), message.size());
+
+  *scope_logs_->add_log_records() = std::move(log_record);
+  STOP_TIMING(OtlpGrpcFormatterFormatFlowLog);
+
+  if (scope_logs_->log_records_size() >= global_otlp_grpc_batch_size) {
     send_logs_request();
   }
+}
 
-  if (scope_metrics_->metrics_size()) {
-    send_metrics_request();
+void OtlpGrpcFormatter::flush()
+{
+  {
+    SCOPED_TIMING(OtlpGrpcFormatterFlushLogs);
+    if (scope_logs_->log_records_size()) {
+      send_logs_request();
+    }
+  }
+
+  {
+    SCOPED_TIMING(OtlpGrpcFormatterFlushMetrics);
+    if (scope_metrics_->metrics_size()) {
+      send_metrics_request();
+    }
   }
 }
 
@@ -187,25 +232,23 @@ void OtlpGrpcFormatter::send_logs_request()
 
   writer_->write(logs_request_);
 
-  // clear the metrics portion of metrics_request_, leaving the common portions to reuse
+  // clear the logs portion of logs_request_, leaving the common portions to reuse
   scope_logs_->clear_log_records();
 }
 
 void OtlpGrpcFormatter::send_metrics_request()
 {
-  {
-    SCOPED_TIMING(OtlpGrpcFormatterSendMetricsRequest);
+  SCOPED_TIMING(OtlpGrpcFormatterSendMetricsRequest);
 
 #if DEBUG_OTLP_JSON_PRINT
-    LOG::trace(
-        "JSON view of ExportMetricsServiceRequest being sent: {}", log_waive(otlp_client::get_request_json(metrics_request_)));
+  LOG::trace(
+      "JSON view of ExportMetricsServiceRequest being sent: {}", log_waive(otlp_client::get_request_json(metrics_request_)));
 #endif
 
-    writer_->write(metrics_request_);
+  writer_->write(metrics_request_);
 
-    // clear the metrics portion of metrics_request_, leaving the common portions to reuse
-    scope_metrics_->clear_metrics();
-  }
+  // clear the metrics portion of metrics_request_, leaving the common portions to reuse
+  scope_metrics_->clear_metrics();
 }
 
 } // namespace reducer
