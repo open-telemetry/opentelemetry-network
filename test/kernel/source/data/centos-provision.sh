@@ -12,7 +12,14 @@ yum install -y \
   curl \
   openssl
 
-curl -fsSL https://get.docker.com/ | sh
+if ! grep 'ID="amzn"' /etc/os-release
+then
+  curl -fsSL https://get.docker.com/ | sh
+else
+  # get.docker.com does not currently support amazon linux
+  yum install -y docker
+fi
+
 usermod -aG docker vagrant
 systemctl enable docker
 

@@ -20,6 +20,6 @@ constexpr u32 DEFAULT_CGROUP_QUOTA = 100'000;
 
 namespace versions {
 
-constexpr VersionInfo release{EBPF_NET_MAJOR_VERSION, EBPF_NET_MINOR_VERSION, EBPF_NET_COLLECTOR_BUILD_NUMBER};
+constexpr VersionInfo release{EBPF_NET_MAJOR_VERSION, EBPF_NET_MINOR_VERSION, EBPF_NET_PATCH_VERSION};
 
 } // namespace versions

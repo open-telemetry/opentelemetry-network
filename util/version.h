@@ -13,21 +13,21 @@
 
 class VersionInfo {
 public:
-  constexpr explicit VersionInfo(u32 major = 0, u32 minor = 0, u32 build = 0, std::string_view signature = {})
-      : version_(major, minor, build, signature)
+  constexpr explicit VersionInfo(u32 major = 0, u32 minor = 0, u32 patch = 0, std::string_view signature = {})
+      : version_(major, minor, patch, signature)
   {}
 
   constexpr VersionInfo(VersionInfo const &) = default;
   constexpr VersionInfo(VersionInfo &&) = default;
 
-  void set(u32 major, u32 minor, u32 build = 0, std::string_view signature = {})
+  void set(u32 major, u32 minor, u32 patch = 0, std::string_view signature = {})
   {
-    version_ = std::make_tuple(major, minor, build, signature);
+    version_ = std::make_tuple(major, minor, patch, signature);
   }
 
   constexpr u32 major() const { return std::get<0>(version_); }
   constexpr u32 minor() const { return std::get<1>(version_); }
-  constexpr u32 build() const { return std::get<2>(version_); }
+  constexpr u32 patch() const { return std::get<2>(version_); }
   constexpr std::string_view signature() const { return std::get<3>(version_); }
 
   constexpr bool operator==(VersionInfo const &rhs) const { return version_ == rhs.version_; }
@@ -43,7 +43,7 @@ public:
 
   template <typename Out> friend Out &&operator<<(Out &&out, VersionInfo const &value)
   {
-    out << value.major() << '.' << value.minor() << '.' << value.build();
+    out << value.major() << '.' << value.minor() << '.' << value.patch();
     if (auto signature = value.signature(); !signature.empty()) {
       out << '-' << signature;
     }

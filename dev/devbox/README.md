@@ -129,12 +129,15 @@ To view the the metrics output from the OpenTelemetry eBPF pipeline:
 
         tail -f ~/otel.log | jq .
 
-The default when the `--public` option is not specified as in the above examples is to use Docker images from the local Docker registry running on the host that is running the devbox VM at `localhost:5000`.  The typical use case is for developers to build and publish images to the local registry for testing in a devbox.  [Click here for more information on building.](https://github.com/open-telemetry/opentelemetry-ebpf/blob/main/docs/developing.md#building-the-project)  To list available build targets that will publish images to the local registry, from within the `build-env` container:
-  - `make help | grep docker-registry`  
-  or
-  - `../build.sh --list-targets | grep docker-registry`
+The default when the `--public` option is not specified as in the above examples is to use Docker images from the local Docker registry running on the host that is running the devbox VM at `localhost:5000`.  The typical use case is for developers to build and publish images to the local registry for testing in a devbox.  [Click here for more information on building.](../../docs/developing.md#building-the-project)  To list available build targets that will publish images to the local registry, from within the `build-env` container:
 
-  Some examples to build and publish the kernel-collector, reducer, and all pipeline images respectively:
+    make help | grep docker-registry
+
+  or
+
+    ../build.sh --list-targets | grep docker-registry
+
+  Some examples to build and publish the kernel-collector, reducer, and all OpenTelemetry eBPF component images respectively:
 
         ../build.sh kernel-collector-docker-registry
         ../build.sh reducer-docker-registry
@@ -170,7 +173,8 @@ Each devbox[^3] has microk8s installed as a convenient Kubernetes environment fo
 1. Deploy the OpenTelemetry eBPF pipeline using the public [Splunk Distribution of OpenTelemetry Collector helm chart](https://signalfx.github.io/splunk-otel-collector-chart) (addition of OpenTelemetry eBPF to upstream helm chart TBD)
     - To see all options:
 
-            ~/k8s/deploy.sh --help
+            cd ~/k8s
+            ./deploy.sh --help
 
     - Deploy OpenTelemetry eBPF, with the OpenTelemetry Collector configured to use the logging exporter
 
@@ -194,6 +198,14 @@ Each devbox[^3] has microk8s installed as a convenient Kubernetes environment fo
 
             k logs -f ebpf-net-splunk-otel-collector-<COMPLETE_YOUR_POD_NAME> | rg "Name:|Value:"
 
+    - Examples of how to modify component(s) of previously deployed OpenTelemetry eBPF:
+
+            cd ~/k8s
+            ./modify.sh --ebpf-net ./ebpf-net-modify-reducer.yaml
+
+      or
+
+            ./modify.sh --ebpf-net ./ebpf-net-modify-otelcol.yaml
 
     - To uninstall the OpenTelemetry eBPF pipeline
 

@@ -55,6 +55,9 @@ EOF
 cd ~
 git clone https://github.com/GoogleCloudPlatform/microservices-demo.git
 
+# get the splunk-otel-collector-chart repo for (optional) use by the deploy.sh script
+git clone https://github.com/signalfx/splunk-otel-collector-chart.git
+
 # disable microk8s by default on devbox startup
 sudo /snap/bin/microk8s stop
 

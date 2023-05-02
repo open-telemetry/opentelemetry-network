@@ -1,0 +1,16 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+################################################################################
+# Override splunk-otel-collector default values and ebpf-net.yaml gateway setting
+# to deploy OpenTelemetry-eBPF components using the otel-demo OpenTelemetry
+# Collector.
+################################################################################
+
+gateway:
+  enabled: false
+
+networkExplorer:
+  reducer:
+    additionalArgs:
+      - --otlp-grpc-metrics-host=otel-demo-otelcol

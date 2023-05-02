@@ -81,7 +81,7 @@ void ConnectionCaretaker::send_metadata_header()
 {
   set_compression_cb_(false);
   LOG::info("initiating connection of {} collector version {}", client_type_, versions::release);
-  writer_.version_info(versions::release.major(), versions::release.minor(), versions::release.build());
+  writer_.version_info(versions::release.major(), versions::release.minor(), versions::release.patch());
   flush();
   set_compression_cb_(true);
 

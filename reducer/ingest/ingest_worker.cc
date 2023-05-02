@@ -220,12 +220,9 @@ std::optional<uint32_t> IngestWorker::Callbacks::received_data_internal(const u8
       return std::nullopt;
     }
 
-    // If this is the first message, check to see if compression is required.
+    // If this is the first message, turn on decompression of further messages.
     if (!first_message_seen_) {
-      if (ft_conn->ingest_connection()->agent().impl().lz4_required()) {
-        decompressor_active_ = true;
-      }
-
+      decompressor_active_ = true;
       first_message_seen_ = true;
     }
 

@@ -236,11 +236,11 @@ void KernelCollector::on_close()
 {
   cleanup_pointers();
   upstream_connection_.close();
-  uv_close((uv_handle_t *)&polling_timer_, __handle_close_cb);
-  uv_close((uv_handle_t *)&slow_timer_, __handle_close_cb);
-  uv_close((uv_handle_t *)&connection_timeout_, __handle_close_cb);
-  uv_close((uv_handle_t *)&probe_holdoff_timer_, __handle_close_cb);
-  uv_close((uv_handle_t *)&try_connecting_timer_, __handle_close_cb);
+  close_uv_handle_cleanly(reinterpret_cast<uv_handle_t *>(&polling_timer_), __handle_close_cb);
+  close_uv_handle_cleanly(reinterpret_cast<uv_handle_t *>(&slow_timer_), __handle_close_cb);
+  close_uv_handle_cleanly(reinterpret_cast<uv_handle_t *>(&connection_timeout_), __handle_close_cb);
+  close_uv_handle_cleanly(reinterpret_cast<uv_handle_t *>(&probe_holdoff_timer_), __handle_close_cb);
+  close_uv_handle_cleanly(reinterpret_cast<uv_handle_t *>(&try_connecting_timer_), __handle_close_cb);
 }
 
 void KernelCollector::on_upstream_connected()
@@ -331,7 +331,7 @@ void KernelCollector::send_connection_metadata()
 {
   // send a version_info message
   upstream_connection_.set_compression(false);
-  writer_.version_info(versions::release.major(), versions::release.minor(), versions::release.build());
+  writer_.version_info(versions::release.major(), versions::release.minor(), versions::release.patch());
   upstream_connection_.flush();
   upstream_connection_.set_compression(true);
 
@@ -502,7 +502,7 @@ void KernelCollector::restart()
   /* we don't want attempts to perform IO on the channel */
   heartbeat_sender_.stop();
 
-  // flush the channel so previously sent messages make it to the pipeline server
+  // flush the channel so previously sent messages make it to the reducer
   upstream_connection_.flush();
 
   // close the channel, it will trigger reconnect via KernelCollector::Callbacks::on_closed() which calls enter_try_connecting()

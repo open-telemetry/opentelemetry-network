@@ -95,13 +95,7 @@ template <typename Out> Out &operator<<(Out &&out, FlowSide side);
 namespace versions::client {
 
 // minimum version of a collector for incoming connections to be accepted
-constexpr VersionInfo MINIMUM_ACCEPTED_VERSION{0, 4, 2};
-
-// minimum version of a collector to enable lz4 for
-constexpr VersionInfo LZ4_REQUIRED_VERSION{0, 7, 0};
-
-// minimum version of a collector that's cloud platform aware
-constexpr VersionInfo CLOUD_PLATFORM_AWARE_VERSION{0, 8, 837};
+constexpr VersionInfo MINIMUM_ACCEPTED_VERSION{0, 9, 0};
 
 } // namespace versions::client
 

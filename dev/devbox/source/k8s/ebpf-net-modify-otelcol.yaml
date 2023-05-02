@@ -1,0 +1,25 @@
+# Example of modifying the OpenTelemetry Collector that was previously deployed with ebpf-net to use the
+# metricstransform processor to aggregate metrics named ebpf_net.message by aggregating away all labels
+# except 'message' and 'module' using summation.
+
+gateway:
+  config:
+    processors:
+      metricstransform:
+        transforms:
+          include: ebpf_net.message
+          action: update
+          operations:
+            - action: aggregate_labels
+              aggregation_type: sum
+              label_set:
+              - message
+              - module
+    service:
+      pipelines:
+        metrics:
+          processors:
+          - memory_limiter
+          - batch
+          - resource/add_cluster_name
+          - metricstransform

@@ -77,6 +77,8 @@ void BPFHandler::load_buffered_poller(
 
 void BPFHandler::load_probes(::ebpf_net::ingest::Writer &writer)
 {
+  probe_handler_.load_kernel_symbols();
+
   CgroupProber cgroup_prober(
       probe_handler_,
       bpf_module_,
@@ -228,6 +230,8 @@ void BPFHandler::load_probes(::ebpf_net::ingest::Writer &writer)
   check_cb("end of load_probes()");
 
   buf_poller_->set_all_probes_loaded();
+
+  probe_handler_.clear_kernel_symbols();
 }
 
 void BPFHandler::start_poll(u64 interval_useconds, u64 n_intervals)

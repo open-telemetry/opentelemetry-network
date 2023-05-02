@@ -275,7 +275,7 @@ void SignalManager::handle_minidump()
 
   parameters["version_major"] = std::to_string(versions::release.major());
   parameters["version_minor"] = std::to_string(versions::release.minor());
-  parameters["version_build"] = std::to_string(versions::release.build());
+  parameters["version_patch"] = std::to_string(versions::release.patch());
   parameters["version_signature"] = std::string(versions::release.signature());
 
   auto const aws_metadata = AwsMetadata::fetch(METADATA_TIMEOUT);

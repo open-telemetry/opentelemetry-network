@@ -6,6 +6,7 @@ distros_and_kernels=(
 "centos 7"
 "debian buster64"
 "debian bullseye64"
+"bento amazonlinux-2"
 "ubuntu bionic64"
 "ubuntu focal64"
 "ubuntu jammy64"

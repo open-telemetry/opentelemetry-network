@@ -96,7 +96,7 @@ void AgentSpan::socket_steady_state(
 
 void AgentSpan::version_info(::ebpf_net::ingest::weak_refs::agent span_ref, u64 timestamp, jsrv_ingest__version_info *msg)
 {
-  version_.set(msg->major, msg->minor, msg->build);
+  version_.set(msg->major, msg->minor, msg->patch);
 
   LOG::info("agent version: {}", version_);
 
@@ -186,13 +186,7 @@ void AgentSpan::set_node_info(::ebpf_net::ingest::weak_refs::agent span_ref, u64
     node_id_ = hostname_;
   } else if (auto const id = msg->instance_id.string_view(); !id.empty()) {
     // otherwise use given id if available
-    if (cloud_platform_ == CloudPlatform::aws || version_ < versions::client::CLOUD_PLATFORM_AWARE_VERSION) {
-      // restore 'i-NNNNN' format if AWS (old agents all assume AWS)
-      node_id_ = "i-";
-      node_id_.append(id.data(), id.size());
-    } else if (!id.empty()) {
-      node_id_.assign(id.data(), id.size());
-    }
+    node_id_.assign(id.data(), id.size());
   }
 
   if (auto const instance_type = msg->instance_type.string_view(); !instance_type.empty()) {
@@ -611,11 +605,6 @@ void AgentSpan::bpf_lost_samples(
   const auto conn = local_connection();
 
   local_logger().agent_lost_events(msg->count, jb_blob(conn->client_hostname()));
-}
-
-bool AgentSpan::lz4_required() const
-{
-  return version_ >= versions::client::LZ4_REQUIRED_VERSION;
 }
 
 void AgentSpan::set_pod_new(

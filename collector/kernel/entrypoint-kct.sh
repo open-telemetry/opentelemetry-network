@@ -75,7 +75,16 @@ elif [[ -n "${EBPF_NET_RUN_UNDER_VALGRIND}" ]]; then
   # shellcheck disable=SC2086
   (set -x; exec /usr/bin/valgrind ${EBPF_NET_RUN_UNDER_VALGRIND} "${install_dir}/kernel_collector_test" "${cmd_args[@]}" "$@")
 else
-  (set -x; exec "${install_dir}/kernel_collector_test" "${cmd_args[@]}" "$@")
+  if ! (set -x; exec "${install_dir}/kernel_collector_test" "${cmd_args[@]}" "$@")
+  then
+    echo "kernel collector test FAILED"
+    cp /srv/core-* /hostfs/data || true
+    if [[ -n "${DELAY_EXIT_ON_FAILURE}" ]]
+    then
+      echo "DELAY_EXIT_ON_FAILURE is set, doing 'sleep inf'"
+      sleep inf
+    fi
+  fi
 fi
 
 if [ -e /tmp/bpf-dump-file ]
@@ -88,7 +97,8 @@ then
   "${install_dir}/intake_wire_to_json" < /tmp/intake-dump-file | jq . > /tmp/intake-dump-file.json
 fi
 
-if [[ "${DELAY_BEFORE_EXITING_SEC}" != "" ]]
+if [[ -n "${DELAY_EXIT}" ]]
 then
-  sleep "${DELAY_BEFORE_EXITING_SEC}"
+  echo "DELAY_EXIT is set, doing 'sleep inf'"
+  sleep inf
 fi
