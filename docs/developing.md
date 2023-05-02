@@ -31,7 +31,7 @@ The only prerequisites for building the image are CMake, Docker and a fair
 amount of disk space and patience.
 
 ```
-git clone https://github.com/Flowmill/opentelemetry-ebpf-build-tools.git
+git clone https://github.com/open-telemetry/opentelemetry-ebpf-build-tools.git
 cd opentelemetry-ebpf-build-tools
 git submodule update --init --recursive
 ./build.sh
