@@ -59,13 +59,25 @@ void OtlpGrpcPublisher::Writer::write_internal_stats(
   OtlpGrpcStats stats;
   stats.labels.shard = std::to_string(shard);
   stats.labels.module = module;
+
+  stats.labels.type = "metrics";
   stats.metrics.bytes_failed = metrics_client_.bytes_failed();
   stats.metrics.bytes_sent = metrics_client_.bytes_sent();
-  stats.metrics.metrics_failed = metrics_client_.entries_failed();
-  stats.metrics.metrics_sent = metrics_client_.entries_sent();
+  stats.metrics.metrics_failed = metrics_client_.data_points_failed();
+  stats.metrics.metrics_sent = metrics_client_.data_points_sent();
   stats.metrics.requests_failed = metrics_client_.requests_failed();
   stats.metrics.requests_sent = metrics_client_.requests_sent();
   stats.metrics.unknown_response_tags = metrics_client_.unknown_response_tags();
+  encoder.write_internal_stats(stats, time_ns);
+
+  stats.labels.type = "logs";
+  stats.metrics.bytes_failed = logs_client_.bytes_failed();
+  stats.metrics.bytes_sent = logs_client_.bytes_sent();
+  stats.metrics.metrics_failed = logs_client_.data_points_failed();
+  stats.metrics.metrics_sent = logs_client_.data_points_sent();
+  stats.metrics.requests_failed = logs_client_.requests_failed();
+  stats.metrics.requests_sent = logs_client_.requests_sent();
+  stats.metrics.unknown_response_tags = logs_client_.unknown_response_tags();
   encoder.write_internal_stats(stats, time_ns);
 }
 

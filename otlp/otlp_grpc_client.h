@@ -29,7 +29,14 @@ namespace otlp_client {
 
 template <typename TService, typename TReq, typename TResp> class OtlpGrpcClient {
 public:
-  OtlpGrpcClient(std::shared_ptr<grpc::Channel> channel) : stub_(TService::NewStub(channel)) {}
+  OtlpGrpcClient(std::shared_ptr<grpc::Channel> channel) : stub_(TService::NewStub(channel))
+  {
+    if constexpr (std::is_same_v<ExportLogsServiceRequest, TReq>) {
+      client_type_ = "logs client";
+    } else if constexpr (std::is_same_v<ExportMetricsServiceRequest, TReq>) {
+      client_type_ = "metrics client";
+    }
+  }
 
   virtual ~OtlpGrpcClient() { cq_.Shutdown(); }
 
@@ -60,21 +67,21 @@ public:
     if constexpr (std::is_same_v<ExportLogsServiceRequest, TReq>) {
       for (auto const &resource_logs : request.resource_logs()) {
         for (auto const &scope_logs : resource_logs.scope_logs()) {
-          async_response->num_entries += scope_logs.log_records_size();
+          async_response->num_data_points += scope_logs.log_records_size();
         }
       }
     } else if constexpr (std::is_same_v<ExportMetricsServiceRequest, TReq>) {
       for (auto const &resource_metrics : request.resource_metrics()) {
         for (auto const &scope_metrics : resource_metrics.scope_metrics()) {
-          async_response->num_entries += scope_metrics.metrics_size();
+          async_response->num_data_points += scope_metrics.metrics_size();
         }
       }
     } else {
-      async_response->num_entries = 0;
+      async_response->num_data_points = 0;
     }
 
     bytes_sent_ += async_response->num_bytes;
-    entries_sent_ += async_response->num_entries;
+    data_points_sent_ += async_response->num_data_points;
     ++requests_sent_;
 
     async_responses_.emplace(async_response_tag, std::move(async_response));
@@ -101,12 +108,13 @@ public:
           auto const &async_response = itr->second;
           if (!async_response->status_.ok()) {
             LOG::debug(
-                "RPC failed for tag={}: {}: {}",
+                "{}: RPC failed for tag={}: {}: {}",
+                client_type_,
                 reinterpret_cast<u64>(tag),
                 async_response->status_.error_code(),
                 log_waive(async_response->status_.error_message()));
             bytes_failed_ += async_response->num_bytes;
-            entries_failed_ += async_response->num_entries;
+            data_points_failed_ += async_response->num_data_points;
             ++requests_failed_;
           }
           async_responses_.erase(itr);
@@ -120,8 +128,8 @@ public:
 
   u64 bytes_failed() const { return bytes_failed_; }
   u64 bytes_sent() const { return bytes_sent_; }
-  u64 entries_failed() const { return entries_failed_; }
-  u64 entries_sent() const { return entries_sent_; }
+  u64 data_points_failed() const { return data_points_failed_; }
+  u64 data_points_sent() const { return data_points_sent_; }
   u64 requests_failed() const { return requests_failed_; }
   u64 requests_sent() const { return requests_sent_; }
   u64 unknown_response_tags() const { return unknown_response_tags_; }
@@ -139,7 +147,7 @@ private:
     std::unique_ptr<grpc::ClientAsyncResponseReader<TResp>> response_reader_;
 
     u64 num_bytes = 0;
-    u64 num_entries = 0;
+    u64 num_data_points = 0;
   };
 
   static u64 next_async_response_tag_;
@@ -147,11 +155,13 @@ private:
 
   u64 bytes_failed_ = 0;
   u64 bytes_sent_ = 0;
-  u64 entries_failed_ = 0;
-  u64 entries_sent_ = 0;
+  u64 data_points_failed_ = 0;
+  u64 data_points_sent_ = 0;
   u64 requests_failed_ = 0;
   u64 requests_sent_ = 0;
   u64 unknown_response_tags_ = 0;
+
+  std::string_view client_type_;
 };
 
 template <typename TService, typename TReq, typename TResp>
