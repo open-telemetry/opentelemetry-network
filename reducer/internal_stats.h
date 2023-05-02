@@ -370,6 +370,7 @@ struct PipelineAgentStats {
 struct OtlpGrpcStats {
   BEGIN_LABELS
   COMMON_LABELS
+  LABEL(type)
   END_LABELS
 
   BEGIN_METRICS

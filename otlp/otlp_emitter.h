@@ -6,7 +6,7 @@
 #pragma once
 #include <string>
 
-#include "otlp_grpc_metrics_client.h"
+#include "otlp_grpc_client.h"
 
 namespace otlp_client {
 
@@ -21,6 +21,6 @@ public:
   bool operator()(const ExportMetricsServiceRequest &request);
 
 private:
-  OtlpGrpcMetricsClient client_;
+  OtlpGrpcClient<MetricsService, ExportMetricsServiceRequest, ExportMetricsServiceResponse> client_;
 };
 } // namespace otlp_client

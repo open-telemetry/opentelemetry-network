@@ -7,7 +7,6 @@
 
 #include "percentile_latencies.h"
 
-#include <otlp/otlp_grpc_metrics_client.h>
 #include <reducer/constants.h>
 #include <reducer/disabled_metrics.h>
 #include <reducer/publisher.h>

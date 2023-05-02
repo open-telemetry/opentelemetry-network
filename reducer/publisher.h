@@ -5,10 +5,9 @@
 
 #pragma once
 
-#include <otlp/otlp_grpc_metrics_client.h>
-#include <util/log.h>
-
+#include <otlp/otlp_grpc_client.h>
 #include <platform/types.h>
+#include <util/log.h>
 
 #include <chrono>
 #include <iosfwd>
@@ -40,6 +39,13 @@ public:
     virtual void write(std::string_view prefix, std::string_view labels, std::string_view suffix)
     {
       LOG::error("write(prefix, labels, suffix) not supported");
+      std::abort();
+    }
+
+    // Writes provided ExportLogsServiceRequest.
+    virtual void write(ExportLogsServiceRequest &request)
+    {
+      LOG::error("write(ExportLogsServiceRequest) not supported");
       std::abort();
     }
 

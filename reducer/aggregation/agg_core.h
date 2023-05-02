@@ -15,8 +15,6 @@
 #include <reducer/rpc_stats.h>
 #include <reducer/tsdb_format.h>
 
-#include <otlp/otlp_grpc_metrics_client.h>
-
 #include <generated/ebpf_net/aggregation/connection.h>
 #include <generated/ebpf_net/aggregation/index.h>
 #include <generated/ebpf_net/aggregation/protocol.h>

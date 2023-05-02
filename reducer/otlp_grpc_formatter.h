@@ -26,7 +26,7 @@ public:
   OtlpGrpcFormatter(Publisher::WriterPtr const &writer);
   virtual ~OtlpGrpcFormatter() override;
 
-  // flush any metrics remaining in request_
+  // flush any logs and metrics remaining in logs_request_ and metrics_request_
   virtual void flush() override;
 
 protected:
@@ -46,11 +46,17 @@ protected:
       bool timestamp_changed,
       Publisher::WriterPtr const &unused_writer) override;
 
-  void send_request();
+  void send_logs_request();
+  void send_metrics_request();
+
+  // A single ExportLogsServiceRequest is used to send logs, batching multiple logs per request, and it is reused to
+  // avoid regenerating common portions.
+  ExportLogsServiceRequest logs_request_;
+  opentelemetry::proto::logs::v1::ScopeLogs *scope_logs_;
 
   // A single ExportMetricsServiceRequest is used to send metrics, batching multiple metrics per request, and it is reused to
   // avoid regenerating common portions.
-  ExportMetricsServiceRequest request_;
+  ExportMetricsServiceRequest metrics_request_;
   opentelemetry::proto::metrics::v1::Sum sum_;
   opentelemetry::proto::metrics::v1::ScopeMetrics *scope_metrics_;
 

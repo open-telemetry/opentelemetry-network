@@ -9,6 +9,10 @@ gateway:
   config:
     service:
       pipelines:
+        logs:
+          receivers: [otlp]
+          processors: [batch, memory_limiter]
+          exporters: [logging]
         metrics:
           exporters: [logging]
         metrics/collector:

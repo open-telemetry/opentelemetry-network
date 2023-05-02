@@ -4,7 +4,6 @@
 #include "otlp_grpc_formatter.h"
 #include "publisher.h"
 
-#include <otlp/otlp_grpc_metrics_client.h>
 #include <otlp/otlp_util.h>
 #include <util/common_test.h>
 #include <util/json.h>
@@ -24,6 +23,7 @@ public:
 
   ~TestPublisherWriter(){};
 
+  void write(ExportLogsServiceRequest &request) override{};
   void write(ExportMetricsServiceRequest &request) override { request_to_validate_ = request; };
 
   void flush() override{};

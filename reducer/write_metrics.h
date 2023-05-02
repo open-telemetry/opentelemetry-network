@@ -12,8 +12,6 @@
 #include "outbound_metrics.h"
 #include "tsdb_formatter.h"
 
-#include <otlp/otlp_grpc_metrics_client.h>
-
 #include <generated/ebpf_net/metrics.h>
 
 namespace reducer {
