@@ -60,7 +60,7 @@ void OtlpGrpcPublisher::Writer::write_internal_stats(
   stats.labels.shard = std::to_string(shard);
   stats.labels.module = module;
 
-  stats.labels.type = "metrics";
+  stats.labels.client_type = "metrics";
   stats.metrics.bytes_failed = metrics_client_.bytes_failed();
   stats.metrics.bytes_sent = metrics_client_.bytes_sent();
   stats.metrics.metrics_failed = metrics_client_.data_points_failed();
@@ -70,7 +70,7 @@ void OtlpGrpcPublisher::Writer::write_internal_stats(
   stats.metrics.unknown_response_tags = metrics_client_.unknown_response_tags();
   encoder.write_internal_stats(stats, time_ns);
 
-  stats.labels.type = "logs";
+  stats.labels.client_type = "logs";
   stats.metrics.bytes_failed = logs_client_.bytes_failed();
   stats.metrics.bytes_sent = logs_client_.bytes_sent();
   stats.metrics.metrics_failed = logs_client_.data_points_failed();
@@ -79,6 +79,39 @@ void OtlpGrpcPublisher::Writer::write_internal_stats(
   stats.metrics.requests_sent = logs_client_.requests_sent();
   stats.metrics.unknown_response_tags = logs_client_.unknown_response_tags();
   encoder.write_internal_stats(stats, time_ns);
+}
+
+void OtlpGrpcPublisher::Writer::write_internal_stats_to_logging_core(
+    ::ebpf_net::aggregation::auto_handles::agg_core_stats &agg_core_stats,
+    u64 time_ns,
+    int shard,
+    std::string_view module) const
+{
+  agg_core_stats.agg_otlp_grpc_stats(
+      jb_blob(module),
+      shard,
+      jb_blob(std::string_view("metrics")),
+      metrics_client_.bytes_failed(),
+      metrics_client_.bytes_sent(),
+      metrics_client_.data_points_failed(),
+      metrics_client_.data_points_sent(),
+      metrics_client_.requests_failed(),
+      metrics_client_.requests_sent(),
+      metrics_client_.unknown_response_tags(),
+      time_ns);
+
+  agg_core_stats.agg_otlp_grpc_stats(
+      jb_blob(module),
+      shard,
+      jb_blob(std::string_view("logs")),
+      logs_client_.bytes_failed(),
+      logs_client_.bytes_sent(),
+      logs_client_.data_points_failed(),
+      logs_client_.data_points_sent(),
+      logs_client_.requests_failed(),
+      logs_client_.requests_sent(),
+      logs_client_.unknown_response_tags(),
+      time_ns);
 }
 
 } // namespace reducer

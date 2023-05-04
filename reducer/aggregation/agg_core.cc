@@ -197,6 +197,10 @@ void AggCore::write_internal_stats()
   matching_to_aggregation_stats_.write_internal_metrics_to_logging_core(core_stats_, time_ns);
   aggregation_to_logging_stats_.write_internal_metrics_to_logging_core(core_stats_, time_ns);
 
+  if (otlp_metric_writer_) {
+    otlp_metric_writer_->write_internal_stats_to_logging_core(agg_core_stats_, time_ns, shard, module);
+  }
+
 #if ENABLE_CODE_TIMING
   code_timing_registry_.visit(
       [&](std::string_view name, std::string_view filename, int line, u64 index, data::Gauge<u64> &data) {
