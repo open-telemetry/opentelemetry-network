@@ -9,6 +9,8 @@
 #include <platform/types.h>
 #include <util/log.h>
 
+#include <generated/ebpf_net/aggregation/connection.h>
+
 #include <chrono>
 #include <iosfwd>
 #include <memory>
@@ -65,8 +67,17 @@ public:
     // Number of bytes that were not written.
     virtual u64 bytes_failed_to_write() const { return 0; }
 
-    // Gets this writer's stats encoded for TSDB output.
+    // Publishes this Writer's internal metrics.  This version is called from the logging core to publish internal metrics on
+    // the logging core's Publisher::Writer that publishes internal metrics.
     virtual void write_internal_stats(InternalMetricsEncoder &encoder, u64 time_ns, int shard, std::string_view module) const {}
+
+    // Publishes this Writer's internal metrics.  This version is called from the aggregation core and sends the internal
+    // metrics to the logging core to be processed and published as appropriate.
+    virtual void write_internal_stats_to_logging_core(
+        ::ebpf_net::aggregation::auto_handles::agg_core_stats &agg_core_stats,
+        u64 time_ns,
+        int shard,
+        std::string_view module) const {};
   };
 
   using WriterPtr = std::unique_ptr<Writer>;

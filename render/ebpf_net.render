@@ -1913,6 +1913,19 @@ app logging {
       4: u64 prometheus_bytes_discarded
       5: u64 time_ns
     }
+    44: msg agg_otlp_grpc_stats{
+      1: string module
+      2: u16 shard
+      3: string client_type
+      4: u64 bytes_failed
+      5: u64 bytes_sent
+      6: u64 data_points_failed
+      7: u64 data_points_sent
+      8: u64 requests_failed
+      9: u64 requests_sent
+      10: u64 unknown_response_tags
+      11: u64 time_ns
+    }
   }
 
   span ingest_core_stats

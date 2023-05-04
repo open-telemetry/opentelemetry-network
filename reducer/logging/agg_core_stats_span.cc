@@ -67,4 +67,40 @@ void AggCoreStatsSpan::agg_prometheus_bytes_stats(
       msg->prometheus_bytes_discarded,
       msg->time_ns);
 }
+
+void AggCoreStatsSpan::agg_otlp_grpc_stats(
+    ::ebpf_net::logging::weak_refs::agg_core_stats span_ref, u64 timestamp, jsrv_logging__agg_otlp_grpc_stats *msg)
+{
+  auto &encoder = local_core<LoggingCore>().encoder_;
+
+  OtlpGrpcStats stats;
+  stats.labels.module = msg->module;
+  stats.labels.shard = std::to_string(msg->shard);
+  stats.labels.client_type = msg->client_type;
+  stats.metrics.bytes_failed = msg->bytes_failed;
+  stats.metrics.bytes_sent = msg->bytes_sent;
+  stats.metrics.metrics_failed = msg->data_points_failed;
+  stats.metrics.metrics_sent = msg->data_points_sent;
+  stats.metrics.requests_failed = msg->requests_failed;
+  stats.metrics.requests_sent = msg->requests_sent;
+  stats.metrics.unknown_response_tags = msg->unknown_response_tags;
+
+  encoder.write_internal_stats(stats, msg->time_ns);
+
+  LOG::debug_in(
+      reducer::logging::Component::internal_metrics,
+      "AggCoreStatsSpan::agg_otlp_grpc_stats module={} shard={} client_type={} bytes_failed={} bytes_sent={} metrics_failed={} metrics_sent={} requests_failed={} requests_sent={} unknown_response_tags={} timestamp={}",
+      msg->module,
+      msg->shard,
+      msg->client_type,
+      msg->bytes_failed,
+      msg->bytes_sent,
+      msg->data_points_failed,
+      msg->data_points_sent,
+      msg->requests_failed,
+      msg->requests_sent,
+      msg->unknown_response_tags,
+      msg->time_ns);
+}
+
 } // namespace reducer::logging
