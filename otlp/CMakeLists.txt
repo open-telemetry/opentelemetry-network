@@ -60,3 +60,5 @@ target_link_libraries(
     otlp_grpc_proto
     time
 )
+
+add_unit_test(otlp_grpc_client SRCS otlp_request_builder.cc LIBS logging otlp_grpc_proto time)
