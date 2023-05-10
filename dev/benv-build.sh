@@ -132,8 +132,6 @@ echo -n "version being built: "
 source ./version.sh
 
 CMAKE_FLAGS=( \
-  -DLLVM_DIR:PATH="$HOME/install/lib/cmake/llvm"
-  -DCLANG_DIR="$HOME/install/lib/cmake/clang"
   -DCMAKE_INSTALL_PREFIX:PATH="$HOME/install"
   -DOPENSSL_ROOT_DIR:PATH="$HOME/install/openssl"
   -DCMAKE_PREFIX_PATH:PATH="$HOME/install"
