@@ -9,7 +9,7 @@
 #include <platform/types.h>
 #include <util/log.h>
 
-#include <generated/ebpf_net/aggregation/connection.h>
+#include <generated/ebpf_net/aggregation/auto_handles.h>
 
 #include <chrono>
 #include <iosfwd>
