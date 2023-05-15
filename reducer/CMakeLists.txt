@@ -125,6 +125,10 @@ target_link_libraries(
     time
     otlp_grpc_proto
 )
+add_dependencies(
+  metrics_output
+    render_compile_ebpf_net
+)
 
 # Shell scripts
 #
