@@ -30,6 +30,8 @@ the individual components:
 
 Check out the [Developer Guide](docs/developing.md).
 
+See the [Roadmap](docs/roadmap.md) for an overwiew of the project's goals.
+
 Triagers ([@open-telemetry/ebpf-triagers](https://github.com/orgs/open-telemetry/teams/ebpf-triagers))
 
 - [Antoine Toulme](https://github.com/atoulme), Splunk
