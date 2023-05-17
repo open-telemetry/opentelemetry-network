@@ -1,6 +1,9 @@
-# Example of modifying the OpenTelemetry eBPF Reducer that was previously deployed with ebpf-net to
-# use more shards then the default of 1, to disable all udp metrics, and to enable the ebpf_net.message
-# internal metric.
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+# Modify the OpenTelemetry eBPF Reducer that was previously deployed with ebpf-net to
+# use more shards then the default of 1, to disable all udp metrics, and to enable the
+# ebpf_net.message internal metric.
 
 networkExplorer:
   reducer:

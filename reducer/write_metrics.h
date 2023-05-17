@@ -117,4 +117,26 @@ inline void write_metrics(
 
 #undef WRITE
 
+// The following functions are used to write metrics as flow logs.
+inline void
+write_flow_log(ebpf_net::metrics::tcp_metrics const &metrics, TsdbFormatter &formatter, const DisabledMetrics &disabled_metrics)
+{
+  if (disabled_metrics.is_metric_group_disabled<TcpMetrics>())
+    return;
+
+  formatter.write_flow_log(metrics);
+}
+
+inline void
+write_flow_log(ebpf_net::metrics::udp_metrics const &metrics, TsdbFormatter &formatter, const DisabledMetrics &disabled_metrics)
+{}
+
+inline void
+write_flow_log(ebpf_net::metrics::dns_metrics const &metrics, TsdbFormatter &formatter, const DisabledMetrics &disabled_metrics)
+{}
+
+inline void write_flow_log(
+    ebpf_net::metrics::http_metrics const &metrics, TsdbFormatter &formatter, const DisabledMetrics &disabled_metrics)
+{}
+
 } // namespace reducer

@@ -35,6 +35,7 @@ void AggCore::disable_node_ip_field()
 
 bool AggCore::id_id_enabled_ = false;
 bool AggCore::az_id_enabled_ = false;
+bool AggCore::flow_logs_enabled_ = false;
 
 void AggCore::enable_id_id()
 {
@@ -44,6 +45,11 @@ void AggCore::enable_id_id()
 void AggCore::enable_az_id()
 {
   az_id_enabled_ = true;
+}
+
+void AggCore::enable_flow_logs()
+{
+  flow_logs_enabled_ = true;
 }
 
 AggCore::AggCore(
@@ -129,6 +135,7 @@ void AggCore::write_standard_metrics(u64 t)
       std::chrono::nanoseconds(metric_timestamp),
       id_id_enabled_,
       az_id_enabled_,
+      flow_logs_enabled_,
       disabled_metrics_);
 
   auto az_az_writer = [&encoder, this](auto &&...args) {

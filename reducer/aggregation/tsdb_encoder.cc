@@ -22,6 +22,7 @@ TsdbEncoder::TsdbEncoder(
     std::chrono::nanoseconds timestamp,
     bool id_id_enabled,
     bool az_id_enabled,
+    bool flow_logs_enabled,
     const DisabledMetrics &disabled_metrics,
     std::optional<int> rollup_count)
     : metric_writers_(metric_writers),
@@ -30,6 +31,7 @@ TsdbEncoder::TsdbEncoder(
       timestamp_(timestamp),
       id_id_enabled_(id_id_enabled),
       az_id_enabled_(az_id_enabled),
+      flow_logs_enabled_(flow_logs_enabled),
       disabled_metrics_(disabled_metrics)
 {
   if (!metric_writers.empty()) {

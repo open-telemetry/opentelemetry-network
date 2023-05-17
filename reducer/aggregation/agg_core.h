@@ -54,6 +54,9 @@ public:
   // Enables generating az-node metrics.
   static void enable_az_id();
 
+  // Enables generating flow logs from node-node (id-id) metrics.
+  static void enable_flow_logs();
+
   // How many top aggregation role/role pairs to show the count for in the
   // pipeline_aggregation_roles internal stat.
   static void count_top_aggregation_roles(size_t k);
@@ -112,6 +115,9 @@ private:
 
   // Flag indicating whether az-id timeseries should be outputted.
   static bool az_id_enabled_;
+
+  // Flag indicating whether flow logs should be outputted.
+  static bool flow_logs_enabled_;
 
   void on_timeslot_complete() override;
 
