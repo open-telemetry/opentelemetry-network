@@ -46,6 +46,14 @@ set_target_properties(
 
 strip_binary(cloud-collector)
 
+install(
+  TARGETS
+    cloud-collector
+  RUNTIME
+  DESTINATION ${CMAKE_INSTALL_BINOIR}
+  COMPONENT cloud-collector
+)
+
 lint_shell_script_bundle(
   cloud-collector-scripts
   SOURCES

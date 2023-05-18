@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.12)
 
 project(
   opentelemetry-ebpf
-    VERSION 0.9.0
+  VERSION ${EBPF_NET_MAJOR_VERSION}.${EBPF_NET_MINOR_VERSION}.${EBPF_NET_PATCH_VERSION}
 )
 
 list(
@@ -86,3 +86,48 @@ configure_file(config.h.cmake_in config.h)
 add_dependencies(pipeline collectors reducer)
 add_dependencies(pipeline-docker collectors-docker)
 add_dependencies(pipeline-docker-registry collectors-docker-registry)
+
+
+################################################################################
+# Packaging
+#
+
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "OpenTelemetry-eBPF")
+set(CPACK_PACKAGE_DESCRIPTION
+"The OpenTelemetry eBPF project develops components that collect and analyze
+telemetry from the operating system, cloud, and container orchestrators. Its initial focus
+is on collecting network data to enable users to gain insight into their distributed
+applications.")
+set(CPACK_PACKAGE_VENDOR "OpenTelemetry")
+set(CPACK_PACKAGE_CONTACT "https://github.com/orgs/open-telemetry/teams/ebpf-maintainers")
+set(CPACK_PACKAGE_HOMEPAGE_URL "https://github.com/open-telemetry/opentelemetry-ebpf")
+
+set(CPACK_RESOURCE_FILE_README "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.txt")
+
+set(CPACK_GENERATOR "TGZ;RPM;DEB")
+set(CPACK_COMPONENTS_GROUPING IGNORE) # one package per component
+set(CPACK_RPM_COMPONENT_INSTALL ON)
+set(CPACK_DEB_COMPONENT_INSTALL ON)
+
+include(CPack)
+
+cpack_add_component(
+  reducer
+  DESCRIPTION
+    "OpenTelemetry-eBPF Reducer.\n${CPACK_PACKAGE_DESCRIPTION}"
+)
+
+cpack_add_component(
+  kernel-collector
+  DESCRIPTION
+    "OpenTelemetry-eBPF Kernel Collector.\n${CPACK_PACKAGE_DESCRIPTION}"
+)
+
+cpack_add_component(
+  cloud-collector
+  DESCRIPTION
+    "OpenTelemetry-eBPF Cloud Collector.\n${CPACK_PACKAGE_DESCRIPTION}"
+)
+
+cpack_add_component(tools DESCRIPTION "OpenTelemetry-eBPF tools")
