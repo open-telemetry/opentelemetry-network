@@ -16,6 +16,13 @@ target_link_libraries(
     static-executable
     spdlog
 )
+install(
+  TARGETS
+    reducer
+  RUNTIME
+  DESTINATION ${CMAKE_INSTALL_BINOIR}
+  COMPONENT reducer
+)
 
 harden_executable(reducer)
 strip_binary(reducer)

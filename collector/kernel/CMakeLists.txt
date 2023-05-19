@@ -34,8 +34,9 @@ target_include_directories(
 install(
   TARGETS
     kernel-collector
-  RUNTIME DESTINATION
-    bin
+  RUNTIME
+  DESTINATION ${CMAKE_INSTALL_BINOIR}
+  COMPONENT kernel-collector
 )
 harden_executable(kernel-collector)
 strip_binary(kernel-collector)
