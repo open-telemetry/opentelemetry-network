@@ -10,9 +10,12 @@ function(add_tool_executable EXEC_NAME)
 
   add_executable("${EXEC_NAME}" "${P_SRCS}")
   add_dependencies(tools "${EXEC_NAME}")
+
   install(
     TARGETS "${EXEC_NAME}"
-    RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}/bin"
+    RUNTIME
+    DESTINATION "${CMAKE_INSTALL_BINDIR}"
+    COMPONENT tools
   )
 
   if(DEFINED P_DEPS)
