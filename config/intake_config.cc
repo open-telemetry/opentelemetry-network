@@ -31,14 +31,22 @@ FileDescriptor IntakeConfig::create_output_record_file() const
 
 std::unique_ptr<channel::NetworkChannel> IntakeConfig::make_channel(uv_loop_t &loop) const
 {
+  if (host_.empty()) {
+    throw std::invalid_argument("missing intake host value");
+  }
+
+  if (port_.empty()) {
+    throw std::invalid_argument("missing intake port value");
+  }
+
   return std::make_unique<channel::TCPChannel>(loop, host_, port_);
 }
 
 IntakeConfig IntakeConfig::read_from_env()
 {
   IntakeConfig intake{
-      .host_ = get_env_var(INTAKE_HOST_VAR),
-      .port_ = get_env_var(INTAKE_PORT_VAR),
+      .host_ = std::string(try_get_env_var(INTAKE_HOST_VAR)),
+      .port_ = std::string(try_get_env_var(INTAKE_PORT_VAR)),
       .record_output_path = std::string(try_get_env_var(INTAKE_RECORD_OUTPUT_PATH_VAR)),
       .encoder_ = try_get_env_value<IntakeEncoder>(INTAKE_INTAKE_ENCODER_VAR)};
 
@@ -46,7 +54,17 @@ IntakeConfig IntakeConfig::read_from_env()
 }
 
 IntakeConfig::ArgsHandler::ArgsHandler(cli::ArgsParser &parser)
-    : encoder_(parser.add_arg(
+    : host_(parser.add_arg<std::string>(
+          "intake-host",
+          "IP address or host name of the reducer to which telemetry is to be sent",
+          INTAKE_HOST_VAR,
+          "127.0.0.1")),
+      port_(parser.add_arg<std::string>(
+          "intake-port",
+          "TCP port number on which the reducer is listening for collector connections",
+          INTAKE_PORT_VAR,
+          "8000")),
+      encoder_(parser.add_arg(
           "intake-encoder",
           "Chooses the intake encoder to use"
           " - this relates to the sink used to dump collected telemetry to",
@@ -59,6 +77,8 @@ IntakeConfig IntakeConfig::ArgsHandler::read_config()
   auto intake_config = config::IntakeConfig::read_from_env();
 
   intake_config.encoder(*encoder_);
+  intake_config.host(*host_);
+  intake_config.port(*port_);
 
   return intake_config;
 }

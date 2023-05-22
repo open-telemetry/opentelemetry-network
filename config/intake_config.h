@@ -52,6 +52,9 @@ public:
   std::string const &host() const { return host_; }
   std::string const &port() const { return port_; }
 
+  void host(std::string const &host) { host_ = host; }
+  void port(std::string const &port) { port_ = port; }
+
   /**
    * If a secondary output has been set, opens or creates the output file and
    * returns its file descriptor.
@@ -108,6 +111,8 @@ struct IntakeConfig::ArgsHandler : cli::ArgsParser::Handler {
   IntakeConfig read_config();
 
 private:
+  cli::ArgsParser::ArgProxy<std::string> host_;
+  cli::ArgsParser::ArgProxy<std::string> port_;
   cli::ArgsParser::ArgProxy<IntakeEncoder> encoder_;
 };
 
