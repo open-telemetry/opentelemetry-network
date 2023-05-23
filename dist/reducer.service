@@ -1,0 +1,11 @@
+[Unit]
+Description=OpenTelemetry-eBPF Reducer
+After=network.target
+
+[Service]
+Type=exec
+ExecStart=/bin/bash -c 'exec /usr/bin/reducer $(< /etc/opentelemetry-ebpf/reducer.args)'
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

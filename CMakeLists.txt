@@ -80,6 +80,7 @@ add_subdirectory(reducer)
 add_subdirectory(otlp)
 add_subdirectory(dev)
 add_subdirectory(tools)
+add_subdirectory(dist)
 
 configure_file(config.h.cmake_in config.h)
 
@@ -109,6 +110,11 @@ set(CPACK_GENERATOR "TGZ;RPM;DEB")
 set(CPACK_COMPONENTS_GROUPING IGNORE) # one package per component
 set(CPACK_RPM_COMPONENT_INSTALL ON)
 set(CPACK_DEB_COMPONENT_INSTALL ON)
+
+set(CPACK_RPM_PACKAGRE_REQUIRES "bash")
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "bash")
+set(CPACK_RPM_KERNEL-COLLECTOR_PACKAGE_REQUIRES "bash, kernel-devel")
+set(CPACK_DEBIAN_KERNEL-COLLECTOR_PACKAGE_DEPENDS "bash, linux-headers")
 
 include(CPack)
 

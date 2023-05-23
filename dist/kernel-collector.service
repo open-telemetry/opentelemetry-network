@@ -1,0 +1,11 @@
+[Unit]
+Description=OpenTelemetry-eBPF Kernel Collector
+After=network.target
+
+[Service]
+Type=exec
+ExecStart=/bin/bash -c 'exec /usr/bin/kernel-collector $(< /etc/opentelemetry-ebpf/kernel-collector.args)'
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
