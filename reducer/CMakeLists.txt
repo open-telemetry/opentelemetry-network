@@ -31,6 +31,7 @@ strip_binary(reducer)
 #
 add_library(
   reducerlib
+    reducer.cc
     core.cc
     worker.cc
     uid_key.cc
@@ -182,3 +183,4 @@ endif()
 add_unit_test(otlp_grpc_formatter LIBS metrics_output)
 add_unit_test(rpc_queue_matrix LIBS fastpass_util element_queue_writer)
 add_unit_test(disabled_metrics LIBS metrics_output)
+add_unit_test(reducer LIBS reducerlib libuv-static static-executable spdlog)
