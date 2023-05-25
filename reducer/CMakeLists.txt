@@ -31,6 +31,7 @@ strip_binary(reducer)
 #
 add_library(
   reducerlib
+    reducer.cc
     core.cc
     worker.cc
     uid_key.cc
