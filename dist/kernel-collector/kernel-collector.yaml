@@ -1,0 +1,5 @@
+#labels:
+#  environment: myenv
+#  zone: myzone
+#  service: myservice
+#  host: myhost
