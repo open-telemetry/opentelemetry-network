@@ -153,6 +153,7 @@ TEST_F(OtlpGrpcLogsClientTest, AsyncLogs)
   tester_.stop_server();
 
   // Async response for this request will indicate failure since the server was previously stopped.
+  LOG::debug("Sending async request to gRPC server that has been shutdown (will log error)");
   ExportLogsServiceRequest request = create_request();
   tester_.send_async(request);
   tester_.process_responses();
@@ -184,6 +185,7 @@ TEST_F(OtlpGrpcMetricsClientTest, AsyncMetrics)
   tester_.stop_server();
 
   // Async response for this request will indicate failure since the server was previously stopped.
+  LOG::debug("Sending async request to gRPC server that has been shutdown (will log error)");
   ExportMetricsServiceRequest request = create_request();
   tester_.send_async(request);
   tester_.process_responses();
