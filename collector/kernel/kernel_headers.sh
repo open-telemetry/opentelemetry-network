@@ -7,20 +7,20 @@ set -xe
 kernel_headers_info_path="$1"
 kernel_version="$(uname -r)"
 
-kernel_headers_usr_src_base_path="/usr/src"
-kernel_headers_lib_modules_base_path="/lib/modules"
+kernel_headers_usr_src_base_path="/usr/src/kernels/4.18.0-372.49.1.rt7.206.el8_6.x86_64/"
+kernel_headers_lib_modules_base_path="/lib/modules/4.18.0-372.49.1.rt7.206.el8_6.x86_64"
 
 host_dir="${EBPF_NET_HOST_DIR:-/hostfs}"
 host_etc_dir="${host_dir}/etc"
 host_yum_vars_dir="${host_etc_dir}/yum/vars"
 host_cache_dir="${host_dir}/cache/ebpf_net"
-host_usr_src_dir="${host_dir}${kernel_headers_usr_src_base_path}"
+host_usr_src_dir="${kernel_headers_usr_src_base_path}"
 host_lib_modules_dir="${host_dir}${kernel_headers_lib_modules_base_path}"
 host_kernel_headers_dir="${host_lib_modules_dir}/${kernel_version}"
 host_cache_kernel_headers_dir="${host_cache_dir}/kernel-headers"
 host_cache_kernel_headers_archive="${host_cache_kernel_headers_dir}/${kernel_version}.tar.gz"
 
-kernel_headers_lib_modules_path="${kernel_headers_lib_modules_base_path}/${kernel_version}"
+kernel_headers_lib_modules_path="${kernel_headers_lib_modules_base_path}"
 kernel_headers_beacon_path=( \
   "build/include/linux/tcp.h"
   "source/include/linux/tcp.h"
