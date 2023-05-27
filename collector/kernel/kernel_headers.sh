@@ -8,7 +8,7 @@ kernel_headers_info_path="$1"
 kernel_version="$(uname -r)"
 
 kernel_headers_usr_src_base_path="/usr/src"
-kernel_headers_lib_modules_base_path="/lib/modules/4.18.0-372.49.1.rt7.206.el8_6.x86_64"
+kernel_headers_lib_modules_base_path="/lib/modules"
 
 host_dir="${EBPF_NET_HOST_DIR:-/hostfs}"
 host_etc_dir="${host_dir}/etc"
@@ -34,6 +34,7 @@ function check_kernel_headers_installed {
   if [[ -n "$1" ]]; then
     base_dir="$1"
   fi
+  base_dir="${kernel_headers_lib_modules_path}"
 
   for header_file in "${kernel_headers_beacon_path[@]}"; do
     if [[ -e "${base_dir}/${header_file}" ]]; then
