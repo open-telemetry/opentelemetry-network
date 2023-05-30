@@ -1,0 +1,2 @@
+/etc/opentelemetry-ebpf/kernel-collector.yaml
+/etc/opentelemetry-ebpf/kernel-collector.args
