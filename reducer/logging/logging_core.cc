@@ -23,9 +23,9 @@ namespace reducer::logging {
 
 bool LoggingCore::otlp_formatted_internal_metrics_enabled_ = false;
 
-void LoggingCore::enable_otlp_formatted_internal_metrics()
+void LoggingCore::set_otlp_formatted_internal_metrics_enabled(bool enabled)
 {
-  otlp_formatted_internal_metrics_enabled_ = true;
+  otlp_formatted_internal_metrics_enabled_ = enabled;
 }
 
 TsdbFormat LoggingCore::get_tsdb_format()

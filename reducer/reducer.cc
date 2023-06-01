@@ -93,29 +93,15 @@ void Reducer::init_config()
 {
   global_otlp_grpc_batch_size = config_.otlp_grpc_batch_size;
 
-  if (config_.enable_id_id) {
-    reducer::aggregation::AggCore::enable_id_id();
-  }
-  if (config_.enable_az_id) {
-    reducer::aggregation::AggCore::enable_az_id();
-  }
-  if (config_.enable_flow_logs) {
-    reducer::aggregation::AggCore::enable_flow_logs();
-  }
+  reducer::aggregation::AggCore::set_id_id_enabled(config_.enable_id_id);
+  reducer::aggregation::AggCore::set_az_id_enabled(config_.enable_az_id);
+  reducer::aggregation::AggCore::set_flow_logs_enabled(config_.enable_flow_logs);
 
-  if (config_.enable_otlp_grpc_metrics) {
-    reducer::logging::LoggingCore::enable_otlp_formatted_internal_metrics();
-  }
-  if (config_.enable_otlp_grpc_metric_descriptions) {
-    reducer::OtlpGrpcFormatter::enable_metric_description_field();
-  }
+  reducer::logging::LoggingCore::set_otlp_formatted_internal_metrics_enabled(config_.enable_otlp_grpc_metrics);
+  reducer::OtlpGrpcFormatter::set_metric_description_field_enabled(config_.enable_otlp_grpc_metric_descriptions);
 
-  if (config_.disable_node_ip_field) {
-    reducer::aggregation::AggCore::disable_node_ip_field();
-  }
-  if (config_.enable_autonomous_system_ip) {
-    reducer::matching::MatchingCore::enable_autonomous_system_ip();
-  }
+  reducer::aggregation::AggCore::set_node_ip_field_disabled(config_.disable_node_ip_field);
+  reducer::matching::MatchingCore::set_autonomous_system_ip_enabled(config_.enable_autonomous_system_ip);
 
   // If the path to a GeoIP database is defined, try loading the database here
   // and print an error message if it fails.
@@ -158,6 +144,9 @@ void Reducer::init_config()
 
     IndexDumper::set_dump_dir(dump_dir.native());
     IndexDumper::set_cooldown(dump_interval);
+  } else {
+    IndexDumper::set_dump_dir("");
+    IndexDumper::set_cooldown(0s);
   }
 }
 

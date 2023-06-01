@@ -19,7 +19,7 @@ namespace reducer {
 class OtlpGrpcFormatter : public TsdbFormatter {
 public:
   // Enables populating the metric description field in the `v1::Metric` messages.
-  static void enable_metric_description_field();
+  static void set_metric_description_field_enabled(bool enabled);
   // Returns whether populating the metric description field is enabled.
   static bool metric_description_field_enabled();
 
