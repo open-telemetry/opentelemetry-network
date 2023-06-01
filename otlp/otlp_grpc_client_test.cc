@@ -67,16 +67,25 @@ public:
 
   void validate_requests()
   {
-    auto &requests_received = server_.get_requests_received();
-    ASSERT_EQ(requests_sent_.size(), requests_received.size());
-    ASSERT_EQ(requests_sent_.size(), server_.get_num_requests_received());
-    for (size_t i = 0; i < requests_sent_.size(); ++i) {
-      EXPECT_EQ(get_request_json(requests_sent_[i]), get_request_json(requests_received[i]));
+    if constexpr (std::is_same_v<ExportLogsServiceRequest, TReq>) {
+      auto &requests_received = server_.get_log_requests_received();
+      ASSERT_EQ(requests_sent_.size(), requests_received.size());
+      ASSERT_EQ(requests_sent_.size(), server_.get_num_log_requests_received());
+      for (size_t i = 0; i < requests_sent_.size(); ++i) {
+        EXPECT_EQ(get_request_json(requests_sent_[i]), get_request_json(requests_received[i]));
+      }
+    } else if constexpr (std::is_same_v<ExportMetricsServiceRequest, TReq>) {
+      auto &requests_received = server_.get_metric_requests_received();
+      ASSERT_EQ(requests_sent_.size(), requests_received.size());
+      ASSERT_EQ(requests_sent_.size(), server_.get_num_metric_requests_received());
+      for (size_t i = 0; i < requests_sent_.size(); ++i) {
+        EXPECT_EQ(get_request_json(requests_sent_[i]), get_request_json(requests_received[i]));
+      }
     }
   };
 
   OtlpGrpcClient<TService, TReq, TResp> client_;
-  otlp_test_server::OtlpGrpcTestServer<TService, TReq, TResp> server_;
+  otlp_test_server::OtlpGrpcTestServer server_;
 
 private:
   std::vector<TReq> requests_sent_;
@@ -133,20 +142,20 @@ TEST_F(OtlpGrpcLogsClientTest, SyncLogs)
   ExportLogsServiceRequest request = create_request();
   auto status = tester_.client_.Export(request);
   EXPECT_TRUE(status.ok()) << "RPC failed: " << status.error_code() << ": " << log_waive(status.error_message());
-  EXPECT_EQ(1, tester_.server_.get_num_requests_received());
+  EXPECT_EQ(1, tester_.server_.get_num_log_requests_received());
 }
 
 TEST_F(OtlpGrpcLogsClientTest, AsyncLogs)
 {
   tester_.send_async(create_request());
   tester_.process_responses();
-  EXPECT_EQ(1, tester_.server_.get_num_requests_received());
+  EXPECT_EQ(1, tester_.server_.get_num_log_requests_received());
   tester_.validate_async_response_failures(0, 0, 0);
   tester_.validate_requests();
 
   tester_.send_async(create_request());
   tester_.process_responses();
-  EXPECT_EQ(2, tester_.server_.get_num_requests_received());
+  EXPECT_EQ(2, tester_.server_.get_num_log_requests_received());
   tester_.validate_async_response_failures(0, 0, 0);
   tester_.validate_requests();
 
@@ -165,20 +174,20 @@ TEST_F(OtlpGrpcMetricsClientTest, SyncMetrics)
   ExportMetricsServiceRequest request = create_request();
   auto status = tester_.client_.Export(request);
   EXPECT_TRUE(status.ok()) << "RPC failed: " << status.error_code() << ": " << log_waive(status.error_message());
-  EXPECT_EQ(1, tester_.server_.get_num_requests_received());
+  EXPECT_EQ(1, tester_.server_.get_num_metric_requests_received());
 }
 
 TEST_F(OtlpGrpcMetricsClientTest, AsyncMetrics)
 {
   tester_.send_async(create_request());
   tester_.process_responses();
-  EXPECT_EQ(1, tester_.server_.get_num_requests_received());
+  EXPECT_EQ(1, tester_.server_.get_num_metric_requests_received());
   tester_.validate_async_response_failures(0, 0, 0);
   tester_.validate_requests();
 
   tester_.send_async(create_request());
   tester_.process_responses();
-  EXPECT_EQ(2, tester_.server_.get_num_requests_received());
+  EXPECT_EQ(2, tester_.server_.get_num_metric_requests_received());
   tester_.validate_async_response_failures(0, 0, 0);
   tester_.validate_requests();
 

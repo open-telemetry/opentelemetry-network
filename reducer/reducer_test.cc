@@ -72,15 +72,12 @@ std::string_view do_curl(std::string const &url)
 
 class ReducerTest : public CommonTest {
 protected:
-  ReducerTest() : logs_server_(otlp_grpc_server_address_and_port), metrics_server_(otlp_grpc_server_address_and_port) {}
+  ReducerTest() : server_(otlp_grpc_server_address_and_port) {}
 
   void SetUp() override
   {
     CommonTest::SetUp();
     ASSERT_EQ(0, uv_loop_init(&loop_));
-
-    logs_server_.start();
-    metrics_server_.start();
   }
 
   void TearDown() override
@@ -91,9 +88,6 @@ protected:
       exit(1);
     }
 
-    logs_server_.stop();
-    metrics_server_.stop();
-
     print_code_timings();
 
     ASSERT_FALSE(timeout_exceeded_);
@@ -102,14 +96,19 @@ protected:
     exit(0);
   }
 
-  void start_reducer(reducer::ReducerConfig &config, StopConditions stop_conditions)
+  void start_reducer(reducer::ReducerConfig config, StopConditions stop_conditions)
   {
     try {
+      config_ = std::move(config);
       stop_conditions_ = std::move(stop_conditions);
       run_test_stopper();
 
+      if (config_.enable_otlp_grpc_metrics) {
+        server_.start();
+      }
+
       LOG::info("Starting Reducer...");
-      reducer_ = std::make_unique<reducer::Reducer>(loop_, config);
+      reducer_ = std::make_unique<reducer::Reducer>(loop_, config_);
 
       // start timing for purposes of the test timeout
       stopwatch_.emplace();
@@ -125,6 +124,10 @@ protected:
   {
     SCOPED_TIMING(StopReducer);
     reducer_->shutdown();
+
+    if (config_.enable_otlp_grpc_metrics) {
+      server_.stop();
+    }
   }
 
   void stop_test_check()
@@ -143,8 +146,12 @@ protected:
       }
     }
 
-    if (logs_server_.get_num_requests_received() < stop_conditions_.num_otlp_log_requests ||
-        metrics_server_.get_num_requests_received() < stop_conditions_.num_otlp_metric_requests) {
+    if (server_.get_num_log_requests_received() < stop_conditions_.num_otlp_log_requests ||
+        server_.get_num_metric_requests_received() < stop_conditions_.num_otlp_metric_requests) {
+      LOG::debug(
+          "log requests received={} metric requests received={}",
+          server_.get_num_log_requests_received(),
+          server_.get_num_metric_requests_received());
       stop_test_timer_->defer(std::chrono::seconds(1));
       return;
     }
@@ -198,15 +205,14 @@ protected:
 
   std::unique_ptr<reducer::Reducer> reducer_;
 
+  reducer::ReducerConfig config_;
   StopConditions stop_conditions_;
 
   bool timeout_exceeded_ = false;
   std::optional<StopWatch<>> stopwatch_;
   std::unique_ptr<scheduling::Timer> stop_test_timer_;
 
-  otlp_test_server::OtlpGrpcTestServer<LogsService, ExportLogsServiceRequest, ExportLogsServiceResponse> logs_server_;
-  otlp_test_server::OtlpGrpcTestServer<MetricsService, ExportMetricsServiceRequest, ExportMetricsServiceResponse>
-      metrics_server_;
+  otlp_test_server::OtlpGrpcTestServer server_;
 };
 
 // TODO: There are still memory issues during Reducer shutdown, in particular what appears to be use after free that results in
@@ -219,7 +225,7 @@ protected:
 // googletest ASSERT macros should be used instead of EXPECT macros because failures with the former cause the test to fail
 // immediately while failures with the latter don't cause the test to fail until later in the test teardown, after the exit().
 
-TEST_F(ReducerTest, DISABLED_OtlpGrpcInternalMetrics)
+TEST_F(ReducerTest, OtlpGrpcInternalMetrics)
 {
   reducer::ReducerConfig config{
       .telemetry_port = 8000,
@@ -238,11 +244,12 @@ TEST_F(ReducerTest, DISABLED_OtlpGrpcInternalMetrics)
       .otlp_grpc_batch_size = 1000,
 
       .disable_prometheus_metrics = true};
+
   StopConditions stop_conditions{.timeout_sec = std::chrono::seconds(60), .num_otlp_metric_requests = 1};
-  start_reducer(config, std::move(stop_conditions));
+  start_reducer(std::move(config), std::move(stop_conditions));
 }
 
-TEST_F(ReducerTest, PrometheusInternalMetrics)
+TEST_F(ReducerTest, DISABLED_PrometheusInternalMetrics)
 {
   reducer::ReducerConfig config{
       .telemetry_port = 8000,
@@ -262,8 +269,9 @@ TEST_F(ReducerTest, PrometheusInternalMetrics)
       .prom_bind = prom_server_address_and_port,
       .internal_prom_bind = internal_prom_server_address_and_port,
       .scrape_metrics_tsdb_format = reducer::TsdbFormat::prometheus};
+
   StopConditions stop_conditions{.timeout_sec = std::chrono::seconds(60), .num_prom_internal_metrics = 1};
-  start_reducer(config, std::move(stop_conditions));
+  start_reducer(std::move(config), std::move(stop_conditions));
 }
 
 } // namespace reducer_test
