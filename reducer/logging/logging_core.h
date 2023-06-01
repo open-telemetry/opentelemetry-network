@@ -48,7 +48,7 @@ public:
   InternalMetricsEncoder encoder_;
 
   // Enables otlp formatted internal metrics.
-  static void enable_otlp_formatted_internal_metrics();
+  static void set_otlp_formatted_internal_metrics_enabled(bool enabled);
 
   // Get tsdb format for Logging core.
   static TsdbFormat get_tsdb_format();

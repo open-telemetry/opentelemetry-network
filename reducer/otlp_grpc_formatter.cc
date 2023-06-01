@@ -28,9 +28,9 @@ namespace reducer {
 
 bool OtlpGrpcFormatter::metric_description_field_enabled_ = false;
 
-void OtlpGrpcFormatter::enable_metric_description_field()
+void OtlpGrpcFormatter::set_metric_description_field_enabled(bool enabled)
 {
-  metric_description_field_enabled_ = true;
+  metric_description_field_enabled_ = enabled;
 }
 
 bool OtlpGrpcFormatter::metric_description_field_enabled()

@@ -33,28 +33,28 @@ public:
     // Writes provided stream's content.
     virtual void write(std::stringstream &ss)
     {
-      LOG::error("write(std::stringstream) not supported");
+      std::cerr << "Publisher::Writer::write(stringstream) not supported" << std::endl;
       std::abort();
     }
 
     // Writes prefix, followed by labels, finished with suffix.
     virtual void write(std::string_view prefix, std::string_view labels, std::string_view suffix)
     {
-      LOG::error("write(prefix, labels, suffix) not supported");
+      std::cerr << "Publisher::Writer::write(prefix, labels, suffix) not supported" << std::endl;
       std::abort();
     }
 
     // Writes provided ExportLogsServiceRequest.
     virtual void write(ExportLogsServiceRequest &request)
     {
-      LOG::error("write(ExportLogsServiceRequest) not supported");
+      std::cerr << "Publisher::Writer::write(ExportLogsServiceRequest) not supported" << std::endl;
       std::abort();
     }
 
     // Writes provided ExportMetricsServiceRequest.
     virtual void write(ExportMetricsServiceRequest &request)
     {
-      LOG::error("write(ExportMetricsServiceRequest) not supported");
+      std::cerr << "Publisher::Writer::write(ExportMetricsServiceRequest) not supported" << std::endl;
       std::abort();
     }
 
