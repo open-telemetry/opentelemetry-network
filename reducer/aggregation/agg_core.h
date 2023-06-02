@@ -44,18 +44,18 @@ class AggCore : public CoreBase<
                     ebpf_net::aggregation::TransformBuilder> {
 public:
   // Disables using IP address in node spans.
-  static void disable_node_ip_field();
+  static void set_node_ip_field_disabled(bool disabled);
   // Returns whether using IP addresses in node spans is disabled.
   static bool node_ip_field_disabled() { return node_ip_field_disabled_; }
 
   // Enables generating node-node (id-id) metrics.
-  static void enable_id_id();
+  static void set_id_id_enabled(bool enabled);
 
   // Enables generating az-node metrics.
-  static void enable_az_id();
+  static void set_az_id_enabled(bool enabled);
 
   // Enables generating flow logs from node-node (id-id) metrics.
-  static void enable_flow_logs();
+  static void set_flow_logs_enabled(bool enabled);
 
   // How many top aggregation role/role pairs to show the count for in the
   // pipeline_aggregation_roles internal stat.

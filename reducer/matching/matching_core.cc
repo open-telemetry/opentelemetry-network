@@ -47,9 +47,9 @@ bool MatchingCore::autonomous_system_ip_enabled()
   return autonomous_system_ip_enabled_;
 }
 
-void MatchingCore::enable_autonomous_system_ip()
+void MatchingCore::set_autonomous_system_ip_enabled(bool enabled)
 {
-  autonomous_system_ip_enabled_ = true;
+  autonomous_system_ip_enabled_ = enabled;
 }
 
 void MatchingCore::enable_aws_enrichment(bool enabled)

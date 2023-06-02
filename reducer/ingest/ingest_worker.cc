@@ -85,8 +85,6 @@ void IngestWorker::on_thread_start()
 
 void IngestWorker::on_thread_stop()
 {
-  // ~Index() indirectly depends on local_index, so it must be destroyed first.
-  index_.reset();
   set_local_index(nullptr);
   set_local_logger(nullptr);
   set_local_core_stats_handle(nullptr);

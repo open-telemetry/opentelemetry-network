@@ -3,8 +3,8 @@
 
 #include "otlp_grpc_client.h"
 #include "otlp_request_builder.h"
+#include "otlp_test_server.h"
 #include "otlp_util.h"
-#include "test_grpc_server.h"
 
 #include <util/common_test.h>
 #include <util/json.h>
@@ -28,18 +28,10 @@ public:
 
   void start_server()
   {
-    ASSERT_FALSE(server_is_running_);
     server_.start();
-    server_is_running_ = true;
   }
 
-  void stop_server()
-  {
-    if (server_is_running_) {
-      server_.stop();
-      server_is_running_ = false;
-    }
-  }
+  void stop_server() { server_.stop(); }
 
   void send_async(TReq const &request)
   {
@@ -56,9 +48,10 @@ public:
 
   void process_responses()
   {
+    // wait for async response, but no more than 30 seconds
     for (int i = 0; !client_.async_responses_.empty() && i < 300; ++i) {
       client_.process_async_responses();
-      usleep(100000);
+      usleep(100'000);
     }
     ASSERT_TRUE(client_.async_responses_.empty());
     ASSERT_EQ(0, client_.unknown_response_tags());
@@ -76,16 +69,16 @@ public:
   {
     auto &requests_received = server_.get_requests_received();
     ASSERT_EQ(requests_sent_.size(), requests_received.size());
+    ASSERT_EQ(requests_sent_.size(), server_.get_num_requests_received());
     for (size_t i = 0; i < requests_sent_.size(); ++i) {
       EXPECT_EQ(get_request_json(requests_sent_[i]), get_request_json(requests_received[i]));
     }
   };
 
-  otlp_client::OtlpGrpcClient<TService, TReq, TResp> client_;
+  OtlpGrpcClient<TService, TReq, TResp> client_;
+  otlp_test_server::OtlpGrpcTestServer<TService, TReq, TResp> server_;
 
 private:
-  bool server_is_running_ = false;
-  OtlpGrpcTestServer<TService, TReq, TResp> server_;
   std::vector<TReq> requests_sent_;
 };
 
@@ -140,23 +133,27 @@ TEST_F(OtlpGrpcLogsClientTest, SyncLogs)
   ExportLogsServiceRequest request = create_request();
   auto status = tester_.client_.Export(request);
   EXPECT_TRUE(status.ok()) << "RPC failed: " << status.error_code() << ": " << log_waive(status.error_message());
+  EXPECT_EQ(1, tester_.server_.get_num_requests_received());
 }
 
 TEST_F(OtlpGrpcLogsClientTest, AsyncLogs)
 {
   tester_.send_async(create_request());
   tester_.process_responses();
+  EXPECT_EQ(1, tester_.server_.get_num_requests_received());
   tester_.validate_async_response_failures(0, 0, 0);
   tester_.validate_requests();
 
   tester_.send_async(create_request());
   tester_.process_responses();
+  EXPECT_EQ(2, tester_.server_.get_num_requests_received());
   tester_.validate_async_response_failures(0, 0, 0);
   tester_.validate_requests();
 
   tester_.stop_server();
 
   // Async response for this request will indicate failure since the server was previously stopped.
+  LOG::debug("Sending async request to gRPC server that has been shutdown (will log error)");
   ExportLogsServiceRequest request = create_request();
   tester_.send_async(request);
   tester_.process_responses();
@@ -168,23 +165,27 @@ TEST_F(OtlpGrpcMetricsClientTest, SyncMetrics)
   ExportMetricsServiceRequest request = create_request();
   auto status = tester_.client_.Export(request);
   EXPECT_TRUE(status.ok()) << "RPC failed: " << status.error_code() << ": " << log_waive(status.error_message());
+  EXPECT_EQ(1, tester_.server_.get_num_requests_received());
 }
 
 TEST_F(OtlpGrpcMetricsClientTest, AsyncMetrics)
 {
   tester_.send_async(create_request());
   tester_.process_responses();
+  EXPECT_EQ(1, tester_.server_.get_num_requests_received());
   tester_.validate_async_response_failures(0, 0, 0);
   tester_.validate_requests();
 
   tester_.send_async(create_request());
   tester_.process_responses();
+  EXPECT_EQ(2, tester_.server_.get_num_requests_received());
   tester_.validate_async_response_failures(0, 0, 0);
   tester_.validate_requests();
 
   tester_.stop_server();
 
   // Async response for this request will indicate failure since the server was previously stopped.
+  LOG::debug("Sending async request to gRPC server that has been shutdown (will log error)");
   ExportMetricsServiceRequest request = create_request();
   tester_.send_async(request);
   tester_.process_responses();

@@ -118,7 +118,6 @@ void Worker::start(std::size_t thread_num)
 void Worker::stop()
 {
   if (!started_) {
-    LOG::warn("Trying to stop an already-stopped worker thread");
     return;
   }
 

@@ -44,7 +44,7 @@ public:
   static void enable_aws_enrichment(bool enabled);
 
   // Enables using IP address for autonomous systems.
-  static void enable_autonomous_system_ip();
+  static void set_autonomous_system_ip_enabled(bool enabled);
   // Returns whether using IP addresses for autonomous systems is enabled.
   static bool autonomous_system_ip_enabled();
 

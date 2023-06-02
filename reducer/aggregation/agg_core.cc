@@ -28,28 +28,28 @@ namespace reducer::aggregation {
 
 bool AggCore::node_ip_field_disabled_ = false;
 
-void AggCore::disable_node_ip_field()
+void AggCore::set_node_ip_field_disabled(bool disabled)
 {
-  node_ip_field_disabled_ = true;
+  node_ip_field_disabled_ = disabled;
 }
 
 bool AggCore::id_id_enabled_ = false;
 bool AggCore::az_id_enabled_ = false;
 bool AggCore::flow_logs_enabled_ = false;
 
-void AggCore::enable_id_id()
+void AggCore::set_id_id_enabled(bool enabled)
 {
-  id_id_enabled_ = true;
+  id_id_enabled_ = enabled;
 }
 
-void AggCore::enable_az_id()
+void AggCore::set_az_id_enabled(bool enabled)
 {
-  az_id_enabled_ = true;
+  az_id_enabled_ = enabled;
 }
 
-void AggCore::enable_flow_logs()
+void AggCore::set_flow_logs_enabled(bool enabled)
 {
-  flow_logs_enabled_ = true;
+  flow_logs_enabled_ = enabled;
 }
 
 AggCore::AggCore(
