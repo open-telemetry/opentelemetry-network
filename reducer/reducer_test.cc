@@ -90,11 +90,6 @@ protected:
 
     print_code_timings();
 
-    // TODO: When Reducer::ingest_core_ is destructed it gets a segfault due to a nullptr dereference. Until the Reducer can be
-    // cleanly shutdown this test will exit here.
-    LOG::info("TearDown() doing exit(0)");
-    exit(0);
-
     // Clean up loop_ to avoid valgrind and asan complaints about memory leaks.
     close_uv_loop_cleanly(&loop_);
   }
@@ -191,9 +186,6 @@ protected:
       metrics_server_;
 };
 
-// TODO: When Reducer::ingest_core_ is destructed it gets a segfault due to a nullptr dereference. Until the Reducer can be
-// cleanly shutdown these tests are DISABLED so they are not run as part of the GitHub Actions automated testing.
-
 TEST_F(ReducerTest, DISABLED_OtlpGrpcInternalMetrics)
 {
   reducer::ReducerConfig config{
@@ -217,7 +209,7 @@ TEST_F(ReducerTest, DISABLED_OtlpGrpcInternalMetrics)
   start_reducer(config, std::move(stop_conditions));
 }
 
-TEST_F(ReducerTest, DISABLED_PrometheusInternalMetrics)
+TEST_F(ReducerTest, PrometheusInternalMetrics)
 {
   reducer::ReducerConfig config{
       .telemetry_port = 8000,
