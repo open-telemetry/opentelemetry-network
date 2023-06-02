@@ -80,6 +80,7 @@ void Core::run()
   }
 
   uv_run(&loop_, UV_RUN_DEFAULT);
+  close_uv_loop_cleanly(&loop_);
 
   done_.Notify();
 }

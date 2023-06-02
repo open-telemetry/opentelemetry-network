@@ -59,6 +59,7 @@ void Reducer::startup()
   start_threads();
 
   uv_run(&loop_, UV_RUN_DEFAULT);
+  close_uv_loop_cleanly(&loop_);
 
   for (auto &thread : threads_) {
     thread.join();
