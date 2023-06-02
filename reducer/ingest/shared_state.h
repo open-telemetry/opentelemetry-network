@@ -22,6 +22,8 @@
 
 namespace reducer::ingest {
 
+void free_local_state();
+
 ThreadSafeMap<IPv6Address, IPv6Address> &global_private_to_public_address_map();
 
 // The Index and NpmConnection objects associated with the current thread.
