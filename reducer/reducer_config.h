@@ -8,10 +8,16 @@
 #include <platform/types.h>
 #include <reducer/tsdb_format.h>
 
+#include <optional>
 #include <string>
 
 namespace reducer {
 
+// Configuration options for running Reducer.
+//
+// NOTE: default-constructed values are "zero values", not default configuration values
+// (see DEFAULT_REDUCER_CONFIG for default configuration values).
+//
 struct ReducerConfig {
   u32 telemetry_port = 0;
 
@@ -52,4 +58,13 @@ struct ReducerConfig {
   u64 index_dump_interval = 0;
 };
 
+// Default configuration values.
+extern const ReducerConfig DEFAULT_REDUCER_CONFIG;
+
+// Loads configuration file located at `path` and assigns provided values to
+// corresponding fields in `config`.
+void read_config_from_yaml(ReducerConfig &config, std::string const &path);
+
 } // namespace reducer
+
+#include "reducer_config.inl"

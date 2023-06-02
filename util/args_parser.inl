@@ -29,7 +29,7 @@ template <typename T> bool ArgsParser::ArgProxy<T>::given() const
   return arg_.Matched();
 }
 
-template <typename T> typename ArgsParser::ArgProxy<T>::proxy_ref ArgsParser::ArgProxy<T>::operator*()
+template <typename T> typename ArgsParser::ArgProxy<T>::proxy_ref ArgsParser::ArgProxy<T>::Get()
 {
   if constexpr (std::is_enum_v<T>) {
     auto const &arg = arg_.Get();
