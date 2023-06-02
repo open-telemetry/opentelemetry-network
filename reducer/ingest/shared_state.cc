@@ -35,6 +35,11 @@ LocalState *local_state()
 
 } // namespace
 
+void free_local_state()
+{
+  delete local_state();
+}
+
 ThreadSafeMap<IPv6Address, IPv6Address> &global_private_to_public_address_map()
 {
   return global_state()->private_to_public_address_map;

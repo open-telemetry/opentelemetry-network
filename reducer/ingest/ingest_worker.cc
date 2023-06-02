@@ -90,6 +90,7 @@ void IngestWorker::on_thread_stop()
   set_local_core_stats_handle(nullptr);
   set_local_ingest_core_stats_handle(nullptr);
   set_local_connection(nullptr);
+  free_local_state();
 }
 
 std::unique_ptr<::channel::Callbacks> IngestWorker::create_callbacks(uv_loop_t &loop, ::channel::TCPChannel *const tcp_channel)

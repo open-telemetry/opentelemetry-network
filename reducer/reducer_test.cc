@@ -152,7 +152,7 @@ protected:
 
     if (stop_conditions_.num_prom_internal_metrics) {
       EXPECT_NO_THROW(curl_buf_view = do_curl(internal_prom_server_address_and_port));
-      if (!curl_buf_view.empty() && curl_buf_view.find("ebpf_net_rpc_queue_buf_utilization") != std::string::npos) {
+      if (!curl_buf_view.empty() && curl_buf_view.find("ebpf_net_") != std::string::npos) {
         // may still be waiting for other stop conditions, but don't need to check this one again
         stop_conditions_.num_prom_internal_metrics = 0;
       } else {
