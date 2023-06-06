@@ -23,22 +23,17 @@ struct LocalState {
 
 GlobalState *global_state()
 {
-  static auto *const state = new GlobalState;
-  return state;
+  static GlobalState state;
+  return &state;
 }
 
 LocalState *local_state()
 {
-  thread_local auto *const state = new LocalState;
-  return state;
+  thread_local LocalState state;
+  return &state;
 }
 
 } // namespace
-
-void free_local_state()
-{
-  delete local_state();
-}
 
 ThreadSafeMap<IPv6Address, IPv6Address> &global_private_to_public_address_map()
 {
