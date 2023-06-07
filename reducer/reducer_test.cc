@@ -85,10 +85,18 @@ protected:
 
   void TearDown() override
   {
+    // Check for ASSERT failure(s) in subroutines, see
+    // http://google.github.io/googletest/advanced.html#checking-for-failures-in-the-current-test
+    if (HasFatalFailure()) {
+      exit(1);
+    }
+
     logs_server_.stop();
     metrics_server_.stop();
 
     print_code_timings();
+
+    ASSERT_FALSE(timeout_exceeded_);
 
     LOG::info("TearDown() doing exit(0)");
     exit(0);
@@ -96,23 +104,26 @@ protected:
 
   void start_reducer(reducer::ReducerConfig &config, StopConditions stop_conditions)
   {
-    stop_conditions_ = std::move(stop_conditions);
-    run_test_stopper();
+    try {
+      stop_conditions_ = std::move(stop_conditions);
+      run_test_stopper();
 
-    LOG::info("Starting Reducer...");
-    reducer_ = std::make_unique<reducer::Reducer>(loop_, config);
+      LOG::info("Starting Reducer...");
+      reducer_ = std::make_unique<reducer::Reducer>(loop_, config);
 
-    // start timing for purposes of the test timeout
-    stopwatch_.emplace();
+      // start timing for purposes of the test timeout
+      stopwatch_.emplace();
 
-    reducer_->startup();
-    LOG::info("reducer_->startup() returned.");
+      reducer_->startup();
+      LOG::info("reducer_->startup() returned.");
+    } catch (std::exception &ex) {
+      FAIL() << ex.what();
+    }
   }
 
   void stop_reducer()
   {
     SCOPED_TIMING(StopReducer);
-    ASSERT_EQ(false, timeout_exceeded_);
     reducer_->shutdown();
   }
 
@@ -140,7 +151,13 @@ protected:
 
     std::string_view curl_buf_view;
     if (stop_conditions_.num_prom_metrics) {
-      ASSERT_NO_THROW(curl_buf_view = do_curl(prom_server_address_and_port));
+      try {
+        curl_buf_view = do_curl(prom_server_address_and_port);
+      } catch (std::exception &ex) {
+        stop_reducer();
+        FAIL() << ex.what();
+        return;
+      }
       if (!curl_buf_view.empty() && curl_buf_view.find("tcp.bytes") != std::string::npos) {
         // may still be waiting for other stop conditions, but don't need to check this one again
         stop_conditions_.num_prom_metrics = 0;
@@ -151,7 +168,13 @@ protected:
     }
 
     if (stop_conditions_.num_prom_internal_metrics) {
-      ASSERT_NO_THROW(curl_buf_view = do_curl(internal_prom_server_address_and_port));
+      try {
+        curl_buf_view = do_curl(internal_prom_server_address_and_port);
+      } catch (std::exception &ex) {
+        stop_reducer();
+        FAIL() << ex.what();
+        return;
+      }
       if (!curl_buf_view.empty() && curl_buf_view.find("ebpf_net_") != std::string::npos) {
         // may still be waiting for other stop conditions, but don't need to check this one again
         stop_conditions_.num_prom_internal_metrics = 0;
