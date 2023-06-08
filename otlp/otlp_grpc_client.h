@@ -28,7 +28,7 @@ using opentelemetry::proto::collector::metrics::v1::MetricsService;
 namespace otlp_client {
 
 template <typename TService, typename TReq, typename TResp> class OtlpGrpcClient {
-  template <typename T, typename U, typename V> friend class OtlpGrpcClientTester;
+  friend class OtlpGrpcClientTest;
 
 public:
   OtlpGrpcClient(std::shared_ptr<grpc::Channel> channel) : stub_(TService::NewStub(channel))
