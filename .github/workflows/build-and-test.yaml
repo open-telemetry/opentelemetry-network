@@ -318,8 +318,6 @@ jobs:
       if: steps.changes.outputs.kernel == 'true' || steps.changes.outputs.github == 'true'
       run: |
         sudo spctl --add /usr/local/bin/brew
-        brew link --overwrite python@3.x
-        brew update
         brew install podman
         sudo spctl --add /usr/local/bin/podman
         podman machine init --rootful --cpus 3 --disk-size 14 --memory 12288
