@@ -317,7 +317,8 @@ jobs:
       id: run-kernel-collector-test
       if: steps.changes.outputs.kernel == 'true' || steps.changes.outputs.github == 'true'
       run: |
-        HOMEBREW_NO_AUTO_UPDATE=1 brew install podman
+        export HOMEBREW_UPDATE_PREINSTALL=0
+        brew install podman
         podman machine init --rootful --cpus 3 --disk-size 14 --memory 12288
         podman machine start
         podman pull $BENV_IMAGE
