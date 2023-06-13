@@ -212,7 +212,7 @@ jobs:
   run-kernel-header-tests:
     name: run-kernel-header-tests
     needs: [clang-format-check]
-    runs-on: macos-13
+    runs-on: macos-latest
     env:
       EBPF_NET_SRC_ROOT: ${{ github.workspace }}
     steps:
@@ -281,7 +281,7 @@ jobs:
   run-kernel-collector-tests:
     name: run-kernel-collector-tests
     needs: [clang-format-check]
-    runs-on: macos-13
+    runs-on: macos-12
     env:
       EBPF_NET_SRC_ROOT: ${{ github.workspace }}
     steps:
@@ -317,7 +317,6 @@ jobs:
       id: run-kernel-collector-test
       if: steps.changes.outputs.kernel == 'true' || steps.changes.outputs.github == 'true'
       run: |
-        export HOMEBREW_UPDATE_PREINSTALL=0
         brew install podman
         podman machine init --rootful --cpus 3 --disk-size 14 --memory 12288
         podman machine start
