@@ -281,7 +281,7 @@ jobs:
   run-kernel-collector-tests:
     name: run-kernel-collector-tests
     needs: [clang-format-check]
-    runs-on: macos-12
+    runs-on: macos-13
     env:
       EBPF_NET_SRC_ROOT: ${{ github.workspace }}
     steps:
@@ -318,6 +318,7 @@ jobs:
       if: steps.changes.outputs.kernel == 'true' || steps.changes.outputs.github == 'true'
       run: |
         sudo spctl --add /usr/local/bin/brew
+        brew link --overwrite python@3.x
         brew update
         brew install podman
         sudo spctl --add /usr/local/bin/podman
