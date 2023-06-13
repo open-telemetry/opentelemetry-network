@@ -317,7 +317,9 @@ jobs:
       id: run-kernel-collector-test
       if: steps.changes.outputs.kernel == 'true' || steps.changes.outputs.github == 'true'
       run: |
-        sudo chown -R $(whoami) /usr/local 
+        sudo mkdir /usr/local/Frameworks
+        sudo chown $USER /usr/local/Frameworks
+        brew link python
         brew update
         brew install podman
         podman machine init --rootful --cpus 3 --disk-size 14 --memory 12288
