@@ -248,8 +248,7 @@ jobs:
       id: run-kernel-header-tests
       if: steps.changes.outputs.kernel == 'true' || steps.changes.outputs.github == 'true'
       run: |
-        rm '/usr/local/bin/2to3-3.11'
-        rm '/usr/local/bin/2to3*'
+        rm /usr/local/bin/2to3*
         brew update
         brew install podman
         podman machine init --rootful --cpus 3 --disk-size 12 --memory 8196
