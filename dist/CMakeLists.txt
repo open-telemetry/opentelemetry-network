@@ -12,6 +12,7 @@ set(CPACK_DEBIAN_REDUCER_PACKAGE_CONTROL_EXTRA "${CMAKE_CURRENT_SOURCE_DIR}/redu
 
 set(CPACK_RPM_REDUCER_USER_FILELIST
   "%config(noreplace) ${CONFIG_DIR}/reducer.args"
+  "%config(noreplace) ${CONFIG_DIR}/reducer.yaml"
 )
 
 install(
@@ -24,6 +25,7 @@ install(
 install(
   FILES
     reducer/reducer.args
+    reducer/reducer.yaml
   DESTINATION ${CONFIG_DIR}
   COMPONENT reducer
 )

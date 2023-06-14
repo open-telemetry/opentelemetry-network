@@ -1,0 +1,94 @@
+# TCP port to listen on for incoming connections from collectors.
+telemetry_port: 8000
+
+# How many ingest shards to run.
+num_aggregation_shards: 1
+
+# How many matching shards to run.
+num_matching_shards: 1
+
+# How many aggregation shards to run.
+num_aggregation_shards: 1
+
+# How many partitions per aggregation shard to write metrics into.
+partitions_per_shard: 1
+
+# Enables id-id timeseries generation.
+enable_id_id: false
+
+# Enables az-id timeseries generation.
+enable_az_id: false
+
+# Enables exporting metric flow logs.
+enable_flow_logs: false
+
+# Enables OTLP gRPC metrics output.
+enable_otlp_grpc_metrics: false
+
+# Network address to send OTLP gRPC metrics.
+otlp_grpc_metrics_address: "localhost"
+
+# TCP port to send OTLP gRPC metrics.
+otlp_grpc_metrics_port: 4317
+
+# Size, in bytes, of batches in which OTLP metrics are sent over gRPC.
+otlp_grpc_batch_size: 1000
+
+# Enables sending metric descriptions in OTLP gRPC metrics output.
+enable_otlp_grpc_metric_descriptions: false
+
+# Disables prometheus metrics output.
+disable_prometheus_metrics: false
+
+# Partitions prometheus metrics.
+shard_prometheus_metrics: false
+
+# Bind address for Prometheus.
+prom_bind: "0.0.0.0:7010"
+
+# Maximum size of a scrape response, in bytes.
+# Unlimited if not specified.
+#scrape_size_limit_bytes: 0
+
+# Bind address for Internal Prometheus.
+internal_prom_bind: "0.0.0.0:7001"
+
+# Maximum size of internal stats scrape response, in bytes.
+# Unlimited if not specified.
+#stats_scrape_size_limit_bytes: 0
+
+# Format of TSDB data for scraped metrics.
+scrape_metrics_tsdb_format: "prometheus"
+
+# Disables the IP addresses field in node spans.
+disable_node_ip_field: false
+
+# Enables using IP addresses for autonomous systems.
+enable_autonomous_system_ip: false
+
+# Path to the GeoLite2 ASN database file.
+# Disabled if not specified.
+#geoip_path: ""
+
+# Enables enrichment using AWS metadata received from the Cloud Collector.
+enable_aws_enrichment: false
+
+# Enables computation and output of pXX latency timeseries.
+enable_percentile_latencies: false
+
+# Comma-separated list of metrics to disable.
+# A metric group can also be disabled. To do so, specify '<group>.all', where <group> is one of: tcp,udp,dns,http.
+# A value of 'none' can be given to enable all metrics.
+# If this argument is not specified, the recommended collection of metrics will be used.
+# Example: 'http.all;dns.all;udp.drops'. This will disable all http metrics, all dns metrics, and the udp.drops metric.
+#disable_metrics: ""
+
+# Comma-separated list of metrics to enable.
+# This list is processed AFTER disable-metrics.
+# A metric group can also be enabled. To do so, specify '<group>.all', where <group> is one of: tcp,udp,dns,http.
+# Example: 'http.all;dns.all;udp.drops'. This will enable all http metrics, all dns metrics, and the udp.drops metric.
+#enable_metrics: ""
+
+# Interval (in seconds) to generate a JSON dump of the span indexes for each core.
+# A value of 0 disables index dumping.
+index_dump_interval: 0
