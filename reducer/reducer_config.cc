@@ -12,7 +12,7 @@
 namespace reducer {
 
 const ReducerConfig DEFAULT_REDUCER_CONFIG = {
-    .telemetry_port = 8080,
+    .telemetry_port = 8000,
 
     .num_ingest_shards = 1,
     .num_matching_shards = 1,
