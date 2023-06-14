@@ -216,7 +216,7 @@ jobs:
   run-kernel-header-tests:
     name: run-kernel-header-tests
     needs: [clang-format-check]
-    runs-on: macos-12
+    runs-on: macos-latest
     env:
       EBPF_NET_SRC_ROOT: ${{ github.workspace }}
     steps:
@@ -253,6 +253,10 @@ jobs:
       if: steps.changes.outputs.kernel == 'true' || steps.changes.outputs.github == 'true'
       run: |
         sudo spctl --add /usr/local/bin/brew
+        rm /usr/local/bin/2to3*
+        rm /usr/local/bin/idle*
+        rm /usr/local/bin/pydoc*
+        rm /usr/local/bin/python3*
         brew update
         brew install podman
         sudo spctl --add /usr/local/bin/podman
@@ -287,7 +291,7 @@ jobs:
   run-kernel-collector-tests:
     name: run-kernel-collector-tests
     needs: [clang-format-check]
-    runs-on: macos-12
+    runs-on: macos-latest
     env:
       EBPF_NET_SRC_ROOT: ${{ github.workspace }}
     steps:
@@ -324,6 +328,10 @@ jobs:
       if: steps.changes.outputs.kernel == 'true' || steps.changes.outputs.github == 'true'
       run: |
         sudo spctl --add /usr/local/bin/brew
+        rm /usr/local/bin/2to3*
+        rm /usr/local/bin/idle*
+        rm /usr/local/bin/pydoc*
+        rm /usr/local/bin/python3*
         brew update
         brew install podman
         sudo spctl --add /usr/local/bin/podman
