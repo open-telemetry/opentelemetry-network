@@ -29,18 +29,17 @@ public:
   void start()
   {
     ASSERT_FALSE(server_is_running_);
-    thr_ = std::thread([&]() {
-      LOG::debug("starting gRPC logs and metrics server at {}", server_addr_);
-      grpc::ServerBuilder builder;
-      builder.AddListeningPort(server_addr_, grpc::InsecureServerCredentials());
-      builder.RegisterService(&logs_service_);
-      builder.RegisterService(&metrics_service_);
-      server_ = builder.BuildAndStart();
-      ASSERT_NE(nullptr, server_);
+    LOG::debug("starting gRPC logs and metrics server at {}", server_addr_);
+    grpc::ServerBuilder builder;
+    builder.AddListeningPort(server_addr_, grpc::InsecureServerCredentials());
+    builder.RegisterService(&logs_service_);
+    builder.RegisterService(&metrics_service_);
+    server_ = builder.BuildAndStart();
+    ASSERT_NE(nullptr, server_);
 
-      server_->Wait();
-    });
     server_is_running_ = true;
+
+    thr_ = std::thread([&]() { server_->Wait(); });
   }
 
   void stop()
