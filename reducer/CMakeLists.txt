@@ -32,6 +32,7 @@ strip_binary(reducer)
 add_library(
   reducerlib
     reducer.cc
+    reducer_config.cc
     core.cc
     worker.cc
     uid_key.cc
@@ -90,6 +91,7 @@ target_link_libraries(
     absl::strings
     absl::synchronization
     absl::time
+    yaml-cpp
     tdigest
     ip_address
     file_ops

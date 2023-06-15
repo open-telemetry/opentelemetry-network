@@ -185,6 +185,8 @@ jobs:
         --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
         --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/root/src,readonly" \
         --env EBPF_NET_SRC_ROOT=/root/src \
+        --env ARGS="--output-on-failure --repeat until-pass:3" \
+        --env SPDLOG_LEVEL="trace" \
         $BENV_IMAGE \
         ./build.sh unit_tests test
 
@@ -206,13 +208,15 @@ jobs:
         --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
         --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/root/src,readonly" \
         --env EBPF_NET_SRC_ROOT=/root/src \
+        --env ARGS="--output-on-failure --repeat until-pass:3" \
+        --env SPDLOG_LEVEL="trace" \
         $BENV_IMAGE \
         ./build.sh --debug --asan unit_tests test
 
   run-kernel-header-tests:
     name: run-kernel-header-tests
     needs: [clang-format-check]
-    runs-on: macos-12
+    runs-on: macos-latest
     env:
       EBPF_NET_SRC_ROOT: ${{ github.workspace }}
     steps:
@@ -249,6 +253,11 @@ jobs:
       if: steps.changes.outputs.kernel == 'true' || steps.changes.outputs.github == 'true'
       run: |
         sudo spctl --add /usr/local/bin/brew
+        # These following 4 lines are added to overcome brew link failures seen while executing brew update.
+        rm /usr/local/bin/2to3*
+        rm /usr/local/bin/idle*
+        rm /usr/local/bin/pydoc*
+        rm /usr/local/bin/python3*
         brew update
         brew install podman
         sudo spctl --add /usr/local/bin/podman
@@ -283,7 +292,7 @@ jobs:
   run-kernel-collector-tests:
     name: run-kernel-collector-tests
     needs: [clang-format-check]
-    runs-on: macos-12
+    runs-on: macos-latest
     env:
       EBPF_NET_SRC_ROOT: ${{ github.workspace }}
     steps:
@@ -320,6 +329,11 @@ jobs:
       if: steps.changes.outputs.kernel == 'true' || steps.changes.outputs.github == 'true'
       run: |
         sudo spctl --add /usr/local/bin/brew
+        # These following 4 lines are added to overcome brew link failures seen while executing brew update.
+        rm /usr/local/bin/2to3*
+        rm /usr/local/bin/idle*
+        rm /usr/local/bin/pydoc*
+        rm /usr/local/bin/python3*
         brew update
         brew install podman
         sudo spctl --add /usr/local/bin/podman

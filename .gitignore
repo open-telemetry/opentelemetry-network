@@ -70,3 +70,9 @@ perf.data.old
 .vscode/settings.json
 # Visual C++ cache files
 ipch/
+
+# Gnu Global
+GPATH
+GRTAGS
+GTAGS
+

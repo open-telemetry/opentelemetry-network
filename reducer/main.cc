@@ -18,6 +18,9 @@ int main(int argc, char *argv[])
 
   ////////////////////////////////////////////////////////////////////////////////
   // Command-line flags.
+  // IMPORTANT: do not provide a default value for flags that correspond to
+  // ReducerConfig fields, otherwise those defaults will override values set in
+  // DEFAULT_REDUCER_CONFIG and those provided in the configuration file.
   //
 
   cli::ArgsParser parser("OpenTelemetry eBPF Reducer.");
@@ -25,8 +28,10 @@ int main(int argc, char *argv[])
   // Main.
   //
   args::HelpFlag help(*parser, "help", "Display this help menu", {'h', "help"});
+  args::ValueFlag<std::string> config_file(*parser, "config_file", "Path to the configuration file", {"c", "config-file"});
+  args::Flag print_config(*parser, "print_config", "Print configuration values to stdout", {"print-config"});
   args::ValueFlag<u32> telemetry_port(
-      *parser, "port", "TCP port to listen on for incoming connections from collectors", {'p', "port"}, 8000);
+      *parser, "port", "TCP port to listen on for incoming connections from collectors", {'p', "port"});
   args::ValueFlag<std::string> metrics_tsdb_format_flag(
       *parser, "prometheus|json", "Format of TSDB data for scraped metrics", {"metrics-tsdb-format"}, "prometheus");
 
@@ -53,18 +58,15 @@ int main(int argc, char *argv[])
       "Enables computation and output of pXX latency timeseries",
       {"enable-percentile-latencies"});
 
-  args::ValueFlag<int> otlp_grpc_batch_size(*parser, "otlp_grpc_batch_size", "", {"otlp-grpc-batch-size"}, 1000);
-
   // Scaling.
   //
-  args::ValueFlag<u32> num_ingest_shards(
-      *parser, "num_ingest_shards", "How many ingest shards to run.", {"num-ingest-shards"}, 1);
+  args::ValueFlag<u32> num_ingest_shards(*parser, "num_ingest_shards", "How many ingest shards to run.", {"num-ingest-shards"});
   args::ValueFlag<u32> num_matching_shards(
-      *parser, "num_matching_shards", "How many matching shards to run.", {"num-matching-shards"}, 1);
+      *parser, "num_matching_shards", "How many matching shards to run.", {"num-matching-shards"});
   args::ValueFlag<u32> num_aggregation_shards(
-      *parser, "num_aggregation_shards", "How many aggregation shards to run.", {"num-aggregation-shards"}, 1);
+      *parser, "num_aggregation_shards", "How many aggregation shards to run.", {"num-aggregation-shards"});
   args::ValueFlag<u32> partitions_per_shard(
-      *parser, "count", "How many partitions per aggregation shard to write metrics into.", {"partitions-per-shard"}, 1);
+      *parser, "count", "How many partitions per aggregation shard to write metrics into.", {"partitions-per-shard"});
 
   // Prometheus output.
   //
@@ -72,7 +74,7 @@ int main(int argc, char *argv[])
       *parser, "disable_prometheus_metrics", "Disables prometheus metrics output", {"disable-prometheus-metrics"});
   args::Flag shard_prometheus_metrics(
       *parser, "shard_prometheus_metrics", "Partitions prometheus metrics", {"shard-prometheus-metrics"});
-  args::ValueFlag<std::string> prom_bind(*parser, "prometheus_bind", "Bind address for Prometheus", {"prom"}, "127.0.0.1:7010");
+  args::ValueFlag<std::string> prom_bind(*parser, "prometheus_bind", "Bind address for Prometheus", {"prom"});
   args::ValueFlag<u64> scrape_size_limit_bytes(
       *parser, "scrape_size_limit", "Maximum size of a scrape response, in bytes.", {"scrape-size-limit-bytes"});
 
@@ -87,7 +89,8 @@ int main(int argc, char *argv[])
       {"otlp-grpc-metrics-host"},
       "localhost");
   args::ValueFlag<u32> otlp_grpc_metrics_port(
-      *parser, "otlp_grpc_metrics_port", "TCP port to send OTLP gRPC metrics", {"otlp-grpc-metrics-port"}, 4317);
+      *parser, "otlp_grpc_metrics_port", "TCP port to send OTLP gRPC metrics", {"otlp-grpc-metrics-port"});
+  args::ValueFlag<int> otlp_grpc_batch_size(*parser, "otlp_grpc_batch_size", "", {"otlp-grpc-batch-size"});
   args::Flag enable_otlp_grpc_metric_descriptions(
       *parser,
       "enable_otlp_grpc_metric_descriptions",
@@ -104,8 +107,7 @@ int main(int argc, char *argv[])
       "If this argument is not specified, the recommended collection of metrics will be used.\n\n"
       "Example: disable-metrics=http.all;dns.all;udp.drops\n"
       "This example will disable all http metrics, all dns metrics, and the udp.drops metric.",
-      {"disable-metrics"},
-      "");
+      {"disable-metrics"});
 
   auto enable_metrics = parser.add_arg<std::string>(
       "enable-metrics",
@@ -113,13 +115,12 @@ int main(int argc, char *argv[])
       "A metric group can also be enabled. To do so, specify '<group>.all', where <group> is one of: tcp,udp,dns,http.\n"
       "Example: enable-metrics=http.all;dns.all;udp.drops\n"
       "This example will enable all http metrics, all dns metrics, and the udp.drops metric.",
-      {"enable-metrics"},
-      "");
+      {"enable-metrics"});
 
   // Internal stats.
   //
   args::ValueFlag<std::string> internal_prom_bind(
-      *parser, "prometheus_bind", "Bind address for Internal Prometheus", {"internal-prom"}, "0.0.0.0:7001");
+      *parser, "prometheus_bind", "Bind address for Internal Prometheus", {"internal-prom"});
   args::ValueFlag<u64> stats_scrape_size_limit_bytes(
       *parser,
       "stats_scrape_size_limit",
@@ -145,63 +146,85 @@ int main(int argc, char *argv[])
     return result.error();
   }
 
-  reducer::ReducerConfig config{
-      .telemetry_port = telemetry_port.Get(),
+  reducer::ReducerConfig config = reducer::DEFAULT_REDUCER_CONFIG;
 
-      .num_ingest_shards = num_ingest_shards.Get(),
-      .num_matching_shards = num_matching_shards.Get(),
-      .num_aggregation_shards = num_aggregation_shards.Get(),
-      .partitions_per_shard = partitions_per_shard.Get(),
-
-      .enable_id_id = enable_id_id.Get(),
-      .enable_az_id = enable_az_id.Get(),
-      .enable_flow_logs = enable_flow_logs.Get(),
-
-      .enable_otlp_grpc_metrics = enable_otlp_grpc_metrics.Get(),
-      .otlp_grpc_metrics_address = otlp_grpc_metrics_address.Get(),
-      .otlp_grpc_metrics_port = otlp_grpc_metrics_port.Get(),
-      .otlp_grpc_batch_size = otlp_grpc_batch_size.Get(),
-      .enable_otlp_grpc_metric_descriptions = enable_otlp_grpc_metric_descriptions.Get(),
-
-      .disable_prometheus_metrics = disable_prometheus_metrics.Get(),
-      .shard_prometheus_metrics = shard_prometheus_metrics.Get(),
-      .prom_bind = prom_bind.Get(),
-      .internal_prom_bind = internal_prom_bind.Get(),
-
-      .disable_node_ip_field = disable_node_ip_field.Get(),
-      .enable_autonomous_system_ip = enable_autonomous_system_ip.Get(),
-
-      .enable_aws_enrichment = enable_aws_enrichment.Get(),
-      .enable_percentile_latencies = enable_percentile_latencies.Get(),
-
-      .disable_metrics = *disable_metrics,
-      .enable_metrics = *enable_metrics,
-
-      .index_dump_interval = *index_dump_interval};
-
-  if (scrape_size_limit_bytes) {
-    config.scrape_size_limit_bytes = scrape_size_limit_bytes.Get();
-  }
-  config.stats_scrape_size_limit_bytes =
-      stats_scrape_size_limit_bytes ? stats_scrape_size_limit_bytes.Get() : config.scrape_size_limit_bytes;
-
-  if (!enum_from_string(metrics_tsdb_format_flag.Get(), config.scrape_metrics_tsdb_format)) {
-    LOG::critical("Unknown TSDB format: {}", metrics_tsdb_format_flag.Get());
-    return 1;
-  } else {
-    if (config.scrape_metrics_tsdb_format != reducer::TsdbFormat::prometheus &&
-        config.scrape_metrics_tsdb_format != reducer::TsdbFormat::json) {
-      LOG::critical(
-          "Invalid TSDB format for scraped metrics: {}. Supported formats: {}, {}",
-          metrics_tsdb_format_flag.Get(),
-          reducer::TsdbFormat::prometheus,
-          reducer::TsdbFormat::json);
+  if (config_file) {
+    try {
+      reducer::read_config_from_yaml(config, config_file.Get());
+    } catch (std::exception const &exc) {
+      std::cerr << "Unable to load configuration file: " << exc.what() << std::endl;
       return 1;
     }
   }
 
+#define SET_CONFIG(var, flag)                                                                                                  \
+  if (flag) {                                                                                                                  \
+    var = flag.Get();                                                                                                          \
+  }
+
+  SET_CONFIG(config.telemetry_port, telemetry_port);
+
+  SET_CONFIG(config.num_ingest_shards, num_ingest_shards);
+  SET_CONFIG(config.num_matching_shards, num_matching_shards);
+  SET_CONFIG(config.num_aggregation_shards, num_aggregation_shards);
+  SET_CONFIG(config.partitions_per_shard, partitions_per_shard);
+
+  SET_CONFIG(config.enable_id_id, enable_id_id);
+  SET_CONFIG(config.enable_az_id, enable_az_id);
+  SET_CONFIG(config.enable_flow_logs, enable_flow_logs);
+
+  SET_CONFIG(config.enable_otlp_grpc_metrics, enable_otlp_grpc_metrics);
+  SET_CONFIG(config.otlp_grpc_metrics_address, otlp_grpc_metrics_address);
+  SET_CONFIG(config.otlp_grpc_metrics_port, otlp_grpc_metrics_port);
+  SET_CONFIG(config.otlp_grpc_batch_size, otlp_grpc_batch_size);
+  SET_CONFIG(config.enable_otlp_grpc_metric_descriptions, enable_otlp_grpc_metric_descriptions);
+
+  SET_CONFIG(config.disable_prometheus_metrics, disable_prometheus_metrics);
+  SET_CONFIG(config.shard_prometheus_metrics, shard_prometheus_metrics);
+  SET_CONFIG(config.prom_bind, prom_bind);
+  SET_CONFIG(config.internal_prom_bind, internal_prom_bind);
+
+  SET_CONFIG(config.disable_node_ip_field, disable_node_ip_field);
+  SET_CONFIG(config.enable_autonomous_system_ip, enable_autonomous_system_ip);
+
+  SET_CONFIG(config.enable_aws_enrichment, enable_aws_enrichment);
+  SET_CONFIG(config.enable_percentile_latencies, enable_percentile_latencies);
+
+  SET_CONFIG(config.disable_metrics, disable_metrics);
+  SET_CONFIG(config.enable_metrics, enable_metrics);
+
+  SET_CONFIG(config.index_dump_interval, index_dump_interval);
+
+  SET_CONFIG(config.scrape_size_limit_bytes, scrape_size_limit_bytes);
+
+#undef SET_CONFIG
+
+  config.stats_scrape_size_limit_bytes =
+      stats_scrape_size_limit_bytes ? stats_scrape_size_limit_bytes.Get() : config.scrape_size_limit_bytes;
+
+  if (metrics_tsdb_format_flag) {
+    if (!enum_from_string(metrics_tsdb_format_flag.Get(), config.scrape_metrics_tsdb_format)) {
+      LOG::critical("Unknown TSDB format: {}", metrics_tsdb_format_flag.Get());
+      return 1;
+    }
+  }
+
+  if (config.scrape_metrics_tsdb_format != reducer::TsdbFormat::prometheus &&
+      config.scrape_metrics_tsdb_format != reducer::TsdbFormat::json) {
+    LOG::critical(
+        "Invalid TSDB format for scraped metrics: {}. Supported formats: {}, {}",
+        metrics_tsdb_format_flag.Get(),
+        reducer::TsdbFormat::prometheus,
+        reducer::TsdbFormat::json);
+    return 1;
+  }
+
   if (auto val = std::getenv(GEOIP_PATH_VAR); (val != nullptr) && (strlen(val) > 0)) {
     config.geoip_path = val;
+  }
+
+  if (print_config) {
+    std::cout << config;
   }
 
   reducer::Reducer reducer(loop, config);

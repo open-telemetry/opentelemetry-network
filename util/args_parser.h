@@ -94,7 +94,8 @@ public:
 
     explicit operator bool() const { return given(); }
 
-    proxy_ref operator*();
+    proxy_ref Get();
+    proxy_ref operator*() { return Get(); }
 
   private:
     using arg_type = std::conditional_t<std::is_enum_v<T>, std::string, T>;

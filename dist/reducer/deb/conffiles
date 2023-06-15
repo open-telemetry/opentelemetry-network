@@ -1,1 +1,2 @@
 /etc/opentelemetry-ebpf/reducer.args
+/etc/opentelemetry-ebpf/reducer.yaml

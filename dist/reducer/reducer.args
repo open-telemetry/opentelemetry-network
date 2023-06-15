@@ -1,3 +1,2 @@
---port=8000
---prom=0.0.0.0:7010
+--config-file=/etc/opentelemetry-ebpf/reducer.yaml
 --log-console

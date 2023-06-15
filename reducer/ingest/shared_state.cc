@@ -23,14 +23,14 @@ struct LocalState {
 
 GlobalState *global_state()
 {
-  static auto *const state = new GlobalState;
-  return state;
+  static GlobalState state;
+  return &state;
 }
 
 LocalState *local_state()
 {
-  thread_local auto *const state = new LocalState;
-  return state;
+  thread_local LocalState state;
+  return &state;
 }
 
 } // namespace
