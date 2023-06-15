@@ -8,7 +8,7 @@
 
 namespace config {
 
-ConfigFile::ConfigFile(YamlFormat, std::string const &path, FailMode fail)
+ConfigFile::ConfigFile(YamlFormat, std::string const &path, FailMode fail) : intake_config_(IntakeConfig::DEFAULT_CONFIG)
 {
   if (path.empty()) {
     return;
@@ -40,6 +40,18 @@ ConfigFile::ConfigFile(YamlFormat, std::string const &path, FailMode fail)
       }
     } else {
       LOG::info("No \"labels\" were specified.");
+    }
+
+    if (auto intake = yaml["intake"]) {
+      if (!intake.IsMap() && !intake.IsNull()) {
+        LOG::warn("Ignoring 'intake' in config file: 'intake' should be a map.");
+      } else {
+        auto host = intake["host"].as<std::string>();
+        auto port = intake["port"].as<std::string>();
+
+        intake_config_.host(host);
+        intake_config_.port(port);
+      }
     }
   } catch (std::exception const &e) {
     LOG::error("Config file at {} could not be loaded.", path);

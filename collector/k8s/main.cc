@@ -9,6 +9,7 @@
 #include <collector/k8s/resync_queue.h>
 #include <common/cloud_platform.h>
 #include <config/config_file.h>
+#include <config/intake_config.h>
 #include <util/agent_id.h>
 #include <util/args_parser.h>
 #include <util/log.h>
@@ -90,14 +91,14 @@ int main(int argc, char *argv[])
   LOG::info("Kubernetes Collector version {} ({}) started on host {}", versions::release, release_mode_string, hostname);
   LOG::info("Kubernetes Collector agent ID is {}", agent_id);
 
-  config::ConfigFile configuration_data(config::ConfigFile::YamlFormat(), conf_file.Get());
-
   signal_manager.handle_signals({SIGINT, SIGTERM} // TODO: close gracefully
   );
 
   auto curl_engine = CurlEngine::create(&loop);
 
-  auto intake_config = intake_config_handler.read_config();
+  config::ConfigFile configuration_data(config::ConfigFile::YamlFormat(), conf_file.Get());
+  config::IntakeConfig intake_config = configuration_data.intake_config();
+  intake_config_handler.read_config(intake_config);
 
   channel::ReconnectingChannel channel(std::move(intake_config), loop, WRITE_BUFFER_SIZE);
   collector::ResyncQueue queue;

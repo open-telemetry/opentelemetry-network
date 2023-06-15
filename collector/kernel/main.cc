@@ -556,7 +556,9 @@ int main(int argc, char *argv[])
     /* initialize curl engine */
     auto curl_engine = CurlEngine::create(&loop);
 
-    config::IntakeConfig intake_config(intake_config_handler.read_config());
+    // Load the intake configuration from the configuration file and from command-line args.
+    config::IntakeConfig intake_config = configuration_data.intake_config();
+    intake_config_handler.read_config(intake_config);
 
     // Initialize our kernel telemetry collector
     KernelCollector kernel_collector{
