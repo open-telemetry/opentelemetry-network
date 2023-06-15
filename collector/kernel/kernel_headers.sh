@@ -33,8 +33,7 @@ function check_kernel_headers_installed {
   base_dir="${kernel_headers_lib_modules_path}"
   if [[ -n "$1" ]]; then
     base_dir="$1"
-  fi
-  base_dir="${kernel_headers_lib_modules_path}"
+  fi  
 
   for header_file in "${kernel_headers_beacon_path[@]}"; do
     if [[ -e "${base_dir}/${header_file}" ]]; then
