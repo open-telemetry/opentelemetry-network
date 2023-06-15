@@ -76,3 +76,6 @@ GPATH
 GRTAGS
 GTAGS
 
+
+#local
+Vagrantfile

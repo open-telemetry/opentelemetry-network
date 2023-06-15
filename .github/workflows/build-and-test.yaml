@@ -216,7 +216,7 @@ jobs:
   run-kernel-header-tests:
     name: run-kernel-header-tests
     needs: [clang-format-check]
-    runs-on: macos-latest
+    runs-on: macos-latest-xl
     env:
       EBPF_NET_SRC_ROOT: ${{ github.workspace }}
     steps:
@@ -261,7 +261,7 @@ jobs:
         brew update
         brew install podman
         sudo spctl --add /usr/local/bin/podman
-        podman machine init --rootful --cpus 3 --disk-size 20 --memory 8196
+        podman machine init --rootful --cpus 3 --disk-size 22 --memory 8196
         podman machine start
         podman pull $BENV_IMAGE
 
@@ -292,7 +292,7 @@ jobs:
   run-kernel-collector-tests:
     name: run-kernel-collector-tests
     needs: [clang-format-check]
-    runs-on: macos-latest
+    runs-on: macos-latest-xl
     env:
       EBPF_NET_SRC_ROOT: ${{ github.workspace }}
     steps:
@@ -337,7 +337,7 @@ jobs:
         brew update
         brew install podman
         sudo spctl --add /usr/local/bin/podman
-        podman machine init --rootful --cpus 3 --disk-size 20 --memory 12288
+        podman machine init --rootful --cpus 3 --disk-size 22 --memory 12288
         podman machine start
         podman pull $BENV_IMAGE
 
