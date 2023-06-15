@@ -32,7 +32,6 @@ RUN mkdir -p /usr/src/kernels/4.18.0-372.53.1.el8_6.x86_64 && mkdir -p /lib/modu
 COPY --from=copier /usr/src/kernels/4.18.0-372.53.1.el8_6.x86_64/ /usr/src/kernels/4.18.0-372.53.1.el8_6.x86_64
 COPY --from=copier /lib/modules/4.18.0-372.53.1.el8_6.x86_64/ /lib/modules/4.18.0-372.53.1.el8_6.x86_64
 
-#CMD ["/bin/bash"]
 
 COPY srv /srv
 WORKDIR /srv
