@@ -1,4 +1,2 @@
---intake-host=127.0.0.1
---intake-port=8000
 --config-file=/etc/opentelemetry-ebpf/kernel-collector.yaml
 --log-console

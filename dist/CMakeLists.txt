@@ -67,6 +67,7 @@ install(
 set(CPACK_DEBIAN_CLOUD-COLLECTOR_PACKAGE_CONTROL_EXTRA "${CMAKE_CURRENT_SOURCE_DIR}/cloud-collector/deb/conffiles")
 
 set(CPACK_RPM_CLOUD-COLLECTOR_USER_FILELIST
+  "%config(noreplace) ${CONFIG_DIR}/cloud-collector.yaml"
   "%config(noreplace) ${CONFIG_DIR}/cloud-collector.args"
 )
 
@@ -80,6 +81,7 @@ install(
 install(
   FILES
     cloud-collector/cloud-collector.args
+    cloud-collector/cloud-collector.yaml
   DESTINATION ${CONFIG_DIR}
   COMPONENT cloud-collector
 )
