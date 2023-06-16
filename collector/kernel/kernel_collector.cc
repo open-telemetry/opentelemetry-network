@@ -80,7 +80,7 @@ KernelCollector::KernelCollector(
     u64 boot_time_adjustment,
     AwsMetadata const *aws_metadata,
     GcpInstanceMetadata const *gcp_metadata,
-    std::map<std::string, std::string> configuration_data,
+    std::map<std::string, std::string> config_labels,
     uv_loop_t &loop,
     CurlEngine &curl_engine,
     bool enable_http_metrics,
@@ -95,7 +95,7 @@ KernelCollector::KernelCollector(
       boot_time_adjustment_(boot_time_adjustment),
       aws_metadata_(aws_metadata),
       gcp_metadata_(gcp_metadata),
-      configuration_data(configuration_data),
+      config_labels_(config_labels),
       host_info_(std::move(host_info)),
       entrypoint_error_(entrypoint_error),
       loop_(loop),
@@ -364,7 +364,7 @@ void KernelCollector::send_connection_metadata()
     upstream_connection_.flush();
   }
 
-  for (auto const &label : configuration_data) {
+  for (auto const &label : config_labels_) {
     writer_.set_config_label(jb_blob{label.first}, jb_blob{label.second});
   }
 

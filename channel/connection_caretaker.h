@@ -8,7 +8,6 @@
 #include <channel/callbacks.h>
 #include <channel/channel.h>
 #include <common/client_type.h>
-#include <config/config_file.h>
 #include <generated/ebpf_net/ingest/writer.h>
 #include <util/aws_instance_metadata.h>
 #include <util/curl_engine.h>
@@ -18,6 +17,7 @@
 
 #include <chrono>
 #include <functional>
+#include <map>
 
 namespace channel {
 
@@ -30,7 +30,7 @@ namespace channel {
 // This class is NOT thread-safe.
 class ConnectionCaretaker {
 public:
-  using config_data_map = std::unordered_map<std::string, std::string>;
+  using config_labels_t = std::map<std::string, std::string>;
 
   // Constructor
   //
@@ -42,7 +42,7 @@ public:
   ConnectionCaretaker(
       std::string_view hostname,
       ClientType client_type,
-      config::ConfigFile::LabelsMap const &config_data,
+      config_labels_t const &config_labels,
       uv_loop_t *loop,
       ebpf_net::ingest::Writer &writer,
       std::chrono::milliseconds metadata_timeout,
@@ -76,7 +76,7 @@ private:
   std::string_view const hostname_;
   ClientType const client_type_;
 
-  const config::ConfigFile::LabelsMap config_data_;
+  const config_labels_t config_labels_;
 
   uv_loop_t *loop_ = nullptr; // not owned
 
