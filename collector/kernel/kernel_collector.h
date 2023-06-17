@@ -40,7 +40,7 @@ public:
       u64 boot_time_adjustment,
       AwsMetadata const *aws_metadata,
       GcpInstanceMetadata const *gcp_metadata,
-      std::map<std::string, std::string> configuration_data,
+      std::map<std::string, std::string> config_labels,
       uv_loop_t &loop,
       CurlEngine &curl_engine,
       bool enable_http_metrics,
@@ -151,7 +151,7 @@ private:
   u64 const boot_time_adjustment_;
   AwsMetadata const *aws_metadata_;
   GcpInstanceMetadata const *gcp_metadata_;
-  const std::map<std::string, std::string> configuration_data;
+  const std::map<std::string, std::string> config_labels_;
   HostInfo const host_info_;
   EntrypointError const entrypoint_error_;
 

@@ -8,6 +8,7 @@ add_library(
 )
 target_link_libraries(
   config_file
+    intake_config
     yamlcpp
     spdlog
 )

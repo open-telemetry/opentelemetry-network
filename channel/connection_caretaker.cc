@@ -26,7 +26,7 @@ void heartbeat_timer_cb(uv_timer_t *timer)
 ConnectionCaretaker::ConnectionCaretaker(
     std::string_view hostname,
     ClientType client_type,
-    config::ConfigFile::LabelsMap const &config_data,
+    config_labels_t const &config_labels,
     uv_loop_t *loop,
     ebpf_net::ingest::Writer &writer,
     std::chrono::milliseconds metadata_timeout,
@@ -36,7 +36,7 @@ ConnectionCaretaker::ConnectionCaretaker(
     std::function<void()> on_connected_cb)
     : hostname_(hostname),
       client_type_(client_type),
-      config_data_(config_data),
+      config_labels_(config_labels),
       loop_(loop),
       heartbeat_interval_(heartbeat_interval),
       flush_cb_(std::move(flush_cb)),
@@ -95,7 +95,7 @@ void ConnectionCaretaker::send_metadata_header()
   struct struct_name __##struct_name##__##buf_name;                                                                            \
   char buf_name[sizeof(__##struct_name##__##buf_name.field)] = {};
 
-  for (auto const &label : config_data_) {
+  for (auto const &label : config_labels_) {
     writer_.set_config_label(jb_blob{label.first}, jb_blob{label.second});
   }
   flush();

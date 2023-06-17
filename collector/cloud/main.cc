@@ -6,6 +6,8 @@
 #include <channel/component.h>
 #include <collector/constants.h>
 #include <common/cloud_platform.h>
+#include <config/config_file.h>
+#include <config/intake_config.h>
 #include <util/agent_id.h>
 #include <util/args_parser.h>
 #include <util/log.h>
@@ -47,6 +49,8 @@ int main(int argc, char *argv[])
 
   args::HelpFlag help(*parser, "help", "Display this help menu", {'h', "help"});
 
+  args::ValueFlag<std::string> conf_file(*parser, "config_file", "The location of the custom config file", {"config-file"}, "");
+
   args::ValueFlag<std::chrono::milliseconds::rep> ec2_poll_interval_ms(
       *parser,
       "ec2_poll_interval_ms",
@@ -84,7 +88,9 @@ int main(int argc, char *argv[])
 
   auto agent_id = gen_agent_id();
 
-  auto intake_config = intake_config_handler.read_config();
+  config::ConfigFile configuration_data(config::ConfigFile::YamlFormat(), conf_file.Get());
+  config::IntakeConfig intake_config = configuration_data.intake_config();
+  intake_config_handler.read_config(intake_config);
 
   LOG::info("Cloud Collector version {} ({}) started on host {}", versions::release, release_mode_string, hostname);
   LOG::info("Cloud Collector agent ID is {}", agent_id);

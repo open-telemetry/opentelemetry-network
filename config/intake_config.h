@@ -29,6 +29,8 @@ class IntakeConfig {
   static constexpr auto INTAKE_RECORD_OUTPUT_PATH_VAR = "EBPF_NET_RECORD_INTAKE_OUTPUT_PATH";
 
 public:
+  static const IntakeConfig DEFAULT_CONFIG;
+
   IntakeConfig() {}
 
   /**
@@ -86,7 +88,7 @@ public:
    * before any thread is created, given that reading/writing to environment
    * variables is not thread safe and we can't control 3rd party libraries.
    */
-  static IntakeConfig read_from_env();
+  static void read_from_env(IntakeConfig &config);
 
   template <typename Out> friend Out &&operator<<(Out &&out, IntakeConfig const &config)
   {
@@ -107,8 +109,7 @@ private:
 struct IntakeConfig::ArgsHandler : cli::ArgsParser::Handler {
   ArgsHandler(cli::ArgsParser &parser);
 
-  IntakeConfig read_config(std::string_view intake_name);
-  IntakeConfig read_config();
+  void read_config(IntakeConfig &config);
 
 private:
   cli::ArgsParser::ArgProxy<std::string> host_;
