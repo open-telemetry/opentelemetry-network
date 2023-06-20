@@ -18,7 +18,7 @@ echo -e "CONTAINER_NAME\\t\\tCONTAINER_ID\\tBENV_BUILD_DIR\\t\\t\\tIMAGE"
 for container_id in ${container_ids}
 do
   container_name=$(docker inspect "${container_id}" | jq .[].Name | sed 's/\///' | sed 's/"//g')
-  benv_build_dir=$(docker inspect "${container_id}" | jq .[].Mounts | grep tmp | awk '{print $2}' | sed 's/,$//' | sed 's/"//g')
+  benv_build_dir=$(docker inspect "${container_id}" | jq .[].Mounts | grep benv-out | awk '{print $2}' | sed 's/,$//' | sed 's/"//g')
   image=$(docker inspect "${container_id}" | jq .[].Config.Image | sed 's/"//g')
   echo -e "${container_name}\\t${container_id}\\t${benv_build_dir}\\t${image}"
 done

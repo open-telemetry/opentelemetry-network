@@ -1,0 +1,152 @@
+#!/bin/bash
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+set -x
+export EBPF_NET_SRC_ROOT="${EBPF_NET_SRC_ROOT:-$(git rev-parse --show-toplevel)}"
+
+source "${EBPF_NET_SRC_ROOT}/dev/script/benv-error-lib.sh"
+source "${EBPF_NET_SRC_ROOT}/dev/script/benv-lib.sh"
+
+EBPF_NET_BENV_IMAGE="quay.io/splunko11ytest/network-explorer-debug/build-env:latest"
+pull_image='true'
+
+# home directory within the guest
+guest_home="/root"
+guest_out_dir="${guest_home}/out"
+container_name="$(get_benv_container_name)"
+container_entrypoint='/bin/bash'
+
+function print_help {
+  echo "usage: $0 [options...] [-- docker_extra_args... [-- guest_bash_args...]]"
+  echo
+  echo "  -a | --attach: opens an interactive shell to an existing `benv` container"
+  echo "  -l | --local-image: use locally built build environment image"
+  echo "  -s | --skip-image-pull: skips pulling build-env image"
+  echo "       --docker: skips mounting the host's docker socket"
+  echo "  -h | --help: print this help message"
+}
+
+unset docker_extra_args
+declare -a docker_extra_args
+
+attach_to_existing_benv=false
+mount_docker_socket=true
+
+# process benv args
+while [[ "$#" -gt 0 ]]; do
+  arg="$1"; shift
+  case "${arg}" in
+    -a | --attach)
+      attach_to_existing_benv=true
+      ;;
+
+    # option to run benv in a way that supports eBPF to allow kernel-collector testing (priviliged, required mounts)
+    -e | --ebpf-support)
+      ebpf_support=true
+      ;;
+
+    -l | --local-image)
+      if [[ -z "${EBPF_NET_BENV_VERSION}" ]]; then
+        EBPF_NET_BENV_VERSION="latest"
+      fi
+      EBPF_NET_BENV_IMAGE="${DOCKER_TAG_PREFIX}build-env:${EBPF_NET_BENV_VERSION}"
+      pull_image='false'
+      ;;
+
+    -s | --skip-image-pull)
+      pull_image='false'
+      ;;
+
+    --docker)
+      mount_docker_socket=false
+      ;;
+
+    --)
+      break
+      ;;
+
+    -h | --help)
+      print_help
+      exit 0
+      ;;
+
+    *)
+      echo "ERROR: invalid argument '${arg}'"
+      exit 1
+      ;;
+  esac
+done
+
+# process docker extra args
+while [[ "$#" -gt 0 ]]; do
+  arg="$1"; shift
+  case "${arg}" in
+    --)
+      break
+      ;;
+
+    *)
+      docker_extra_args+=("${arg}")
+      ;;
+  esac
+done
+
+container_args=("$@")
+docker_args=(-it --rm)
+
+if [ "${attach_to_existing_benv}" == true ]; then
+  exec docker exec -it "${container_name}" \
+    "${container_entrypoint}" -- "${container_args[@]}"
+fi
+
+BENV_CACHE_CCACHE="$HOME/.ccache"; [ -d "${BENV_CACHE_CCACHE}" ] || mkdir -p "${BENV_CACHE_CCACHE}"
+
+# build output directory management
+host_build_dir="`mktemp -d /tmp/otelebpf-benv-out-XXXX`"
+
+docker_args+=( \
+  --env EBPF_NET_SRC_ROOT="${guest_home}/src"
+  --mount "type=bind,source=$EBPF_NET_SRC_ROOT,destination=${guest_home}/src,readonly"
+  --env EBPF_NET_OUT_DIR="${guest_out_dir}"
+  --mount "type=bind,source=$host_build_dir,destination=${guest_out_dir}"
+  --mount "type=bind,source=${BENV_CACHE_CCACHE},destination=${guest_home}/.ccache,consistency=delegated"
+  --workdir "${guest_out_dir}"
+  --name "${container_name}"
+)
+
+if [[ "${mount_docker_socket}" == "true" ]]; then
+  docker_args+=( \
+    --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock"
+  )
+fi
+
+if [ "${ebpf_support}" == true ]; then
+  docker_args+=( \
+    --privileged
+    --mount "type=bind,source=/lib/modules,destination=/lib/modules,readonly"
+    --mount "type=bind,source=/usr/src,destination=/usr/src,readonly"
+    --mount "type=bind,source=/sys/kernel,destination=/sys/kernel,readonly"
+    --mount "type=bind,source=/sys/fs/cgroup,destination=/hostfs/sys/fs/cgroup"
+  )
+fi
+
+if [ -d "/usr/local/bin" ]; then
+  docker_args+=( \
+    --mount "type=bind,source=/usr/local/bin,destination=${guest_home}/usr/local/bin,readonly"
+  )
+fi
+
+if [[ "${EBPF_NET_BENV_MOUNT_KERNEL_HEADERS}" == "true" ]]; then
+  docker_args+=( \
+    --volume /usr/src:/usr/src
+    --volume /lib/modules:/lib/modules
+  )
+fi
+
+if [[ "${pull_image}" == 'true' ]]; then
+  docker pull "${EBPF_NET_BENV_IMAGE}"
+fi
+
+exec docker run "${docker_args[@]}" "${docker_extra_args[@]}" "${EBPF_NET_BENV_IMAGE}" \
+  "${container_entrypoint}" "${container_args[@]}"

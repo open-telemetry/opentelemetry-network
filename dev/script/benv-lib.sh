@@ -5,16 +5,16 @@
 get_benv_container_name() {
   # MacOS has a slightly different syntax for format in stat
   if [ "$(uname -s)" == "Darwin" ]; then
-    echo "benv-$(basename "${EBPF_NET_SRC}")-$(stat -f %i "${EBPF_NET_SRC}")"
+    echo "benv-$(basename "${EBPF_NET_SRC_ROOT}")-$(stat -f %i "${EBPF_NET_SRC_ROOT}")"
   else
-    echo "benv-$(basename "${EBPF_NET_SRC}")-$(stat --format=%i "${EBPF_NET_SRC}")"
+    echo "benv-$(basename "${EBPF_NET_SRC_ROOT}")-$(stat --format=%i "${EBPF_NET_SRC_ROOT}")"
   fi
 }
 
 get_benv_build_dir() {
   container_name=$(get_benv_container_name)
   benv_build_dir=""
-  benv_build_dir=$(docker inspect "${container_name}" | jq .[].Mounts | grep tmp | awk '{print $2}' | sed 's/,$//' | sed 's/"//g') || true
+  benv_build_dir=$(docker inspect "${container_name}" | jq .[].Mounts | grep benv-out | awk '{print $2}' | sed 's/,$//' | sed 's/"//g') || true
 
   if [ -z "${benv_build_dir}" ]
   then
