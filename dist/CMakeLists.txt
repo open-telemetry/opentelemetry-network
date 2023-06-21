@@ -8,7 +8,12 @@ set(CONFIG_DIR "/etc/opentelemetry-ebpf")
 # Reducer
 #
 
-set(CPACK_DEBIAN_REDUCER_PACKAGE_CONTROL_EXTRA "${CMAKE_CURRENT_SOURCE_DIR}/reducer/deb/conffiles")
+string(JOIN ";" CPACK_DEBIAN_REDUCER_PACKAGE_CONTROL_EXTRA
+  "${CMAKE_CURRENT_SOURCE_DIR}/reducer/deb/conffiles"
+  "${CMAKE_CURRENT_SOURCE_DIR}/reducer/deb/postinst"
+  "${CMAKE_CURRENT_SOURCE_DIR}/reducer/deb/prerm"
+  "${CMAKE_CURRENT_SOURCE_DIR}/reducer/deb/postrm"
+)
 
 set(CPACK_RPM_REDUCER_USER_FILELIST
   "%config(noreplace) ${CONFIG_DIR}/reducer.args"
@@ -37,7 +42,13 @@ install(
 
 set(CPACK_RPM_KERNEL-COLLECTOR_PACKAGE_REQUIRES "bash, kernel-devel")
 set(CPACK_DEBIAN_KERNEL-COLLECTOR_PACKAGE_DEPENDS "bash, linux-headers")
-set(CPACK_DEBIAN_KERNEL-COLLECTOR_PACKAGE_CONTROL_EXTRA "${CMAKE_CURRENT_SOURCE_DIR}/kernel-collector/deb/conffiles")
+
+string(JOIN ";" CPACK_DEBIAN_KERNEL-COLLECTOR_PACKAGE_CONTROL_EXTRA
+  "${CMAKE_CURRENT_SOURCE_DIR}/kernel-collector/deb/conffiles"
+  "${CMAKE_CURRENT_SOURCE_DIR}/kernel-collector/deb/postinst"
+  "${CMAKE_CURRENT_SOURCE_DIR}/kernel-collector/deb/prerm"
+  "${CMAKE_CURRENT_SOURCE_DIR}/kernel-collector/deb/postrm"
+)
 
 set(CPACK_RPM_KERNEL-COLLECTOR_USER_FILELIST
   "%config(noreplace) ${CONFIG_DIR}/kernel-collector.yaml"
@@ -64,7 +75,12 @@ install(
 # Cloud Collector
 #
 
-set(CPACK_DEBIAN_CLOUD-COLLECTOR_PACKAGE_CONTROL_EXTRA "${CMAKE_CURRENT_SOURCE_DIR}/cloud-collector/deb/conffiles")
+string(JOIN ";" CPACK_DEBIAN_CLOUD-COLLECTOR_PACKAGE_CONTROL_EXTRA
+  "${CMAKE_CURRENT_SOURCE_DIR}/cloud-collector/deb/conffiles"
+  "${CMAKE_CURRENT_SOURCE_DIR}/cloud-collector/deb/postinst"
+  "${CMAKE_CURRENT_SOURCE_DIR}/cloud-collector/deb/prerm"
+  "${CMAKE_CURRENT_SOURCE_DIR}/cloud-collector/deb/postrm"
+)
 
 set(CPACK_RPM_CLOUD-COLLECTOR_USER_FILELIST
   "%config(noreplace) ${CONFIG_DIR}/cloud-collector.yaml"
