@@ -1,0 +1,25 @@
+#!/bin/sh
+set -e
+
+service='cloud-collector.service'
+
+if [ "$1" = "configure" ] || [ "$1" = "abort-upgrade" ] || [ "$1" = "abort-deconfigure" ] || [ "$1" = "abort-remove" ] ; then
+  deb-systemd-helper unmask $service >/dev/null || true
+
+  if deb-systemd-helper --quiet was-enabled $service; then
+    deb-systemd-helper enable $service >/dev/null || true
+  else
+    deb-systemd-helper update-state $service >/dev/null || true
+  fi
+
+  if [ -d /run/systemd/system ]; then
+    systemctl --system daemon-reload >/dev/null || true
+
+    if [ -n "$2" ]; then
+      action=restart
+    else
+      action=start
+    fi
+    deb-systemd-invoke $action $service >/dev/null || true
+  fi
+fi
