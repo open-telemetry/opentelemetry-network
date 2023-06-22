@@ -20,6 +20,10 @@ set(CPACK_RPM_REDUCER_USER_FILELIST
   "%config(noreplace) ${CONFIG_DIR}/reducer.yaml"
 )
 
+set(CPACK_RPM_REDUCER_POST_INSTALL_SCRIPT_FILE "${CMAKE_CURRENT_SOURCE_DIR}/reducer/rpm/post.sh")
+set(CPACK_RPM_REDUCER_PRE_UNINSTALL_SCRIPT_FILE "${CMAKE_CURRENT_SOURCE_DIR}/reducer/rpm/preun.sh")
+set(CPACK_RPM_REDUCER_POST_UNINSTALL_SCRIPT_FILE "${CMAKE_CURRENT_SOURCE_DIR}/reducer/rpm/postun.sh")
+
 install(
   FILES
     reducer/reducer.service
@@ -55,6 +59,10 @@ set(CPACK_RPM_KERNEL-COLLECTOR_USER_FILELIST
   "%config(noreplace) ${CONFIG_DIR}/kernel-collector.args"
 )
 
+set(CPACK_RPM_KERNEL-COLLECTOR_POST_INSTALL_SCRIPT_FILE "${CMAKE_CURRENT_SOURCE_DIR}/kernel-collector/rpm/post.sh")
+set(CPACK_RPM_KERNEL-COLLECTOR_PRE_UNINSTALL_SCRIPT_FILE "${CMAKE_CURRENT_SOURCE_DIR}/kernel-collector/rpm/preun.sh")
+set(CPACK_RPM_KERNEL-COLLECTOR_POST_UNINSTALL_SCRIPT_FILE "${CMAKE_CURRENT_SOURCE_DIR}/kernel-collector/rpm/postun.sh")
+
 install(
   FILES
     kernel-collector/kernel-collector.service
@@ -86,6 +94,10 @@ set(CPACK_RPM_CLOUD-COLLECTOR_USER_FILELIST
   "%config(noreplace) ${CONFIG_DIR}/cloud-collector.yaml"
   "%config(noreplace) ${CONFIG_DIR}/cloud-collector.args"
 )
+
+set(CPACK_RPM_CLOUD-COLLECTOR_POST_INSTALL_SCRIPT_FILE "${CMAKE_CURRENT_SOURCE_DIR}/cloud-collector/rpm/post.sh")
+set(CPACK_RPM_CLOUD-COLLECTOR_PRE_UNINSTALL_SCRIPT_FILE "${CMAKE_CURRENT_SOURCE_DIR}/cloud-collector/rpm/preun.sh")
+set(CPACK_RPM_CLOUD-COLLECTOR_POST_UNINSTALL_SCRIPT_FILE "${CMAKE_CURRENT_SOURCE_DIR}/cloud-collector/rpm/postun.sh")
 
 install(
   FILES
