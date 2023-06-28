@@ -129,8 +129,8 @@ set(CPACK_PACKAGE_VENDOR "OpenTelemetry")
 set(CPACK_PACKAGE_CONTACT "https://github.com/orgs/open-telemetry/teams/ebpf-maintainers")
 set(CPACK_PACKAGE_HOMEPAGE_URL "https://github.com/open-telemetry/opentelemetry-ebpf")
 
-set(CPACK_RESOURCE_FILE_README "${CMAKE_SOURCE_DIR}/README.md")
-set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE.txt")
+set(CPACK_RESOURCE_FILE_README "${PROJECT_SOURCE_DIR}/README.md")
+set(CPACK_RESOURCE_FILE_LICENSE "${PROJECT_SOURCE_DIR}/LICENSE.txt")
 
 set(CPACK_GENERATOR "TGZ;RPM;DEB")
 set(CPACK_COMPONENTS_GROUPING IGNORE) # one package per component
