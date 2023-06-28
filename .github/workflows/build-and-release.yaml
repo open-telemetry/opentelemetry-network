@@ -96,9 +96,12 @@ jobs:
             k8s-relay
           )
 
+          # strip potential "https://" prefix and trailing slashes from docker registry
+          docker_registry=$(sed -e 's,^https://,,' -e 's,/*$,,' <<< $DOCKER_REGISTRY)
+
           for image in ${images[@]}; do
             image_name="${IMAGE_PREFIX}${image}"
-            image_path="${DOCKER_REGISTRY}/${DOCKER_NAMESPACE}/${image_name}"
+            image_path="${docker_registry}/${DOCKER_NAMESPACE}/${image_name}"
 
             for tag in ${tags[@]}; do
               docker tag $image ${image_path}:${tag}
