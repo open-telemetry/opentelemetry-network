@@ -52,20 +52,40 @@ jobs:
         with:
           ref: ${{ inputs.ref }}
           fetch-depth: 0
+          submodules: recursive
+          path: src
       - name: Log-in to container registry
         run: |
           docker login --username="$DOCKER_USERNAME" --password-stdin $DOCKER_REGISTRY <<< "$DOCKER_PASSWORD"
       - name: Build artifacts
         run: |
-          git submodule update --init --recursive
+          mkdir -p $GITHUB_WORKSPACE/out
           docker run -t --rm \
             --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
-            --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/root/src,readonly" \
+            --mount "type=bind,source=$GITHUB_WORKSPACE/src,destination=/root/src,readonly" \
+            --mount "type=bind,source=$GITHUB_WORKSPACE/out,destination=/root/out" \
             --env EBPF_NET_SRC_ROOT=/root/src \
             $BENV_IMAGE \
             ./build.sh pipeline-docker
+      - name: Build packages
+        run: |
+          docker run -t --rm \
+            --mount "type=bind,source=$GITHUB_WORKSPACE/src,destination=/root/src,readonly" \
+            --mount "type=bind,source=$GITHUB_WORKSPACE/out,destination=/root/out" \
+            --env EBPF_NET_SRC_ROOT=/root/src \
+            --workdir /root/out \
+            $BENV_IMAGE \
+            cpack -G 'RPM;DEB'
+      - name: Upload packages
+        uses: actions/upload-artifact@v3
+        with:
+          name: packages
+          path: |
+            out/opentelemetry-ebpf-*.rpm
+            out/opentelemetry-ebpf-*.deb
       - name: Push to container registry
         run: |
+          cd $GITHUB_WORKSPACE/src
           source ./version.sh
 
           git_short_hash=$(git rev-parse --short=8 HEAD)
