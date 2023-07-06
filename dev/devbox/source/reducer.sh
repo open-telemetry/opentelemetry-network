@@ -38,7 +38,7 @@ function print_help {
   echo "  --help: display this help message and the container's help message"
   echo "  --num-shards <num>: the number of shards to run per reducer core"
   echo "  --prom: start prometheus"
-  echo "  --public: use the public reducer image from quay.io (default is to use localhost:5000/reducer image from local registry)"
+  echo "  --public: use the public reducer image from dockerhub (default is to use localhost:5000/reducer image from local registry)"
   echo "  --publish-ports: publish individual ports (instead of running with --network=host)"
   echo "  --tag: use the reducer image with the specified tag (--tag <TAG>)"
   echo "  args...: any additional arguments are forwarded to the container"
@@ -80,10 +80,10 @@ while [[ "$#" -gt 0 ]]; do
       ;;
 
     --public)
-      image="quay.io/signalfx/splunk-network-explorer-reducer"
+      image="otel/opentelemetry-ebpf-reducer"
       if [[ "${tag}" == "" ]]
       then
-        tag=":latest-v0.9"
+        tag=":latest-v0.10"
       fi
       ;;
 
