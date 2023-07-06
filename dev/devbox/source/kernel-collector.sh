@@ -55,7 +55,7 @@ function print_help {
   echo "  --entrypoint-error <ERROR>: force entrypoint error with the specified EntrypointError <ERROR>"
   echo "  --ingest-dump: dump ingest messages into file '${host_data_mount_path}/${ingest_dump_file}'"
   echo "  --ingest-pipe: dump ingest messages into named pipe '${host_data_mount_path}/${ingest_dump_file}'"
-  echo "  --public: use the public kernel-collector image from quay.io (default is to use localhost:5000/kernel-collector image from local registry)"
+  echo "  --public: use the public kernel-collector image from dockerhub (default is to use localhost:5000/kernel-collector image from local registry)"
   echo "  --tag <TAG>: use the kernel-collector image with the specified <TAG>"
   echo '  --valgrind-memcheck: run the kernel collector under `valgrind` using the memcheck tool'
   echo '  --valgrind-massif: run the kernel collector under `valgrind` using the massif tool'
@@ -121,10 +121,10 @@ while [[ "$#" -gt 0 ]]; do
       ;;
 
     --public)
-      image="quay.io/signalfx/splunk-network-explorer-kernel-collector"
+      image="otel/opentelemetry-ebpf-kernel-collector"
       if [[ "${tag}" == "" ]]
       then
-        tag=":latest-v0.9"
+        tag=":latest-v0.10"
       fi
       ;;
 
