@@ -130,7 +130,7 @@ uint32_t IngestWorker::Callbacks::received_data(const u8 *data, int data_len)
     }
 
     // Increment the begin pointer by the bytes consumed.
-    ASSUME(static_cast<int>(*bytes_consumed) <= (end - begin));
+    DEBUG_ASSUME(static_cast<int>(*bytes_consumed) <= (end - begin));
     begin += *bytes_consumed;
     ++count;
 
