@@ -16,8 +16,6 @@
 
 namespace {
 
-#ifndef NDEBUG
-
 void stacktrace(std::ostream &os)
 {
   // Get the list of PCs
@@ -68,7 +66,5 @@ Panicker::~Panicker()
   LOG::critical(message_stream.str());
   std::exit(1);
 }
-
-#endif // NDEBUG
 
 } // namespace internal
