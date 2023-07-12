@@ -513,7 +513,7 @@ TEST_F(KernelCollectorTest, bpf_log)
   auto ingest_msg_cb = [&](nlohmann::json const &object) {
     SCOPED_TIMING(BpfLogTestIngestMsgCb);
     // Fail immediately if a bpf_log is encountered.
-    ASSUME(object["name"] != "bpf_log").else_log("got bpf_log {}", to_string(object));
+    DEBUG_ASSUME(object["name"] != "bpf_log").else_log("got bpf_log {}", to_string(object));
   };
 
   start_kernel_collector(IntakeEncoder::binary, stop_conditions, BPF_DUMP_FILE, ingest_msg_cb);

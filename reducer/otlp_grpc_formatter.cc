@@ -83,7 +83,7 @@ void OtlpGrpcFormatter::format(
 
   auto print_ascii = [&](const std::string &str) { return is_non_ascii(str) ? "<ERROR_NON_ASCII>" : str; };
 
-  ASSUME(!metric_info.name.empty()).else_log("empty metric name");
+  DEBUG_ASSUME(!metric_info.name.empty()).else_log("empty metric name");
   bool found_non_ascii = false;
   found_non_ascii |= is_non_ascii(metric_info.name);
   found_non_ascii |= is_non_ascii(metric_info.unit);
@@ -93,7 +93,7 @@ void OtlpGrpcFormatter::format(
       throw std::invalid_argument(fmt::format("empty label key for metric={}", metric_info.name));
     }
     found_non_ascii |= is_non_ascii(key);
-    ASSUME(!(key != "span" && key != "error" && value.empty()))
+    DEBUG_ASSUME(!(key != "span" && key != "error" && value.empty()))
         .else_log("empty label value for metric={} label={}", metric_info.name, key);
     found_non_ascii |= is_non_ascii(value);
   }
@@ -118,7 +118,7 @@ void OtlpGrpcFormatter::format(
       }
       metric_string += " }";
     }
-    ASSUME(!found_non_ascii).else_log("OtlpGrpcFormatter detected non-ascii character(s) in metric: {}", metric_string);
+    DEBUG_ASSUME(!found_non_ascii).else_log("OtlpGrpcFormatter detected non-ascii character(s) in metric: {}", metric_string);
   }
 #endif
 

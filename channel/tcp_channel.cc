@@ -74,7 +74,7 @@ void TCPChannel::conn_read_cb(uv_stream_t *stream, ssize_t nread, const uv_buf_t
     u32 res = conn->callbacks_->received_data((u8 *)conn->rx_buffer_, conn->rx_len_);
 
     if (res > 0) {
-      ASSUME(res <= conn->rx_len_);
+      DEBUG_ASSUME(res <= conn->rx_len_);
       conn->rx_len_ -= res;
       memmove(conn->rx_buffer_, (u8 *)conn->rx_buffer_ + res, conn->rx_len_);
     }
@@ -163,7 +163,7 @@ TCPChannel::TCPChannel(uv_loop_t &loop, std::string addr, std::string port) : ad
 TCPChannel::~TCPChannel()
 {
   LOG::trace_in(channel::Component::tcp, "TCPChannel::{}: connection not closing, calling close on handle()", __func__);
-  ASSUME(uv_is_closing((uv_handle_t *)&conn_));
+  DEBUG_ASSUME(uv_is_closing((uv_handle_t *)&conn_));
 }
 
 void TCPChannel::connect(Callbacks &callbacks)

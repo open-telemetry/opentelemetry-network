@@ -34,13 +34,21 @@
 //
 // None of the expressions in the custom message are evaluated if the
 // conditional evaluates to true.
-
-namespace internal {
-
-#ifndef NDEBUG
-
+//
 #define ASSUME(...)                                                                                                            \
   (__VA_ARGS__) || ::internal::Panicker(::absl::StrCat("Assumption `", #__VA_ARGS__, "` failed at ", __FILE__, ":", __LINE__))
+
+// DEBUG_ASSUME - version of the ASSUME macro enabled only on debug builds.
+// To be used when the evaluation of the provided expression is too costly for
+// release builds.
+//
+#ifdef NDEBUG
+#define DEBUG_ASSUME(...) (::internal::NopPanicker{})
+#else
+#define DEBUG_ASSUME ASSUME
+#endif // NDEBUG
+
+namespace internal {
 
 // Internal class that prints a message. Exits and dumps everything in the
 // destructor.
@@ -73,14 +81,10 @@ private:
   std::string custom_message_;
 };
 
-#else // NDEBUG
-#define ASSUME(...) (::internal::Panicker{})
-
-struct Panicker {
-  // Custom message formatter. Uses spdlog-like formatting.
-  template <typename... Args> Panicker &else_log(Args &&... args) { return *this; }
-
-  // Needed so that the `(expression) || Panicker(...)` statement compiles.
+#ifdef NDEBUG
+// Dummy panicker used by DEBUG_ASSUME on non-debug builds.
+struct NopPanicker {
+  template <typename... Args> NopPanicker &else_log(Args &&... args) { return *this; }
   operator bool() const { return true; }
 };
 #endif // NDEBUG

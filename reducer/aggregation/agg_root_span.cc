@@ -38,7 +38,7 @@ AggRootSpan::~AggRootSpan() {}
 void AggRootSpan::update_node(
     ::ebpf_net::aggregation::weak_refs::agg_root span_ref, u64 timestamp, jsrv_aggregation__update_node *msg)
 {
-  ASSUME(msg->side <= 1).else_log("side must be either 0 or 1, instead got {}", msg->side);
+  DEBUG_ASSUME(msg->side <= 1).else_log("side must be either 0 or 1, instead got {}", msg->side);
 
   auto &stat_counters = local_core<AggCore>().stat_counters;
 
