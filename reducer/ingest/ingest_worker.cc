@@ -130,7 +130,7 @@ uint32_t IngestWorker::Callbacks::received_data(const u8 *data, int data_len)
     }
 
     // Increment the begin pointer by the bytes consumed.
-    DEBUG_ASSUME(static_cast<int>(*bytes_consumed) <= (end - begin));
+    ASSUME(static_cast<int>(*bytes_consumed) <= (end - begin));
     begin += *bytes_consumed;
     ++count;
 
@@ -161,7 +161,7 @@ uint32_t IngestWorker::Callbacks::received_data(const u8 *data, int data_len)
     // Process the decompressed data.
     begin += consumed_len;
 
-    assert(decompressor_active_);
+    ASSUME(decompressor_active_);
     const std::optional<uint32_t> consumed_uncompressed =
         received_data_internal(decompressor_.output_buf(), decompressor_.output_buf_size());
 

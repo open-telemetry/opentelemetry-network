@@ -25,6 +25,7 @@
 #include <util/boot_time.h>
 #include <util/debug.h>
 #include <util/environment_variables.h>
+#include <util/error_handling.h>
 #include <util/file_ops.h>
 #include <util/log.h>
 #include <util/uv_helpers.h>
@@ -258,8 +259,8 @@ void Reducer::init_cores()
       ingest_to_logging_queues_, ingest_to_matching_queues_, config_.telemetry_port);
 
   // all writers created
-  assert(stat_writer_num == num_stat_writers);
-  assert(!prom_metrics_publisher_ || prom_metric_writer_num == num_prom_metric_writers);
+  ASSUME(stat_writer_num == num_stat_writers);
+  ASSUME(!prom_metrics_publisher_ || prom_metric_writer_num == num_prom_metric_writers);
 }
 
 void Reducer::start_threads()

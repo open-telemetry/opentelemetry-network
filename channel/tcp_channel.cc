@@ -74,7 +74,7 @@ void TCPChannel::conn_read_cb(uv_stream_t *stream, ssize_t nread, const uv_buf_t
     u32 res = conn->callbacks_->received_data((u8 *)conn->rx_buffer_, conn->rx_len_);
 
     if (res > 0) {
-      DEBUG_ASSUME(res <= conn->rx_len_);
+      ASSUME(res <= conn->rx_len_);
       conn->rx_len_ -= res;
       memmove(conn->rx_buffer_, (u8 *)conn->rx_buffer_ + res, conn->rx_len_);
     }
