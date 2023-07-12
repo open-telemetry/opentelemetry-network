@@ -3,12 +3,9 @@
 
 package io.opentelemetry.render.extensions;
 
-
 import com.google.common.base.Objects;
 import io.opentelemetry.render.render.FieldType;
 import io.opentelemetry.render.render.FieldTypeEnum;
-
-
 
 public class FieldTypeExtensions {
   public static String cType(final FieldType fieldType, final boolean packedStrings) {
@@ -47,13 +44,13 @@ public class FieldTypeExtensions {
           switchResult = "__int128";
           break;
         case STRING:
-          String xIfExpression = null;
+          String expression = null;
           if (packedStrings) {
-            xIfExpression = "uint16_t";
+            expression = "uint16_t";
           } else {
-            xIfExpression = "struct jb_blob";
+            expression = "struct jb_blob";
           }
-          switchResult = xIfExpression;
+          switchResult = expression;
           break;
         default:
           break;
@@ -62,24 +59,23 @@ public class FieldTypeExtensions {
     return switchResult;
   }
 
-
- public static CharSequence cType(final FieldType type, final int arraySize) {
+  public static CharSequence cType(final FieldType type, final int arraySize) {
     CharSequence xBlockExpression = null;
     {
-      String xIfExpression = null;
-      boolean isItShortString = type.isIsShortString();
-      if (isItShortString) {
+      String expression = null;
+      boolean shortString = type.isIsShortString();
+      if (shortString) {
         StringBuilder builder = new StringBuilder();
         builder.append("short_string<");
         int size = type.getSize();
         builder.append(size);
         builder.append(">");
-        xIfExpression = builder.toString();
+        expression = builder.toString();
       } else {
-        xIfExpression = type.getEnum_type().getLiteral();
+        expression = type.getEnum_type().getLiteral();
       }
-      final String nonArrayType = xIfExpression;
-      CharSequence xIfExpression1 = null;
+      final String nonArrayType = expression;
+      CharSequence expression1 = null;
       if ((arraySize >= 0)) {
         StringBuilder builder1 = new StringBuilder();
         builder1.append("std::array<");
@@ -87,15 +83,16 @@ public class FieldTypeExtensions {
         builder1.append(",");
         builder1.append(arraySize);
         builder1.append(">");
-        xIfExpression1 = builder1;
+        expression1 = builder1;
       } else {
-        xIfExpression1 = nonArrayType;
+        expression1 = nonArrayType;
       }
-      xBlockExpression = xIfExpression1;
+      xBlockExpression = expression1;
     }
     return xBlockExpression;
   }
- public static String wireCType(final FieldType fieldType) {
+
+  public static String wireCType(final FieldType fieldType) {
     return FieldTypeExtensions.cType(fieldType, true);
   }
 
@@ -104,10 +101,10 @@ public class FieldTypeExtensions {
   }
 
   public static int size(final FieldType fieldType, final boolean packedStrings) {
-    int xIfExpression;
-    boolean isItShortString = fieldType.isIsShortString();
-    if (isItShortString) {
-      xIfExpression = fieldType.getSize();
+    int expression;
+    boolean shortString = fieldType.isIsShortString();
+    if (shortString) {
+      expression = fieldType.getSize();
     } else {
       int switchResult = (int) 0;
       FieldTypeEnum enumType = fieldType.getEnum_type();
@@ -144,36 +141,36 @@ public class FieldTypeExtensions {
             switchResult = 16;
             break;
           case STRING:
-            int xIfExpression1 = (int) 0;
+            int expression1 = (int) 0;
             if (packedStrings) {
-              xIfExpression1 = 2;
+              expression1 = 2;
             } else {
-              xIfExpression1 = 16;
+              expression1 = 16;
             }
-            switchResult = xIfExpression1;
+            switchResult = expression1;
             break;
           default:
             break;
         }
       }
-xIfExpression = switchResult;
+      expression = switchResult;
     }
-    return xIfExpression;
+    return expression;
   }
 
   public static int wireSize(final FieldType fieldType) {
     return FieldTypeExtensions.size(fieldType, true);
   }
 
-    public static int parsedSize(final FieldType fieldType) {
+  public static int parsedSize(final FieldType fieldType) {
     return FieldTypeExtensions.size(fieldType, false);
   }
 
   public static int alignment(final FieldType fieldType, final boolean packedStrings) {
-    int xIfExpression;
-    boolean isItShortString = fieldType.isIsShortString();
-    if (isItShortString) {
-      xIfExpression = 1;
+    int expression;
+    boolean shortString = fieldType.isIsShortString();
+    if (shortString) {
+      expression = 1;
     } else {
       int switchResult = (int) 0;
       FieldTypeEnum enumType = fieldType.getEnum_type();
@@ -210,19 +207,19 @@ xIfExpression = switchResult;
             switchResult = 16;
             break;
           case STRING:
-            int xIfExpression1 = (int) 0;
+            int expression1 = (int) 0;
             if (packedStrings) {
-              xIfExpression1 = 2;
+              expression1 = 2;
             } else {
-              xIfExpression1 = 8;
+              expression1 = 8;
             }
-            switchResult = xIfExpression1;
+            switchResult = expression1;
             break;
- }
+        }
       }
-      xIfExpression = switchResult;
+      expression = switchResult;
     }
-    return xIfExpression;
+    return expression;
   }
 
   public static int wireAlignment(final FieldType fieldType) {
@@ -232,12 +229,8 @@ xIfExpression = switchResult;
   public static int parsedAlignment(final FieldType fieldType) {
     return FieldTypeExtensions.alignment(fieldType, false);
   }
- public static boolean isInt(final FieldType fieldType) {
-    return ((!fieldType.isIsShortString()) && (!Objects.equal(fieldType.getEnum_type(), FieldTypeEnum.STRING)));
+
+  public static boolean isInt(final FieldType fieldType) {
+    return ((!fieldType.isIsShortString()) && (fieldType.getEnum_type() == FieldTypeEnum.STRING));
   }
 }
-
-
-
-
-

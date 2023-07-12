@@ -82,13 +82,13 @@ add_custom_command(
     ./io.opentelemetry.render/src/io/opentelemetry/render/GenerateRender.mwe2
     ./io.opentelemetry.render/src/io/opentelemetry/render/validation/RenderValidator.xtend
     ./io.opentelemetry.render/src/io/opentelemetry/render/formatting/RenderFormatter.xtend
-    ./io.opentelemetry.render/src/io/opentelemetry/render/extensions/AppExtensions.xtend
+    ./io.opentelemetry.render/src/io/opentelemetry/render/extensions/AppExtensions.java
     ./io.opentelemetry.render/src/io/opentelemetry/render/extensions/SpanExtensions.java
     ./io.opentelemetry.render/src/io/opentelemetry/render/extensions/FieldExtensions.java
     ./io.opentelemetry.render/src/io/opentelemetry/render/extensions/FieldTypeExtensions.java
     ./io.opentelemetry.render/src/io/opentelemetry/render/extensions/MessageExtensions.java
     ./io.opentelemetry.render/src/io/opentelemetry/render/extensions/UtilityExtensions.java
-    ./io.opentelemetry.render/src/io/opentelemetry/render/extensions/XPackedMessageExtensions.xtend
+    ./io.opentelemetry.render/src/io/opentelemetry/render/extensions/XPackedMessageExtensions.java
     ./io.opentelemetry.render/src/io/opentelemetry/render/generator/RenderGenerator.xtend
     ./io.opentelemetry.render/src/io/opentelemetry/render/generator/MetricsGenerator.xtend
     ./io.opentelemetry.render/src/io/opentelemetry/render/generator/AppPacker.xtend

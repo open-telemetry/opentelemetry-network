@@ -15,7 +15,6 @@ import org.eclipse.xtext.xbase.lib.Conversions;
 import org.eclipse.xtext.xbase.lib.Functions.Function1;
 import org.eclipse.xtext.xbase.lib.IterableExtensions;
 
-@SuppressWarnings("all")
 public class SpanExtensions {
   public static String getBaseClassName(final Span span) {
     String camelCase = UtilityExtensions.toCamelCase(span.getName());
@@ -48,11 +47,11 @@ public class SpanExtensions {
   }
 
   public static Message proxyStartMessage(final Span span) {
-    final Function1<Message, Boolean> _function = (Message it) -> {
-      return Boolean.valueOf((Objects.equal(it.getType(), MessageType.START) && it.isReferenceEmbedded()));
+    final Function1<Message, Boolean> function = (Message it) -> {
+      return it.getType() == MessageType.START && it.isReferenceEmbedded();
     };
-    final Message msg = IterableExtensions.<Message>findFirst(span.getRemoteSpan().getMessages(), _function);
-    if ((msg == null)) {
+    final Message msg = IterableExtensions.<Message>findFirst(span.getRemoteSpan().getMessages(), function);
+    if (msg == null) {
       Span remoteSpan = span.getRemoteSpan();
       String plus = ("proxy: no viable start message: " + remoteSpan);
       throw new RuntimeException(plus);
@@ -61,11 +60,11 @@ public class SpanExtensions {
   }
 
  public static Message proxyEndMessage(final Span span) {
-    final Function1<Message, Boolean> _function = (Message it) -> {
-      return Boolean.valueOf(((Objects.equal(it.getType(), MessageType.END) && (((Object[])Conversions.unwrapArray(it.getFields(), Object.class)).length == 1)) && it.isReferenceEmbedded()));
+    final Function1<Message, Boolean> function = (Message it) -> {
+      return (it.getType() == MessageType.END) && (((Object[])Conversions.unwrapArray(it.getFields(), Object.class)).length == 1) && it.isReferenceEmbedded();
     };
-    final Message msg = IterableExtensions.<Message>findFirst(span.getRemoteSpan().getMessages(), _function);
-    if ((msg == null)) {
+    final Message msg = IterableExtensions.<Message>findFirst(span.getRemoteSpan().getMessages(), function);
+    if (msg == null) {
       Span remoteSpan = span.getRemoteSpan();
       String plus = ("proxy: no viable end message: " + remoteSpan);
       throw new RuntimeException(plus);
@@ -74,10 +73,10 @@ public class SpanExtensions {
   }
 
   public static Iterable<Message> proxyLogMessages(final Span span) {
-    final Function1<Message, Boolean> _function = (Message it) -> {
-      return Boolean.valueOf(((Objects.equal(it.getType(), MessageType.LOG) || Objects.equal(it.getType(), MessageType.MSG)) && it.isReferenceEmbedded()));
+    final Function1<Message, Boolean> function = (Message it) -> {
+      return it.getType() == MessageType.LOG || it.getType() == MessageType.MSG && it.isReferenceEmbedded();
     };
-    return IterableExtensions.<Message>filter(span.getRemoteSpan().getMessages(), _function);
+    return IterableExtensions.<Message>filter(span.getRemoteSpan().getMessages(), function);
   }
 
   public static App app(final Span span) {
@@ -86,24 +85,23 @@ public class SpanExtensions {
   }
 
   public static FieldType referenceType(final Span span) {
-    FieldType xBlockExpression = null;
+    FieldType blockExpression = null;
     {
-      final Function1<Message, Boolean> _function = (Message it) -> {
+      final Function1<Message, Boolean> function = (Message it) -> {
         return Boolean.valueOf(it.isReferenceEmbedded());
       };
-      final Message messageWithRef = IterableExtensions.<Message>findFirst(span.getMessages(), _function);
+      final Message messageWithRef = IterableExtensions.<Message>findFirst(span.getMessages(), function);
       if ((messageWithRef == null)) {
         throw new RuntimeException("referenceType(span): span does not have any messages with reference_field");
       }
-      xBlockExpression = messageWithRef.getReference_field().getType();
+      blockExpression = messageWithRef.getReference_field().getType();
     }
-    return xBlockExpression;
+    return blockExpression;
   }
 
   public static int pool_size(final Span span) {
     int poolSize = span.getPool_size_();
-    boolean greaterThan = (poolSize > 0);
-    if (greaterThan) {
+    if (poolSize > 0) {
       return span.getPool_size_();
     } else {
       return 4096;
@@ -111,8 +109,7 @@ public class SpanExtensions {
   }
 
   public static boolean conn_hash(final Span span) {
-    boolean isConnHash = span.isConn_hash_();
-    if (isConnHash) {
+    if (span.isConn_hash_()) {
       return span.isConn_hash_();
     }
     return ((((Object[])Conversions.unwrapArray(span.getMessages(), Object.class)).length > 0) && (!span.isIsSingleton()));
