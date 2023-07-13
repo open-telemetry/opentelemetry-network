@@ -3,6 +3,7 @@
 
 package io.opentelemetry.render.extensions;
 
+import com.google.common.base.Objects;
 import io.opentelemetry.render.render.FieldType;
 import io.opentelemetry.render.render.FieldTypeEnum;
 
@@ -53,14 +54,20 @@ public class FieldTypeExtensions {
   }
 
   public static CharSequence cType(final FieldType type, final int arraySize) {
-    String expression =
-        type.isIsShortString()
-            ? "short_string<" + type.getSize() + ">"
-            : type.getEnum_type().getLiteral();
-    final String nonArrayType = expression;
-    CharSequence blockExpression =
-        arraySize >= 0 ? "std::array<" + nonArrayType + "," + arraySize + ">" : nonArrayType;
-    return blockExpression;
+    String expression = null;
+    boolean shortString = type.isIsShortString();
+    if (shortString) {
+      expression = "short_string<" + type.getSize() + ">";
+    } else {
+      expression = type.getEnum_type().getLiteral();
+    }
+    CharSequence finalExpression = null;
+    if (arraySize >= 0) {
+      finalExpression = "std::array<" + expression + "," + arraySize + ">";
+    } else {
+      finalExpression = expression;
+    }
+    return finalExpression;
   }
 
   public static String wireCType(final FieldType fieldType) {
@@ -73,7 +80,8 @@ public class FieldTypeExtensions {
 
   public static int size(final FieldType fieldType, final boolean packedStrings) {
     int expression;
-    if (fieldType.isIsShortString()) {
+    boolean shortString = fieldType.isIsShortString();
+    if (shortString) {
       expression = fieldType.getSize();
     } else {
       int switchResult = (int) 0;
@@ -111,7 +119,7 @@ public class FieldTypeExtensions {
             switchResult = 16;
             break;
           case STRING:
-            switchResult = packedStrings ? 2 : 8;
+            switchResult = packedStrings ? 2:16;
             break;
           default:
             break;
@@ -132,7 +140,8 @@ public class FieldTypeExtensions {
 
   public static int alignment(final FieldType fieldType, final boolean packedStrings) {
     int expression;
-    if (fieldType.isIsShortString()) {
+    boolean shortString = fieldType.isIsShortString();
+    if (shortString) {
       expression = 1;
     } else {
       int switchResult = (int) 0;
@@ -170,7 +179,7 @@ public class FieldTypeExtensions {
             switchResult = 16;
             break;
           case STRING:
-            switchResult = packedStrings ? 2 : 8;
+            switchResult = packedStrings ? 2: 8;
             break;
         }
       }
@@ -188,6 +197,6 @@ public class FieldTypeExtensions {
   }
 
   public static boolean isInt(final FieldType fieldType) {
-    return !fieldType.isIsShortString() && (fieldType.getEnum_type() == FieldTypeEnum.STRING);
+    return ((!fieldType.isIsShortString()) && (fieldType.getEnum_type() == FieldTypeEnum.STRING));
   }
 }
