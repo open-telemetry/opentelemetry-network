@@ -44,7 +44,7 @@ public class AppExtensions {
 
   public static Set<App> remoteApps(final App app) {
     final Function1<Span, Boolean> function = (Span it) -> {
-      return Boolean.valueOf(it.isIsProxy());
+      return it.isIsProxy();
     };
     final Function1<Span, App> function1 = (Span it) -> {
       return it.getRemoteApp();

@@ -86,16 +86,16 @@ public class SpanExtensions {
 
   public static FieldType referenceType(final Span span) {
     FieldType blockExpression = null;
-    {
-      final Function1<Message, Boolean> function = (Message it) -> {
-        return Boolean.valueOf(it.isReferenceEmbedded());
-      };
-      final Message messageWithRef = IterableExtensions.<Message>findFirst(span.getMessages(), function);
-      if ((messageWithRef == null)) {
-        throw new RuntimeException("referenceType(span): span does not have any messages with reference_field");
-      }
-      blockExpression = messageWithRef.getReference_field().getType();
+
+    final Function1<Message, Boolean> function = (Message it) -> {
+      return Boolean.valueOf(it.isReferenceEmbedded());
+    };
+    final Message messageWithRef = IterableExtensions.<Message>findFirst(span.getMessages(), function);
+    if ((messageWithRef == null)) {
+      throw new RuntimeException("referenceType(span): span does not have any messages with reference_field");
     }
+    blockExpression = messageWithRef.getReference_field().getType();
+
     return blockExpression;
   }
 
@@ -103,9 +103,8 @@ public class SpanExtensions {
     int poolSize = span.getPool_size_();
     if (poolSize > 0) {
       return span.getPool_size_();
-    } else {
-      return 4096;
     }
+    return 4096;
   }
 
   public static boolean conn_hash(final Span span) {
