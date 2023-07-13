@@ -60,7 +60,7 @@ public class FieldTypeExtensions {
   }
 
   public static CharSequence cType(final FieldType type, final int arraySize) {
-    CharSequence xBlockExpression = null;
+    CharSequence blockExpression = null;
     {
       String expression = null;
       boolean shortString = type.isIsShortString();
@@ -76,7 +76,7 @@ public class FieldTypeExtensions {
       }
       final String nonArrayType = expression;
       CharSequence expression1 = null;
-      if ((arraySize >= 0)) {
+      if (arraySize >= 0) {
         StringBuilder builder1 = new StringBuilder();
         builder1.append("std::array<");
         builder1.append(nonArrayType);
@@ -87,9 +87,9 @@ public class FieldTypeExtensions {
       } else {
         expression1 = nonArrayType;
       }
-      xBlockExpression = expression1;
+      blockExpression = expression1;
     }
-    return xBlockExpression;
+    return blockExpression;
   }
 
   public static String wireCType(final FieldType fieldType) {
