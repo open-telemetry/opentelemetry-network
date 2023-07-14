@@ -695,7 +695,7 @@ void FlowSpan::http_update(::ebpf_net::matching::weak_refs::flow span_ref, u64 t
 
 void FlowSpan::dns_update(::ebpf_net::matching::weak_refs::flow span_ref, u64 timestamp, jsrv_matching__dns_update *msg)
 {
-  DEBUG_ASSUME(msg->side <= 1).else_log("side must be either 0 or 1, instead got {}", msg->side);
+  ASSUME(msg->side <= 1).else_log("side must be either 0 or 1, instead got {}", msg->side);
 
   auto const side = u8_to_side(msg->side);
   auto const is_rx = msg->client_server == (u8)SC_SERVER; // client(0) is 'tx', server(1) is 'rx'
