@@ -71,10 +71,10 @@ IngestCore::IngestCore(
   }
   stop_async_.data = this;
 
-  DEBUG_ASSUME(ingest_to_logging_queues.num_receivers() == 1).else_log("Not using multiple logging cores");
+  ASSUME(ingest_to_logging_queues.num_receivers() == 1).else_log("Not using multiple logging cores");
 
   // Create the ingest workers and start the telemetry TCP server.
-  DEBUG_ASSUME(ingest_shard_count > 0).else_log("Ingest shards should be > 0, instead got {}", ingest_shard_count);
+  ASSUME(ingest_shard_count > 0).else_log("Ingest shards should be > 0, instead got {}", ingest_shard_count);
 
   std::vector<std::unique_ptr<IngestWorker>> workers;
   workers.reserve(ingest_shard_count);
