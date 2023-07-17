@@ -86,9 +86,9 @@ add_custom_command(
     ./io.opentelemetry.render/src/io/opentelemetry/render/extensions/SpanExtensions.xtend
     ./io.opentelemetry.render/src/io/opentelemetry/render/extensions/FieldExtensions.xtend
     ./io.opentelemetry.render/src/io/opentelemetry/render/extensions/FieldTypeExtensions.xtend
-    ./io.opentelemetry.render/src/io/opentelemetry/render/extensions/MessageExtensions.xtend
+    ./io.opentelemetry.render/src/io/opentelemetry/render/extensions/MessageExtensions.java
     ./io.opentelemetry.render/src/io/opentelemetry/render/extensions/UtilityExtensions.xtend
-    ./io.opentelemetry.render/src/io/opentelemetry/render/extensions/XPackedMessageExtensions.xtend
+    ./io.opentelemetry.render/src/io/opentelemetry/render/extensions/XPackedMessageExtensions.java
     ./io.opentelemetry.render/src/io/opentelemetry/render/generator/RenderGenerator.xtend
     ./io.opentelemetry.render/src/io/opentelemetry/render/generator/MetricsGenerator.xtend
     ./io.opentelemetry.render/src/io/opentelemetry/render/generator/AppPacker.xtend
