@@ -55,7 +55,7 @@ public class MessageExtensions {
     String finalString = msg.getFields().stream()
       .filter( c -> c != msg.getReference_field() )
 			.sorted(Comparator.comparingInt(Field::getId))
-      .map(Field::getName)
+      .map(it -> "const " + FieldTypeExtensions.parsedCType(it.getType()) +  " " + it.getName() + FieldExtensions.arraySuffix(it))
       .collect(Collectors.joining(","));    
     return finalString;
   }
