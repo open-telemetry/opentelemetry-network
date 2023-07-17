@@ -20,11 +20,11 @@ import org.eclipse.xtext.xbase.lib.IterableExtensions;
 import org.eclipse.xtext.xbase.lib.ListExtensions;
 
 public class MessageExtensions {
-  private static String prependCommaIfNotEmpty(final String string) {
+  private static String prependCommaIfNotEmpty(String string) {
     return  string.isEmpty() ? string : ", " + string;
   }
 
-  public static String prototype(final Message msg) {
+  public static String prototype(Message msg) {
     List<Field> sortedFields = msg.getFields().stream()
 			.sorted(Comparator.comparingInt(Field::getId))
 			.collect(Collectors.toList());
@@ -35,11 +35,11 @@ public class MessageExtensions {
     return finalString;
   }
 
-  public static String commaPrototype(final Message msg) {
+  public static String commaPrototype(Message msg) {
     return MessageExtensions.prependCommaIfNotEmpty(MessageExtensions.prototype(msg));
   } 
 
-  public static String callPrototype(final Message msg) {
+  public static String callPrototype(Message msg) {
     String finalString = msg.getFields().stream()
 			.sorted(Comparator.comparingInt(Field::getId))
       .map(Field::getName)
@@ -47,11 +47,11 @@ public class MessageExtensions {
       return finalString;
   }
 
-  public static String commaCallPrototype(final Message msg) {
+  public static String commaCallPrototype(Message msg) {
     return MessageExtensions.prependCommaIfNotEmpty(MessageExtensions.callPrototype(msg));
   }
 
-  public static String norefPrototype(final Message msg) {
+  public static String norefPrototype(Message msg) {
     String finalString = msg.getFields().stream()
       .filter( c -> c != msg.getReference_field() )
 			.sorted(Comparator.comparingInt(Field::getId))
@@ -60,7 +60,7 @@ public class MessageExtensions {
     return finalString;
   }
 
-  public static String norefCommaPrototype(final Message msg) {
+  public static String norefCommaPrototype(Message msg) {
     String finalString = msg.getFields().stream()
       .filter( c -> c != msg.getReference_field() )
 			.sorted(Comparator.comparingInt(Field::getId))
@@ -69,7 +69,7 @@ public class MessageExtensions {
     return MessageExtensions.prependCommaIfNotEmpty(finalString);
   }
 
- public static String norefCommaCallPrototype(final Message msg) {
+ public static String norefCommaCallPrototype(Message msg) {
      String finalString = msg.getFields().stream()
       .filter( c -> c != msg.getReference_field() )
 			.sorted(Comparator.comparingInt(Field::getId))
@@ -83,7 +83,7 @@ public class MessageExtensions {
     return ((Span) eContainer);
   }
 
-  public static Set<String> errors(final Message msg) {
+  public static Set<String> errors(Message msg) {
     Set<String> expression = null;
     MessageType type = msg.getType();
     if ( msg.getType() == MessageType.START) {

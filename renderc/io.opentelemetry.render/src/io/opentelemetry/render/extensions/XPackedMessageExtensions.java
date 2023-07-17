@@ -8,7 +8,7 @@ import io.opentelemetry.render.render.FieldType;
 import io.opentelemetry.render.render.XPackedMessage;
 
 public class XPackedMessageExtensions {
-  public static String cType(final XPackedMessage packedMessage, final FieldType fieldType) {
+  public static String cType(XPackedMessage packedMessage, FieldType fieldType) {
     return FieldTypeExtensions.cType(fieldType, packedMessage.isPackedStrings());
   }
 }
