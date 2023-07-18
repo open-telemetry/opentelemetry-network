@@ -26,25 +26,25 @@ public class MessageExtensions {
 
   public static String prototype(Message msg) {
     List<Field> sortedFields = msg.getFields().stream()
-			.sorted(Comparator.comparingInt(Field::getId))
-			.collect(Collectors.toList());
+      .sorted(Comparator.comparingInt(Field::getId))
+      .collect(Collectors.toList());
 
     String finalString = sortedFields.stream()
-      .map( it -> it.getType().isIsShortString() ? "const char " + it.getName() + "[" +it.getType().getSize() + "]" + FieldExtensions.arraySuffix(it) : "const " + FieldTypeExtensions.parsedCType(it.getType()) + " " + it.getName() +  FieldExtensions.arraySuffix(it) )
+      .map( it -> it.getType().isIsShortString() ? "const char " + it.getName() + "[" +it.getType().getSize() + "]" + FieldExtensions.arraySuffix(it) : "const " + FieldTypeExtensions.parsedCType(it.getType()) + " " + it.getName() +  FieldExtensions.arraySuffix(it))
       .collect(Collectors.joining(","));
     return finalString;
   }
 
   public static String commaPrototype(Message msg) {
     return MessageExtensions.prependCommaIfNotEmpty(MessageExtensions.prototype(msg));
-  } 
+  }
 
   public static String callPrototype(Message msg) {
     String finalString = msg.getFields().stream()
-			.sorted(Comparator.comparingInt(Field::getId))
+      .sorted(Comparator.comparingInt(Field::getId))
       .map(Field::getName)
       .collect(Collectors.joining(","));    
-      return finalString;
+    return finalString;
   }
 
   public static String commaCallPrototype(Message msg) {
@@ -53,8 +53,8 @@ public class MessageExtensions {
 
   public static String norefPrototype(Message msg) {
     String finalString = msg.getFields().stream()
-      .filter( c -> c != msg.getReference_field() )
-			.sorted(Comparator.comparingInt(Field::getId))
+      .filter( c -> c != msg.getReference_field())
+      .sorted(Comparator.comparingInt(Field::getId))
       .map(it -> "const " + FieldTypeExtensions.parsedCType(it.getType()) +  " " + it.getName() + FieldExtensions.arraySuffix(it))
       .collect(Collectors.joining(","));    
     return finalString;
@@ -63,16 +63,16 @@ public class MessageExtensions {
   public static String norefCommaPrototype(Message msg) {
     String finalString = msg.getFields().stream()
       .filter( c -> c != msg.getReference_field() )
-			.sorted(Comparator.comparingInt(Field::getId))
+      .sorted(Comparator.comparingInt(Field::getId))
       .map(it -> "const " + FieldTypeExtensions.parsedCType(it.getType()) + " " + it.getName() + FieldExtensions.arraySuffix(it) )
       .collect(Collectors.joining(","));    
     return MessageExtensions.prependCommaIfNotEmpty(finalString);
   }
 
- public static String norefCommaCallPrototype(Message msg) {
-     String finalString = msg.getFields().stream()
+  public static String norefCommaCallPrototype(Message msg) {
+    String finalString = msg.getFields().stream()
       .filter( c -> c != msg.getReference_field() )
-			.sorted(Comparator.comparingInt(Field::getId))
+      .sorted(Comparator.comparingInt(Field::getId))
       .map(it -> it.getType().isIsShortString() ? it.getName() + ".data()" : it.getName() )
       .collect(Collectors.joining(","));    
     return MessageExtensions.prependCommaIfNotEmpty(finalString);
@@ -100,3 +100,4 @@ public class MessageExtensions {
     return expression;
   }
 }
+
