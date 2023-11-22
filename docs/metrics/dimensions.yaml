@@ -29,6 +29,19 @@ dest.workload.name:
   brief: See workload.name
   description: See workload.name
 
+workload.uid:
+  brief: Kubernetes workload or application UUID.
+  description: If the associated metric comes from a monitored Kubernetes cluster running the k8-collector, the metric may note the UUID of the source and destination workload that the traffic being measured moved between. This UUID represents the unique identifier of the associated Deployment or DaemonSet. 
+  example: 0485c36b-283e-496e-af47-1a69545cd887
+
+source.workload.uid:
+  brief: See workload.uid
+  description: See workload.uid
+
+dest.workload.uid:
+  brief: See workload.uid
+  description: See workload.uid
+
 image_version:
   brief: Kubernetes pod version label of the workload.
   description: If the associated metric comes from a monitored Kubernetes cluster running the k8-collector, the metric may note the source and destination versions that the traffic being measured moved between.  The version label is optionally set by the administrator configuring Kubernetes.  Sometimes referred to as the 'service version.'  May be found in the docker (pod) image or Kubernetes metadata.

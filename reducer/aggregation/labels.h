@@ -20,6 +20,7 @@ struct NodeLabels {
   std::string ip;
   std::string az;
   std::string role;
+  std::string role_uid;
   std::string version;
   std::string env;
   std::string ns;
