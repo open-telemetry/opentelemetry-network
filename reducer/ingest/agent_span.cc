@@ -610,6 +610,7 @@ void AgentSpan::bpf_lost_samples(
 void AgentSpan::set_pod_new(
     std::string_view uid,
     std::string_view owner_name,
+    std::string_view owner_uid,
     std::string_view pod_name,
     std::string_view ns,
     std::string_view version,
@@ -640,7 +641,7 @@ void AgentSpan::set_pod_new(
       version);
 
   // populate the pod span with pod metadata
-  k8s_pod.set_pod_detail(jb_blob(owner_name), jb_blob{pod_name}, jb_blob(ns), jb_blob(version));
+  k8s_pod.set_pod_detail(jb_blob(owner_name), jb_blob{pod_name}, jb_blob(ns), jb_blob(version), jb_blob(owner_uid));
 
   // Add pod to k8s_pod_set if it isn't already there.
 
@@ -661,18 +662,18 @@ void AgentSpan::set_pod_new(
 
 void AgentSpan::pod_new_legacy(::ebpf_net::ingest::weak_refs::agent span_ref, u64 timestamp, jsrv_ingest__pod_new_legacy *msg)
 {
-  set_pod_new(msg->uid, msg->owner_name, {}, msg->ns, {}, msg->ip);
+  set_pod_new(msg->uid, msg->owner_name, msg->owner_uid, {}, msg->ns, {}, msg->ip);
 }
 
 void AgentSpan::pod_new_legacy2(::ebpf_net::ingest::weak_refs::agent span_ref, u64 timestamp, jsrv_ingest__pod_new_legacy2 *msg)
 {
-  set_pod_new(msg->uid, msg->owner_name, {}, msg->ns, msg->version, msg->ip);
+  set_pod_new(msg->uid, msg->owner_name, msg->owner_uid, {}, msg->ns, msg->version, msg->ip);
 }
 
 void AgentSpan::pod_new_with_name(
     ::ebpf_net::ingest::weak_refs::agent span_ref, u64 timestamp, jsrv_ingest__pod_new_with_name *msg)
 {
-  set_pod_new(msg->uid, msg->owner_name, msg->pod_name, msg->ns, msg->version, msg->ip);
+  set_pod_new(msg->uid, msg->owner_name, msg->owner_uid, msg->pod_name, msg->ns, msg->version, msg->ip);
 }
 
 void AgentSpan::pod_container(::ebpf_net::ingest::weak_refs::agent span_ref, u64 timestamp, jsrv_ingest__pod_container *msg)

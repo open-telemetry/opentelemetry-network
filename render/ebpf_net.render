@@ -1098,6 +1098,9 @@ app ingest {
     // can be obtained from docker label `io.kubernetes.pod.name`??
     string<64> owner_name   // name of the Deployment, DaemonSet, ReplicaSet or StatefulSet owning the pod
 
+    // owner uid
+    string<64> owner_uid
+
     // can be obtained from docker label `io.kubernetes.pod.namespace`
     string<64> ns
 
@@ -1343,6 +1346,7 @@ app matching {
     u64 uid_hash
 
     string<64> owner_name   // name of the Deployment, DaemonSet, ReplicaSet or StatefulSet owning the pod
+    string<64> owner_uid
     string<64> pod_name
     string<64> ns
     string<64> version
@@ -1357,6 +1361,7 @@ app matching {
       2: string pod_name
       3: string ns
       4: string version
+      5: string owner_uid
     }
   } /* span k8s_pod */
 
@@ -1425,6 +1430,7 @@ app aggregation {
     pool_size 70000
     index (s, version, env, ns, node_type, process, container)
     string<80> s
+    string<80> uid
     string<64> version
     string<32> env
     string<64> ns
@@ -1498,6 +1504,7 @@ app aggregation {
       11: string process
       12: string container
       13: string pod_name
+      14: string role_uid
     }
     14: msg update_tcp_metrics {
       1: u8 direction

@@ -9,6 +9,7 @@
 
 #define FOREACH_NODE_LABEL(FUNC)                                                                                               \
   FUNC("workload.name", role)                                                                                                  \
+  FUNC("workload.uid", role_uid)                                                                                               \
   FUNC("availability_zone", az)                                                                                                \
   FUNC("id", id)                                                                                                               \
   FUNC("ip", ip)                                                                                                               \
@@ -39,6 +40,7 @@ inline NodeLabels::NodeLabels(::ebpf_net::aggregation::weak_refs::az az_ref) : N
 inline NodeLabels::NodeLabels(::ebpf_net::aggregation::weak_refs::role role_ref)
 {
   role = role_ref.s().to_string();
+  role_uid = role_ref.uid().to_string();
   version = role_ref.version().to_string();
   env = role_ref.env().to_string();
   ns = role_ref.ns().to_string();
