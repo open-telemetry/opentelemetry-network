@@ -20,6 +20,7 @@ void K8sPodSpan::set_pod_detail(
 {
   span_ref.modify()
       .owner_name({short_string_behavior::truncate, msg->owner_name})
+      .owner_uid({short_string_behavior::truncate, msg->owner_uid})
       .pod_name({short_string_behavior::truncate, msg->pod_name})
       .ns({short_string_behavior::truncate, msg->ns})
       .version({short_string_behavior::truncate, msg->version});

@@ -107,6 +107,7 @@ public:
   void set_pod_new(
       std::string_view uid,
       std::string_view owner_name,
+      std::string_view owner_uid,
       std::string_view pod_name,
       std::string_view ns,
       std::string_view version,

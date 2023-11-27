@@ -17,7 +17,8 @@
   FN(pod_name, 6)                                                                                                              \
   FN(process, 7)                                                                                                               \
   FN(role, 8)                                                                                                                  \
-  FN(version, 9)
+  FN(version, 9)                                                                                                               \
+  FN(role_uid, 10)
 
 namespace reducer::aggregation {
 

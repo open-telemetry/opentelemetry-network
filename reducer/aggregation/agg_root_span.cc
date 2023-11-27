@@ -57,6 +57,9 @@ void AggRootSpan::update_node(
   using role_t = ::ebpf_net::aggregation::spans::role::s_t;
   auto role = as_short_string<role_t>(msg->role, stat_counters.trunc_role);
 
+  using uid_t = ::ebpf_net::aggregation::spans::role::uid_t;
+  auto role_uid = as_short_string<uid_t>(msg->role_uid, stat_counters.trunc_role_uid);
+
   using version_t = ::ebpf_net::aggregation::spans::role::version_t;
   auto version = as_short_string<version_t>(msg->version, stat_counters.trunc_version);
 
@@ -84,6 +87,7 @@ void AggRootSpan::update_node(
   if (!role_ref.valid()) {
     return;
   }
+  role_ref.modify().uid(role_uid);
 
   auto az_ref = index.az.by_key({az, role_ref.loc()});
   if (!az_ref.valid()) {

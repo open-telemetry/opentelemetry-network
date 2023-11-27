@@ -230,7 +230,8 @@ void FlowSpan::update_node(::ebpf_net::matching::weak_refs::agg_root agg_root, F
       jb_blob(n.address),
       jb_blob(n.comm),
       jb_blob(n.container_name),
-      jb_blob(n.pod_name));
+      jb_blob(n.pod_name),
+      jb_blob(n.role_uid));
 }
 
 void FlowSpan::create_agg_root(::ebpf_net::matching::weak_refs::flow flow, NodeData const &node_a, NodeData const &node_b)
@@ -316,6 +317,7 @@ FlowSpan::NodeData FlowSpan::resolve_node(::ebpf_net::matching::weak_refs::flow 
   auto [id, az, is_autonomous_system] = get_id_az(side);
 
   std::string role;
+  std::string role_uid;
   std::string version;
   std::string env;
   std::string ns;
@@ -364,6 +366,7 @@ FlowSpan::NodeData FlowSpan::resolve_node(::ebpf_net::matching::weak_refs::flow 
     // enrich
     node_type = NodeResolutionType::K8S_CONTAINER;
     role = pod.owner_name();
+    role_uid = pod.owner_uid();
     version = pod.version();
     ns = pod.ns();
 
@@ -477,6 +480,7 @@ FlowSpan::NodeData FlowSpan::resolve_node(::ebpf_net::matching::weak_refs::flow 
       .id = id,
       .az = az,
       .role = role,
+      .role_uid = role_uid,
       .version = version,
       .env = env,
       .ns = ns,
