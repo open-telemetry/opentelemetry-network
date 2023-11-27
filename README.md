@@ -49,3 +49,11 @@ Maintainers ([@open-telemetry/ebpf-maintainers](https://github.com/orgs/open-tel
 - [Jonathan Perry](https://github.com/yonch), Splunk
 
 Learn more about roles in the [community repository](https://github.com/open-telemetry/community/blob/main/community-membership.md).
+
+## Questions ##
+
+You can connect with us in our [slack channel](https://cloud-native.slack.com/archives/C02AB15583A).
+
+The OpenTelemetry eBPF special interest group (SIG) meets regularly, and the meetting is held every 
+week on Tuesday at 09:00 Pacific time.
+See the [eBPF Workgroup Meeting Notes](https://docs.google.com/document/d/13GK915hdDQ9sUYzUIWi4pOfJK68EE935ugutUgL3yOw) for a summary description of past meetings.

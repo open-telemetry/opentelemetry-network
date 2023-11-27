@@ -221,3 +221,11 @@ See [test/kernel](../test/kernel/README.md)
 
 - [Render Framework](./render.md)
 - [Reducer Architecture Overview](./reducer/architecture.md)
+
+## Where to Get Help? ##
+
+You can connect with us in our [slack channel](https://cloud-native.slack.com/archives/C02AB15583A).
+
+The OpenTelemetry eBPF special interest group (SIG) meets regularly, and the meetting is held every 
+week on Tuesday at 09:00 Pacific time.
+See the [eBPF Workgroup Meeting Notes](https://docs.google.com/document/d/13GK915hdDQ9sUYzUIWi4pOfJK68EE935ugutUgL3yOw) for a summary description of past meetings.
