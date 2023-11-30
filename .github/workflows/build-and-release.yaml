@@ -57,8 +57,12 @@ jobs:
       - name: Log-in to container registry
         run: |
           docker login --username="$DOCKER_USERNAME" --password-stdin $DOCKER_REGISTRY <<< "$DOCKER_PASSWORD"
+      - name: Fetch build environment
+        run: |
+          docker pull $BENV_IMAGE
       - name: Build artifacts
         run: |
+          echo "github.workspace = ${{ github.workspace }}"
           mkdir -p $GITHUB_WORKSPACE/out
           docker run -t --rm \
             --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
