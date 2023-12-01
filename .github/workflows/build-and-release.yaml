@@ -19,6 +19,7 @@ on:
         description: "Tag, branch or SHA to checkout"
         required: true
         type: string
+        default: "main"
       image_prefix:
         description: "Prefix to use for destination image name"
         required: false
@@ -54,6 +55,37 @@ jobs:
           fetch-depth: 0
           submodules: recursive
           path: src
+      - name: Compute version numbers
+        run: |
+          # sets environment variables for use in later steps.
+          # see https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#setting-an-environment-variable
+
+          cd $GITHUB_WORKSPACE/src
+          source ./version.sh
+
+          git_short_hash=$(git rev-parse --short=8 HEAD)
+          short_version_number="${EBPF_NET_MAJOR_VERSION}.${EBPF_NET_MINOR_VERSION}"
+          full_version_number="${EBPF_NET_MAJOR_VERSION}.${EBPF_NET_MINOR_VERSION}.${EBPF_NET_PATCH_VERSION}"
+          if [[ "${{ inputs.release_type }}" == "public" ]]; then
+            github_tag=v${full_version_number}
+          else
+            github_tag=v${full_version_number}-${git_short_hash}
+          fi
+
+          echo "git_short_hash=${git_short_hash}" >> "$GITHUB_ENV"
+          echo "short_version_number=${short_version_number}" >> "$GITHUB_ENV"
+          echo "full_version_number=${full_version_number}" >> "$GITHUB_ENV"
+          echo "github_tag=${github_tag}" >> "$GITHUB_ENV"
+      - name: Output build information
+        run: |
+          echo "github.workspace = ${{ github.workspace }}"
+          echo "github.ref = ${{ github.ref }}"
+          echo "inputs.image_prefix = ${{ inputs.image_prefix }}"
+          echo "inputs.dry_run = ${{ inputs.dry_run }}"
+          echo "git_short_hash = ${git_short_hash}"
+          echo "short_version_number = ${short_version_number}"
+          echo "full_version_number = ${full_version_number}"
+          echo "github_tag = ${github_tag}"
       - name: Log-in to container registry
         run: |
           docker login --username="$DOCKER_USERNAME" --password-stdin $DOCKER_REGISTRY <<< "$DOCKER_PASSWORD"
@@ -62,7 +94,6 @@ jobs:
           docker pull $BENV_IMAGE
       - name: Build artifacts
         run: |
-          echo "github.workspace = ${{ github.workspace }}"
           mkdir -p $GITHUB_WORKSPACE/out
           docker run -t --rm \
             --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
@@ -80,21 +111,26 @@ jobs:
             --workdir /root/out \
             $BENV_IMAGE \
             cpack -G 'RPM;DEB'
-      - name: Upload packages
+      - name: Upload packages to GitHub Action artifacts
         uses: actions/upload-artifact@v3
         with:
           name: packages
           path: |
             out/opentelemetry-ebpf-*.rpm
             out/opentelemetry-ebpf-*.deb
+      - name: Upload packages to Release
+        uses: softprops/action-gh-release@c9b46fe7aad9f02afd89b12450b780f52dacfb2d
+        if: ${{ !inputs.dry_run }}
+        with:
+          tag_name: ${{ env.github_tag }}
+          target_commitish: ${{ inputs.ref }}
+          prerelease: ${{ inputs.release_type != 'public' }}
+          files: |
+            out/opentelemetry-ebpf-*.rpm
+            out/opentelemetry-ebpf-*.deb
       - name: Push to container registry
         run: |
           cd $GITHUB_WORKSPACE/src
-          source ./version.sh
-
-          git_short_hash=$(git rev-parse --short=8 HEAD)
-          short_version_number="${EBPF_NET_MAJOR_VERSION}.${EBPF_NET_MINOR_VERSION}"
-          full_version_number="${EBPF_NET_MAJOR_VERSION}.${EBPF_NET_MINOR_VERSION}.${EBPF_NET_PATCH_VERSION}"
 
           if [[ "${{ inputs.release_type }}" == "public" ]]; then
             tags=(
