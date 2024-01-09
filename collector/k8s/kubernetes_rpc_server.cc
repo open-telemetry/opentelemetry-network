@@ -42,8 +42,12 @@ public:
   // Returns true if gRpc stream needs to be restarted.
   bool need_restart() const;
 
+  void owner_new_or_modified(const std::string &uid, const OwnerInfo &owner_info);
+  void owner_deleted(const std::string &uid, const OwnerInfo &owner_info);
   void replica_set_new_or_modified(const ReplicaSetInfo &rs_info);
   void replica_set_deleted(const ReplicaSetInfo &rs_info);
+  void job_new_or_modified(const JobInfo &job_info);
+  void job_deleted(const JobInfo &job_info);
   void pod_new_or_modified(const PodInfo &pod_info);
   void pod_deleted(const PodInfo &pod_info);
 
@@ -51,17 +55,19 @@ private:
   // Max number of Pods allowed to wait for the ReplicaSet infos.
   static constexpr u64 max_waiting_pods_ = 10000;
 
-  // Max number of deleted ReplicaSets before they are purged.
-  static constexpr u64 max_deleted_replicat_sets_ = 10000;
+  // Max number of deleted owners before they are purged.
+  static constexpr u64 max_deleted_owners_ = 10000;
 
   u64 get_id(const std::string &uid);
   void send_pod_new(const PodInfo &pod_info, const OwnerInfo &owner);
   void send_pod_new_no_owner(const PodInfo &pod_info);
   void send_pod_containers(const PodInfo &pod_info);
 
-  struct ReplicaSetStore {
-    // Existing ReplicaSet metadata that we know of.
-    std::unordered_map<u64, ReplicaSetInfo, ::util::Lookup3Hasher<u64>> infos;
+  struct OwnerStore {
+    //
+    // Existing ReplicaSet/Job's OwnerInfo that we know of. Here the key is the
+    // id of the ReplicaSet/Job.
+    std::unordered_map<u64, OwnerInfo, ::util::Lookup3Hasher<u64>> infos;
 
     // ReplicaSet metadata which has been deleted recently.
     std::deque<u64> deleted;
@@ -78,16 +84,16 @@ private:
     // Set of Pods whose info has been sent back to pipeline server.
     std::unordered_set<u64, ::util::Lookup3Hasher<u64>> live;
 
-    // Set of Pods that replies on a yet-to-be-seen ReplicaSet.
+    // Set of Pods that replies on a yet-to-be-seen ReplicaSet/Job.
     std::unordered_set<u64, ::util::Lookup3Hasher<u64>> waiting;
   };
 
-  // Maps ReplicaSet's and Pod's UID to a sequential id.
+  // Maps ReplicaSet's, Job's and Pod's UID to a sequential id.
   // This is to avoid storing the UID (a long string) in multiple places.
   u64 next_id_ = 0;
   std::unordered_map<std::string, u64> uid_to_id_;
 
-  ReplicaSetStore replica_sets_;
+  OwnerStore owners_;
   PodStore pods_;
 
   ebpf_net::ingest::Writer *writer_;
@@ -166,27 +172,21 @@ u64 K8sHandler::get_id(const std::string &uid)
   return id;
 }
 
-void K8sHandler::replica_set_new_or_modified(const ReplicaSetInfo &rs_info)
+void K8sHandler::owner_new_or_modified(const std::string &uid, const OwnerInfo &owner_info)
 {
-  if (rs_info.uid().empty()) {
-    LOG::warn("ReplicaSet info without UID. {}", rs_info);
-    return;
-  }
-
-  u64 id = get_id(rs_info.uid());
-
-  auto iter = replica_sets_.infos.find(id);
-  if (iter != replica_sets_.infos.end()) {
+  u64 id = get_id(uid);
+  auto iter = owners_.infos.find(id);
+  if (iter != owners_.infos.end()) {
     // updated
-    iter->second.MergeFrom(rs_info);
+    iter->second.MergeFrom(owner_info);
   } else {
     // insert
-    replica_sets_.infos.emplace(id, std::move(rs_info));
+    owners_.infos.emplace(id, std::move(owner_info));
   }
 
-  // See if any Pod is waiting for this ReplicaSet
-  auto waiting_iter = replica_sets_.waiting.find(id);
-  if (waiting_iter == replica_sets_.waiting.end()) {
+  // See if any Pod is waiting for this id
+  auto waiting_iter = owners_.waiting.find(id);
+  if (waiting_iter == owners_.waiting.end()) {
     return;
   }
 
@@ -203,15 +203,54 @@ void K8sHandler::replica_set_new_or_modified(const ReplicaSetInfo &rs_info)
       continue;
     }
 
-    if (KubernetesOwnerIsDeployment(rs_info.owner().kind())) {
-      send_pod_new(pod_iter->second, rs_info.owner());
+    if (KubernetesOwnerIsDeployment(owner_info.kind()) ||
+        KubernetesOwnerIsCronJob(owner_info.kind())) {
+      send_pod_new(pod_iter->second, owner_info);
     } else {
       send_pod_new(pod_iter->second, pod_iter->second.owner());
     }
     pods_.waiting.erase(pod_id);
     pods_.live.insert(pod_id);
   }
-  replica_sets_.waiting.erase(waiting_iter);
+  owners_.waiting.erase(waiting_iter);
+}
+
+void K8sHandler::owner_deleted(const std::string &uid, const OwnerInfo &owner_info)
+{
+  u64 id = get_id(uid);
+  auto iter = owners_.infos.find(id);
+  if (iter == owners_.infos.end()) {
+    uid_to_id_.erase(uid);
+    return;
+  }
+
+  owners_.deleted.push_back(id);
+  if (owners_.deleted.size() <= max_deleted_owners_) {
+    return;
+  }
+
+  // There are more than |max_deleted_owners_| entries in the set,
+  // so remove the oldest one.
+  u64 expired_id = owners_.deleted.front();
+  owners_.deleted.pop_front();
+  auto expired_iter = owners_.infos.find(expired_id);
+  if (expired_iter == owners_.infos.end()) {
+    LOG::info("Owner removed before it expires.");
+    return;
+  }
+
+  uid_to_id_.erase(expired_iter->second.uid());
+  owners_.infos.erase(expired_id);
+}
+
+void K8sHandler::replica_set_new_or_modified(const ReplicaSetInfo &rs_info)
+{
+  if (rs_info.uid().empty()) {
+    LOG::warn("ReplicaSet info without UID. {}", rs_info);
+    return;
+  }
+
+  owner_new_or_modified(rs_info.uid(), rs_info.owner());
 }
 
 void K8sHandler::replica_set_deleted(const ReplicaSetInfo &rs_info)
@@ -221,30 +260,28 @@ void K8sHandler::replica_set_deleted(const ReplicaSetInfo &rs_info)
     return;
   }
 
-  u64 id = get_id(rs_info.uid());
-  auto iter = replica_sets_.infos.find(id);
-  if (iter == replica_sets_.infos.end()) {
-    uid_to_id_.erase(rs_info.uid());
+  owner_deleted(rs_info.uid(), rs_info.owner());
+}
+
+
+void K8sHandler::job_new_or_modified(const JobInfo &job_info)
+{
+  if (job_info.uid().empty()) {
+    LOG::warn("Job info without UID. {}", job_info);
     return;
   }
 
-  replica_sets_.deleted.push_back(id);
-  if (replica_sets_.deleted.size() <= max_deleted_replicat_sets_) {
+  owner_new_or_modified(job_info.uid(), job_info.owner());
+}
+
+void K8sHandler::job_deleted(const JobInfo &job_info)
+{
+  if (job_info.uid().empty()) {
+    LOG::warn("Job info without UID. {}", job_info);
     return;
   }
 
-  // There are more than |max_deleted_replicat_sets_| entries in the set,
-  // so remove the oldest one.
-  u64 expired_id = replica_sets_.deleted.front();
-  replica_sets_.deleted.pop_front();
-  auto expired_iter = replica_sets_.infos.find(expired_id);
-  if (expired_iter == replica_sets_.infos.end()) {
-    LOG::info("ReplicaSet removed before it expires.");
-    return;
-  }
-
-  uid_to_id_.erase(expired_iter->second.uid());
-  replica_sets_.infos.erase(expired_id);
+  owner_deleted(job_info.uid(), job_info.owner());
 }
 
 void K8sHandler::pod_new_or_modified(const PodInfo &pod_info)
@@ -286,38 +323,53 @@ void K8sHandler::pod_new_or_modified(const PodInfo &pod_info)
     return;
   }
 
-  if (!KubernetesOwnerIsReplicaSet(pod.owner().kind())) {
-    // Not owned by a ReplicaSet, just send new_pod
-    LOG::trace("Pod is not owned by ReplicaSet. Sending. {}", pod_info);
+  if (!KubernetesOwnerIsReplicaSet(pod.owner().kind()) &&
+      !KubernetesOwnerIsJob(pod.owner().kind()))
+  {
+     // Not owned by a ReplicaSet or Job, just send new_pod
+    LOG::trace("Pod is not owned by ReplicaSet/Job. Sending. {}", pod_info);
     send_pod_new(pod, pod.owner());
     pods_.live.insert(id);
     return;
   }
 
+   // Pod is owned by replica set or Job, need to check if the owner exists.
   u64 owner_id = get_id(pod.owner().uid());
-  auto rs_iter = replica_sets_.infos.find(owner_id);
+  auto owner_iter = owners_.infos.find(owner_id);
 
-  if (rs_iter == replica_sets_.infos.end()) {
-    // We have not seen the ReplicaSet yet, needs to wait.
-    auto waiting_iter = replica_sets_.waiting.find(owner_id);
-    if (waiting_iter == replica_sets_.waiting.end()) {
-      replica_sets_.waiting[owner_id] = std::vector<u64>({id});
-      LOG::trace("Pod's ReplicaSet and queue did not exist, added queue and enqueued. {}", pod_info);
+  if (owner_iter == owners_.infos.end()) {
+    // We have not seen the ReplicaSet/Job yet, needs to wait.
+    auto waiting_iter = owners_.waiting.find(owner_id);
+    if (waiting_iter == owners_.waiting.end()) {
+      owners_.waiting[owner_id] = std::vector<u64>({id});
+      LOG::trace("Pod's Owner queue did not exist, added queue and enqueued. {}", pod_info);
     } else {
       waiting_iter->second.push_back(id);
-      LOG::trace("Pod's ReplicaSet did not exist, enqueued to existing queue. {}", pod_info);
+      LOG::trace("Pod's Owner did not exist, enqueued to existing queue. {}", pod_info);
     }
     pods_.waiting.insert(id);
     return;
   }
 
-  const OwnerInfo &owner = rs_iter->second.owner();
-  if (KubernetesOwnerIsDeployment(owner.kind())) {
-    LOG::trace("Pod's owner ReplicaSet has Deployment owner. Sending pod with owner {}", owner);
-    send_pod_new(pod, owner);
-  } else {
-    LOG::trace("Pod's owner ReplicaSet has non-Deployment owner. Sending pod with owner {}", pod.owner());
-    send_pod_new(pod, pod.owner());
+  const OwnerInfo &owner = owner_iter->second;
+  if (KubernetesOwnerIsReplicaSet(pod.owner().kind())) {
+    // Pod is owned by ReplicaSet
+    if (KubernetesOwnerIsDeployment(owner.kind())) {
+      LOG::trace("Pod's owner ReplicaSet has Deployment owner. Sending pod with owner {}", owner);
+      send_pod_new(pod, owner);
+    } else {
+      LOG::trace("Pod's owner ReplicaSet has non-Deployment owner. Sending pod with owner {}", pod.owner());
+      send_pod_new(pod, pod.owner());
+    }
+  } else if (KubernetesOwnerIsJob(pod.owner().kind())) {
+    // Pod is owned by job
+    if (KubernetesOwnerIsCronJob(owner.kind())) {
+      LOG::trace("Pod's owner Job has CronJob owner. Sending pod with owner {}", owner);
+      send_pod_new(pod, owner);
+    } else {
+      LOG::trace("Pod's owner Job has non-CronJob owner. Sending pod with owner {}", pod.owner());
+      send_pod_new(pod, pod.owner());
+    }
   }
   pods_.live.insert(id);
 }
@@ -383,6 +435,22 @@ Status KubernetesRpcServer::Collect(ServerContext *context, ServerReaderWriter<R
         handler.replica_set_deleted(rs_info);
         break;
       case Info_Event_ERROR:
+      default:
+        // do nothing now.
+        break;
+      }
+    } if (info.type() == Info::K8S_JOB) {
+      const JobInfo &job_info = info.job_info();
+      switch (info.event()) {
+      case Info_Event_ADDED:
+      case Info_Event_MODIFIED:
+        handler.job_new_or_modified(job_info);
+        break;
+      case Info_Event_DELETED:
+        handler.job_deleted(job_info);
+        break;
+      case Info_Event_ERROR:
+        // Got an error/unhandled event from the k8s watch API, ignore it.
       default:
         // do nothing now.
         break;

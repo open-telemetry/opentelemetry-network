@@ -12,6 +12,8 @@ namespace collector {
 enum class KubernetesOwnerKind : u8 {
   ReplicaSet = 0,
   Deployment = 1,
+  Job = 2,
+  CronJob = 3,
   // TODO: fill in more as we go.
   //
   NoOwner = 254,
@@ -23,6 +25,8 @@ const char *KubernetesOwnerKindToString(const KubernetesOwnerKind kind);
 
 bool KubernetesOwnerIsDeployment(const std::string &str);
 bool KubernetesOwnerIsReplicaSet(const std::string &str);
+bool KubernetesOwnerIsJob(const std::string &str);
+bool KubernetesOwnerIsCronJob(const std::string &str);
 bool KubernetesOwnerIsNoOwner(const std::string &str);
 
 } // namespace collector

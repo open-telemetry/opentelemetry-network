@@ -13,6 +13,7 @@ message Info {
   enum Type {
     K8S_REPLICASET = 0;
     K8S_POD = 1;
+    K8S_JOB = 2;
   }
 
   Type type = 1;
@@ -27,6 +28,7 @@ message Info {
 
   PodInfo pod_info = 3;
   ReplicaSetInfo rs_info = 4;
+  JobInfo job_info = 5;
 }
 
 message Response {
