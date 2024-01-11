@@ -19,6 +19,7 @@ import (
 	"google.golang.org/grpc"
 
 	appsv1 "k8s.io/api/apps/v1"
+	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/watch"
@@ -136,6 +137,13 @@ func make_rs_info(rs *appsv1.ReplicaSet) *collector.ReplicaSetInfo {
 	}
 }
 
+func make_job_info(job *batchv1.Job) *collector.JobInfo {
+	return &collector.JobInfo{
+		Uid:   string(job.ObjectMeta.UID),
+		Owner: extract_owner(job.ObjectMeta),
+	}
+}
+
 func make_collector_info_from_pod(event_type collector.Info_Event, pod_info *collector.PodInfo) *collector.Info {
 	return &collector.Info{
 		Type:    collector.Info_K8S_POD,
@@ -149,6 +157,14 @@ func make_collector_info_from_replicaset(event_type collector.Info_Event, rs_inf
 		Type:   collector.Info_K8S_REPLICASET,
 		Event:  event_type,
 		RsInfo: rs_info,
+	}
+}
+
+func make_collector_info_from_job(event_type collector.Info_Event, job_info *collector.JobInfo) *collector.Info {
+	return &collector.Info{
+		Type:    collector.Info_K8S_JOB,
+		Event:   event_type,
+		JobInfo: job_info,
 	}
 }
 
@@ -191,6 +207,24 @@ func handle_rs_event(event watch.Event, stream collector.Collector_CollectClient
 
 	err = send_info(make_collector_info_from_replicaset(event_type, make_rs_info(rs)), stream)
 	return &rs.ObjectMeta.ResourceVersion, err
+}
+
+// Handles Job event from watcher.
+//
+// Returns the version of Job object, and the error object, if any.
+func handle_job_event(event watch.Event, stream collector.Collector_CollectClient) (*string, error) {
+	event_type, err := info_event_type(event.Type)
+	if err != nil {
+		return nil, err
+	}
+
+	job, ok := event.Object.(*batchv1.Job)
+	if !ok || job == nil {
+		return nil, errors.New("errorenous Job watch event")
+	}
+
+	err = send_info(make_collector_info_from_job(event_type, make_job_info(job)), stream)
+	return &job.ObjectMeta.ResourceVersion, err
 }
 
 // For test the connection w/o connecting to k8s master.
@@ -328,6 +362,20 @@ func run() error {
 		}
 	}
 
+	logmsg(Trace, "Fetch k8s Job info.")
+	batch_api := clientset.BatchV1()
+	job_list, err := batch_api.Jobs(metav1.NamespaceAll).List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return err
+	}
+
+	for _, job := range job_list.Items {
+		err := send_info(make_collector_info_from_job(collector.Info_ADDED, make_job_info(&job)), stream)
+		if err != nil {
+			return err
+		}
+	}
+
 	logmsg(Trace, "Fetch k8s Pod info.")
 	core_api := clientset.CoreV1()
 	pod_list, err := core_api.Pods(metav1.NamespaceAll).List(ctx, metav1.ListOptions{})
@@ -357,6 +405,7 @@ func run() error {
 
 	pod_version := pod_list.ListMeta.ResourceVersion
 	rs_version := rs_list.ListMeta.ResourceVersion
+	job_version := job_list.ListMeta.ResourceVersion
 
 	tick_ch := time.NewTicker(5 * time.Minute).C
 	for {
@@ -381,6 +430,18 @@ func run() error {
 		}
 		rs_ch := rs_watcher.ResultChan()
 
+		// Watch Job
+		job_watcher, err := batch_api.Jobs(metav1.NamespaceAll).Watch(ctx,
+			metav1.ListOptions{
+				ResourceVersion: job_version,
+			})
+		if err != nil {
+			pod_watcher.Stop()
+			rs_watcher.Stop()
+			return err
+		}
+		job_ch := job_watcher.ResultChan()
+
 		keep_watching := true
 		for keep_watching {
 			select {
@@ -389,15 +450,27 @@ func run() error {
 				if err != nil {
 					pod_watcher.Stop()
 					rs_watcher.Stop()
+					job_watcher.Stop()
 					return err
 				}
 				rs_version = *version
+
+			case event := <-job_ch:
+				version, err := handle_job_event(event, stream)
+				if err != nil {
+					pod_watcher.Stop()
+					rs_watcher.Stop()
+					job_watcher.Stop()
+					return err
+				}
+				job_version = *version
 
 			case event := <-pod_ch:
 				version, err := handle_pod_event(event, stream)
 				if err != nil {
 					pod_watcher.Stop()
 					rs_watcher.Stop()
+					job_watcher.Stop()
 					return err
 				}
 				pod_version = *version
@@ -406,11 +479,13 @@ func run() error {
 				logmsg(Info, "server signals canceled")
 				pod_watcher.Stop()
 				rs_watcher.Stop()
+				job_watcher.Stop()
 				return ctx.Err()
 
 			case err := <-cancel_ch:
 				pod_watcher.Stop()
 				rs_watcher.Stop()
+				job_watcher.Stop()
 				return err
 
 			case <-tick_ch:
@@ -418,6 +493,7 @@ func run() error {
 				logmsg(Trace, "end of one iteration of watch loop.")
 				pod_watcher.Stop()
 				rs_watcher.Stop()
+				job_watcher.Stop()
 			}
 		}
 	}

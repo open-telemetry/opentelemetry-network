@@ -36,3 +36,9 @@ message ReplicaSetInfo {
 
   OwnerInfo owner = 2;
 }
+
+message JobInfo {
+  string uid = 1;
+
+  OwnerInfo owner = 2;
+}
