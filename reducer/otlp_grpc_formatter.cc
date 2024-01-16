@@ -49,6 +49,8 @@ OtlpGrpcFormatter::OtlpGrpcFormatter(Publisher::WriterPtr const &writer) : write
   sum_.set_aggregation_temporality(opentelemetry::proto::metrics::v1::AggregationTemporality::AGGREGATION_TEMPORALITY_DELTA);
   sum_.set_is_monotonic(true);
   sum_.add_data_points();
+
+  gauge_.add_data_points();
 }
 
 OtlpGrpcFormatter::~OtlpGrpcFormatter()
@@ -128,30 +130,36 @@ void OtlpGrpcFormatter::format(
     metric.set_description(metric_info.description.data(), metric_info.description.size());
   }
 
-  auto data_point = sum_.mutable_data_points(0);
-
   if (labels_changed) {
     SCOPED_TIMING(OtlpGrpcFormatterFormatLabelsChanged);
-    data_point->clear_attributes();
+    data_point_.clear_attributes();
     for (auto const &[key, value] : labels) {
-      auto attribute = data_point->add_attributes();
+      auto attribute = data_point_.add_attributes();
       attribute->set_key(key.data(), key.size());
       attribute->mutable_value()->set_string_value(value.data(), value.size());
     }
   }
 
   if (timestamp_changed) {
-    data_point->set_time_unix_nano(integer_time<std::chrono::nanoseconds>(timestamp));
+    // set the start time to the timestamp minus 30 seconds.
+    data_point_.set_start_time_unix_nano(integer_time<std::chrono::nanoseconds>(timestamp) - int64_t(30000000000));
+    data_point_.set_time_unix_nano(integer_time<std::chrono::nanoseconds>(timestamp));
   }
 
   std::visit(
       overloaded_visitor{
-          [&](auto val) { data_point->set_as_int(val); },
-          [&](double val) { data_point->set_as_double(val); },
+          [&](auto val) { data_point_.set_as_int(val); },
+          [&](double val) { data_point_.set_as_double(val); },
       },
       metric_value);
 
-  *metric.mutable_sum() = sum_;
+  if (metric_info.type == MetricTypeSum) {
+    *sum_.mutable_data_points(0) = data_point_;
+    *metric.mutable_sum() = sum_;
+  } else {
+    *gauge_.mutable_data_points(0) = data_point_;
+    *metric.mutable_gauge() = gauge_;
+  }
 
   *scope_metrics_->add_metrics() = std::move(metric);
   STOP_TIMING(OtlpGrpcFormatterFormatMetric);
