@@ -66,6 +66,8 @@ protected:
   // avoid regenerating common portions.
   ExportMetricsServiceRequest metrics_request_;
   opentelemetry::proto::metrics::v1::Sum sum_;
+  opentelemetry::proto::metrics::v1::Gauge gauge_;
+  opentelemetry::proto::metrics::v1::NumberDataPoint data_point_;
   opentelemetry::proto::metrics::v1::ScopeMetrics *scope_metrics_;
 
   OtlpGrpcPublisher::WriterPtr const &writer_;

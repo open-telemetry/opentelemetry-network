@@ -9,6 +9,14 @@
 #include <string_view>
 
 namespace reducer {
+// Metric Types
+//
+enum MetricType {
+  // OTLP Metric Data Sum
+  MetricTypeSum,
+  // OTLP Metric Data Gauge
+  MetricTypeGauge,
+};
 
 // Information associated with a metric.
 //
@@ -19,9 +27,12 @@ struct MetricInfo {
   const std::string description;
   // Unit in which the metric value is reported (format described in http://unitsofmeasure.org/ucum.html).
   const std::string unit;
+  // Metric Type
+  MetricType type;
 
-  explicit MetricInfo(std::string_view name_, std::string_view description_ = "", std::string_view unit_ = "")
-      : name(name_), description(description_), unit(unit_)
+  explicit MetricInfo(
+      std::string_view name_, std::string_view description_ = "", std::string_view unit_ = "", MetricType type_ = MetricTypeSum)
+      : name(name_), description(description_), unit(unit_), type(type_)
   {}
 };
 
@@ -32,8 +43,8 @@ template <typename T> struct OutboundMetricInfo : public MetricInfo {
   typedef T metric_group_t;
   const metric_group_t metric;
 
-  OutboundMetricInfo(T metric_, std::string_view description_, std::string_view unit_)
-      : MetricInfo(to_string(metric_), description_, unit_), metric(metric_)
+  OutboundMetricInfo(T metric_, std::string_view description_, std::string_view unit_, MetricType type_ = MetricTypeSum)
+      : MetricInfo(to_string(metric_), description_, unit_, type_), metric(metric_)
   {}
 };
 
