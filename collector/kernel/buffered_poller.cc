@@ -643,6 +643,7 @@ void BufferedPoller::handle_set_state_ipv6(message_metadata const &metadata, jb_
   }
 
   writer_.set_state_ipv6_tstamp(metadata.timestamp, msg.dest, msg.src, msg.dport, msg.sport, msg.sk, msg.tx_rx);
+  nat_handler_.handle_set_state_ipv6(metadata.timestamp, &msg);
 }
 
 void BufferedPoller::handle_close_socket(message_metadata const &metadata, jb_agent_internal__close_sock_info &msg)

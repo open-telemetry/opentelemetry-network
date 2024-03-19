@@ -208,6 +208,63 @@ void NatHandler::handle_set_state_ipv4(u64 timestamp, jb_agent_internal__set_sta
   }
 }
 
+void NatHandler::handle_set_state_ipv6(u64 timestamp, jb_agent_internal__set_state_ipv6 *msg)
+{
+  // Check if it is an ipv4 address
+  IPv6Address src = IPv6Address::from(msg->src);
+  IPv6Address dst = IPv6Address::from(msg->dest);
+
+  if (!src.is_ipv4() || !dst.is_ipv4()) {
+    if (is_log_whitelisted(AgentLogKind::NAT)) {
+      LOG::trace_in(
+          AgentLogKind::NAT,
+          "NatHandler::handle_set_state_ipv6: "
+          "not a v4 address - skipping nat handling sk={}, src={}:{}, dest={}:{}, tx_rx={}",
+          msg->sk,
+          src,
+          msg->sport,
+          dst,
+          msg->dport,
+          msg->tx_rx);
+    }
+    return;
+  }
+
+  if (is_log_whitelisted(AgentLogKind::NAT)) {
+    LOG::trace_in(
+        AgentLogKind::NAT,
+        "NatHandler::handle_set_state_ipv6: "
+        "sk={}, src={}:{}, dest={}:{}, tx_rx={}",
+        msg->sk,
+        src.to_ipv4().value(),
+        msg->sport,
+        dst.to_ipv4().value(),
+        msg->dport,
+        msg->tx_rx);
+  }
+
+  const u64 sk = msg->sk;
+
+  const hostport_tuple ft = {
+      .src_ip = src.to_ipv4().value().as_int(),
+      .dst_ip = dst.to_ipv4().value().as_int(),
+      .src_port = htons(msg->sport),
+      .dst_port = htons(msg->dport),
+      .proto = IPPROTO_TCP,
+  };
+
+  record_sk(sk, ft);
+
+  // We had a NAT table entry before getting the socket info.
+  if (auto mapping = nat_table_.find(ft); mapping != nat_table_.end()) {
+    send_nat_remapping(timestamp, sk, mapping->second);
+  }
+
+  if (auto rev_mapping = nat_table_rev_.find(ft.reversed()); rev_mapping != nat_table_rev_.end()) {
+    send_nat_remapping(timestamp, sk, rev_mapping->second.reversed());
+  }
+}
+
 void NatHandler::handle_close_socket(u64 timestamp, jb_agent_internal__close_sock_info *msg)
 {
   remove_sk(msg->sk);
