@@ -44,9 +44,9 @@ Approvers ([@open-telemetry/ebpf-approvers](https://github.com/orgs/open-telemet
 
 Maintainers ([@open-telemetry/ebpf-maintainers](https://github.com/orgs/open-telemetry/teams/ebpf-maintainers)):
 
-- [Borko Jandras](https://github.com/bjandras), Splunk
+- [Borko Jandras](https://github.com/bjandras), Nvidia
 - [Jim Wilson](https://github.com/jmw51798), DataDog
-- [Jonathan Perry](https://github.com/yonch), Splunk
+- [Jonathan Perry](https://github.com/yonch), State-fu
 
 Learn more about roles in the [community repository](https://github.com/open-telemetry/community/blob/main/community-membership.md).
 
