@@ -1041,7 +1041,7 @@ app ingest {
       description "DNS A/AAAA record query response, with name, response address(es), and latency information"
       severity 0
       1: u32 sk_id
-      2: u16 total_dn_len                 // Total length of domain name without truncation (MAX_ENCODED_DOMAIN_NAME)
+      2: u16 total_dn_len                 // Total length of domain name without truncation (DNS_NAME_MAX_LENGTH)
       3: string domain_name               // Domain name being queried (possibly truncated)
       4: string ipv4_addrs                // IPv4 addresses corresponding to domain name 'dn'
       5: string ipv6_addrs                // IPv6 addresses corresponding to domain name 'dn'
@@ -1051,7 +1051,7 @@ app ingest {
       description "A DNS A/AAAA record request timeout"
       severity 0
       1: u32 sk_id
-      2: u16 total_dn_len                 // Total length of domain name without truncation (MAX_ENCODED_DOMAIN_NAME)
+      2: u16 total_dn_len                 // Total length of domain name without truncation (DNS_NAME_MAX_LENGTH)
       3: string domain_name               // Domain name being queried (possibly truncated)
       4: u64 timeout_ns                   // Timeout duration for request (in ns)
     }
@@ -1065,7 +1065,7 @@ app ingest {
       description "DNS A/AAAA record query response, with name, response address(es), and latency information, with direction"
       severity 0
       1: u32 sk_id
-      2: u16 total_dn_len                 // Total length of domain name without truncation (MAX_ENCODED_DOMAIN_NAME)
+      2: u16 total_dn_len                 // Total length of domain name without truncation (DNS_NAME_MAX_LENGTH)
       3: string domain_name               // Domain name being queried (possibly truncated)
       4: string ipv4_addrs                // IPv4 addresses corresponding to domain name 'dn'
       5: string ipv6_addrs                // IPv6 addresses corresponding to domain name 'dn'

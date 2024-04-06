@@ -13,12 +13,11 @@ extern "C" {
 
 #define DNS_NAME_MAX_LENGTH 256
 
-#define MAX_ENCODED_DOMAIN_NAME 80
 #define MAX_ENCODED_IP_ADDRS 16
 
 #define MAX_ENCODED_DNS_MESSAGE                                                                                                \
   (/* timestamp */ sizeof(u64) + /* jb message */ jb_ingest__dns_response__data_size +                                         \
-   /* ip addrs */ (sizeof(u32) * MAX_ENCODED_IP_ADDRS) + /* DNS name */ MAX_ENCODED_DOMAIN_NAME)
+   /* ip addrs */ (sizeof(u32) * MAX_ENCODED_IP_ADDRS) + /* DNS name */ DNS_NAME_MAX_LENGTH)
 
 int dns_name_length(const unsigned char *encoded, const unsigned char *abuf, int alen);
 
