@@ -29,6 +29,7 @@ public:
   void handle_existing_conntrack_tuple(u64 timestamp, struct jb_agent_internal__existing_conntrack_tuple *msg);
 
   void handle_set_state_ipv4(u64 timestamp, jb_agent_internal__set_state_ipv4 *msg);
+  void handle_set_state_ipv6(u64 timestamp, jb_agent_internal__set_state_ipv6 *msg);
 
   void handle_close_socket(u64 timestamp, jb_agent_internal__close_sock_info *msg);
 
