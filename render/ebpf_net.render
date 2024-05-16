@@ -1329,7 +1329,7 @@ app matching {
     pool_size 4800000
     proxy aggregation.agg_root shard_by (role1, az1, role2, az2)
     string<80> role1
-    string<80> role2
+    string<256> role2
     string<32> az1
     string<32> az2
   }
@@ -1429,7 +1429,7 @@ app aggregation {
   span role {
     pool_size 70000
     index (s, version, env, ns, node_type, process, container)
-    string<80> s
+    string<256> s
     string<80> uid
     string<64> version
     string<32> env
