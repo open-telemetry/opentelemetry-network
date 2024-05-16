@@ -1041,7 +1041,7 @@ app ingest {
       description "DNS A/AAAA record query response, with name, response address(es), and latency information"
       severity 0
       1: u32 sk_id
-      2: u16 total_dn_len                 // Total length of domain name without truncation (MAX_ENCODED_DOMAIN_NAME)
+      2: u16 total_dn_len                 // Total length of domain name without truncation (DNS_NAME_MAX_LENGTH)
       3: string domain_name               // Domain name being queried (possibly truncated)
       4: string ipv4_addrs                // IPv4 addresses corresponding to domain name 'dn'
       5: string ipv6_addrs                // IPv6 addresses corresponding to domain name 'dn'
@@ -1051,7 +1051,7 @@ app ingest {
       description "A DNS A/AAAA record request timeout"
       severity 0
       1: u32 sk_id
-      2: u16 total_dn_len                 // Total length of domain name without truncation (MAX_ENCODED_DOMAIN_NAME)
+      2: u16 total_dn_len                 // Total length of domain name without truncation (DNS_NAME_MAX_LENGTH)
       3: string domain_name               // Domain name being queried (possibly truncated)
       4: u64 timeout_ns                   // Timeout duration for request (in ns)
     }
@@ -1065,7 +1065,7 @@ app ingest {
       description "DNS A/AAAA record query response, with name, response address(es), and latency information, with direction"
       severity 0
       1: u32 sk_id
-      2: u16 total_dn_len                 // Total length of domain name without truncation (MAX_ENCODED_DOMAIN_NAME)
+      2: u16 total_dn_len                 // Total length of domain name without truncation (DNS_NAME_MAX_LENGTH)
       3: string domain_name               // Domain name being queried (possibly truncated)
       4: string ipv4_addrs                // IPv4 addresses corresponding to domain name 'dn'
       5: string ipv6_addrs                // IPv6 addresses corresponding to domain name 'dn'
@@ -1329,7 +1329,7 @@ app matching {
     pool_size 4800000
     proxy aggregation.agg_root shard_by (role1, az1, role2, az2)
     string<80> role1
-    string<80> role2
+    string<256> role2
     string<32> az1
     string<32> az2
   }
@@ -1429,7 +1429,7 @@ app aggregation {
   span role {
     pool_size 70000
     index (s, version, env, ns, node_type, process, container)
-    string<80> s
+    string<256> s
     string<80> uid
     string<64> version
     string<32> env

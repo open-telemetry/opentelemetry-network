@@ -414,7 +414,7 @@ void BufferedPoller::handle_dns_message(message_metadata const &metadata, jb_age
 
     send_a_aaaa_response = 1;
     // truncate hostname */
-    sent_hostname_len = (hostname_len < MAX_ENCODED_DOMAIN_NAME) ? (u16)hostname_len : MAX_ENCODED_DOMAIN_NAME;
+    sent_hostname_len = (hostname_len < DNS_NAME_MAX_LENGTH) ? (u16)hostname_len : DNS_NAME_MAX_LENGTH;
     sent_hostname = hostname_out + hostname_len - sent_hostname_len;
   }
 
@@ -534,7 +534,7 @@ void BufferedPoller::timeout_dns_request(u64 timestamp_ns, const DnsRequests::Re
     const char *hostname_out = req->first.name.c_str();
     size_t hostname_len = req->first.name.size();
 
-    u16 sent_hostname_len = (hostname_len < MAX_ENCODED_DOMAIN_NAME) ? (u16)hostname_len : MAX_ENCODED_DOMAIN_NAME;
+    u16 sent_hostname_len = (hostname_len < DNS_NAME_MAX_LENGTH) ? (u16)hostname_len : DNS_NAME_MAX_LENGTH;
 
     const char *sent_hostname = hostname_out + hostname_len - sent_hostname_len;
 

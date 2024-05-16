@@ -17,7 +17,7 @@ namespace reducer {
 namespace dns {
 struct hash_ipv6_address;
 struct eq_ipv6_address;
-static constexpr u32 max_len = 80;
+static constexpr u32 max_len = 256;
 typedef short_string<max_len> dns_record;
 } // namespace dns
 
