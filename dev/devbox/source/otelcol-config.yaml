@@ -28,7 +28,7 @@ processors:
   batch:
 
 exporters:
-  logging:
+  debug:
     verbosity: detailed
   file:
     path: /var/log/otel.log
@@ -70,12 +70,12 @@ service:
     logs:
       receivers: [otlp]
       processors: [batch]
-      exporters: [logging,file]
-      #exporters: [logging,file,splunk_hec]
+      exporters: [debug,file]
+      #exporters: [debug,file,splunk_hec]
     metrics:
       receivers: [otlp]
       processors: [batch]
-      exporters: [logging,file]
+      exporters: [debug,file]
   telemetry:
     logs:
       level: "debug"
