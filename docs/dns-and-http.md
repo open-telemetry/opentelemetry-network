@@ -10,7 +10,7 @@ This document describes how DNS collection and enrichment works.
 
 #### Kernel space
 
-Collector's eBFP code gathers DNS data by hooking into kernel UDP send functions \(for reference, see where `perf_check_and_submit_dns` function is called from\). Captured UDP send buffer data \(`skb->data`\) are relayed to the user space through perf ring messages. The maximum captured UDP data size is limited to 512 bytes \(maximum DNS UDP packet message size specified in the RFC\). We currently do not support DNS over HTTP.
+Collector's eBPF code gathers DNS data by hooking into kernel UDP send functions \(for reference, see where `perf_check_and_submit_dns` function is called from\). Captured UDP send buffer data \(`skb->data`\) are relayed to the user space through perf ring messages. The maximum captured UDP data size is limited to 512 bytes \(maximum DNS UDP packet message size specified in the RFC\). We currently do not support DNS over HTTP.
 
 #### User space
 
