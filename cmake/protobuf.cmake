@@ -74,7 +74,8 @@ function (build_protobuf NAME)
     list(
       APPEND
       PROTOBUF_ARGS
-        --go_out="plugins=grpc:${GO_PATH_SRC}"
+        --go_out="${GO_PATH_SRC}"
+        --go-grpc_out="${GO_PATH_SRC}"
     )
 
     add_dependencies(
