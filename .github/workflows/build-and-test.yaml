@@ -259,7 +259,7 @@ jobs:
         rm /usr/local/bin/pydoc*
         rm /usr/local/bin/python3*
         brew update
-        brew install podman
+        brew install podman@4.9.4
         # sudo spctl --add /usr/local/bin/podman
         podman machine init --rootful --cpus 3 --disk-size 14 --memory 5000
         podman machine start
@@ -335,7 +335,7 @@ jobs:
         rm /usr/local/bin/pydoc*
         rm /usr/local/bin/python3*
         brew update
-        brew install podman
+        brew install podman@4.9.4
         # sudo spctl --add /usr/local/bin/podman
         podman machine init --rootful --cpus 3 --disk-size 14 --memory 5000
         podman machine start
