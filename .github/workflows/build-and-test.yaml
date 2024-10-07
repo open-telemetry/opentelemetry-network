@@ -253,8 +253,8 @@ jobs:
       if: steps.changes.outputs.kernel == 'true' || steps.changes.outputs.github == 'true'
       run: |
         # Install podman
-        curl -LO "https://github.com/containers/podman/releases/download/v4.9.4/podman-remote-release-darwin_arm64.zip"
-        unzip podman-remote-release-darwin_arm64.zip
+        curl -LO "https://github.com/containers/podman/releases/download/v4.9.4/podman-remote-release-darwin_amd64.zip"
+        unzip podman-remote-release-darwin_amd64.zip
         sudo mv podman-4.9.4/usr/bin/podman /usr/local/bin/podman
         sudo chmod +x /usr/local/bin/podman
         podman --version
