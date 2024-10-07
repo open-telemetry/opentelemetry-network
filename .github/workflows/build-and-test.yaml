@@ -216,7 +216,7 @@ jobs:
   run-kernel-header-tests:
     name: run-kernel-header-tests
     needs: [clang-format-check]
-    runs-on: macos-14
+    runs-on: ubuntu-latest
     env:
       EBPF_NET_SRC_ROOT: ${{ github.workspace }}
     steps:
@@ -252,15 +252,8 @@ jobs:
       id: run-kernel-header-tests
       if: steps.changes.outputs.kernel == 'true' || steps.changes.outputs.github == 'true'
       run: |
-        # sudo spctl --add /usr/local/bin/brew
-        # These following 4 lines are added to overcome brew link failures seen while executing brew update.
-        rm /usr/local/bin/2to3*
-        rm /usr/local/bin/idle*
-        rm /usr/local/bin/pydoc*
-        rm /usr/local/bin/python3*
-        brew update
-        brew install podman@4.9.4
-        # sudo spctl --add /usr/local/bin/podman
+        sudo apt-get update
+        sudo apt-get -y install podman
         podman machine init --rootful --cpus 3 --disk-size 14 --memory 5000
         podman machine start
         podman pull $BENV_IMAGE
@@ -292,7 +285,7 @@ jobs:
   run-kernel-collector-tests:
     name: run-kernel-collector-tests
     needs: [clang-format-check]
-    runs-on: macos-14
+    runs-on: ubuntu-latest
     env:
       EBPF_NET_SRC_ROOT: ${{ github.workspace }}
     steps:
@@ -328,16 +321,9 @@ jobs:
       id: run-kernel-collector-test
       if: steps.changes.outputs.kernel == 'true' || steps.changes.outputs.github == 'true'
       run: |
-        # sudo spctl --add /usr/local/bin/brew
-        # These following 4 lines are added to overcome brew link failures seen while executing brew update.
-        rm /usr/local/bin/2to3*
-        rm /usr/local/bin/idle*
-        rm /usr/local/bin/pydoc*
-        rm /usr/local/bin/python3*
-        brew update
-        brew install podman@4.9.4
-        # sudo spctl --add /usr/local/bin/podman
-        podman machine init --rootful --cpus 3 --disk-size 14 --memory 5000
+        sudo apt-get update
+        sudo apt-get -y install podman
+        podman machine init --rootful --cpus 4 --disk-size 14 --memory 12000
         podman machine start
         podman pull $BENV_IMAGE
 
