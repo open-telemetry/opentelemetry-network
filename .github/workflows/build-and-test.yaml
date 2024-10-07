@@ -216,7 +216,7 @@ jobs:
   run-kernel-header-tests:
     name: run-kernel-header-tests
     needs: [clang-format-check]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20
     env:
       EBPF_NET_SRC_ROOT: ${{ github.workspace }}
     steps:
