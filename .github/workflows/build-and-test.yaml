@@ -257,6 +257,7 @@ jobs:
         unzip podman-remote-release-darwin_amd64.zip
         sudo mv podman-4.9.4/usr/bin/podman /usr/local/bin/podman
         sudo chmod +x /usr/local/bin/podman
+        sudo spctl --add /usr/local/bin/podman
         podman --version
 
         podman machine init
