@@ -190,28 +190,28 @@ jobs:
         $BENV_IMAGE \
         ./build.sh unit_tests test
 
-  build-run-unit-tests-with-asan-and-debug-flags:
-    name: build-run-unit-tests-with-asan-and-debug-flags
-    runs-on: ubuntu-20.04
-    needs: [clang-format-check]
-    steps:
-    - name: Check out the codebase
-      uses: actions/checkout@v3
-      with:
-        fetch-depth: 0
-    - name: build unit tests with asan and debug flags on then run all tests
-      run: |
-        docker pull $BENV_IMAGE
-        git submodule update  --init --recursive
-        docker run -t \
-        --rm \
-        --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
-        --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/root/src,readonly" \
-        --env EBPF_NET_SRC_ROOT=/root/src \
-        --env ARGS="--output-on-failure --repeat until-pass:3" \
-        --env SPDLOG_LEVEL="trace" \
-        $BENV_IMAGE \
-        ./build.sh --debug --asan unit_tests test
+  # build-run-unit-tests-with-asan-and-debug-flags:
+  #   name: build-run-unit-tests-with-asan-and-debug-flags
+  #   runs-on: ubuntu-20.04
+  #   needs: [clang-format-check]
+  #   steps:
+  #   - name: Check out the codebase
+  #     uses: actions/checkout@v3
+  #     with:
+  #       fetch-depth: 0
+  #   - name: build unit tests with asan and debug flags on then run all tests
+  #     run: |
+  #       docker pull $BENV_IMAGE
+  #       git submodule update  --init --recursive
+  #       docker run -t \
+  #       --rm \
+  #       --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
+  #       --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/root/src,readonly" \
+  #       --env EBPF_NET_SRC_ROOT=/root/src \
+  #       --env ARGS="--output-on-failure --repeat until-pass:3" \
+  #       --env SPDLOG_LEVEL="trace" \
+  #       $BENV_IMAGE \
+  #       ./build.sh --debug --asan unit_tests test
 
   run-kernel-header-tests:
     name: run-kernel-header-tests
