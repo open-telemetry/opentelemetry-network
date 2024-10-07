@@ -252,7 +252,7 @@ jobs:
       id: run-kernel-header-tests
       if: steps.changes.outputs.kernel == 'true' || steps.changes.outputs.github == 'true'
       run: |
-        sudo spctl --add /usr/local/bin/brew
+        # sudo spctl --add /usr/local/bin/brew
         # These following 4 lines are added to overcome brew link failures seen while executing brew update.
         rm /usr/local/bin/2to3*
         rm /usr/local/bin/idle*
@@ -328,7 +328,7 @@ jobs:
       id: run-kernel-collector-test
       if: steps.changes.outputs.kernel == 'true' || steps.changes.outputs.github == 'true'
       run: |
-        sudo spctl --add /usr/local/bin/brew
+        # sudo spctl --add /usr/local/bin/brew
         # These following 4 lines are added to overcome brew link failures seen while executing brew update.
         rm /usr/local/bin/2to3*
         rm /usr/local/bin/idle*
