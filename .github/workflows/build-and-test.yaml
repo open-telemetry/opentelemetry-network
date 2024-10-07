@@ -252,8 +252,7 @@ jobs:
       id: run-kernel-header-tests
       if: steps.changes.outputs.kernel == 'true' || steps.changes.outputs.github == 'true'
       run: |
-        sudo apt-get update
-        sudo apt-get -y install podman
+        
         podman machine init --cpus 3 --disk-size 14 --memory 5000
         podman machine start
         podman pull $BENV_IMAGE
