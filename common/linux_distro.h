@@ -16,6 +16,7 @@
   X(rhel, 3, "")                                                                                                               \
   X(centos, 4, "")                                                                                                             \
   X(amazon, 5, "")                                                                                                             \
-  X(gcp_cos, 6, "")
+  X(gcp_cos, 6, "")                                                                                                            \
+  X(rocky, 7, "")
 #define ENUM_DEFAULT unknown
 #include <util/enum_operators.inl>

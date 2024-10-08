@@ -56,7 +56,7 @@ function detect_distro {
   if [[ -e "${os_release_file}" ]]; then
     os_id="$(grep '^ID=' "${os_release_file}" 2> /dev/null | sed -e 's/ID=\(.*\)/\1/g' -e 's/"//g')"
     case "${os_id}" in
-      debian | ubuntu | centos | amazon | rhel)
+      debian | ubuntu | centos | amazon | rhel | rocky)
         echo "${os_id}"
         return
         ;;
@@ -78,6 +78,9 @@ function detect_distro {
       return
     elif grep 'RHEL' "${system_release_file}" > /dev/null 2> /dev/null; then
       echo "rhel"
+      return
+    elif grep 'Rocky Linux' "${system_release_file}" > /dev/null 2> /dev/null; then
+      echo "rocky"
       return
     elif grep 'Amazon Linux' "${system_release_file}" > /dev/null 2> /dev/null; then
       echo "amazon"
@@ -391,7 +394,7 @@ function install_kernel_headers {
     debian | ubuntu)
       install_apt_kernel_headers
       ;;
-    centos | rhel | amazon)
+    centos | rhel | amazon | rocky)
       install_yum_kernel_headers
       ;;
     gcp_cos)
