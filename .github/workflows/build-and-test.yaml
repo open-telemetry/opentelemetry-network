@@ -216,7 +216,7 @@ jobs:
   run-kernel-header-tests:
     name: run-kernel-header-tests
     # needs: [clang-format-check]
-    runs-on: macos-13
+    runs-on: ubuntu-24.04
     env:
       EBPF_NET_SRC_ROOT: ${{ github.workspace }}
     steps:
@@ -268,25 +268,25 @@ jobs:
         #   "/usr/lib/podman",
         # ]
         # EOF
-        brew install podman
+        # brew install podman
                 
-        podman --version
+        # podman --version
 
-        podman machine init --rootful
-        podman machine start
-        podman pull $BENV_IMAGE
+        # podman machine init --rootful
+        # podman machine start
+        # podman pull $BENV_IMAGE
 
-        podman machine ssh 'cat > /etc/containers/registries.conf.d/localhost.conf' <<EOF
-        [[registry]]
-        location = "localhost:5000"
-        insecure = true
-        EOF
-        podman machine ssh systemctl restart podman
-        podman container run -dt -p 5000:5000 --name registry docker.io/library/registry:2
-        podman info
+        # podman machine ssh 'cat > /etc/containers/registries.conf.d/localhost.conf' <<EOF
+        # [[registry]]
+        # location = "localhost:5000"
+        # insecure = true
+        # EOF
+        # podman machine ssh systemctl restart podman
+        # podman container run -dt -p 5000:5000 --name registry docker.io/library/registry:2
+        # podman info
         git submodule update  --init --recursive
 
-        podman run -t --rm \
+        docker run -t --rm \
         --mount type=bind,source=$PWD,destination=/root/src,readonly \
         --mount type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock \
         --env EBPF_NET_SRC_ROOT=/root/src \
