@@ -67,9 +67,17 @@ typedef FILE fp_outfile;
 /* compiler-gcc.h */
 #ifdef __GNUC__
 #define barrier() __asm__ __volatile__("" : : : "memory")
+
+#ifdef __aarch64__
+#define mb() asm volatile("dmb ish" : : : "memory")
+#define rmb() asm volatile("dmb ishld" : : : "memory")
+#define wmb() asm volatile("dmb ishst" : : : "memory")
+#else
 #define mb() asm volatile("mfence" : : : "memory")
 #define rmb() asm volatile("lfence" : : : "memory")
 #define wmb() asm volatile("sfence" : : : "memory")
+#endif
+
 #define read_barrier_depends()                                                                                                 \
   do {                                                                                                                         \
   } while (0)
