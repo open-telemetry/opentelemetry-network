@@ -285,7 +285,7 @@ jobs:
         # podman container run -dt -p 5000:5000 --name registry docker.io/library/registry:2
         # podman info
         git submodule update  --init --recursive
-
+        docker run -d -p 5000:5000 --name registry docker.io/library/registry:2
         docker run -t --rm \
         --mount type=bind,source=$PWD,destination=/root/src,readonly \
         --mount type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock \
