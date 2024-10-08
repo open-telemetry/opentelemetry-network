@@ -284,6 +284,13 @@ jobs:
         # podman machine ssh systemctl restart podman
         # podman container run -dt -p 5000:5000 --name registry docker.io/library/registry:2
         # podman info
+        
+        # Install vagrant
+        wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+        echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+        sudo apt update && sudo apt install vagrant virtualbox
+        
+        
         git submodule update  --init --recursive
         docker run -d -p 5000:5000 --name registry docker.io/library/registry:2
         docker run -t --rm \
