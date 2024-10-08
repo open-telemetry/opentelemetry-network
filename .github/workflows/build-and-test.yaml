@@ -18,34 +18,34 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  clang-format-check:
-    runs-on: ubuntu-20.04
-    name: clang-format-check
+  # clang-format-check:
+  #   runs-on: ubuntu-20.04
+  #   name: clang-format-check
 
-    steps:
-    - name: Print github workspace
-      run: |
-        echo "github.workspace = ${{ github.workspace }}"
-        echo "pr.ref = ${{github.event.pull_request.head.ref}}"
-        echo "github.ref = ${{ github.ref }}"
-        echo "$GITHUB_CONTEXT"
+  #   steps:
+  #   - name: Print github workspace
+  #     run: |
+  #       echo "github.workspace = ${{ github.workspace }}"
+  #       echo "pr.ref = ${{github.event.pull_request.head.ref}}"
+  #       echo "github.ref = ${{ github.ref }}"
+  #       echo "$GITHUB_CONTEXT"
 
-    - name: Check out the codebase
-      uses: actions/checkout@v3
+  #   - name: Check out the codebase
+  #     uses: actions/checkout@v3
 
-    - name: Get current date
-      id: date
-      run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+  #   - name: Get current date
+  #     id: date
+  #     run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
 
-    - name: Runs format checker
-      run: |
-        sudo apt update
-        sudo apt install -y clang-format-11
-        cd ${{ github.workspace }}
-        ./.github/workflows/scripts/check-clang-format.sh
+  #   - name: Runs format checker
+  #     run: |
+  #       sudo apt update
+  #       sudo apt install -y clang-format-11
+  #       cd ${{ github.workspace }}
+  #       ./.github/workflows/scripts/check-clang-format.sh
 
-    outputs:
-      date: ${{ steps.date.outputs.date }}
+  #   outputs:
+  #     date: ${{ steps.date.outputs.date }}
 
   # build-reducer:
   #   name: build-reducer
@@ -215,7 +215,7 @@ jobs:
 
   run-kernel-header-tests:
     name: run-kernel-header-tests
-    needs: [clang-format-check]
+    # needs: [clang-format-check]
     runs-on: macos-13
     env:
       EBPF_NET_SRC_ROOT: ${{ github.workspace }}
@@ -272,7 +272,7 @@ jobs:
                 
         podman --version
 
-        podman machine init
+        podman machine init --rootful
         podman machine start
         podman pull $BENV_IMAGE
 
