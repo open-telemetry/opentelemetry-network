@@ -132,8 +132,8 @@ jobs:
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKER_HUB_CI_USER }}
-          password: ${{ secrets.DOCKER_HUB_CI_PASSWORD }}
+          username: ${{ secrets.OPENTELEMETRY_DOCKER_HUB_CI_USER }}
+          password: ${{ secrets.OPENTELEMETRY_DOCKER_HUB_CI_PASSWORD }}
 
       - name: Push to container registry
         run: |
