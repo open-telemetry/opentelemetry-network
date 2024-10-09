@@ -16,8 +16,13 @@ if ! grep 'ID="amzn"' /etc/os-release && ! grep 'ID="rocky"' /etc/os-release
 then
   curl -fsSL https://get.docker.com/ | sh
 else
-  # get.docker.com does not currently support amazon linux
-  yum install -y docker
+  # get.docker.com does not currently support rocky linux
+  dnf check-update
+  dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+  dnf install docker-ce docker-ce-cli containerd.io
+  systemctl start docker
+  systemctl status docker
+  systemctl enable docker
 fi
 
 usermod -aG docker vagrant
