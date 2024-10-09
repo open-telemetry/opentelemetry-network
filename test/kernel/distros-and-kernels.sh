@@ -8,5 +8,6 @@ distros_and_kernels=(
 "ubuntu bionic64"
 "ubuntu focal64"
 "ubuntu jammy64"
+"rockylinux 8"
 )
 
