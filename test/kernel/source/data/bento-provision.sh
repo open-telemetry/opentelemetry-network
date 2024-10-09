@@ -12,7 +12,7 @@ yum install -y \
   curl \
   openssl
 
-if ! grep 'ID="amzn"' /etc/os-release
+if ! grep 'ID="amzn"' /etc/os-release && ! grep 'ID="rocky"' /etc/os-release
 then
   curl -fsSL https://get.docker.com/ | sh
 else
