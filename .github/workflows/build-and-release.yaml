@@ -5,6 +5,9 @@ name: build-and-release
 run-name: Publishing a release
 
 on:
+  push:
+    tags:
+      - '*.*.*'
   workflow_dispatch:
     inputs:
       release_type:
@@ -36,20 +39,18 @@ on:
         default: false
 
 env:
-  BENV_IMAGE: quay.io/splunko11ytest/network-explorer-debug/build-env
-  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-  DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-  DOCKER_REGISTRY: ${{ vars.DOCKER_REGISTRY }}
-  DOCKER_NAMESPACE: ${{ vars.DOCKER_NAMESPACE }}
-  IMAGE_PREFIX: ${{ inputs.image_prefix }}
+  BENV_IMAGE: public.ecr.aws/u7d6c4a3/solarwinds-opentelemetry-network:benv-exp
+  DOCKER_REGISTRY: docker.io
+  DOCKER_NAMESPACE: solarwinds
+  IMAGE_PREFIX: "opentelemetry-ebpf-"
 
 jobs:
   build-and-release:
     name: Build and release
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: ${{ inputs.ref }}
           fetch-depth: 0
@@ -86,9 +87,8 @@ jobs:
           echo "short_version_number = ${short_version_number}"
           echo "full_version_number = ${full_version_number}"
           echo "github_tag = ${github_tag}"
-      - name: Log-in to container registry
-        run: |
-          docker login --username="$DOCKER_USERNAME" --password-stdin $DOCKER_REGISTRY <<< "$DOCKER_PASSWORD"
+
+
       - name: Fetch build environment
         run: |
           docker pull $BENV_IMAGE
@@ -112,7 +112,7 @@ jobs:
             $BENV_IMAGE \
             cpack -G 'RPM;DEB'
       - name: Upload packages to GitHub Action artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: packages
           path: |
@@ -128,6 +128,13 @@ jobs:
           files: |
             out/opentelemetry-ebpf-*.rpm
             out/opentelemetry-ebpf-*.deb
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.OPENTELEMETRY_DOCKER_HUB_CI_USER }}
+          password: ${{ secrets.OPENTELEMETRY_DOCKER_HUB_CI_PASSWORD }}
+
       - name: Push to container registry
         run: |
           cd $GITHUB_WORKSPACE/src
@@ -151,7 +158,7 @@ jobs:
           images=(
             reducer
             kernel-collector
-            cloud-collector
+            # cloud-collector
             k8s-watcher
             k8s-relay
           )
