@@ -18,7 +18,7 @@ then
 else
   # get.docker.com does not currently support rocky linux
   dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
-  dnf install docker-ce docker-ce-cli containerd.io
+  dnf install -y docker-ce docker-ce-cli containerd.io
   systemctl start docker
   systemctl status docker
   systemctl enable docker
