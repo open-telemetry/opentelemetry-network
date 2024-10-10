@@ -8,4 +8,6 @@ uname -a
 
 export RUNNING_KERNEL_VERSION="`uname -r`"
 
+dnf config-manager --set-enabled devel
+
 sudo yum install -y kernel-devel "${RUNNING_KERNEL_VERSION}"
