@@ -8,8 +8,14 @@ uname -a
 
 export RUNNING_KERNEL_VERSION="`uname -r`"
 
-sudo yum install -y dnf-utils
 
-sudo yum config-manager --set-enabled devel
+if ! grep 'ID="amzn"' /etc/os-release
+then
+  # rocky linux
+  sudo yum install -y dnf-utils
+  sudo yum config-manager --set-enabled devel
+  sudo yum install -y kernel-devel-"${RUNNING_KERNEL_VERSION}"
+else
+  sudo yum install -y kernel-devel "${RUNNING_KERNEL_VERSION}"
+fi
 
-sudo yum install -y kernel-devel-"${RUNNING_KERNEL_VERSION}"

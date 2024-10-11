@@ -12,16 +12,16 @@ yum install -y \
   curl \
   openssl
 
-if ! grep 'ID="amzn"' /etc/os-release && ! grep 'ID="rocky"' /etc/os-release
+if ! grep 'ID="amzn"' /etc/os-release
 then
-  curl -fsSL https://get.docker.com/ | sh
-else
-  # get.docker.com does not currently support rocky linux
+  # rocky linux
   yum config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
   yum install -y docker-ce docker-ce-cli containerd.io
   systemctl start docker
   systemctl status docker
   systemctl enable docker
+else
+  yum install -y docker
 fi
 
 usermod -aG docker vagrant
