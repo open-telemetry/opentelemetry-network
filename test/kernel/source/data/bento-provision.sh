@@ -17,8 +17,8 @@ then
   curl -fsSL https://get.docker.com/ | sh
 else
   # get.docker.com does not currently support rocky linux
-  dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
-  dnf install -y docker-ce docker-ce-cli containerd.io
+  yum config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+  yum install -y docker-ce docker-ce-cli containerd.io
   systemctl start docker
   systemctl status docker
   systemctl enable docker
