@@ -14,9 +14,13 @@ yum install -y \
 
 if ! grep 'ID="amzn"' /etc/os-release
 then
-  curl -fsSL https://get.docker.com/ | sh
+  # rocky linux
+  yum config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+  yum install -y docker-ce docker-ce-cli containerd.io
+  systemctl start docker
+  systemctl status docker
+  systemctl enable docker
 else
-  # get.docker.com does not currently support amazon linux
   yum install -y docker
 fi
 
