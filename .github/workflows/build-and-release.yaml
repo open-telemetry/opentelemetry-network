@@ -46,7 +46,7 @@ env:
 
 jobs:
   build-and-release-amd64:
-    name: Build and release
+    name: Build and release - AMD64
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout sources
@@ -180,7 +180,7 @@ jobs:
 
           docker images --no-trunc
   build-and-release-arm64:
-    name: Build and release
+    name: Build and release  - ARM64
     runs-on: macos-14
     steps:
       - name: Checkout sources
@@ -222,7 +222,10 @@ jobs:
           echo "full_version_number = ${full_version_number}"
           echo "github_tag = ${github_tag}"
 
-
+      - name: Fetch build environment
+        run: |
+            brew install --cask docker
+            
       - name: Fetch build environment
         run: |
           docker pull $BENV_IMAGE
