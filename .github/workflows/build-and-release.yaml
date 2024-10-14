@@ -222,10 +222,11 @@ jobs:
           echo "full_version_number = ${full_version_number}"
           echo "github_tag = ${github_tag}"
 
-      - name: Fetch build environment
+      - name: Install docker
         run: |
-            brew install --cask docker
-            
+          brew install docker
+          colima start
+
       - name: Fetch build environment
         run: |
           docker pull $BENV_IMAGE
