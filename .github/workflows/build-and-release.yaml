@@ -225,7 +225,6 @@ jobs:
       - name: Install docker
         run: |
           brew install docker
-          colima start
 
       - name: Fetch build environment
         run: |
