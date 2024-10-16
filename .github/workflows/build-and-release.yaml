@@ -181,9 +181,9 @@ jobs:
 
               if [[ "${{ inputs.dry_run }}" == "false" ]];
               then
-                docker push ${image_path}:${tag}
+                docker push ${image_path}:v${full_version_number}-${arch}
               else
-                echo "Would run: docker push ${image_path}:${tag}"
+                echo "Would run: docker push ${image_path}:v${full_version_number}-${arch}"
               fi
             done
 
@@ -191,7 +191,7 @@ jobs:
               manifest_cmd="docker manifest create ${image_path}:${tag}"
 
               for arch in ${architectures[@]}; do
-                manifest_cmd="${manifest_cmd} --amend ${image_path}:${tag}-${arch}"
+                manifest_cmd="${manifest_cmd} --amend ${image_path}:v${full_version_number}-${arch}"
               done
 
               if [[ "${{ inputs.dry_run }}" == "false" ]]; then
