@@ -169,7 +169,7 @@ jobs:
             k8s-relay
           )
 
-          architectures=("amd64" "arm64")
+          architectures=("amd64")
 
           # strip potential "https://" prefix and trailing slashes from docker registry
           docker_registry=$(sed -e 's,^https://,,' -e 's,/*$,,' <<< $DOCKER_REGISTRY)
@@ -191,10 +191,9 @@ jobs:
 
             for tag in ${tags[@]}; do
               manifest_cmd="docker manifest create ${image_path}:${tag}"
+              manifest_cmd="${manifest_cmd} --amend ${image_path}:v${full_version_number}"
+              manifest_cmd="${manifest_cmd} --amend ${image_path}:v${full_version_number}-${arch}"
 
-              for arch in ${architectures[@]}; do
-                manifest_cmd="${manifest_cmd} --amend ${image_path}:v${full_version_number}-${arch}"
-              done
 
               if [[ "${{ inputs.dry_run }}" == "false" ]]; then
                 eval $manifest_cmd

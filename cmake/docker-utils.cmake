@@ -162,7 +162,7 @@ function(build_custom_docker_image IMAGE_NAME)
       WORKING_DIRECTORY
         "${out_path}"
       COMMAND
-        docker buildx build --platform linux/amd64 -t "${IMAGE_NAME}-amd64" ${DOCKER_ARGS} .
+        docker buildx build --platform linux/amd64 -t "${IMAGE_NAME}" ${DOCKER_ARGS} .
     )
   endif()
 
