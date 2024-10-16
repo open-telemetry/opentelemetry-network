@@ -169,8 +169,6 @@ jobs:
             k8s-relay
           )
 
-          architectures=("amd64")
-
           # strip potential "https://" prefix and trailing slashes from docker registry
           docker_registry=$(sed -e 's,^https://,,' -e 's,/*$,,' <<< $DOCKER_REGISTRY)
 
@@ -178,21 +176,21 @@ jobs:
             image_name="${IMAGE_PREFIX}${image}"
             image_path="${docker_registry}/${DOCKER_NAMESPACE}/${image_name}"
 
-            for arch in ${architectures[@]}; do
-              docker tag "${image}-${arch}" ${image_path}:v${full_version_number}-${arch}
+            docker tag "${image}" ${image_path}:v${full_version_number}-amd64
+            docker tag "${image}-arm64" ${image_path}:v${full_version_number}-arm64
 
-              if [[ "${{ inputs.dry_run }}" == "false" ]];
-              then
-                docker push ${image_path}:v${full_version_number}-${arch}
-              else
-                echo "Would run: docker push ${image_path}:v${full_version_number}-${arch}"
-              fi
-            done
+            if [[ "${{ inputs.dry_run }}" == "false" ]];
+            then
+              docker push ${image_path}:v${full_version_number}-arm64
+              docker push ${image_path}:v${full_version_number}-amd64
+            else
+              echo "Would run: docker push ${image_path}:v${full_version_number}-{arm64,amd64}"
+            fi
 
             for tag in ${tags[@]}; do
               manifest_cmd="docker manifest create ${image_path}:${tag}"
-              manifest_cmd="${manifest_cmd} --amend ${image_path}:v${full_version_number}"
-              manifest_cmd="${manifest_cmd} --amend ${image_path}:v${full_version_number}-${arch}"
+              manifest_cmd="${manifest_cmd} --amend ${image_path}:v${full_version_number}-arm64"
+              manifest_cmd="${manifest_cmd} --amend ${image_path}:v${full_version_number}-amd64"
 
 
               if [[ "${{ inputs.dry_run }}" == "false" ]]; then
