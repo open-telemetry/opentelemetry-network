@@ -167,6 +167,8 @@ jobs:
             k8s-relay
           )
 
+          architectures=("amd64" "arm64")
+
           # strip potential "https://" prefix and trailing slashes from docker registry
           docker_registry=$(sed -e 's,^https://,,' -e 's,/*$,,' <<< $DOCKER_REGISTRY)
 
@@ -174,12 +176,36 @@ jobs:
             image_name="${IMAGE_PREFIX}${image}"
             image_path="${docker_registry}/${DOCKER_NAMESPACE}/${image_name}"
 
+            for arch in ${architectures[@]}; do
+              for tag in ${tags[@]}; do
+                image_with_arch="${image}-${arch}"
+                docker tag $image_with_arch ${image_path}:${tag}-${arch}
+
+                if [[ "${{ inputs.dry_run }}" == "false" ]];
+                then
+                  docker push ${image_path}:${tag}
+                else
+                  echo "Would run: docker push ${image_path}:${tag}"
+                fi
+              done
+            done
+
             for tag in ${tags[@]}; do
-              docker tag $image ${image_path}:${tag}
+              manifest_cmd="docker manifest create ${image_path}:${tag}"
+
+              for arch in ${architectures[@]}; do
+                manifest_cmd="${manifest_cmd} --amend ${image_path}:${tag}-${arch}"
+              done
+
               if [[ "${{ inputs.dry_run }}" == "false" ]]; then
-                docker push ${image_path}:${tag}
+                eval $manifest_cmd
+                docker manifest push ${image_path}:${tag}
+              else
+                echo "Would run: $manifest_cmd"
+                echo "Would run: docker manifest push ${image_path}:${tag}"
               fi
             done
+
           done
 
           docker images --no-trunc
