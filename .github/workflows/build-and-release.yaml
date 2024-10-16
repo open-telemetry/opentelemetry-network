@@ -177,17 +177,14 @@ jobs:
             image_path="${docker_registry}/${DOCKER_NAMESPACE}/${image_name}"
 
             for arch in ${architectures[@]}; do
-              for tag in ${tags[@]}; do
-                image_with_arch="${image}-${arch}"
-                docker tag $image_with_arch ${image_path}:${tag}-${arch}
+              docker tag "${image}-${arch}" ${image_path}:v${full_version_number}-${arch}
 
-                if [[ "${{ inputs.dry_run }}" == "false" ]];
-                then
-                  docker push ${image_path}:${tag}
-                else
-                  echo "Would run: docker push ${image_path}:${tag}"
-                fi
-              done
+              if [[ "${{ inputs.dry_run }}" == "false" ]];
+              then
+                docker push ${image_path}:${tag}
+              else
+                echo "Would run: docker push ${image_path}:${tag}"
+              fi
             done
 
             for tag in ${tags[@]}; do
