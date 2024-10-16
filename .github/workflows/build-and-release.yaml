@@ -104,6 +104,7 @@ jobs:
             --mount "type=bind,source=$GITHUB_WORKSPACE/src,destination=/root/src,readonly" \
             --mount "type=bind,source=$GITHUB_WORKSPACE/out,destination=/root/out" \
             --env EBPF_NET_SRC_ROOT=/root/src \
+            --env ENABLE_ARM64_BUILD=TRUE \
             $BENV_IMAGE \
             ./build.sh pipeline-docker
       - name: Build packages
@@ -112,6 +113,7 @@ jobs:
             --mount "type=bind,source=$GITHUB_WORKSPACE/src,destination=/root/src,readonly" \
             --mount "type=bind,source=$GITHUB_WORKSPACE/out,destination=/root/out" \
             --env EBPF_NET_SRC_ROOT=/root/src \
+            --env ENABLE_ARM64_BUILD=TRUE \
             --workdir /root/out \
             $BENV_IMAGE \
             cpack -G 'RPM;DEB'
