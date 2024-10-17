@@ -147,6 +147,14 @@ function(build_custom_docker_image IMAGE_NAME)
     )
   endforeach()
 
+  # Get the value of the environment variable ENABLE_ARM64_BUILD
+  if (DEFINED ENV{ENABLE_ARM64_BUILD} AND "$ENV{ENABLE_ARM64_BUILD}" STREQUAL "TRUE")
+    set(ENABLE_ARM64_BUILD TRUE)
+  else()
+    set(ENABLE_ARM64_BUILD FALSE)
+  endif()
+
+
   if (RUN_DOCKER_COMMANDS)
     add_custom_command(
       TARGET
@@ -154,9 +162,21 @@ function(build_custom_docker_image IMAGE_NAME)
       WORKING_DIRECTORY
         "${out_path}"
       COMMAND
-        docker build -t "${IMAGE_NAME}" ${DOCKER_ARGS} .
+        docker buildx build --platform linux/amd64 -t "${IMAGE_NAME}" ${DOCKER_ARGS} .
     )
+    if (ENABLE_ARM64_BUILD)
+      add_custom_command(
+        TARGET
+          "${IMAGE_NAME}-docker"
+        WORKING_DIRECTORY
+          "${out_path}"
+        COMMAND
+          docker buildx build --platform linux/arm64 -t "${IMAGE_NAME}-arm64" ${DOCKER_ARGS} .
+    )
+    endif()
   endif()
+
+  
 
   ###########################
   # push to docker registry #

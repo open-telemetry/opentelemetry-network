@@ -147,7 +147,9 @@ struct monotonic_clock {
   }
 };
 
+#ifndef __aarch64__
 #include <x86intrin.h>
+#endif
 /**
  * Monotonic, std::chrono compatible clock using `__rdtsc()` as the backend.
  */
@@ -159,5 +161,13 @@ struct rdtsc_clock {
   using duration = std::chrono::duration<rep, period>;
   using time_point = std::chrono::time_point<monotonic_clock>;
 
+#ifdef __aarch64__
+  static inline __attribute__((always_inline)) time_point now() {
+    uint64_t cntvct;
+    asm volatile ("mrs %0, cntvct_el0; " : "=r"(cntvct) :: "memory");
+    return time_point{duration{cntvct}}; 
+  }
+#else
   static inline __attribute__((always_inline)) time_point now() { return time_point{duration{__rdtsc()}}; }
+#endif
 };

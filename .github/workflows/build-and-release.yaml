@@ -39,7 +39,7 @@ on:
         default: false
 
 env:
-  BENV_IMAGE: public.ecr.aws/u7d6c4a3/solarwinds-opentelemetry-network:benv-exp
+  BENV_IMAGE: public.ecr.aws/u7d6c4a3/solarwinds-opentelemetry-network:buil-env-buildx
   DOCKER_REGISTRY: docker.io
   DOCKER_NAMESPACE: solarwinds
   IMAGE_PREFIX: "opentelemetry-ebpf-"
@@ -88,6 +88,10 @@ jobs:
           echo "full_version_number = ${full_version_number}"
           echo "github_tag = ${github_tag}"
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
       - name: Fetch build environment
         run: |
@@ -100,6 +104,7 @@ jobs:
             --mount "type=bind,source=$GITHUB_WORKSPACE/src,destination=/root/src,readonly" \
             --mount "type=bind,source=$GITHUB_WORKSPACE/out,destination=/root/out" \
             --env EBPF_NET_SRC_ROOT=/root/src \
+            --env ENABLE_ARM64_BUILD=TRUE \
             $BENV_IMAGE \
             ./build.sh pipeline-docker
       - name: Build packages
@@ -108,6 +113,7 @@ jobs:
             --mount "type=bind,source=$GITHUB_WORKSPACE/src,destination=/root/src,readonly" \
             --mount "type=bind,source=$GITHUB_WORKSPACE/out,destination=/root/out" \
             --env EBPF_NET_SRC_ROOT=/root/src \
+            --env ENABLE_ARM64_BUILD=TRUE \
             --workdir /root/out \
             $BENV_IMAGE \
             cpack -G 'RPM;DEB'
@@ -170,12 +176,32 @@ jobs:
             image_name="${IMAGE_PREFIX}${image}"
             image_path="${docker_registry}/${DOCKER_NAMESPACE}/${image_name}"
 
+            docker tag "${image}" ${image_path}:v${full_version_number}-amd64
+            docker tag "${image}-arm64" ${image_path}:v${full_version_number}-arm64
+
+            if [[ "${{ inputs.dry_run }}" == "false" ]];
+            then
+              docker push ${image_path}:v${full_version_number}-arm64
+              docker push ${image_path}:v${full_version_number}-amd64
+            else
+              echo "Would run: docker push ${image_path}:v${full_version_number}-{arm64,amd64}"
+            fi
+
             for tag in ${tags[@]}; do
-              docker tag $image ${image_path}:${tag}
+              manifest_cmd="docker manifest create ${image_path}:${tag}"
+              manifest_cmd="${manifest_cmd} --amend ${image_path}:v${full_version_number}-arm64"
+              manifest_cmd="${manifest_cmd} --amend ${image_path}:v${full_version_number}-amd64"
+
+
               if [[ "${{ inputs.dry_run }}" == "false" ]]; then
-                docker push ${image_path}:${tag}
+                eval $manifest_cmd
+                docker manifest push ${image_path}:${tag}
+              else
+                echo "Would run: $manifest_cmd"
+                echo "Would run: docker manifest push ${image_path}:${tag}"
               fi
             done
+
           done
 
           docker images --no-trunc
