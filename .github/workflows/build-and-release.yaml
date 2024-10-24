@@ -88,14 +88,9 @@ jobs:
           echo "short_version_number = ${short_version_number}"
           echo "full_version_number = ${full_version_number}"
           echo "github_tag = ${github_tag}"
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
       - name: Fetch build environment
         run: |
           docker pull $BENV_IMAGE
-          docker pull $BENV_IMAGE_ARM
       - name: Build artifacts
         run: |
           mkdir -p $GITHUB_WORKSPACE/out
@@ -147,14 +142,12 @@ jobs:
             image_path="${docker_registry}/${DOCKER_NAMESPACE}/${image_name}"
 
             docker tag "${image}" ${image_path}:v${full_version_number}-amd64
-            docker tag "${image}-arm64" ${image_path}:v${full_version_number}-arm64
 
             if [[ "${{ inputs.dry_run }}" == "false" ]];
             then
-              docker push ${image_path}:v${full_version_number}-arm64
               docker push ${image_path}:v${full_version_number}-amd64
             else
-              echo "Would run: docker push ${image_path}:v${full_version_number}-{arm64,amd64}"
+              echo "Would run: docker push ${image_path}:v${full_version_number}-amd64"
             fi
 
           done
@@ -261,15 +254,14 @@ jobs:
             image_name="${IMAGE_PREFIX}${image}"
             image_path="${docker_registry}/${DOCKER_NAMESPACE}/${image_name}"
 
-            docker tag "${image}" ${image_path}:v${full_version_number}-amd64
-            docker tag "${image}-arm64" ${image_path}:v${full_version_number}-arm64
+            docker tag "${image}" ${image_path}:v${full_version_number}-arm64
+
 
             if [[ "${{ inputs.dry_run }}" == "false" ]];
             then
               docker push ${image_path}:v${full_version_number}-arm64
-              docker push ${image_path}:v${full_version_number}-amd64
             else
-              echo "Would run: docker push ${image_path}:v${full_version_number}-{arm64,amd64}"
+              echo "Would run: docker push ${image_path}:v${full_version_number}-arm64"
             fi
           done
 
