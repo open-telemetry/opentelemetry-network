@@ -40,6 +40,7 @@ on:
 
 env:
   BENV_IMAGE: public.ecr.aws/u7d6c4a3/solarwinds-opentelemetry-network:buil-env-buildx
+  BENV_IMAGE_ARM: public.ecr.aws/u7d6c4a3/solarwinds-opentelemetry-network:build-env-arm64
   DOCKER_REGISTRY: docker.io
   DOCKER_NAMESPACE: solarwinds
   IMAGE_PREFIX: "opentelemetry-ebpf-"
@@ -93,7 +94,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
       - name: Fetch build environment
         run: |
-          docker pull $BENV_IMAGE
+          docker pull $BENV_IMAGE $BENV_IMAGE_ARM
       - name: Build artifacts
         run: |
           mkdir -p $GITHUB_WORKSPACE/out
@@ -102,8 +103,15 @@ jobs:
             --mount "type=bind,source=$GITHUB_WORKSPACE/src,destination=/root/src,readonly" \
             --mount "type=bind,source=$GITHUB_WORKSPACE/out,destination=/root/out" \
             --env EBPF_NET_SRC_ROOT=/root/src \
-            --env ENABLE_ARM64_BUILD=TRUE \
             $BENV_IMAGE \
+            ./build.sh docker
+          docker run -t --rm \
+            --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
+            --mount "type=bind,source=$GITHUB_WORKSPACE/src,destination=/root/src,readonly" \
+            --mount "type=bind,source=$GITHUB_WORKSPACE/out,destination=/root/out" \
+            --env EBPF_NET_SRC_ROOT=/root/src \
+            --env ENABLE_ARM64_BUILD=TRUE \
+            $BENV_IMAGE_ARM \
             ./build.sh docker
       - name: Login to Docker Hub
         uses: docker/login-action@v3
