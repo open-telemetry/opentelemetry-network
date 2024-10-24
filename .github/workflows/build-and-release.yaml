@@ -106,24 +106,7 @@ jobs:
             --env EBPF_NET_SRC_ROOT=/root/src \
             --env ENABLE_ARM64_BUILD=TRUE \
             $BENV_IMAGE \
-            ./build.sh pipeline-docker
-      - name: Build packages
-        run: |
-          docker run -t --rm \
-            --mount "type=bind,source=$GITHUB_WORKSPACE/src,destination=/root/src,readonly" \
-            --mount "type=bind,source=$GITHUB_WORKSPACE/out,destination=/root/out" \
-            --env EBPF_NET_SRC_ROOT=/root/src \
-            --env ENABLE_ARM64_BUILD=TRUE \
-            --workdir /root/out \
-            $BENV_IMAGE \
-            cpack -G 'RPM;DEB'
-      - name: Upload packages to GitHub Action artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: packages
-          path: |
-            out/opentelemetry-ebpf-*.rpm
-            out/opentelemetry-ebpf-*.deb
+            ./build.sh docker
       - name: Upload packages to Release
         uses: softprops/action-gh-release@c9b46fe7aad9f02afd89b12450b780f52dacfb2d
         if: ${{ !inputs.dry_run }}
