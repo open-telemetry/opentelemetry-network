@@ -165,8 +165,9 @@ function(build_custom_docker_image IMAGE_NAME)
           "${out_path}"
         COMMAND
           docker buildx build --platform linux/arm64 -t "${IMAGE_NAME}-arm64" ${DOCKER_ARGS} .
-    )
-    else()      add_custom_command(
+      )
+    else()      
+      add_custom_command(
         TARGET
           "${IMAGE_NAME}-docker"
         WORKING_DIRECTORY
