@@ -40,13 +40,14 @@ on:
 
 env:
   BENV_IMAGE: public.ecr.aws/u7d6c4a3/solarwinds-opentelemetry-network:buil-env-buildx
+  BENV_IMAGE_ARM: public.ecr.aws/u7d6c4a3/solarwinds-opentelemetry-network:build-env-arm64
   DOCKER_REGISTRY: docker.io
   DOCKER_NAMESPACE: solarwinds
   IMAGE_PREFIX: "opentelemetry-ebpf-"
 
 jobs:
-  build-and-release:
-    name: Build and release
+  build-and-release-amd64:
+    name: Build and release amd64
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout sources
@@ -87,12 +88,6 @@ jobs:
           echo "short_version_number = ${short_version_number}"
           echo "full_version_number = ${full_version_number}"
           echo "github_tag = ${github_tag}"
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
       - name: Fetch build environment
         run: |
           docker pull $BENV_IMAGE
@@ -104,43 +99,13 @@ jobs:
             --mount "type=bind,source=$GITHUB_WORKSPACE/src,destination=/root/src,readonly" \
             --mount "type=bind,source=$GITHUB_WORKSPACE/out,destination=/root/out" \
             --env EBPF_NET_SRC_ROOT=/root/src \
-            --env ENABLE_ARM64_BUILD=TRUE \
             $BENV_IMAGE \
-            ./build.sh pipeline-docker
-      - name: Build packages
-        run: |
-          docker run -t --rm \
-            --mount "type=bind,source=$GITHUB_WORKSPACE/src,destination=/root/src,readonly" \
-            --mount "type=bind,source=$GITHUB_WORKSPACE/out,destination=/root/out" \
-            --env EBPF_NET_SRC_ROOT=/root/src \
-            --env ENABLE_ARM64_BUILD=TRUE \
-            --workdir /root/out \
-            $BENV_IMAGE \
-            cpack -G 'RPM;DEB'
-      - name: Upload packages to GitHub Action artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: packages
-          path: |
-            out/opentelemetry-ebpf-*.rpm
-            out/opentelemetry-ebpf-*.deb
-      - name: Upload packages to Release
-        uses: softprops/action-gh-release@c9b46fe7aad9f02afd89b12450b780f52dacfb2d
-        if: ${{ !inputs.dry_run }}
-        with:
-          tag_name: ${{ env.github_tag }}
-          target_commitish: ${{ inputs.ref }}
-          prerelease: ${{ inputs.release_type != 'public' }}
-          files: |
-            out/opentelemetry-ebpf-*.rpm
-            out/opentelemetry-ebpf-*.deb
-
+            ./build.sh docker
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.OPENTELEMETRY_DOCKER_HUB_CI_USER }}
           password: ${{ secrets.OPENTELEMETRY_DOCKER_HUB_CI_PASSWORD }}
-
       - name: Push to container registry
         run: |
           cd $GITHUB_WORKSPACE/src
@@ -177,15 +142,213 @@ jobs:
             image_path="${docker_registry}/${DOCKER_NAMESPACE}/${image_name}"
 
             docker tag "${image}" ${image_path}:v${full_version_number}-amd64
+
+            if [[ "${{ inputs.dry_run }}" == "false" ]];
+            then
+              docker push ${image_path}:v${full_version_number}-amd64
+            else
+              echo "Would run: docker push ${image_path}:v${full_version_number}-amd64"
+            fi
+
+          done
+
+          docker images --no-trunc
+  build-and-release-arm64:
+    name: Build and release arm64
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+          fetch-depth: 0
+          submodules: recursive
+          path: src
+      - name: Compute version numbers
+        run: |
+          # sets environment variables for use in later steps.
+          # see https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#setting-an-environment-variable
+
+          cd $GITHUB_WORKSPACE/src
+          source ./version.sh
+
+          git_short_hash=$(git rev-parse --short=8 HEAD)
+          short_version_number="${EBPF_NET_MAJOR_VERSION}.${EBPF_NET_MINOR_VERSION}"
+          full_version_number="${EBPF_NET_MAJOR_VERSION}.${EBPF_NET_MINOR_VERSION}.${EBPF_NET_PATCH_VERSION}"
+          if [[ "${{ inputs.release_type }}" == "public" ]]; then
+            github_tag=v${full_version_number}
+          else
+            github_tag=v${full_version_number}-${git_short_hash}
+          fi
+
+          echo "git_short_hash=${git_short_hash}" >> "$GITHUB_ENV"
+          echo "short_version_number=${short_version_number}" >> "$GITHUB_ENV"
+          echo "full_version_number=${full_version_number}" >> "$GITHUB_ENV"
+          echo "github_tag=${github_tag}" >> "$GITHUB_ENV"
+      - name: Output build information
+        run: |
+          echo "github.workspace = ${{ github.workspace }}"
+          echo "github.ref = ${{ github.ref }}"
+          echo "inputs.image_prefix = ${{ inputs.image_prefix }}"
+          echo "inputs.dry_run = ${{ inputs.dry_run }}"
+          echo "git_short_hash = ${git_short_hash}"
+          echo "short_version_number = ${short_version_number}"
+          echo "full_version_number = ${full_version_number}"
+          echo "github_tag = ${github_tag}"
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Fetch build environment
+        run: |
+          docker pull $BENV_IMAGE_ARM
+      - name: Build artifacts
+        run: |
+          export DOCKER_DEFAULT_PLATFORM=linux/arm64
+          mkdir -p $GITHUB_WORKSPACE/out
+          docker run -t --rm \
+            --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
+            --mount "type=bind,source=$GITHUB_WORKSPACE/src,destination=/root/src,readonly" \
+            --mount "type=bind,source=$GITHUB_WORKSPACE/out,destination=/root/out" \
+            --env EBPF_NET_SRC_ROOT=/root/src \
+            --env ENABLE_ARM64_BUILD=TRUE \
+            $BENV_IMAGE_ARM \
+            ./build.sh docker
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.OPENTELEMETRY_DOCKER_HUB_CI_USER }}
+          password: ${{ secrets.OPENTELEMETRY_DOCKER_HUB_CI_PASSWORD }}
+      - name: Push to container registry
+        run: |
+          cd $GITHUB_WORKSPACE/src
+
+          if [[ "${{ inputs.release_type }}" == "public" ]]; then
+            tags=(
+              latest
+              latest-v${short_version_number}
+              v${full_version_number}
+            )
+          else
+            tags=(
+              v${full_version_number}-${git_short_hash}
+            )
+          fi
+
+          if [[ "${{ inputs.additional_tag }}" != "" ]]; then
+            tags=(${tags[@]} "${{ inputs.additional_tag }}")
+          fi
+
+          images=(
+            reducer
+            kernel-collector
+            # cloud-collector
+            k8s-watcher
+            k8s-relay
+          )
+
+          # strip potential "https://" prefix and trailing slashes from docker registry
+          docker_registry=$(sed -e 's,^https://,,' -e 's,/*$,,' <<< $DOCKER_REGISTRY)
+
+          for image in ${images[@]}; do
+            image_name="${IMAGE_PREFIX}${image}"
+            image_path="${docker_registry}/${DOCKER_NAMESPACE}/${image_name}"
+
             docker tag "${image}-arm64" ${image_path}:v${full_version_number}-arm64
+
 
             if [[ "${{ inputs.dry_run }}" == "false" ]];
             then
               docker push ${image_path}:v${full_version_number}-arm64
-              docker push ${image_path}:v${full_version_number}-amd64
             else
-              echo "Would run: docker push ${image_path}:v${full_version_number}-{arm64,amd64}"
+              echo "Would run: docker push ${image_path}:v${full_version_number}-arm64"
             fi
+          done
+
+          docker images --no-trunc
+  create-manifest:
+    runs-on: ubuntu-24.04
+    needs: [build-and-release-arm64, build-and-release-amd64]
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+          fetch-depth: 0
+          submodules: recursive
+          path: src
+      - name: Compute version numbers
+        run: |
+          # sets environment variables for use in later steps.
+          # see https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#setting-an-environment-variable
+
+          cd $GITHUB_WORKSPACE/src
+          source ./version.sh
+
+          git_short_hash=$(git rev-parse --short=8 HEAD)
+          short_version_number="${EBPF_NET_MAJOR_VERSION}.${EBPF_NET_MINOR_VERSION}"
+          full_version_number="${EBPF_NET_MAJOR_VERSION}.${EBPF_NET_MINOR_VERSION}.${EBPF_NET_PATCH_VERSION}"
+          if [[ "${{ inputs.release_type }}" == "public" ]]; then
+            github_tag=v${full_version_number}
+          else
+            github_tag=v${full_version_number}-${git_short_hash}
+          fi
+
+          echo "git_short_hash=${git_short_hash}" >> "$GITHUB_ENV"
+          echo "short_version_number=${short_version_number}" >> "$GITHUB_ENV"
+          echo "full_version_number=${full_version_number}" >> "$GITHUB_ENV"
+          echo "github_tag=${github_tag}" >> "$GITHUB_ENV"
+      - name: Output build information
+        run: |
+          echo "github.workspace = ${{ github.workspace }}"
+          echo "github.ref = ${{ github.ref }}"
+          echo "inputs.image_prefix = ${{ inputs.image_prefix }}"
+          echo "inputs.dry_run = ${{ inputs.dry_run }}"
+          echo "git_short_hash = ${git_short_hash}"
+          echo "short_version_number = ${short_version_number}"
+          echo "full_version_number = ${full_version_number}"
+          echo "github_tag = ${github_tag}"
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.OPENTELEMETRY_DOCKER_HUB_CI_USER }}
+          password: ${{ secrets.OPENTELEMETRY_DOCKER_HUB_CI_PASSWORD }}
+      - name: Push to container registry
+        run: |
+          cd $GITHUB_WORKSPACE/src
+
+          if [[ "${{ inputs.release_type }}" == "public" ]]; then
+            tags=(
+              latest
+              latest-v${short_version_number}
+              v${full_version_number}
+            )
+          else
+            tags=(
+              v${full_version_number}-${git_short_hash}
+            )
+          fi
+
+          if [[ "${{ inputs.additional_tag }}" != "" ]]; then
+            tags=(${tags[@]} "${{ inputs.additional_tag }}")
+          fi
+
+          images=(
+            reducer
+            kernel-collector
+            # cloud-collector
+            k8s-watcher
+            k8s-relay
+          )
+
+          # strip potential "https://" prefix and trailing slashes from docker registry
+          docker_registry=$(sed -e 's,^https://,,' -e 's,/*$,,' <<< $DOCKER_REGISTRY)
+
+          for image in ${images[@]}; do
+            image_name="${IMAGE_PREFIX}${image}"
+            image_path="${docker_registry}/${DOCKER_NAMESPACE}/${image_name}"
 
             for tag in ${tags[@]}; do
               manifest_cmd="docker manifest create ${image_path}:${tag}"
