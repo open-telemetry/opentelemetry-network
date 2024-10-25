@@ -251,10 +251,10 @@ jobs:
           docker_registry=$(sed -e 's,^https://,,' -e 's,/*$,,' <<< $DOCKER_REGISTRY)
 
           for image in ${images[@]}; do
-            image_name="${IMAGE_PREFIX}${image}-arm64"
+            image_name="${IMAGE_PREFIX}${image}"
             image_path="${docker_registry}/${DOCKER_NAMESPACE}/${image_name}"
 
-            docker tag "${image}" ${image_path}:v${full_version_number}-arm64
+            docker tag "${image}-arm64" ${image_path}:v${full_version_number}-arm64
 
 
             if [[ "${{ inputs.dry_run }}" == "false" ]];
