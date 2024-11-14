@@ -11,7 +11,7 @@
 
 ///////// render_bpf.c config
 
-#define BPF_MAX_CPUS 128              // Maximum number of CPUs to support
+#define BPF_MAX_CPUS 1024              // Maximum number of CPUs to support
 #define TABLE_SIZE__TGID_INFO MAX_PID // Task (TGID) information
 #define TABLE_SIZE__SEEN_INODES                                                                                                \
   70000 // XXX: Is this even necessary? could this tracking be done in userland with non-limited tables?
