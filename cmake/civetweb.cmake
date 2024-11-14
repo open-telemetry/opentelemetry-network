@@ -29,5 +29,8 @@ target_compile_definitions(
 
 target_include_directories(civetweb PUBLIC ${CIVETWEB_INCLUDE_DIR})
 
+find_library(LIBDL dl)
+target_link_libraries(civetweb PRIVATE ${LIBDL})
+
 add_library(civetweb-interface INTERFACE)
 target_include_directories(civetweb-interface INTERFACE ${CIVETWEB_INCLUDE_DIR})

@@ -27,10 +27,7 @@ else()
   set(_GRPC_CPP_PLUGIN_EXECUTABLE $<TARGET_FILE:gRPC::grpc_cpp_plugin>)
 endif()
 
-if (NOT gRPC_VERSION STREQUAL "1.45.0")
-  message(FATAL_ERROR "gRPC must be a specific version (1.45.0). Build container should already have that set up.  Note that benv-final:v8 doesn't currently support building with OTLP - need to use a custom local benv build.")
-endif()
-
+include_directories(${Protobuf_INCLUDE_DIRS})
 include_directories(${CMAKE_INSTALL_PREFIX})
 
 add_library(otlp_grpc_proto
@@ -41,12 +38,14 @@ add_library(otlp_grpc_proto
   "${CMAKE_INSTALL_PREFIX}/opentelemetry/proto/logs/v1/logs.pb.cc"
   "${CMAKE_INSTALL_PREFIX}/opentelemetry/proto/collector/metrics/v1/metrics_service.pb.cc"
   "${CMAKE_INSTALL_PREFIX}/opentelemetry/proto/collector/metrics/v1/metrics_service.grpc.pb.cc"
-  "${CMAKE_INSTALL_PREFIX}/opentelemetry/proto/metrics/v1/metrics.pb.cc")
+  "${CMAKE_INSTALL_PREFIX}/opentelemetry/proto/metrics/v1/metrics.pb.cc"
+)
 
 target_link_libraries(
   otlp_grpc_proto
     gRPC::grpc++
     protobuf::libprotobuf
+    protobuf::libprotoc
 )
 
 add_library(
