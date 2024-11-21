@@ -56,7 +56,7 @@ function detect_distro {
   if [[ -e "${os_release_file}" ]]; then
     os_id="$(grep '^ID=' "${os_release_file}" 2> /dev/null | sed -e 's/ID=\(.*\)/\1/g' -e 's/"//g')"
     case "${os_id}" in
-      debian | ubuntu | centos | amazon | rhel)
+      debian | ubuntu | centos | amazon | rhel | fedora)
         echo "${os_id}"
         return
         ;;
@@ -80,6 +80,9 @@ function detect_distro {
       echo "rhel"
       return
     elif grep 'Amazon Linux' "${system_release_file}" > /dev/null 2> /dev/null; then
+      echo "amazon"
+      return
+    elif grep 'Fedora' "${system_release_file}" > /dev/null 2> /dev/null; then
       echo "amazon"
       return
     fi
