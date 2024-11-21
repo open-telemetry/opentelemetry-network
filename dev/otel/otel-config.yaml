@@ -10,8 +10,8 @@ processors:
   batch:
 
 exporters:
-  logging:
-    logLevel: debug
+  debug:
+    verbosity: detailed
   file:
     path: /var/log/otel.log
 
@@ -20,4 +20,4 @@ service:
     logs:
       receivers: [otlp]
       processors: [batch]
-      exporters: [logging,file]
+      exporters: [debug,file]
