@@ -105,7 +105,7 @@ int main(int argc, char *argv[])
       "A metric group can also be disabled. To do so, specify '<group>.all', where <group> is one of: tcp,udp,dns,http.\n"
       "A value of 'none' can be given to enable all metrics.\n\n"
       "If this argument is not specified, the recommended collection of metrics will be used.\n\n"
-      "Example: disable-metrics=http.all;dns.all;udp.drops\n"
+      "Example: disable-metrics=http.all,dns.all,udp.drops\n"
       "This example will disable all http metrics, all dns metrics, and the udp.drops metric.",
       {"disable-metrics"});
 
@@ -113,7 +113,7 @@ int main(int argc, char *argv[])
       "enable-metrics",
       "A comma (,) separated list of metrics to enable.  This list is processed AFTER disable-metrics\n"
       "A metric group can also be enabled. To do so, specify '<group>.all', where <group> is one of: tcp,udp,dns,http.\n"
-      "Example: enable-metrics=http.all;dns.all;udp.drops\n"
+      "Example: enable-metrics=http.all,dns.all,udp.drops\n"
       "This example will enable all http metrics, all dns metrics, and the udp.drops metric.",
       {"enable-metrics"});
 
