@@ -1,6 +1,6 @@
 configurations {
   mwe2 {
-    extendsFrom compile
+    extendsFrom implementation
   }
 }
 
