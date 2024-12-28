@@ -110,7 +110,7 @@ private:
   std::vector<std::unique_ptr<IngestWorker>> workers_;
   std::unique_ptr<LoadBalancer<Worker *>> worker_balancer_;
 
-  Stats stats_ GUARDED_BY(stats_mu_);
+  Stats stats_ ABSL_GUARDED_BY(stats_mu_);
   mutable absl::Mutex stats_mu_;
 };
 
