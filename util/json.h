@@ -35,6 +35,37 @@ namespace nlohmann {
             }
         }
     };
+
+    // Custom parsing function for optional strings
+    template <typename T = json>
+    T parse_optional(const std::optional<std::string>& opt) {
+        if (opt && !opt->empty()) {
+            return T::parse(*opt);
+        }
+        return T();
+    }
+}
+
+// Add custom input adapter for optional types
+namespace nlohmann::detail {
+    template <typename T>
+    auto input_adapter(std::optional<T>& opt) {
+        if (opt && !opt->empty()) {
+            return input_adapter(*opt);
+        }
+        // Return an empty string input adapter if optional is empty
+        return input_adapter(std::string{});
+    }
+
+    // Input adapter for const optional references
+    template <typename T>
+    auto input_adapter(const std::optional<T>& opt) {
+        if (opt && !opt->empty()) {
+            return input_adapter(*opt);
+        }
+        // Return an empty string input adapter if optional is empty
+        return input_adapter(std::string{});
+    }
 }
 
 inline nlohmann::json const *follow_path(nlohmann::json const &object)

@@ -13,6 +13,7 @@
 #include <generated/ebpf_net/metrics.h>
 
 #include <string>
+#include <optional>
 
 namespace reducer {
 
@@ -61,13 +62,20 @@ protected:
   void validate_logs_request(ebpf_net::metrics::tcp_metrics const &tcp_metrics, TsdbFormatter::timestamp_t timestamp)
   {
     auto request_json_str = get_request_json(logs_request_to_validate_);
-    LOG::trace("JSON view of ExportLogsServiceRequest: {}", request_json_str);
+    
+    if (!request_json_str) {
+      LOG::error("Failed to convert request to JSON string");
+      FAIL();
+      return;
+    }
+
+    LOG::trace("JSON view of ExportLogsServiceRequest: {}", *request_json_str);
 
     nlohmann::json request_json;
     try {
-      request_json = nlohmann::json::parse(request_json_str);
+      request_json = nlohmann::json::parse(*request_json_str);
     } catch (std::exception &ex) {
-      LOG::error("Failed to parse JSON.  request_json_str={} ex.what()={}", request_json_str, ex.what());
+      LOG::error("Failed to parse JSON. request_json_str={} ex.what()={}", *request_json_str, ex.what());
       FAIL();
     }
 
@@ -93,7 +101,8 @@ protected:
         }
       }
     } catch (std::exception &ex) {
-      LOG::error("Exception during validation.  request_json={} ex.what()={}", log_waive(request_json.dump()), ex.what());
+      LOG::error("Exception during validation. request_json={} ex.what()={}", 
+                 log_waive(request_json.dump()), ex.what());
       FAIL();
     }
   }
@@ -114,15 +123,23 @@ protected:
   validate_metrics_request(std::string_view name, TsdbFormatter::value_t metric_value, TsdbFormatter::timestamp_t timestamp)
   {
     auto request_json_str = get_request_json(metrics_request_to_validate_);
-    LOG::trace("JSON view of ExportMetricsServiceRequest: {}", request_json_str);
+    
+    // Check if the optional has a value
+    if (!request_json_str) {
+      LOG::error("Failed to convert metrics request to JSON string");
+      FAIL();
+      return;
+    }
+
+    LOG::trace("JSON view of ExportMetricsServiceRequest: {}", *request_json_str);
 
     auto labels_to_validate = formatter_->labels_;
 
     nlohmann::json request_json;
     try {
-      request_json = nlohmann::json::parse(request_json_str);
+      request_json = nlohmann::json::parse(*request_json_str);
     } catch (std::exception &ex) {
-      LOG::error("Failed to parse JSON.  request_json_str={} ex.what()={}", request_json_str, ex.what());
+      LOG::error("Failed to parse JSON. request_json_str={} ex.what()={}", *request_json_str, ex.what());
       FAIL();
     }
 
@@ -156,7 +173,7 @@ protected:
         }
       }
     } catch (std::exception &ex) {
-      LOG::error("Exception during validation.  request_json={} ex.what()={}", log_waive(request_json.dump()), ex.what());
+      LOG::error("Exception during validation. request_json={} ex.what()={}", log_waive(request_json.dump()), ex.what());
       FAIL();
     }
   }
