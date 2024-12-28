@@ -27,10 +27,6 @@ else()
   set(_GRPC_CPP_PLUGIN_EXECUTABLE $<TARGET_FILE:gRPC::grpc_cpp_plugin>)
 endif()
 
-if (NOT gRPC_VERSION STREQUAL "1.45.0")
-  message(FATAL_ERROR "gRPC must be a specific version (1.45.0). Build container should already have that set up.  Note that benv-final:v8 doesn't currently support building with OTLP - need to use a custom local benv build.")
-endif()
-
 include_directories(${CMAKE_INSTALL_PREFIX})
 
 add_library(otlp_grpc_proto
