@@ -13,6 +13,30 @@
 
 #include <cstdlib>
 
+#include <optional>
+
+namespace nlohmann {
+    template <typename T>
+    struct adl_serializer<std::optional<T>> {
+        // Convert from JSON to optional
+        static std::optional<T> from_json(const json& j) {
+            if (j.is_null()) {
+                return std::nullopt;
+            }
+            return j.get<T>();
+        }
+
+        // Convert from optional to JSON
+        static void to_json(json& j, const std::optional<T>& opt) {
+            if (opt) {
+                j = *opt;
+            } else {
+                j = nullptr;
+            }
+        }
+    };
+}
+
 inline nlohmann::json const *follow_path(nlohmann::json const &object)
 {
   return &object;
