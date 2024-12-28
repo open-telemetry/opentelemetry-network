@@ -9,6 +9,8 @@
 
 #include <absl/container/flat_hash_map.h>
 #include <absl/synchronization/mutex.h>
+#include "absl/base/thread_annotations.h"
+
 #include <absl/types/span.h>
 
 // LoadBalancer helps associate integer load values with a list of elements.
