@@ -36,7 +36,7 @@ on:
         default: false
 
 env:
-  BENV_IMAGE: quay.io/splunko11ytest/network-explorer-debug/build-env
+  BENV_IMAGE: docker.io/otel/opentelemetry-network-build-tools
   DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
   DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
   DOCKER_REGISTRY: ${{ vars.DOCKER_REGISTRY }}
