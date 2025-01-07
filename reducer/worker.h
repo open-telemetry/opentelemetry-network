@@ -8,9 +8,11 @@
 #include "channel/callbacks.h"
 #include "channel/tcp_channel.h"
 
+#include "absl/base/thread_annotations.h"
 #include <absl/container/node_hash_map.h>
 #include <absl/synchronization/mutex.h>
 #include <absl/synchronization/notification.h>
+
 #include <uv.h>
 
 #include <memory>
@@ -108,12 +110,12 @@ private:
   // Various fields that deal with the queueing and processing of
   // newly-assigned TCP sockets.
   uv_async_t open_tcp_socks_async_;
-  std::vector<uv_os_sock_t> tcp_sock_fds_ GUARDED_BY(mu_);
+  std::vector<uv_os_sock_t> tcp_sock_fds_ ABSL_GUARDED_BY(mu_);
   mutable absl::Mutex mu_;
 
   // The queue of visitors.
   uv_async_t visit_async_;
-  std::vector<Visitor> visitors_ GUARDED_BY(mu_);
+  std::vector<Visitor> visitors_ ABSL_GUARDED_BY(mu_);
 
   // The async used to stop this thread.
   uv_async_t stop_async_;

@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "absl/base/thread_annotations.h"
 #include <reducer/ingest/ingest_worker.h>
 #include <reducer/load_balancer.h>
 #include <reducer/prometheus_handler.h>
@@ -108,7 +109,7 @@ private:
   std::vector<std::unique_ptr<IngestWorker>> workers_;
   std::unique_ptr<LoadBalancer<Worker *>> worker_balancer_;
 
-  Stats stats_ GUARDED_BY(stats_mu_);
+  Stats stats_ ABSL_GUARDED_BY(stats_mu_);
   mutable absl::Mutex stats_mu_;
 };
 
