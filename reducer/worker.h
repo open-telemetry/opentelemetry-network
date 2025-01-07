@@ -11,6 +11,8 @@
 #include <absl/container/node_hash_map.h>
 #include <absl/synchronization/mutex.h>
 #include <absl/synchronization/notification.h>
+#include "absl/base/thread_annotations.h"
+
 #include <uv.h>
 
 #include <memory>

@@ -8,6 +8,8 @@
 #include <reducer/ingest/ingest_worker.h>
 #include <reducer/load_balancer.h>
 #include <reducer/prometheus_handler.h>
+#include "absl/base/thread_annotations.h"
+
 
 #include <generated/ebpf_net/ingest/index.h>
 
