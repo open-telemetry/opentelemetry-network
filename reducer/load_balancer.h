@@ -7,9 +7,9 @@
 
 #include <set>
 
+#include "absl/base/thread_annotations.h"
 #include <absl/container/flat_hash_map.h>
 #include <absl/synchronization/mutex.h>
-#include "absl/base/thread_annotations.h"
 
 #include <absl/types/span.h>
 
