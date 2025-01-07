@@ -8,6 +8,7 @@
 #include <string>
 #include <type_traits>
 #include <utility>
+#include <optional>
 
 #include <cassert>
 
@@ -402,3 +403,14 @@ template <typename Fn> constexpr auto log_call(Fn &&callable)
                 ::std::is_reference_v<decltype(__VA_ARGS__)>,                                                                  \
                 decltype(__VA_ARGS__) const &,                                                                                 \
                 decltype(__VA_ARGS__)> { return __VA_ARGS__; })
+
+// Specialization for std::optional to handle logging
+template <typename Out, typename T>
+Out& operator<<(Out&& out, const std::optional<T>& opt) {
+    if (opt) {
+        out << *opt;
+    } else {
+        out << "(empty)";
+    }
+    return out;
+}

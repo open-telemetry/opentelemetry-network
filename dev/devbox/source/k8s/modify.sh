@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 function print_help {
-  echo "usage: $0 [--ebfp-net|--otel-demo] <YAML_FILE>"
+  echo "usage: $0 [--ebpf-net|--otel-demo] <YAML_FILE>"
   echo "  --ebpf-net: modify previously deployed OpenTelementry eBPF component(s)"
   echo "  --ebpf-net-local-helm-chart | -C: use local helm chart to modify OpenTelementry eBPF component(s)"
   echo "                                    (default is to use public splunk-otel-collector-chart/splunk-otel-collector)"

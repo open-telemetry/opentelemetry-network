@@ -2,7 +2,7 @@
 telemetry_port: 8000
 
 # How many ingest shards to run.
-num_aggregation_shards: 1
+num_ingest_shards: 1
 
 # How many matching shards to run.
 num_matching_shards: 1
@@ -80,13 +80,13 @@ enable_percentile_latencies: false
 # A metric group can also be disabled. To do so, specify '<group>.all', where <group> is one of: tcp,udp,dns,http.
 # A value of 'none' can be given to enable all metrics.
 # If this argument is not specified, the recommended collection of metrics will be used.
-# Example: 'http.all;dns.all;udp.drops'. This will disable all http metrics, all dns metrics, and the udp.drops metric.
+# Example: 'http.all,dns.all,udp.drops'. This will disable all http metrics, all dns metrics, and the udp.drops metric.
 #disable_metrics: ""
 
 # Comma-separated list of metrics to enable.
 # This list is processed AFTER disable-metrics.
 # A metric group can also be enabled. To do so, specify '<group>.all', where <group> is one of: tcp,udp,dns,http.
-# Example: 'http.all;dns.all;udp.drops'. This will enable all http metrics, all dns metrics, and the udp.drops metric.
+# Example: 'http.all,dns.all,udp.drops'. This will enable all http metrics, all dns metrics, and the udp.drops metric.
 #enable_metrics: ""
 
 # Interval (in seconds) to generate a JSON dump of the span indexes for each core.
