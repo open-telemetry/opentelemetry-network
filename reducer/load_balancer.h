@@ -9,6 +9,8 @@
 
 #include <absl/container/flat_hash_map.h>
 #include <absl/synchronization/mutex.h>
+#include "absl/base/thread_annotations.h"
+
 #include <absl/types/span.h>
 
 // LoadBalancer helps associate integer load values with a list of elements.
@@ -41,8 +43,8 @@ private:
   using EntrySet = std::multiset<Entry>;
   using EntryIterator = typename EntrySet::const_iterator;
 
-  EntrySet entries_ GUARDED_BY(mu_);
-  absl::flat_hash_map<T, EntryIterator> elem_to_entry_it_ GUARDED_BY(mu_);
+  EntrySet entries_ ABSL_GUARDED_BY(mu_);
+  absl::flat_hash_map<T, EntryIterator> elem_to_entry_it_ ABSL_GUARDED_BY(mu_);
   mutable absl::Mutex mu_;
 };
 

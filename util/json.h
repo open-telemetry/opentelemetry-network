@@ -13,6 +13,61 @@
 
 #include <cstdlib>
 
+#include <optional>
+
+namespace nlohmann {
+    template <typename T>
+    struct adl_serializer<std::optional<T>> {
+        // Convert from JSON to optional
+        static std::optional<T> from_json(const json& j) {
+            if (j.is_null()) {
+                return std::nullopt;
+            }
+            return j.get<T>();
+        }
+
+        // Convert from optional to JSON
+        static void to_json(json& j, const std::optional<T>& opt) {
+            if (opt) {
+                j = *opt;
+            } else {
+                j = nullptr;
+            }
+        }
+    };
+
+    // Custom parsing function for optional strings
+    template <typename T = json>
+    T parse_optional(const std::optional<std::string>& opt) {
+        if (opt && !opt->empty()) {
+            return T::parse(*opt);
+        }
+        return T();
+    }
+}
+
+// Add custom input adapter for optional types
+namespace nlohmann::detail {
+    template <typename T>
+    auto input_adapter(std::optional<T>& opt) {
+        if (opt && !opt->empty()) {
+            return input_adapter(*opt);
+        }
+        // Return an empty string input adapter if optional is empty
+        return input_adapter(std::string{});
+    }
+
+    // Input adapter for const optional references
+    template <typename T>
+    auto input_adapter(const std::optional<T>& opt) {
+        if (opt && !opt->empty()) {
+            return input_adapter(*opt);
+        }
+        // Return an empty string input adapter if optional is empty
+        return input_adapter(std::string{});
+    }
+}
+
 inline nlohmann::json const *follow_path(nlohmann::json const &object)
 {
   return &object;
