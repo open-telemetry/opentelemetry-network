@@ -104,8 +104,8 @@ jobs:
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.OPENTELEMETRY_DOCKER_HUB_CI_USER }}
-          password: ${{ secrets.OPENTELEMETRY_DOCKER_HUB_CI_PASSWORD }}
+          username: ${{ vars.DOCKER_SOLARWINDS_ORG_LOGIN }}
+          password: ${{ secrets.ENOPS5919_OPENTELEMETRYCOLLECTOR_DOCKER_HUB_CI_OAT }}
       - name: Push to container registry
         run: |
           cd $GITHUB_WORKSPACE/src
@@ -217,8 +217,8 @@ jobs:
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.OPENTELEMETRY_DOCKER_HUB_CI_USER }}
-          password: ${{ secrets.OPENTELEMETRY_DOCKER_HUB_CI_PASSWORD }}
+          username: ${{ vars.DOCKER_SOLARWINDS_ORG_LOGIN }}
+          password: ${{ secrets.ENOPS5919_OPENTELEMETRYCOLLECTOR_DOCKER_HUB_CI_OAT }}
       - name: Push to container registry
         run: |
           cd $GITHUB_WORKSPACE/src
@@ -313,8 +313,8 @@ jobs:
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.OPENTELEMETRY_DOCKER_HUB_CI_USER }}
-          password: ${{ secrets.OPENTELEMETRY_DOCKER_HUB_CI_PASSWORD }}
+          username: ${{ vars.DOCKER_SOLARWINDS_ORG_LOGIN }}
+          password: ${{ secrets.ENOPS5919_OPENTELEMETRYCOLLECTOR_DOCKER_HUB_CI_OAT }}
       - name: Push to container registry
         run: |
           cd $GITHUB_WORKSPACE/src
