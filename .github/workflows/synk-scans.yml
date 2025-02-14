@@ -22,7 +22,8 @@ jobs:
           
       - name: Run Snyk to check for vulnerabilities
         run: |
-          snyk test --all-projects \
+          snyk test --unmanaged \ 
+            --all-projects \
             --severity-threshold=high \
             --exclude=docs,cmake,ext \
             --detection-depth=5
