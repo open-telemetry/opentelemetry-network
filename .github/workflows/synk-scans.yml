@@ -13,7 +13,7 @@ jobs:
   snyk-scan:
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
       
       - name: Set up Snyk
         uses: snyk/actions/setup@master
@@ -32,6 +32,6 @@ jobs:
         continue-on-error: false
         
       - name: Upload result to GitHub Code Scanning
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@b8d3b6e8af63cde30bdc382c0bc28114f4346c88 # v2
         with:
           sarif_file: snyk.sarif
