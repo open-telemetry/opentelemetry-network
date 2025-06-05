@@ -38,11 +38,20 @@ static inline __attribute__((always_inline)) u64 monotonic()
   return (u64)ts.tv_sec * (1000 * 1000 * 1000) + ts.tv_nsec;
 }
 
+#ifdef __aarch64__
+static inline __attribute__((always_inline)) u64 fp_monotonic_time_ns(void)
+{
+  uint64_t val;
+   __asm__ __volatile__("mrs %0, cntvct_el0" : "=r"(val));
+  return val;
+}
+#else
 #include <x86intrin.h>
 static inline __attribute__((always_inline)) u64 fp_monotonic_time_ns(void)
 {
   return __rdtsc();
 }
+#endif
 
 #ifdef __cplusplus
 }
