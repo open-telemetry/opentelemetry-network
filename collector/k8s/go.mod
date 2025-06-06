@@ -2,7 +2,7 @@ module ebpf.net/collector
 
 go 1.22
 
-toolchain go1.23.4
+toolchain go1.24.4
 
 require (
 	google.golang.org/grpc v1.69.2
