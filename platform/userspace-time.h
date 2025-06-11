@@ -38,12 +38,6 @@ static inline __attribute__((always_inline)) u64 monotonic()
   return (u64)ts.tv_sec * (1000 * 1000 * 1000) + ts.tv_nsec;
 }
 
-#include <x86intrin.h>
-static inline __attribute__((always_inline)) u64 fp_monotonic_time_ns(void)
-{
-  return __rdtsc();
-}
-
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
