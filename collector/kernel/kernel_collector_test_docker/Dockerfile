@@ -1,7 +1,7 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
-FROM bitnami/minideb:bullseye@sha256:a652b4481a6658273d278b246bb3553058e7083e7f3fbb3523b92e49e26db262
+FROM bitnami/minideb:bullseye@sha256:1a991d4665ebeb68c16a35224d66e77d6daf2c503f8c72572e9890e6e511f193
 
 # ca-certificates are required by libcurl
 RUN install_packages ca-certificates
