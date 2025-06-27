@@ -31,9 +31,10 @@ namespace reducer::ingest {
 IngestWorker::IngestWorker(RpcQueueMatrix &ingest_to_logging_queues, RpcQueueMatrix &ingest_to_matching_queues, u32 shard_num)
     : ingest_to_logging_stats_(shard_num, "ingest", "logging", ingest_to_logging_queues),
       ingest_to_matching_stats_(shard_num, "ingest", "matching", ingest_to_matching_queues),
-      index_(std::make_unique<ebpf_net::ingest::Index>(
-          ingest_to_logging_queues.make_writers<ebpf_net::logging::Writer>(shard_num, monotonic, get_boot_time()),
-          ingest_to_matching_queues.make_writers<ebpf_net::matching::Writer>(shard_num, monotonic, get_boot_time()))),
+      index_(
+          std::make_unique<ebpf_net::ingest::Index>(
+              ingest_to_logging_queues.make_writers<ebpf_net::logging::Writer>(shard_num, monotonic, get_boot_time()),
+              ingest_to_matching_queues.make_writers<ebpf_net::matching::Writer>(shard_num, monotonic, get_boot_time()))),
       logger_(index_->logger.alloc()),
       core_stats_(index_->core_stats.alloc()),
       ingest_core_stats_(index_->ingest_core_stats.alloc())

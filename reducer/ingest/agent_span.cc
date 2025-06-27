@@ -794,15 +794,16 @@ void AgentSpan::log_message(::ebpf_net::ingest::weak_refs::agent span_ref, u64 t
 
 void AgentSpan::bpf_log(::ebpf_net::ingest::weak_refs::agent span_ref, u64 timestamp, jsrv_ingest__bpf_log *msg)
 {
-  bpf_logs_.emplace_back(bpf_log_entry{
-      .timestamp = std::chrono::nanoseconds{timestamp},
-      .filename = msg->filename.to_string(),
-      .line = msg->line,
-      .code = msg->code,
-      .arg0 = msg->arg0,
-      .arg1 = msg->arg1,
-      .arg2 = msg->arg2,
-  });
+  bpf_logs_.emplace_back(
+      bpf_log_entry{
+          .timestamp = std::chrono::nanoseconds{timestamp},
+          .filename = msg->filename.to_string(),
+          .line = msg->line,
+          .code = msg->code,
+          .arg0 = msg->arg0,
+          .arg1 = msg->arg1,
+          .arg2 = msg->arg2,
+      });
 }
 
 void AgentSpan::write_internal_stats(
