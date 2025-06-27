@@ -60,7 +60,12 @@ protected:
 
   void validate_logs_request(ebpf_net::metrics::tcp_metrics const &tcp_metrics, TsdbFormatter::timestamp_t timestamp)
   {
-    auto request_json_str = get_request_json(logs_request_to_validate_);
+    auto request_json_opt = get_request_json(logs_request_to_validate_);
+    if (!request_json_opt.has_value()) {
+      LOG::error("Failed to get JSON from logs request");
+      FAIL();
+    }
+    auto request_json_str = request_json_opt.value();
     LOG::trace("JSON view of ExportLogsServiceRequest: {}", request_json_str);
 
     nlohmann::json request_json;
@@ -113,7 +118,12 @@ protected:
   void
   validate_metrics_request(std::string_view name, TsdbFormatter::value_t metric_value, TsdbFormatter::timestamp_t timestamp)
   {
-    auto request_json_str = get_request_json(metrics_request_to_validate_);
+    auto request_json_opt = get_request_json(metrics_request_to_validate_);
+    if (!request_json_opt.has_value()) {
+      LOG::error("Failed to get JSON from metrics request");
+      FAIL();
+    }
+    auto request_json_str = request_json_opt.value();
     LOG::trace("JSON view of ExportMetricsServiceRequest: {}", request_json_str);
 
     auto labels_to_validate = formatter_->labels_;
