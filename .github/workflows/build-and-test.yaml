@@ -19,7 +19,7 @@ concurrency:
 
 jobs:
   clang-format-check:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     name: clang-format-check
 
     steps:
@@ -49,7 +49,7 @@ jobs:
 
   build-reducer:
     name: build-reducer
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     needs: [clang-format-check]
     steps:
     - name: Check out the codebase
@@ -74,7 +74,7 @@ jobs:
 
   build-kernel-collector:
     name: build-kernel-collector
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     needs: [clang-format-check]
     steps:
     - name: Check out the codebase
@@ -99,7 +99,7 @@ jobs:
 
   build-k8s-relay:
     name: build-k8s-relay
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     needs: [clang-format-check]
     steps:
     - name: Check out the codebase
@@ -122,7 +122,7 @@ jobs:
 
   build-cloud-collector:
     name: build-cloud-collector
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     needs: [clang-format-check]
     steps:
     - name: Check out the codebase
@@ -145,7 +145,7 @@ jobs:
 
   build-k8s-watcher:
     name: build-k8s-watcher
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     needs: [clang-format-check]
     steps:
     - name: Check out the codebase
@@ -168,7 +168,7 @@ jobs:
 
   build-run-unit-tests:
     name: build-run-unit-tests
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     needs: [clang-format-check]
     steps:
     - name: Check out the codebase
@@ -192,7 +192,7 @@ jobs:
 
   build-run-unit-tests-with-asan-and-debug-flags:
     name: build-run-unit-tests-with-asan-and-debug-flags
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     needs: [clang-format-check]
     steps:
     - name: Check out the codebase
