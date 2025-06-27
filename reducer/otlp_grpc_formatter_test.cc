@@ -20,12 +20,12 @@ class TestPublisherWriter : public Publisher::Writer {
 public:
   TestPublisherWriter(
       ExportLogsServiceRequest &logs_request_to_validate, ExportMetricsServiceRequest &metrics_request_to_validate)
-      : logs_request_to_validate_(logs_request_to_validate), metrics_request_to_validate_(metrics_request_to_validate) {};
+      : logs_request_to_validate_(logs_request_to_validate), metrics_request_to_validate_(metrics_request_to_validate){};
 
   TestPublisherWriter(TestPublisherWriter const &) = delete;
   TestPublisherWriter(TestPublisherWriter &&) = default;
 
-  ~TestPublisherWriter() {};
+  ~TestPublisherWriter(){};
 
   void write(ExportLogsServiceRequest &request) override { logs_request_to_validate_ = request; };
   void write(ExportMetricsServiceRequest &request) override { metrics_request_to_validate_ = request; };

@@ -238,27 +238,21 @@ void BufferedPoller::message_handler_entrypoint(PerfReader &reader, u16 length)
 
   if constexpr (MaxPadding) {
     if (length < sizeof(u64) + MessageMetadata::wire_message_size) {
-      throw std::runtime_error(
-          fmt::format(
-              "message truncated (`{}`: {}/{})",
-              MessageMetadata::name,
-              length,
-              sizeof(u64) + MessageMetadata::wire_message_size));
+      throw std::runtime_error(fmt::format(
+          "message truncated (`{}`: {}/{})", MessageMetadata::name, length, sizeof(u64) + MessageMetadata::wire_message_size));
     } else if (length > sizeof(u64) + MessageMetadata::wire_message_size + MaxPadding) {
-      throw std::runtime_error(
-          fmt::format(
-              "message too long (`{}`: {}/{})",
-              MessageMetadata::name,
-              length,
-              sizeof(u64) + MessageMetadata::wire_message_size + MaxPadding));
+      throw std::runtime_error(fmt::format(
+          "message too long (`{}`: {}/{})",
+          MessageMetadata::name,
+          length,
+          sizeof(u64) + MessageMetadata::wire_message_size + MaxPadding));
     }
   } else if (length != sizeof(u64) + MessageMetadata::wire_message_size) {
-    throw std::runtime_error(
-        fmt::format(
-            "invalid message length (`{}`: {}/{})",
-            MessageMetadata::name,
-            length,
-            sizeof(u64) + MessageMetadata::wire_message_size));
+    throw std::runtime_error(fmt::format(
+        "invalid message length (`{}`: {}/{})",
+        MessageMetadata::name,
+        length,
+        sizeof(u64) + MessageMetadata::wire_message_size));
   }
 
   // Get the cpu index we're on so we can read the right data

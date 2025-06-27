@@ -168,11 +168,10 @@ std::shared_ptr<absl::Notification> Worker::visit_thread(std::function<void()> c
   const auto done = std::make_shared<absl::Notification>();
   {
     absl::MutexLock l(&mu_);
-    visitors_.push_back(
-        Visitor{
-            .cb = std::move(cb),
-            .done = done,
-        });
+    visitors_.push_back(Visitor{
+        .cb = std::move(cb),
+        .done = done,
+    });
   }
 
   // Trigger the async.
