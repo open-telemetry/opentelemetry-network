@@ -32,7 +32,7 @@ typedef u64 TIMESTAMP;
 //
 
 #define SAVED_ARGS_TABLE_KEY _pid_tgid
-//#define SAVED_ARGS_TABLE_KEY _cpu
+// #define SAVED_ARGS_TABLE_KEY _cpu
 
 #define SAVED_ARGS_TABLE(FUNC) FUNC##_active
 #define SAVED_ARGS_TYPE(FUNC) struct FUNC##_active_args_t
