@@ -77,12 +77,12 @@ protected:
     }
 
     try {
-      for (auto const &rl : request_json.at("resourceLogs")) {
-        for (auto const &sl : rl.at("scopeLogs")) {
-          for (auto const &log : sl.at("logRecords")) {
-            EXPECT_EQ(integer_time<std::chrono::nanoseconds>(timestamp), std::stoull(std::string(log.at("timeUnixNano"))));
-            EXPECT_EQ("SEVERITY_NUMBER_INFO", log.at("severityNumber"));
-            EXPECT_EQ("INFO", log.at("severityText"));
+      for (auto const &rl : request_json.at("resource_logs")) {
+        for (auto const &sl : rl.at("scope_logs")) {
+          for (auto const &log : sl.at("log_records")) {
+            EXPECT_EQ(integer_time<std::chrono::nanoseconds>(timestamp), std::stoull(std::string(log.at("time_unix_nano"))));
+            EXPECT_EQ("SEVERITY_NUMBER_INFO", log.at("severity_number"));
+            EXPECT_EQ("INFO", log.at("severity_text"));
             double sum_srtt = double(tcp_metrics.sum_srtt) / 8 / 1'000'000; // RTTs are measured in units of 1/8 microseconds.
             std::string log_message(
                 formatter_->labels_["source.ip"] + " " + formatter_->labels_["source.workload.name"] + " " +
@@ -93,7 +93,7 @@ protected:
                 std::to_string(tcp_metrics.sum_delivered) + " " + std::to_string(tcp_metrics.sum_retrans) + " " +
                 std::to_string(tcp_metrics.syn_timeouts) + " " + std::to_string(tcp_metrics.new_sockets) + " " +
                 std::to_string(tcp_metrics.tcp_resets));
-            EXPECT_EQ(log_message, log.at("body").at("stringValue"));
+            EXPECT_EQ(log_message, log.at("body").at("string_value"));
           }
         }
       }
@@ -137,25 +137,25 @@ protected:
     }
 
     try {
-      for (auto const &rm : request_json.at("resourceMetrics")) {
-        for (auto const &sm : rm.at("scopeMetrics")) {
+      for (auto const &rm : request_json.at("resource_metrics")) {
+        for (auto const &sm : rm.at("scope_metrics")) {
           for (auto const &metric : sm.at("metrics")) {
             EXPECT_EQ(name, metric.at("name"));
             auto const &sum = metric.at("sum");
-            EXPECT_EQ("AGGREGATION_TEMPORALITY_DELTA", sum.at("aggregationTemporality"));
-            EXPECT_TRUE(sum.at("isMonotonic"));
-            for (auto const &data_point : sum.at("dataPoints")) {
+            EXPECT_EQ("AGGREGATION_TEMPORALITY_DELTA", sum.at("aggregation_temporality"));
+            EXPECT_TRUE(sum.at("is_monotonic"));
+            for (auto const &data_point : sum.at("data_points")) {
               std::visit(
                   overloaded_visitor{
-                      [&](u32 val) { EXPECT_EQ(val, stoul(std::string(data_point.at("asInt")))); },
-                      [&](u64 val) { EXPECT_EQ(val, stoull(std::string(data_point.at("asInt")))); },
-                      [&](double val) { EXPECT_EQ(val, data_point.at("asDouble")); }},
+                      [&](u32 val) { EXPECT_EQ(val, stoul(std::string(data_point.at("as_int")))); },
+                      [&](u64 val) { EXPECT_EQ(val, stoull(std::string(data_point.at("as_int")))); },
+                      [&](double val) { EXPECT_EQ(val, data_point.at("as_double")); }},
                   metric_value);
               EXPECT_EQ(
-                  integer_time<std::chrono::nanoseconds>(timestamp), std::stoull(std::string(data_point.at("timeUnixNano"))));
+                  integer_time<std::chrono::nanoseconds>(timestamp), std::stoull(std::string(data_point.at("time_unix_nano"))));
               for (auto const &attribute : data_point.at("attributes")) {
                 auto key = attribute.at("key");
-                auto value = attribute.at("value").at("stringValue");
+                auto value = attribute.at("value").at("string_value");
                 EXPECT_EQ(labels_to_validate.count(key), 1);
                 EXPECT_EQ(labels_to_validate.at(key), value);
                 labels_to_validate.erase(key);
