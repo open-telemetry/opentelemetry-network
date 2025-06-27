@@ -40,7 +40,7 @@ jobs:
     - name: Runs format checker
       run: |
         sudo apt update
-        sudo apt install -y clang-format-11
+        sudo apt install -y clang-format
         cd ${{ github.workspace }}
         ./.github/workflows/scripts/check-clang-format.sh
 
