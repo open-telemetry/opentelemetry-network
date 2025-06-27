@@ -15,7 +15,7 @@ shadowJar {
 dependencies {
   implementation project(':io.opentelemetry.render')
   implementation "org.eclipse.xtext:org.eclipse.xtext.builder.standalone:${xtextVersion}"
-  implementation "args4j:args4j:2.33"
+  implementation "args4j:args4j:2.37"
 }
 
 clean.dependsOn(cleanGenerateXtext)
