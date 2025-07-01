@@ -10,6 +10,9 @@ on:
   pull_request:
     paths:
 
+permissions:
+  contents: read
+
 env:
   BENV_IMAGE: docker.io/otel/opentelemetry-network-build-tools
 
