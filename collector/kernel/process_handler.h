@@ -23,7 +23,7 @@
 // Turn this on to enable tgid table debugging feature
 // via: kill -USR1 <agent_pid>
 #ifndef NDEBUG
-//#define DEBUG_TGID 1
+// #define DEBUG_TGID 1
 #endif // NDEBUG
 
 class ProcessHandler {
