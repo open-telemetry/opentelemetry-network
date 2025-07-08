@@ -58,28 +58,28 @@
 
 ///////// render_bpf.c debugging switches
 
-//#define TRACE_TCP_SOCKETS 1
-//#define TRACE_UDP_SOCKETS 1
+// #define TRACE_TCP_SOCKETS 1
+// #define TRACE_UDP_SOCKETS 1
 
-//#define DEBUG_TCP_SOCKET_ERRORS 1
-//#define DEBUG_UDP_SOCKET_ERRORS 1
-//#define DEBUG_OTHER_MAP_ERRORS 1
+// #define DEBUG_TCP_SOCKET_ERRORS 1
+// #define DEBUG_UDP_SOCKET_ERRORS 1
+// #define DEBUG_OTHER_MAP_ERRORS 1
 
-//#define DEBUG_ENABLE_STACKTRACE 1
+// #define DEBUG_ENABLE_STACKTRACE 1
 
 ///////// bpf_tcp_processor.c debugging switches
 
-//#define TRACE_TCP_CONNECTION 1
-//#define DEBUG_TCP_CONNECTION 1
-//#define DEBUG_MEMORY 1
-//#define TRACE_SOCKET_ACCEPT 1
-//#define DEBUG_TCP_RECEIVE 1
-//#define TRACE_TCP_RECEIVE 1
-//#define DEBUG_TCP_SEND 1
-//#define TRACE_TCP_SEND 1
-//#define TRACE_HTTP_PROTOCOL 1
-//#define DEBUG_TCP_DATA 1
-//#define DEBUG_DATA_CHANNEL 1
+// #define TRACE_TCP_CONNECTION 1
+// #define DEBUG_TCP_CONNECTION 1
+// #define DEBUG_MEMORY 1
+// #define TRACE_SOCKET_ACCEPT 1
+// #define DEBUG_TCP_RECEIVE 1
+// #define TRACE_TCP_RECEIVE 1
+// #define DEBUG_TCP_SEND 1
+// #define TRACE_TCP_SEND 1
+// #define TRACE_HTTP_PROTOCOL 1
+// #define DEBUG_TCP_DATA 1
+// #define DEBUG_DATA_CHANNEL 1
 
 ////////////////////////////////////////////////////////////////////////////
 // BPF error report codes

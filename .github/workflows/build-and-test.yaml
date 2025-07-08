@@ -19,7 +19,7 @@ concurrency:
 
 jobs:
   clang-format-check:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     name: clang-format-check
 
     steps:
@@ -31,7 +31,7 @@ jobs:
         echo "$GITHUB_CONTEXT"
 
     - name: Check out the codebase
-      uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
     - name: Get current date
       id: date
@@ -40,7 +40,7 @@ jobs:
     - name: Runs format checker
       run: |
         sudo apt update
-        sudo apt install -y clang-format-11
+        sudo apt install -y clang-format
         cd ${{ github.workspace }}
         ./.github/workflows/scripts/check-clang-format.sh
 
@@ -49,11 +49,11 @@ jobs:
 
   build-reducer:
     name: build-reducer
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     needs: [clang-format-check]
     steps:
     - name: Check out the codebase
-      uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
         fetch-depth: 0
 
@@ -74,11 +74,11 @@ jobs:
 
   build-kernel-collector:
     name: build-kernel-collector
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     needs: [clang-format-check]
     steps:
     - name: Check out the codebase
-      uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
         fetch-depth: 0
 
@@ -99,11 +99,11 @@ jobs:
 
   build-k8s-relay:
     name: build-k8s-relay
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     needs: [clang-format-check]
     steps:
     - name: Check out the codebase
-      uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
         fetch-depth: 0
 
@@ -122,11 +122,11 @@ jobs:
 
   build-cloud-collector:
     name: build-cloud-collector
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     needs: [clang-format-check]
     steps:
     - name: Check out the codebase
-      uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
         fetch-depth: 0
 
@@ -145,11 +145,11 @@ jobs:
 
   build-k8s-watcher:
     name: build-k8s-watcher
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     needs: [clang-format-check]
     steps:
     - name: Check out the codebase
-      uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
         fetch-depth: 0
 
@@ -168,11 +168,11 @@ jobs:
 
   build-run-unit-tests:
     name: build-run-unit-tests
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     needs: [clang-format-check]
     steps:
     - name: Check out the codebase
-      uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
         fetch-depth: 0
     - name: run unit tests
@@ -192,11 +192,11 @@ jobs:
 
   build-run-unit-tests-with-asan-and-debug-flags:
     name: build-run-unit-tests-with-asan-and-debug-flags
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     needs: [clang-format-check]
     steps:
     - name: Check out the codebase
-      uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
         fetch-depth: 0
     - name: build unit tests with asan and debug flags on then run all tests
@@ -221,7 +221,7 @@ jobs:
       EBPF_NET_SRC_ROOT: ${{ github.workspace }}
     steps:
     - name: Check out the codebase
-      uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
         fetch-depth: 0
 
@@ -297,7 +297,7 @@ jobs:
       EBPF_NET_SRC_ROOT: ${{ github.workspace }}
     steps:
     - name: Check out the codebase
-      uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
         fetch-depth: 0
 

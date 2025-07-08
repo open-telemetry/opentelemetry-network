@@ -32,23 +32,27 @@ Check out the [Developer Guide](docs/developing.md).
 
 See the [Roadmap](docs/roadmap.md) for an overwiew of the project's goals.
 
-Triagers ([@open-telemetry/ebpf-triagers](https://github.com/orgs/open-telemetry/teams/ebpf-triagers))
-
-- [Antoine Toulme](https://github.com/atoulme), Splunk
-- Actively seeking contributors to triage issues
-
-Approvers ([@open-telemetry/ebpf-approvers](https://github.com/orgs/open-telemetry/teams/ebpf-approvers)):
-
-- [Samiur Arif](https://github.com/samiura), Sumo Logic
-- Actively seeking approvers to review pull requests
-
-Maintainers ([@open-telemetry/ebpf-maintainers](https://github.com/orgs/open-telemetry/teams/ebpf-maintainers)):
+### Maintainers
 
 - [Borko Jandras](https://github.com/bjandras)
 - [Jim Wilson](https://github.com/jmw51798), DataDog
 - [Jonathan Perry](https://github.com/yonch)
 
-Learn more about roles in the [community repository](https://github.com/open-telemetry/community/blob/main/community-membership.md).
+For more information about the maintainer role, see the [community repository](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#maintainer).
+
+### Approvers
+
+- [Samiur Arif](https://github.com/samiura), Sumo Logic
+- Actively seeking approvers to review pull requests
+
+For more information about the approver role, see the [community repository](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#approver).
+
+### Triagers
+
+- [Antoine Toulme](https://github.com/atoulme), Splunk
+- Actively seeking contributors to triage issues
+
+For more information about the triager role, see the [community repository](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#triager).
 
 ## Questions ##
 

@@ -118,9 +118,9 @@ int handle_kprobe__tcp_sendmsg(struct pt_regs *ctx, struct sock *sk, struct msgh
   pconn = lookup_tcp_connection(sk);
   if (!pconn) {
     // For now ignore sends on sockets we haven't seen the tcp_init_sock for
-    //#if TRACE_TCP_SEND
+    // #if TRACE_TCP_SEND
     //    DEBUG_PRINTK("tcp_sendmsg found no tcp connection in kprobe\n");
-    //#endif
+    // #endif
     return 0;
   }
   struct tcp_control_value_t *pctrl = get_tcp_control(pconn);
@@ -331,9 +331,9 @@ int handle_kprobe__tcp_recvmsg(
   pconn = lookup_tcp_connection(sk);
   if (!pconn) {
     // Ignore receives on sockets we haven't seen the tcp_init_sock for
-    //#if TRACE_TCP_RECEIVE
+    // #if TRACE_TCP_RECEIVE
     //    DEBUG_PRINTK("tcp_recvmsg found no tcp connection in kprobe\n");
-    //#endif
+    // #endif
     return 0;
   }
   struct tcp_control_value_t *pctrl = get_tcp_control(pconn);

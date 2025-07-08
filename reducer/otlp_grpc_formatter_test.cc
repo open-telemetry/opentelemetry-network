@@ -30,7 +30,7 @@ public:
   void write(ExportLogsServiceRequest &request) override { logs_request_to_validate_ = request; };
   void write(ExportMetricsServiceRequest &request) override { metrics_request_to_validate_ = request; };
 
-  void flush() override{};
+  void flush() override {};
 
 private:
   ExportLogsServiceRequest &logs_request_to_validate_;
@@ -60,7 +60,12 @@ protected:
 
   void validate_logs_request(ebpf_net::metrics::tcp_metrics const &tcp_metrics, TsdbFormatter::timestamp_t timestamp)
   {
-    auto request_json_str = get_request_json(logs_request_to_validate_);
+    auto request_json_opt = get_request_json(logs_request_to_validate_);
+    if (!request_json_opt.has_value()) {
+      LOG::error("Failed to get JSON from logs request");
+      FAIL();
+    }
+    auto request_json_str = request_json_opt.value();
     LOG::trace("JSON view of ExportLogsServiceRequest: {}", request_json_str);
 
     nlohmann::json request_json;
@@ -72,12 +77,12 @@ protected:
     }
 
     try {
-      for (auto const &rl : request_json.at("resourceLogs")) {
-        for (auto const &sl : rl.at("scopeLogs")) {
-          for (auto const &log : sl.at("logRecords")) {
-            EXPECT_EQ(integer_time<std::chrono::nanoseconds>(timestamp), std::stoull(std::string(log.at("timeUnixNano"))));
-            EXPECT_EQ("SEVERITY_NUMBER_INFO", log.at("severityNumber"));
-            EXPECT_EQ("INFO", log.at("severityText"));
+      for (auto const &rl : request_json.at("resource_logs")) {
+        for (auto const &sl : rl.at("scope_logs")) {
+          for (auto const &log : sl.at("log_records")) {
+            EXPECT_EQ(integer_time<std::chrono::nanoseconds>(timestamp), std::stoull(std::string(log.at("time_unix_nano"))));
+            EXPECT_EQ("SEVERITY_NUMBER_INFO", log.at("severity_number"));
+            EXPECT_EQ("INFO", log.at("severity_text"));
             double sum_srtt = double(tcp_metrics.sum_srtt) / 8 / 1'000'000; // RTTs are measured in units of 1/8 microseconds.
             std::string log_message(
                 formatter_->labels_["source.ip"] + " " + formatter_->labels_["source.workload.name"] + " " +
@@ -88,7 +93,7 @@ protected:
                 std::to_string(tcp_metrics.sum_delivered) + " " + std::to_string(tcp_metrics.sum_retrans) + " " +
                 std::to_string(tcp_metrics.syn_timeouts) + " " + std::to_string(tcp_metrics.new_sockets) + " " +
                 std::to_string(tcp_metrics.tcp_resets));
-            EXPECT_EQ(log_message, log.at("body").at("stringValue"));
+            EXPECT_EQ(log_message, log.at("body").at("string_value"));
           }
         }
       }
@@ -113,7 +118,12 @@ protected:
   void
   validate_metrics_request(std::string_view name, TsdbFormatter::value_t metric_value, TsdbFormatter::timestamp_t timestamp)
   {
-    auto request_json_str = get_request_json(metrics_request_to_validate_);
+    auto request_json_opt = get_request_json(metrics_request_to_validate_);
+    if (!request_json_opt.has_value()) {
+      LOG::error("Failed to get JSON from metrics request");
+      FAIL();
+    }
+    auto request_json_str = request_json_opt.value();
     LOG::trace("JSON view of ExportMetricsServiceRequest: {}", request_json_str);
 
     auto labels_to_validate = formatter_->labels_;
@@ -127,25 +137,25 @@ protected:
     }
 
     try {
-      for (auto const &rm : request_json.at("resourceMetrics")) {
-        for (auto const &sm : rm.at("scopeMetrics")) {
+      for (auto const &rm : request_json.at("resource_metrics")) {
+        for (auto const &sm : rm.at("scope_metrics")) {
           for (auto const &metric : sm.at("metrics")) {
             EXPECT_EQ(name, metric.at("name"));
             auto const &sum = metric.at("sum");
-            EXPECT_EQ("AGGREGATION_TEMPORALITY_DELTA", sum.at("aggregationTemporality"));
-            EXPECT_TRUE(sum.at("isMonotonic"));
-            for (auto const &data_point : sum.at("dataPoints")) {
+            EXPECT_EQ("AGGREGATION_TEMPORALITY_DELTA", sum.at("aggregation_temporality"));
+            EXPECT_TRUE(sum.at("is_monotonic"));
+            for (auto const &data_point : sum.at("data_points")) {
               std::visit(
                   overloaded_visitor{
-                      [&](u32 val) { EXPECT_EQ(val, stoul(std::string(data_point.at("asInt")))); },
-                      [&](u64 val) { EXPECT_EQ(val, stoull(std::string(data_point.at("asInt")))); },
-                      [&](double val) { EXPECT_EQ(val, data_point.at("asDouble")); }},
+                      [&](u32 val) { EXPECT_EQ(val, stoul(std::string(data_point.at("as_int")))); },
+                      [&](u64 val) { EXPECT_EQ(val, stoull(std::string(data_point.at("as_int")))); },
+                      [&](double val) { EXPECT_EQ(val, data_point.at("as_double")); }},
                   metric_value);
               EXPECT_EQ(
-                  integer_time<std::chrono::nanoseconds>(timestamp), std::stoull(std::string(data_point.at("timeUnixNano"))));
+                  integer_time<std::chrono::nanoseconds>(timestamp), std::stoull(std::string(data_point.at("time_unix_nano"))));
               for (auto const &attribute : data_point.at("attributes")) {
                 auto key = attribute.at("key");
-                auto value = attribute.at("value").at("stringValue");
+                auto value = attribute.at("value").at("string_value");
                 EXPECT_EQ(labels_to_validate.count(key), 1);
                 EXPECT_EQ(labels_to_validate.at(key), value);
                 labels_to_validate.erase(key);

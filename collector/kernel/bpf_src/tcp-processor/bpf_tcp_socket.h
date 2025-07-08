@@ -74,9 +74,9 @@ BPF_HASH(_tcp_control, struct tcp_control_key_t, struct tcp_control_value_t, TCP
 
 static struct tcp_connection_t *lookup_tcp_connection(struct sock *sk)
 {
-  //#if TRACE_TCP_CONNECTION
-  //  DEBUG_PRINTK("tcp_connections.lookup(%llx)\n", sk);
-  //#endif
+  // #if TRACE_TCP_CONNECTION
+  //   DEBUG_PRINTK("tcp_connections.lookup(%llx)\n", sk);
+  // #endif
 
   struct tcp_connection_t *pconn = _tcp_connections.lookup(&sk);
   return pconn;

@@ -68,16 +68,17 @@ namespace reducer {
 #define BEGIN_LABELS                                                                                                           \
   struct Labels {                                                                                                              \
     using label_fn_t = std::function<void(std::string_view, std::string)>;                                                     \
-    void foreach_label(label_fn_t func) { __foreach_label(_FirstLabelType(), func, *this); }                                   \
-    struct _FirstLabelType {                                                                                                   \
-    };                                                                                                                         \
+    void foreach_label(label_fn_t func)                                                                                        \
+    {                                                                                                                          \
+      __foreach_label(_FirstLabelType(), func, *this);                                                                         \
+    }                                                                                                                          \
+    struct _FirstLabelType {};                                                                                                 \
     typedef _FirstLabelType
 
 #define LABEL(LABEL_NAME)                                                                                                      \
   _LabelType_##LABEL_NAME;                                                                                                     \
   std::string LABEL_NAME;                                                                                                      \
-  struct _NextLabelType_##LABEL_NAME {                                                                                         \
-  };                                                                                                                           \
+  struct _NextLabelType_##LABEL_NAME {};                                                                                       \
   static void __foreach_label(_LabelType_##LABEL_NAME, label_fn_t func, Labels &this_struct)                                   \
   {                                                                                                                            \
     func(#LABEL_NAME, this_struct.LABEL_NAME);                                                                                 \
@@ -96,16 +97,17 @@ namespace reducer {
     using value_t = std::variant<u32, u64, double>;                                                                            \
     using metric_fn_t = std::function<void(const EbpfNetMetricInfo &, value_t)>;                                               \
                                                                                                                                \
-    void foreach_metric(metric_fn_t func) { __foreach_metric(_FirstMetricType(), func, *this); }                               \
-    struct _FirstMetricType {                                                                                                  \
-    };                                                                                                                         \
+    void foreach_metric(metric_fn_t func)                                                                                      \
+    {                                                                                                                          \
+      __foreach_metric(_FirstMetricType(), func, *this);                                                                       \
+    }                                                                                                                          \
+    struct _FirstMetricType {};                                                                                                \
     typedef _FirstMetricType
 
 #define METRIC(METRIC_INFO, METRIC_NAME)                                                                                       \
   _MetricType_##METRIC_NAME;                                                                                                   \
   value_t METRIC_NAME;                                                                                                         \
-  struct _NextMetricType_##METRIC_NAME {                                                                                       \
-  };                                                                                                                           \
+  struct _NextMetricType_##METRIC_NAME {};                                                                                     \
   static void __foreach_metric(_MetricType_##METRIC_NAME, metric_fn_t func, Metrics &this_struct)                              \
   {                                                                                                                            \
     func(METRIC_INFO, this_struct.METRIC_NAME);                                                                                \

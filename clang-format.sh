@@ -11,8 +11,8 @@ then
 fi
 
 RC=0
-CMD="${CLANG_FORMAT_VERSION} -Werror --dry-run -style=file"
-function check_file
+CMD="${CLANG_FORMAT_VERSION} -Werror -i -style=file"
+function format_file
 {
   if ! ${CMD} $1
   then
@@ -31,7 +31,7 @@ FILES=$(find ./geoip ./reducer ./test ./collector/kernel ./common ./tools \
 
 for FILE in ${FILES}
 do
-  check_file ${FILE}
+  format_file ${FILE}
 done
 
 exit ${RC}
