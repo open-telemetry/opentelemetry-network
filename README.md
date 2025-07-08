@@ -38,21 +38,21 @@ See the [Roadmap](docs/roadmap.md) for an overwiew of the project's goals.
 - [Jim Wilson](https://github.com/jmw51798), DataDog
 - [Jonathan Perry](https://github.com/yonch)
 
-For more information about the maintainer role, see the [community repository](https://github.com/open-telemetry/community/blob/main/community-membership.md#maintainer).
+For more information about the maintainer role, see the [community repository](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#maintainer).
 
 ### Approvers
 
 - [Samiur Arif](https://github.com/samiura), Sumo Logic
 - Actively seeking approvers to review pull requests
 
-For more information about the approver role, see the [community repository](https://github.com/open-telemetry/community/blob/main/community-membership.md#approver).
+For more information about the approver role, see the [community repository](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#approver).
 
 ### Triagers
 
 - [Antoine Toulme](https://github.com/atoulme), Splunk
 - Actively seeking contributors to triage issues
 
-For more information about the triager role, see the [community repository](https://github.com/open-telemetry/community/blob/main/community-membership.md#triagers).
+For more information about the triager role, see the [community repository](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#triager).
 
 ## Questions ##
 
