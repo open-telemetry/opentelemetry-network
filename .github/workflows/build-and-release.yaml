@@ -35,6 +35,9 @@ on:
         type: boolean
         default: false
 
+permissions:
+  contents: read
+
 env:
   BENV_IMAGE: docker.io/otel/opentelemetry-network-build-tools
   DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
@@ -45,6 +48,8 @@ env:
 
 jobs:
   build-and-release:
+    permissions:
+      contents: write # required for creating releases
     name: Build and release
     runs-on: ubuntu-24.04
     steps:
