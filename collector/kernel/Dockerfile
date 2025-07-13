@@ -1,7 +1,7 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
-FROM bitnami/minideb:bullseye@sha256:b78b0e11bbe13f7a1637f045cdb33e566cb5333c88877f0a99b2df34759d9343
+FROM bitnami/minideb:bullseye@sha256:a6f3a96622f1a2e0eb049e08e3aa4db29c725318c7f410a050f333e074793e88
 
 LABEL org.label-schema.name="opentelemetry-ebpf-kernel-collector"
 LABEL org.label-schema.description="OpenTelemetry eBPF kernel information collector"
