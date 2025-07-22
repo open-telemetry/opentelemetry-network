@@ -42,6 +42,10 @@ jobs:
 
     - name: Runs format checker
       run: |
+        # disable man page updates for faster apt install
+        sudo debconf-set man-db/auto-update false || true
+        sudo rm /var/lib/man-db/auto-update || true
+
         sudo apt update
         sudo apt install -y --no-install-recommends clang-format
         cd ${{ github.workspace }}
