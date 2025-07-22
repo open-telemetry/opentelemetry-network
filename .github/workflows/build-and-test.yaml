@@ -71,13 +71,35 @@ jobs:
         echo "github.workspace = ${{ github.workspace }}"
         docker pull $BENV_IMAGE
         git submodule update  --init --recursive
+        
+        # Start local registry for the build process
+        docker run -d -p 5000:5000 --name registry docker.io/library/registry:2
+        
+        # Build reducer with registry access
         docker run -t \
         --rm \
         --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
-        --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/root/src,readonly" \
+        --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/root/src" \
         --env EBPF_NET_SRC_ROOT=/root/src \
+        --network host \
         $BENV_IMAGE \
-        ./build.sh reducer
+        ./build.sh reducer-docker-registry
+        
+        # Export reducer container
+        mkdir -p container-exports
+        docker save localhost:5000/reducer > container-exports/reducer.tar
+        
+        # Clean up registry
+        docker stop registry
+        docker rm registry
+
+    - name: Upload reducer container
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      with:
+        name: reducer-container
+        path: container-exports/reducer.tar
+        if-no-files-found: error
+        retention-days: 1
 
   build-kernel-collector:
     name: build-kernel-collector
@@ -96,16 +118,38 @@ jobs:
         echo "github.workspace = ${{ github.workspace }}"
         docker pull $BENV_IMAGE
         git submodule update  --init --recursive
+        
+        # Start local registry for the build process
+        docker run -d -p 5000:5000 --name registry docker.io/library/registry:2
+        
+        # Build kernel-collector with registry access
         docker run -t \
         --rm \
         --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
-        --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/root/src,readonly" \
+        --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/root/src" \
         --env EBPF_NET_SRC_ROOT=/root/src \
+        --network host \
         $BENV_IMAGE \
-        ./build.sh kernel-collector
+        ./build.sh kernel-collector-docker-registry
+        
+        # Export kernel-collector container
+        mkdir -p container-exports
+        docker save localhost:5000/kernel-collector > container-exports/kernel-collector.tar
+        
+        # Clean up registry
+        docker stop registry
+        docker rm registry
 
-  build-test-containers:
-    name: build-test-containers
+    - name: Upload kernel collector container
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      with:
+        name: kernel-collector-container
+        path: container-exports/kernel-collector.tar
+        if-no-files-found: error
+        retention-days: 1
+
+  build-kernel-collector-test:
+    name: build-kernel-collector-test
     runs-on: ubuntu-24.04
     needs: [clang-format-check]
     steps:
@@ -114,7 +158,7 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: build test containers
+    - name: build kernel-collector-test container
       env:
         PASS: ${{ secrets.DOCKER_PASSWORD }}
       run: |
@@ -125,7 +169,7 @@ jobs:
         # Start local registry for the build process
         docker run -d -p 5000:5000 --name registry docker.io/library/registry:2
         
-        # Build containers with registry access
+        # Build kernel-collector-test with registry access
         docker run -t \
         --rm \
         --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
@@ -133,23 +177,21 @@ jobs:
         --env EBPF_NET_SRC_ROOT=/root/src \
         --network host \
         $BENV_IMAGE \
-        ./build.sh -j 3 reducer-docker-registry kernel-collector-docker-registry kernel-collector-test-docker-registry
+        ./build.sh kernel-collector-test-docker-registry
         
-        # Export containers as tar files
+        # Export kernel-collector-test container
         mkdir -p container-exports
-        docker save localhost:5000/reducer > container-exports/reducer.tar
-        docker save localhost:5000/kernel-collector > container-exports/kernel-collector.tar
         docker save localhost:5000/kernel-collector-test > container-exports/kernel-collector-test.tar
         
         # Clean up registry
         docker stop registry
         docker rm registry
 
-    - name: Upload container artifacts
+    - name: Upload kernel-collector-test container
       uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
       with:
-        name: test-containers
-        path: container-exports/
+        name: kernel-collector-test-container
+        path: container-exports/kernel-collector-test.tar
         if-no-files-found: error
         retention-days: 1
 
@@ -271,7 +313,7 @@ jobs:
 
   run-kernel-header-tests:
     name: run-kernel-header-tests
-    needs: [build-test-containers]
+    needs: [build-kernel-collector]
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
@@ -328,11 +370,11 @@ jobs:
           github:
             - '.github/**'
 
-    - name: Download test container artifacts
+    - name: Download kernel-collector container
       if: steps.changes.outputs.kernel == 'true' || steps.changes.outputs.github == 'true'
       uses: actions/download-artifact@v4
       with:
-        name: test-containers
+        name: kernel-collector-container
         path: ./container-exports
 
     - name: Run kernel header tests on ${{ matrix.description }}
@@ -443,7 +485,7 @@ jobs:
 
   run-kernel-collector-tests:
     name: run-kernel-collector-tests
-    needs: [build-test-containers]
+    needs: [build-reducer, build-kernel-collector, build-kernel-collector-test]
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
@@ -500,11 +542,18 @@ jobs:
           github:
             - '.github/**'
 
-    - name: Download test container artifacts
+    - name: Download reducer container
       if: steps.changes.outputs.kernel == 'true' || steps.changes.outputs.github == 'true'
       uses: actions/download-artifact@v4
       with:
-        name: test-containers
+        name: reducer-container
+        path: ./container-exports
+
+    - name: Download kernel-collector-test container
+      if: steps.changes.outputs.kernel == 'true' || steps.changes.outputs.github == 'true'
+      uses: actions/download-artifact@v4
+      with:
+        name: kernel-collector-test-container
         path: ./container-exports
 
     - name: Run kernel collector tests on ${{ matrix.description }}
