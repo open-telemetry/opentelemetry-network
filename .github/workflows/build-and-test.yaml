@@ -426,7 +426,7 @@ jobs:
             --volume /var/cache:/hostfs/cache \
             --volume /var/run/docker.sock:/var/run/docker.sock \
             --entrypoint "/srv/test-entrypoint.sh" \
-            kernel-collector --log-console --debug)
+            localhost:5000/kernel-collector --log-console --debug)
           
           timeout 60 docker start -i $container_id || echo "Header fetch test completed"
           
@@ -446,7 +446,7 @@ jobs:
             --volume /var/cache:/hostfs/cache \
             --volume /var/run/docker.sock:/var/run/docker.sock \
             --entrypoint "/srv/test-entrypoint.sh" \
-            kernel-collector --log-console --debug)
+            localhost:5000/kernel-collector --log-console --debug)
           
           timeout 60 docker start -i $container_id || echo "Cached headers test completed"
           
@@ -472,7 +472,7 @@ jobs:
             --volume /var/cache:/hostfs/cache \
             --volume /var/run/docker.sock:/var/run/docker.sock \
             --entrypoint "/srv/test-entrypoint.sh" \
-            kernel-collector --log-console --debug)
+            localhost:5000/kernel-collector --log-console --debug)
           
           timeout 60 docker start -i $container_id || echo "Pre-installed headers test completed"
           
@@ -584,7 +584,7 @@ jobs:
           # Start reducer
           docker run --detach --rm \
             --network=host \
-            reducer \
+            localhost:5000/reducer \
             --port 8000 \
             --prom 0.0.0.0:7000 \
             --partitions-per-shard 1 \
@@ -610,7 +610,7 @@ jobs:
             --env EBPF_NET_EXPORT_BPF_SRC_FILE="/hostfs/data/bpf.src.c" \
             --env EBPF_NET_MINIDUMP_DIR="/hostfs/data/minidump" \
             --volume "$(pwd)/data:/hostfs/data" \
-            kernel-collector-test \
+            localhost:5000/kernel-collector-test \
             --log-console)
           
           docker start -i $container_id
