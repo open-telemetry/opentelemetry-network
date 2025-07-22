@@ -43,8 +43,8 @@ jobs:
     - name: Runs format checker
       run: |
         # disable man page updates for faster apt install
-        sudo debconf-set man-db/auto-update false || true
-        sudo rm /var/lib/man-db/auto-update || true
+        echo "set man-db/auto-update false" | sudo debconf-communicate || true
+        sudo dpkg-reconfigure man-db
 
         sudo apt update
         sudo apt install -y --no-install-recommends clang-format
