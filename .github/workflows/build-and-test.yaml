@@ -43,7 +43,7 @@ jobs:
     - name: Runs format checker
       run: |
         sudo apt update
-        sudo apt install -y clang-format
+        sudo apt install -y --no-install-recommends clang-format
         cd ${{ github.workspace }}
         ./.github/workflows/scripts/check-clang-format.sh
 
@@ -142,7 +142,7 @@ jobs:
         docker rm registry
 
     - name: Upload container artifacts
-      uses: actions/upload-artifact@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
       with:
         name: test-containers
         path: container-exports/
@@ -326,7 +326,7 @@ jobs:
 
     - name: Download test container artifacts
       if: steps.changes.outputs.kernel == 'true' || steps.changes.outputs.github == 'true'
-      uses: actions/download-artifact@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      uses: actions/download-artifact@v4
       with:
         name: test-containers
         path: ./container-exports
@@ -498,7 +498,7 @@ jobs:
 
     - name: Download test container artifacts
       if: steps.changes.outputs.kernel == 'true' || steps.changes.outputs.github == 'true'
-      uses: actions/download-artifact@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      uses: actions/download-artifact@v4
       with:
         name: test-containers
         path: ./container-exports
