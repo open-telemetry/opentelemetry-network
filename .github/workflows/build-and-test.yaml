@@ -650,8 +650,12 @@ jobs:
             --log-console)
           
           echo "Starting kernel collector test..."
-          docker start -i $container_id
+          docker start -a $container_id
+
+          set +e  # disable exit on error
+          docker wait $container_id
           test_exit_code=$?
+          set -e  # re-enable exit on error
           
           # Stop reducer
           docker stop $reducer_id || true
