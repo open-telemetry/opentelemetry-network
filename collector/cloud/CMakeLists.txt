@@ -38,7 +38,7 @@ target_link_libraries(
     spdlog
     static-executable
     "-Wl,--no-as-needed"
-    PkgConfig::protobuf 
+    protobuf::libprotobuf
     ZLIB::ZLIB
     "-Wl,--as-needed"
 )
