@@ -85,9 +85,9 @@ Transform Transformer::get_xform(
     llvm::Value *dst_pos_val = llvm::ConstantInt::get(U32T, dst_pos[i], false);
 
     /* Pointer to source variable */
-    llvm::Value *src_char_ptr = builder_.CreateGEP(src_buf_ptr, src_pos_val, "src_charp");
+    llvm::Value *src_char_ptr = builder_.CreateGEP(llvm::Type::getInt8Ty(context_), src_buf_ptr, src_pos_val, "src_charp");
     /* Pointer to dst variable */
-    llvm::Value *dst_char_ptr = builder_.CreateGEP(dst_buf_ptr, dst_pos_val, "dst_charp");
+    llvm::Value *dst_char_ptr = builder_.CreateGEP(llvm::Type::getInt8Ty(context_), dst_buf_ptr, dst_pos_val, "dst_charp");
 
     /* decide which type the value is */
     llvm::Type *copied_type;
@@ -154,13 +154,13 @@ Transform Transformer::get_xform(
         llvm::Value *dst_pos_val = llvm::ConstantInt::get(U32T, blob.dst_pos, false);
 
         /* Char pointer to dst variable */
-        llvm::Value *dst_char_ptr = builder_.CreateGEP(dst_buf_ptr, dst_pos_val, "offset_charp");
+        llvm::Value *dst_char_ptr = builder_.CreateGEP(llvm::Type::getInt8Ty(context_), dst_buf_ptr, dst_pos_val, "offset_charp");
 
         /* cast pointer to correct type */
         llvm::Value *dst_ptr = builder_.CreatePointerCast(dst_char_ptr, S8PT->getPointerTo(), "buf_ptr");
 
         /* compute &src[offset] */
-        llvm::Value *src_blob_ptr = builder_.CreateGEP(src_buf_ptr, offset, "src_blob_ptr");
+        llvm::Value *src_blob_ptr = builder_.CreateGEP(llvm::Type::getInt8Ty(context_), src_buf_ptr, offset, "src_blob_ptr");
 
         /* Save to destination */
         llvm::StoreInst *stored = builder_.CreateStore(src_blob_ptr, dst_ptr);
@@ -173,7 +173,7 @@ Transform Transformer::get_xform(
         llvm::Value *src_pos_val = llvm::ConstantInt::get(U32T, len_pos, false);
 
         /* Pointer to source variable */
-        llvm::Value *src_char_ptr = builder_.CreateGEP(src_buf_ptr, src_pos_val, "total_len_charp");
+        llvm::Value *src_char_ptr = builder_.CreateGEP(llvm::Type::getInt8Ty(context_), src_buf_ptr, src_pos_val, "total_len_charp");
 
         /* cast pointers to correct type */
         llvm::Value *src_ptr = builder_.CreatePointerCast(src_char_ptr, U16T->getPointerTo(), "total_len_ptr");
@@ -188,7 +188,7 @@ Transform Transformer::get_xform(
         llvm::Value *dst_pos_val = llvm::ConstantInt::get(U32T, blob.dst_pos + sizeof(uint16_t), false);
 
         /* Char pointer to dst variable */
-        llvm::Value *dst_char_ptr = builder_.CreateGEP(dst_buf_ptr, dst_pos_val, "last_len_charp");
+        llvm::Value *dst_char_ptr = builder_.CreateGEP(llvm::Type::getInt8Ty(context_), dst_buf_ptr, dst_pos_val, "last_len_charp");
 
         /* cast pointer to correct type */
         llvm::Value *dst_ptr = builder_.CreatePointerCast(dst_char_ptr, U16T->getPointerTo(), "last_len_ptr");
@@ -207,7 +207,7 @@ Transform Transformer::get_xform(
         llvm::Value *src_pos_val = llvm::ConstantInt::get(U32T, blob.src_pos, false);
 
         /* Pointer to source variable */
-        llvm::Value *src_char_ptr = builder_.CreateGEP(src_buf_ptr, src_pos_val, "field_len_charp");
+        llvm::Value *src_char_ptr = builder_.CreateGEP(llvm::Type::getInt8Ty(context_), src_buf_ptr, src_pos_val, "field_len_charp");
 
         /* cast pointers to correct type */
         llvm::Value *src_ptr = builder_.CreatePointerCast(src_char_ptr, U16T->getPointerTo(), "field_len_ptr");
@@ -229,7 +229,7 @@ Transform Transformer::get_xform(
       llvm::Value *src_pos_val = llvm::ConstantInt::get(U32T, len_pos, false);
 
       /* Pointer to source variable */
-      llvm::Value *src_char_ptr = builder_.CreateGEP(src_buf_ptr, src_pos_val, "total_len_charp");
+      llvm::Value *src_char_ptr = builder_.CreateGEP(llvm::Type::getInt8Ty(context_), src_buf_ptr, src_pos_val, "total_len_charp");
 
       /* cast pointers to correct type */
       llvm::Value *src_ptr = builder_.CreatePointerCast(src_char_ptr, U16T->getPointerTo(), "total_len_ptr");
