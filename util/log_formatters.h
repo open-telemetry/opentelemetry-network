@@ -69,23 +69,6 @@ template <typename Out> Out &operator<<(Out &&out, std::chrono::seconds value)
   return out;
 }
 
-template <typename Out> Out &operator<<(Out &&out, std::chrono::milliseconds value)
-{
-  out << value.count() << "ms";
-  return out;
-}
-
-template <typename Out> Out &operator<<(Out &&out, std::chrono::microseconds value)
-{
-  out << value.count() << "\u00B5s";
-  return out;
-}
-
-template <typename Out> Out &operator<<(Out &&out, std::chrono::nanoseconds value)
-{
-  out << value.count() << "ns";
-  return out;
-}
 
 } // namespace std
 
