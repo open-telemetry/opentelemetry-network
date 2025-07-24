@@ -62,6 +62,17 @@ private:
   T const &what_;
 };
 
+// Specialization for std::optional to handle logging within waived_t
+template <typename Out, typename T>
+Out&& operator<<(Out&& out, const std::optional<T>& opt) {
+    if (opt) {
+        out << *opt;
+    } else {
+        out << "(empty)";
+    }
+    return std::forward<Out>(out);
+}
+
 } // namespace logger::impl
 
 /**
@@ -404,13 +415,15 @@ template <typename Fn> constexpr auto log_call(Fn &&callable)
                 decltype(__VA_ARGS__) const &,                                                                                 \
                 decltype(__VA_ARGS__)> { return __VA_ARGS__; })
 
-// Specialization for std::optional to handle logging
+// Global operator for std::optional to handle ADL-based lookup
+namespace std {
 template <typename Out, typename T>
-Out& operator<<(Out&& out, const std::optional<T>& opt) {
+Out&& operator<<(Out&& out, const std::optional<T>& opt) {
     if (opt) {
         out << *opt;
     } else {
         out << "(empty)";
     }
-    return out;
+    return std::forward<Out>(out);
+}
 }
