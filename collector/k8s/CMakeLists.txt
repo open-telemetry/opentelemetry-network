@@ -106,8 +106,8 @@ target_link_libraries(
     system_ops
     spdlog
     static-executable
-    gRPC::grpc++_unsecure
-    gRPC::grpc_unsecure
+    PkgConfig::grpc++_unsecure
+    PkgConfig::grpc_unsecure
     dl
 )
 

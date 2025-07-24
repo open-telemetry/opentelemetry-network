@@ -150,7 +150,7 @@ target_link_libraries(
   PUBLIC
     libuv-interface
     element_queue_writer
-    curl-static
+    CURL::libcurl
 )
 
 add_library(

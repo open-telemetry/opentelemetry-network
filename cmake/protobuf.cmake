@@ -3,13 +3,28 @@
 
 include_guard()
 
-find_package(Protobuf CONFIG REQUIRED)
-message(STATUS "Found Protobuf ${Protobuf_VERSION}")
 
-find_package(gRPC CONFIG REQUIRED)
-message(STATUS "Found gRPC ${gRPC_VERSION}")
 
-get_target_property(GRPC_CPP_PLUGIN_LOCATION gRPC::grpc_cpp_plugin LOCATION)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(protobuf REQUIRED IMPORTED_TARGET GLOBAL protobuf)
+pkg_check_modules(grpc_unsecure REQUIRED IMPORTED_TARGET GLOBAL grpc_unsecure)
+pkg_check_modules(grpc++ REQUIRED IMPORTED_TARGET GLOBAL grpc++)
+pkg_check_modules(grpc++_unsecure REQUIRED IMPORTED_TARGET GLOBAL grpc++_unsecure)
+
+find_package(ZLIB REQUIRED)
+target_link_libraries(PkgConfig::protobuf INTERFACE ZLIB::ZLIB)
+
+# Add protobuf as a dependency to grpc++ to ensure proper linking
+target_link_libraries(PkgConfig::grpc_unsecure INTERFACE PkgConfig::protobuf)
+target_link_libraries(PkgConfig::grpc++ INTERFACE PkgConfig::protobuf)
+target_link_libraries(PkgConfig::grpc++_unsecure INTERFACE PkgConfig::protobuf)
+
+find_program(GRPC_CPP_PLUGIN_LOCATION grpc_cpp_plugin REQUIRED)
+if(GRPC_CPP_PLUGIN_LOCATION)
+    message(STATUS "Found grpc_cpp_plugin: ${GRPC_CPP_PLUGIN_LOCATION}")
+else()
+    message(FATAL_ERROR "grpc_cpp_plugin not found")
+endif()
 
 set(GO_PROTOBUF_ANNOTATIONS_DIR /usr/local/go/src/github.com/grpc-ecosystem/grpc-gateway)
 set(GO_PROTOBUF_GOOGLEAPIS_DIR /usr/local/go/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis)
@@ -125,8 +140,8 @@ function (build_protobuf NAME)
 
     target_link_libraries(
       "${CPP_TARGET}"
-        protobuf
-        grpc++
+        PkgConfig::protobuf
+        PkgConfig::grpc++
     )
 
     target_include_directories(

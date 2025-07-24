@@ -80,7 +80,7 @@ protected:
       for (auto const &rl : request_json.at("resource_logs")) {
         for (auto const &sl : rl.at("scope_logs")) {
           for (auto const &log : sl.at("log_records")) {
-            EXPECT_EQ(integer_time<std::chrono::nanoseconds>(timestamp), std::stoull(std::string(log.at("time_unix_nano"))));
+            EXPECT_EQ((unsigned long long)(integer_time<std::chrono::nanoseconds>(timestamp)), std::stoull(std::string(log.at("time_unix_nano"))));
             EXPECT_EQ("SEVERITY_NUMBER_INFO", log.at("severity_number"));
             EXPECT_EQ("INFO", log.at("severity_text"));
             double sum_srtt = double(tcp_metrics.sum_srtt) / 8 / 1'000'000; // RTTs are measured in units of 1/8 microseconds.
@@ -152,15 +152,15 @@ protected:
                       [&](double val) { EXPECT_EQ(val, data_point.at("as_double")); }},
                   metric_value);
               EXPECT_EQ(
-                  integer_time<std::chrono::nanoseconds>(timestamp), std::stoull(std::string(data_point.at("time_unix_nano"))));
+                  (unsigned)integer_time<std::chrono::nanoseconds>(timestamp), std::stoull(std::string(data_point.at("time_unix_nano"))));
               for (auto const &attribute : data_point.at("attributes")) {
                 auto key = attribute.at("key");
                 auto value = attribute.at("value").at("string_value");
-                EXPECT_EQ(labels_to_validate.count(key), 1);
+                EXPECT_EQ(labels_to_validate.count(key), 1ull);
                 EXPECT_EQ(labels_to_validate.at(key), value);
                 labels_to_validate.erase(key);
               }
-              EXPECT_EQ(labels_to_validate.size(), 0);
+              EXPECT_EQ(labels_to_validate.size(), 0ull);
             }
           }
         }

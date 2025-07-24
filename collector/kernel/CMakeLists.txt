@@ -92,7 +92,7 @@ target_include_directories(
   SYSTEM
   BEFORE
   PUBLIC
-    /root/install/include/bcc/compat/
+  ${CMAKE_INSTALL_PREFIX}/include/bcc/compat/
 )
 target_link_libraries(
   agentlib

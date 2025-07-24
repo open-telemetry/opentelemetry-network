@@ -46,7 +46,7 @@ TEST(KernelSymbolsTest, ReadStream)
   EXPECT_TRUE(ks.contains("ctnetlink_dump_tuples_ip"));
   EXPECT_TRUE(ks.contains("iso_stream_find"));
 
-  EXPECT_FALSE(ks.contains(UNKNOWN_SYMBOL));
+  EXPECT_FALSE(ks.contains(UNKNOWN_SYMBOL.data()));
 }
 
 TEST(KernelSymbolsTest, ReadProcKallsyms)
@@ -73,7 +73,7 @@ TEST(KernelSymbolsTest, ReadProcKallsyms)
   EXPECT_TRUE(ks.contains("__set_task_comm"));
   EXPECT_TRUE(ks.contains("get_pid_task"));
 
-  EXPECT_FALSE(ks.contains(UNKNOWN_SYMBOL));
+  EXPECT_FALSE(ks.contains(UNKNOWN_SYMBOL.data()));
 }
 
 TEST(KernelSymbolsTest, NoSuchFile)

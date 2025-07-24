@@ -77,8 +77,8 @@ protected:
       exit(1);
     }
     EXPECT_EQ(request.ByteSizeLong(), client_.bytes_sent() - prev_bytes_sent);
-    EXPECT_EQ(1, client_.data_points_sent() - prev_data_points_sent);
-    EXPECT_EQ(1, client_.requests_sent() - prev_requests_sent);
+    EXPECT_EQ(1ull, client_.data_points_sent() - prev_data_points_sent);
+    EXPECT_EQ(1ull, client_.requests_sent() - prev_requests_sent);
   }
 
   void send_async(ExportLogsServiceRequest const &request) { send_async(logs_client_, request); }
@@ -94,7 +94,7 @@ protected:
       usleep(100'000);
     }
     ASSERT_TRUE(client_.async_responses_.empty());
-    ASSERT_EQ(0, client_.unknown_response_tags());
+    ASSERT_EQ(0ull, client_.unknown_response_tags());
   }
 
   template <typename TService, typename TReq, typename TResp>
@@ -143,21 +143,21 @@ TEST_F(OtlpGrpcClientTest, SyncLogs)
   ExportLogsServiceRequest request = create_logs_request();
   auto status = logs_client_.Export(request);
   EXPECT_TRUE(status.ok()) << "RPC failed: " << status.error_code() << ": " << log_waive(status.error_message());
-  EXPECT_EQ(1, server_.get_num_log_requests_received());
+  EXPECT_EQ(1ul, server_.get_num_log_requests_received());
 }
 
 TEST_F(OtlpGrpcClientTest, AsyncLogs)
 {
   send_async(create_logs_request());
   process_async_responses(logs_client_);
-  EXPECT_EQ(1, server_.get_num_log_requests_received());
-  validate_async_response_failures(logs_client_, 0, 0, 0);
+  EXPECT_EQ(1ul, server_.get_num_log_requests_received());
+  validate_async_response_failures(logs_client_, 0ull, 0ull, 0ull);
   validate_log_requests();
 
   send_async(create_logs_request());
   process_async_responses(logs_client_);
-  EXPECT_EQ(2, server_.get_num_log_requests_received());
-  validate_async_response_failures(logs_client_, 0, 0, 0);
+  EXPECT_EQ(2ul, server_.get_num_log_requests_received());
+  validate_async_response_failures(logs_client_, 0ull, 0ull, 0ull);
   validate_log_requests();
 
   server_.stop();
@@ -175,20 +175,20 @@ TEST_F(OtlpGrpcClientTest, SyncMetrics)
   ExportMetricsServiceRequest request = create_metrics_request();
   auto status = metrics_client_.Export(request);
   EXPECT_TRUE(status.ok()) << "RPC failed: " << status.error_code() << ": " << log_waive(status.error_message());
-  EXPECT_EQ(1, server_.get_num_metric_requests_received());
+  EXPECT_EQ(1ul, server_.get_num_metric_requests_received());
 }
 
 TEST_F(OtlpGrpcClientTest, AsyncMetrics)
 {
   send_async(create_metrics_request());
   process_async_responses(metrics_client_);
-  EXPECT_EQ(1, server_.get_num_metric_requests_received());
+  EXPECT_EQ(1ul, server_.get_num_metric_requests_received());
   validate_async_response_failures(metrics_client_, 0, 0, 0);
   validate_metric_requests();
 
   send_async(create_metrics_request());
   process_async_responses(metrics_client_);
-  EXPECT_EQ(2, server_.get_num_metric_requests_received());
+  EXPECT_EQ(2ul, server_.get_num_metric_requests_received());
   validate_async_response_failures(metrics_client_, 0, 0, 0);
   validate_metric_requests();
 
