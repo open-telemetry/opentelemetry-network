@@ -53,7 +53,7 @@ public:
     if (rate_limited()) {
       return;
     }
-    spdlog::trace(format, args...);
+    spdlog::trace(fmt::runtime(std::forward<Format>(format)), std::forward<Args>(args)...);
 
   }
 
@@ -97,7 +97,7 @@ public:
     if (rate_limited()) {
       return;
     }
-    spdlog::debug(format, args...);
+    spdlog::debug(fmt::runtime(std::forward<Format>(format)), std::forward<Args>(args)...);
   }
 
   /**
@@ -142,7 +142,7 @@ public:
     if (rate_limited()) {
       return;
     }
-    spdlog::info(format, args...);
+    spdlog::info(fmt::runtime(std::forward<Format>(format)), std::forward<Args>(args)...);
   }
 
   template <typename Format, typename... Args> static void inline warn(Format &&format, Args &&... args)
@@ -151,7 +151,7 @@ public:
     if (rate_limited()) {
       return;
     }
-    spdlog::warn(format, args...);
+    spdlog::warn(fmt::runtime(std::forward<Format>(format)), std::forward<Args>(args)...);
   }
 
   template <typename Format, typename... Args> static void inline error(Format &&format, Args &&... args)
@@ -160,7 +160,7 @@ public:
     if (rate_limited()) {
       return;
     }
-    spdlog::error(format, args...);
+    spdlog::error(fmt::runtime(std::forward<Format>(format)), std::forward<Args>(args)...);
   }
 
   template <typename Format, typename... Args> static void inline critical(Format &&format, Args &&... args)
@@ -169,7 +169,7 @@ public:
     if (rate_limited()) {
       return;
     }
-    spdlog::critical(format, args...);
+    spdlog::critical(fmt::runtime(std::forward<Format>(format)), std::forward<Args>(args)...);
   }
 
 private:
