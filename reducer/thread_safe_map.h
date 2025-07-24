@@ -71,7 +71,10 @@ private:
 
   // Returns the bucket for the given key.
   Bucket *get_bucket(const Key &key);
-  const Bucket *get_bucket(const Key &key) const { return const_cast<ThreadSafeMap<Key, Value> *>(this)->get_bucket(key); }
+  const Bucket *get_bucket(const Key &key) const
+  {
+    return const_cast<ThreadSafeMap<Key, Value> *>(this)->get_bucket(key);
+  }
 
   // 256 ought to be enough for anybody.
   static const std::size_t kDefaultBucketCount = 256;

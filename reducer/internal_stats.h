@@ -68,10 +68,7 @@ namespace reducer {
 #define BEGIN_LABELS                                                                                                           \
   struct Labels {                                                                                                              \
     using label_fn_t = std::function<void(std::string_view, std::string)>;                                                     \
-    void foreach_label(label_fn_t func)                                                                                        \
-    {                                                                                                                          \
-      __foreach_label(_FirstLabelType(), func, *this);                                                                         \
-    }                                                                                                                          \
+    void foreach_label(label_fn_t func) { __foreach_label(_FirstLabelType(), func, *this); }                                   \
     struct _FirstLabelType {};                                                                                                 \
     typedef _FirstLabelType
 
@@ -97,10 +94,7 @@ namespace reducer {
     using value_t = std::variant<u32, u64, double>;                                                                            \
     using metric_fn_t = std::function<void(const EbpfNetMetricInfo &, value_t)>;                                               \
                                                                                                                                \
-    void foreach_metric(metric_fn_t func)                                                                                      \
-    {                                                                                                                          \
-      __foreach_metric(_FirstMetricType(), func, *this);                                                                       \
-    }                                                                                                                          \
+    void foreach_metric(metric_fn_t func) { __foreach_metric(_FirstMetricType(), func, *this); }                               \
     struct _FirstMetricType {};                                                                                                \
     typedef _FirstMetricType
 

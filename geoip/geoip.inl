@@ -86,14 +86,8 @@ template <std::size_t N> struct data_type<short_string<N>> {
 #define REGISTER_GEOIP_DATA_TYPE(T, Type, Member)                                                                              \
   template <> struct data_type<T> {                                                                                            \
     using type = T;                                                                                                            \
-    static bool same(MMDB_entry_data_s const &data)                                                                            \
-    {                                                                                                                          \
-      return data.type == Type;                                                                                                \
-    }                                                                                                                          \
-    static T const &get(MMDB_entry_data_s const &data)                                                                         \
-    {                                                                                                                          \
-      return data.Member;                                                                                                      \
-    }                                                                                                                          \
+    static bool same(MMDB_entry_data_s const &data) { return data.type == Type; }                                              \
+    static T const &get(MMDB_entry_data_s const &data) { return data.Member; }                                                 \
   }
 
 REGISTER_GEOIP_DATA_TYPE(bool, MMDB_DATA_TYPE_BOOLEAN, boolean);

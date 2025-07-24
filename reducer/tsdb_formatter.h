@@ -56,7 +56,7 @@ public:
   virtual ~TsdbFormatter() {}
 
   // Some formatters may buffer metrics that need to be flushed periodically and before being destructed.
-  virtual void flush() {};
+  virtual void flush(){};
 
   // Assigns the aggregation name (e.g. az_az, role_az, etc.)
   void set_aggregation(std::string_view aggregation);
@@ -128,7 +128,7 @@ protected:
       labels_t labels,
       bool labels_changed,
       timestamp_t timestamp,
-      bool timestamp_changed) {};
+      bool timestamp_changed){};
 
 private:
   std::string aggregation_;

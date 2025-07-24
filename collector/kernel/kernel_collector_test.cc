@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <channel/test_channel.h>
-#include <spdlog/fmt/chrono.h>
 #include <collector/kernel/cgroup_handler.h>
 #include <collector/kernel/kernel_collector.h>
 #include <common/host_info.h>
@@ -13,6 +12,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <jitbuf/jb.h>
+#include <spdlog/fmt/chrono.h>
 #include <util/aws_instance_metadata.h>
 #include <util/boot_time.h>
 #include <util/code_timing.h>
