@@ -18,3 +18,13 @@ std::ostream &operator<<(std::ostream &out, google::protobuf::Message const &mes
 
   return out;
 }
+
+template <typename T>
+struct fmt::formatter<T, std::enable_if_t<std::is_base_of_v<google::protobuf::Message, T>, char>> : fmt::formatter<std::string> {
+  template <typename FormatContext>
+  auto format(const T& message, FormatContext& ctx) {
+    std::ostringstream oss;
+    oss << message;
+    return fmt::formatter<std::string>::format(oss.str(), ctx);
+  }
+};
