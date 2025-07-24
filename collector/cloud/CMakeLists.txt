@@ -37,6 +37,10 @@ target_link_libraries(
     aws_instance_metadata
     spdlog
     static-executable
+    "-Wl,--no-as-needed"
+    PkgConfig::protobuf 
+    ZLIB::ZLIB
+    "-Wl,--as-needed"
 )
 
 set_target_properties(
