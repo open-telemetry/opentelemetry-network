@@ -102,18 +102,18 @@ jobs:
           mkdir -p $GITHUB_WORKSPACE/out
           docker run -t --rm \
             --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
-            --mount "type=bind,source=$GITHUB_WORKSPACE/src,destination=/root/src,readonly" \
-            --mount "type=bind,source=$GITHUB_WORKSPACE/out,destination=/root/out" \
-            --env EBPF_NET_SRC_ROOT=/root/src \
+            --mount "type=bind,source=$GITHUB_WORKSPACE/src,destination=/home/user/src,readonly" \
+            --mount "type=bind,source=$GITHUB_WORKSPACE/out,destination=/home/user/out" \
+            --env EBPF_NET_SRC_ROOT=/home/user/src \
             $BENV_IMAGE \
             ./build.sh pipeline-docker
       - name: Build packages
         run: |
           docker run -t --rm \
-            --mount "type=bind,source=$GITHUB_WORKSPACE/src,destination=/root/src,readonly" \
-            --mount "type=bind,source=$GITHUB_WORKSPACE/out,destination=/root/out" \
-            --env EBPF_NET_SRC_ROOT=/root/src \
-            --workdir /root/out \
+            --mount "type=bind,source=$GITHUB_WORKSPACE/src,destination=/home/user/src,readonly" \
+            --mount "type=bind,source=$GITHUB_WORKSPACE/out,destination=/home/user/out" \
+            --env EBPF_NET_SRC_ROOT=/home/user/src \
+            --workdir /home/user/out \
             $BENV_IMAGE \
             cpack -G 'RPM;DEB'
       - name: Upload packages to GitHub Action artifacts
