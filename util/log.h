@@ -8,7 +8,6 @@
 #include <spdlog/cfg/env.h>
 #include <spdlog/fmt/fmt.h>
 #include <spdlog/fmt/ostr.h>
-#include <spdlog/fmt/chrono.h>
 #include <spdlog/spdlog.h>
 
 #include <atomic>

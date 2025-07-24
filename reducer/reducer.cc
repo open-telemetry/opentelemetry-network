@@ -31,6 +31,7 @@
 #include <util/uv_helpers.h>
 
 #include <spdlog/spdlog.h>
+#include <spdlog/fmt/chrono.h>
 
 #include <ctime>
 #include <filesystem>
