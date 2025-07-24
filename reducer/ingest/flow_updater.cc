@@ -144,7 +144,7 @@ void FlowUpdater::put_handles()
 
   if (flow_handle_.valid() && flow_handle_.loc() == flow.loc()) {
     // unchanged
-    return flow;
+    return flow_handle_.access(*local_index());
   }
 
   if (ordered) {
@@ -246,7 +246,7 @@ void FlowUpdater::put_handles()
   flow_handle_.put(*local_index());
   flow_handle_ = flow.get().to_handle();
 
-  return flow;
+  return flow_handle_.access(*local_index());
 }
 
 ////////////////////////////////////////////////////////////////////////////////
