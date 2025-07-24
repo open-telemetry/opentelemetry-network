@@ -116,11 +116,13 @@ function (build_protobuf NAME)
   )
 
   add_custom_command(
-    TARGET
-      "${TARGET}"
+    OUTPUT
+      ${GEN_FILES_CPP}
     COMMAND
       protoc
         ${PROTOBUF_ARGS}
+    DEPENDS
+      "${CMAKE_CURRENT_SOURCE_DIR}/${NAME}.proto"
   )
 
   if (ARG_CPP)
