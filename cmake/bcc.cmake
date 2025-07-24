@@ -21,6 +21,7 @@ set(
     clangAST
     clangLex
     clangBasic
+    clangSupport
 )
 
 # find the required clang libraries
@@ -90,6 +91,8 @@ set(
     coroutines
     bpfasmparser
     bpfdisassembler
+    windowsdriver
+    frontendhlsl
 )
 llvm_map_components_to_libnames(BCC_LLVM_LIBS ${BCC_LLVM_LIBNAMES})
 llvm_expand_dependencies(BCC_LLVM_LIBS_EXPANDED ${BCC_LLVM_LIBS})
