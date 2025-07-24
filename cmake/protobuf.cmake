@@ -5,19 +5,8 @@ include_guard()
 
 
 
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(protobuf REQUIRED IMPORTED_TARGET GLOBAL protobuf)
-pkg_check_modules(grpc_unsecure REQUIRED IMPORTED_TARGET GLOBAL grpc_unsecure)
-pkg_check_modules(grpc++ REQUIRED IMPORTED_TARGET GLOBAL grpc++)
-pkg_check_modules(grpc++_unsecure REQUIRED IMPORTED_TARGET GLOBAL grpc++_unsecure)
-
-find_package(ZLIB REQUIRED)
-target_link_libraries(PkgConfig::protobuf INTERFACE ZLIB::ZLIB)
-
-# Add protobuf as a dependency to grpc++ to ensure proper linking
-target_link_libraries(PkgConfig::grpc_unsecure INTERFACE PkgConfig::protobuf)
-target_link_libraries(PkgConfig::grpc++ INTERFACE PkgConfig::protobuf)
-target_link_libraries(PkgConfig::grpc++_unsecure INTERFACE PkgConfig::protobuf)
+find_package(Protobuf REQUIRED)
+find_package(gRPC CONFIG REQUIRED)
 
 find_program(GRPC_CPP_PLUGIN_LOCATION grpc_cpp_plugin REQUIRED)
 if(GRPC_CPP_PLUGIN_LOCATION)
@@ -142,8 +131,8 @@ function (build_protobuf NAME)
 
     target_link_libraries(
       "${CPP_TARGET}"
-        PkgConfig::protobuf
-        PkgConfig::grpc++
+        protobuf::libprotobuf
+        gRPC::grpc++
     )
 
     target_include_directories(

@@ -16,8 +16,8 @@ add_library(otlp_grpc_proto
 
 target_link_libraries(
   otlp_grpc_proto
-    PkgConfig::grpc++
-    PkgConfig::protobuf
+    gRPC::grpc++
+    protobuf::libprotobuf
 )
 
 add_library(
