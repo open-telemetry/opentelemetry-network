@@ -39,7 +39,7 @@ permissions:
   contents: read
 
 env:
-  BENV_IMAGE: docker.io/otel/opentelemetry-network-build-tools
+  BENV_IMAGE: ${{ vars.BENV_IMAGE || 'docker.io/otel/opentelemetry-network-build-tools' }}
   DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
   DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
   DOCKER_REGISTRY: ${{ vars.DOCKER_REGISTRY }}

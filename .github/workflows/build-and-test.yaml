@@ -14,7 +14,7 @@ permissions:
   contents: read
 
 env:
-  BENV_IMAGE: docker.io/otel/opentelemetry-network-build-tools
+  BENV_IMAGE: ${{ vars.BENV_IMAGE || 'docker.io/otel/opentelemetry-network-build-tools' }}
 
 concurrency:
   group: build-and-test-${{ github.event.pull_request_number || github.ref }}
