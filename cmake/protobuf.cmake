@@ -75,6 +75,8 @@ function (build_protobuf NAME)
   endif()
 
   if (DEFINED ARG_GO)
+    get_target_property(MOD_BUILD_DIR "${ARG_GO}-go-module" MOD_BUILD_DIR)
+    
     list(
       APPEND
       PROTOBUF_ARGS
@@ -87,6 +89,12 @@ function (build_protobuf NAME)
         "${ARG_GO}-go-module"
     )
 
+    set(
+      GEN_FILES_GO
+        "${MOD_BUILD_DIR}/${NAME}.pb.go"
+        "${MOD_BUILD_DIR}/${NAME}_grpc.pb.go"
+    )
+
     if (ARG_GRPC)
       list(
         APPEND
@@ -94,6 +102,12 @@ function (build_protobuf NAME)
           -I"${GO_PROTOBUF_ANNOTATIONS_DIR}"
           -I"${GO_PROTOBUF_GOOGLEAPIS_DIR}"
           --grpc-gateway_out="logtostderr=true:${GO_PATH_SRC}"
+      )
+
+      list(
+        APPEND
+        GEN_FILES_GO
+          "${MOD_BUILD_DIR}/${NAME}.pb.gw.go"
       )
     endif()
   endif()
@@ -104,9 +118,14 @@ function (build_protobuf NAME)
       "${CMAKE_CURRENT_SOURCE_DIR}/${NAME}.proto"
   )
 
+  set(GEN_FILES_ALL ${GEN_FILES_CPP})
+  if (DEFINED ARG_GO)
+    list(APPEND GEN_FILES_ALL ${GEN_FILES_GO})
+  endif()
+
   add_custom_command(
     OUTPUT
-      ${GEN_FILES_CPP}
+      ${GEN_FILES_ALL}
     COMMAND
       protoc
         ${PROTOBUF_ARGS}
@@ -153,7 +172,7 @@ function (build_protobuf NAME)
     add_custom_target(
       "${GO_TARGET}"
       DEPENDS
-        "${TARGET}"
+        ${GEN_FILES_GO}
     )
   endif()
 
