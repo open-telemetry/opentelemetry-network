@@ -61,10 +61,7 @@ public:
 
   // check if a particular metric is disabled
 #define METRIC_MEMBER_FNS(METRIC, ENUM_TYPE)                                                                                   \
-  bool is_metric_disabled(ENUM_TYPE metric) const                                                                              \
-  {                                                                                                                            \
-    return static_cast<std::uint64_t>(metric) & METRIC_FLAG(METRIC);                                                           \
-  }
+  bool is_metric_disabled(ENUM_TYPE metric) const { return static_cast<std::uint64_t>(metric) & METRIC_FLAG(METRIC); }
 
   METRIC_GROUPS(METRIC_MEMBER_FNS)
 #undef METRIC_MEMBER_FNS
