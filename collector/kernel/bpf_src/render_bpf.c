@@ -23,8 +23,12 @@ extern int LINUX_KERNEL_VERSION __kconfig;
 // Configuration
 #include "config.h"
 #include "render_bpf.h"
-// Perf events
-BPF_PERF_OUTPUT(events);
+// Perf events - per-CPU perf ring buffer
+struct {
+    __uint(type, BPF_MAP_TYPE_PERF_EVENT_ARRAY);
+    __uint(key_size, sizeof(u32));
+    __uint(value_size, sizeof(u32));
+} events SEC(".maps");
 #include "ebpf_net/agent_internal/bpf.h"
 
 // Common utility functions
@@ -96,9 +100,19 @@ struct udp_open_socket_t {
   struct udp_stats_t stats[2];
 };
 
-BPF_HASH(tgid_info_table, TGID, TGID, TABLE_SIZE__TGID_INFO);
+struct {
+    __uint(type, BPF_MAP_TYPE_HASH);
+    __type(key, TGID);
+    __type(value, TGID);
+    __uint(max_entries, TABLE_SIZE__TGID_INFO);
+} tgid_info_table SEC(".maps");
 
-BPF_HASH(dead_group_tasks, struct task_struct *, struct task_struct *, TABLE_SIZE__DEAD_GROUP_TASKS);
+struct {
+    __uint(type, BPF_MAP_TYPE_HASH);
+    __type(key, struct task_struct *);
+    __type(value, struct task_struct *);
+    __uint(max_entries, TABLE_SIZE__DEAD_GROUP_TASKS);
+} dead_group_tasks SEC(".maps");
 
 /* BPF_F_NO_PREALLOC was introduced in 6c9059817432, contained in
  * v4.6-rc1~91^2~108^2~6 */
@@ -180,7 +194,7 @@ static int report_pid_exit(TIMESTAMP timestamp, struct pt_regs *ctx, struct task
 
 static int set_task_group_dead(struct pt_regs *ctx, struct task_struct *tsk)
 {
-  int ret = dead_group_tasks.insert(&tsk, &tsk);
+  int ret = bpf_map_update_elem(&dead_group_tasks, &tsk, &tsk, BPF_ANY);
   if (ret == -E2BIG || ret == -ENOMEM || ret == -EINVAL) {
 #if DEBUG_OTHER_MAP_ERRORS
     bpf_trace_printk("set_task_group_dead: set_task_group_dead table is full, dropping tsk tsk=%llx\n", tsk);
@@ -206,7 +220,7 @@ static int set_task_group_dead(struct pt_regs *ctx, struct task_struct *tsk)
 
 static int task_group_check_dead_and_remove(struct pt_regs *ctx, struct task_struct *tsk)
 {
-  int ret = dead_group_tasks.delete(&tsk);
+  int ret = bpf_map_delete_elem(&dead_group_tasks, &tsk);
   if (ret != 0) {
     // wasn't in map
     return 0;
@@ -314,7 +328,7 @@ static pid_t get_task_parent(struct pt_regs *ctx, struct task_struct *tsk)
 // returns 1 if a task is new and was inserted
 static int insert_tgid_info(struct pt_regs *ctx, TGID tgid)
 {
-  int ret = tgid_info_table.insert(&tgid, &tgid);
+  int ret = bpf_map_update_elem(&tgid_info_table, &tgid, &tgid, BPF_ANY);
   if (ret == -E2BIG || ret == -ENOMEM || ret == -EINVAL) {
 #if DEBUG_OTHER_MAP_ERRORS
     bpf_trace_printk("insert_tgid_info: tgid_info table is full, dropping task tgid=%u\n", tgid);
@@ -343,7 +357,7 @@ static int insert_tgid_info(struct pt_regs *ctx, TGID tgid)
 // returns 1 if a task was removed successfully
 static int remove_tgid_info(struct pt_regs *ctx, TGID tgid)
 {
-  int ret = tgid_info_table.delete(&tgid);
+  int ret = bpf_map_delete_elem(&tgid_info_table, &tgid);
   if (ret != 0) {
 #if DEBUG_OTHER_MAP_ERRORS
     bpf_trace_printk("remove_tgid_info: can't remove missing tgid=%u\n", tgid);
@@ -653,7 +667,7 @@ static int add_tcp_open_socket(struct pt_regs *ctx, struct sock *sk, u32 tgid, u
     return -1;
   }
 
-  ret = tcp_open_sockets.insert(&sk, &sk_info);
+  ret = bpf_map_update_elem(&tcp_open_sockets, &sk, &sk_info, BPF_ANY);
 
   if (ret == -E2BIG || ret == -ENOMEM || ret == -EINVAL) {
 #if DEBUG_TCP_SOCKET_ERRORS
@@ -676,7 +690,7 @@ static int add_tcp_open_socket(struct pt_regs *ctx, struct sock *sk, u32 tgid, u
 static void remove_tcp_open_socket(struct pt_regs *ctx, struct sock *sk)
 {
   struct tcp_open_socket_t *sk_info_p;
-  sk_info_p = tcp_open_sockets.lookup(&sk);
+  sk_info_p = bpf_map_lookup_elem(&tcp_open_sockets, &sk);
   if (!sk_info_p) {
     return;
   }
@@ -690,7 +704,7 @@ static void remove_tcp_open_socket(struct pt_regs *ctx, struct sock *sk)
   struct tcp_open_socket_t sk_info = *sk_info_p;
 
   // do some cleanup from our hashmap
-  int ret = tcp_open_sockets.delete(&sk);
+  int ret = bpf_map_delete_elem(&tcp_open_sockets, &sk);
   if (ret != 0) {
     // Another thread must have already deleted the entry for this sk.
     return;
@@ -827,7 +841,7 @@ static struct tcp_open_socket_t *tcp_existing_hack(struct pt_regs *ctx, struct s
     bpf_trace_printk("tcp_update_stats: add_tcp_open_socket failed: %llx (tgid=%u)\n", sk, _tgid);
   }
 #endif
-  struct tcp_open_socket_t *sk_info_p = tcp_open_sockets.lookup(&sk);
+  struct tcp_open_socket_t *sk_info_p = bpf_map_lookup_elem(&tcp_open_sockets, &sk);
   return sk_info_p;
 }
 #endif
@@ -862,7 +876,7 @@ static void restart_tcp_socket(struct pt_regs *ctx, TIMESTAMP now, struct sock *
 int on_tcp_connect(struct pt_regs *ctx, struct sock *sk)
 {
   struct tcp_open_socket_t *sk_info;
-  sk_info = tcp_open_sockets.lookup(&sk);
+  sk_info = bpf_map_lookup_elem(&tcp_open_sockets, &sk);
   if (!sk_info) {
 #if TCP_EXISTING_HACK
 
@@ -904,7 +918,7 @@ int on_inet_csk_listen_start(struct pt_regs *ctx, struct sock *sk)
     return 0;
 
   struct tcp_open_socket_t *sk_info;
-  sk_info = tcp_open_sockets.lookup(&sk);
+  sk_info = bpf_map_lookup_elem(&tcp_open_sockets, &sk);
   if (!sk_info) {
 #if TCP_EXISTING_HACK
 
@@ -940,7 +954,7 @@ int on_inet_csk_listen_start(struct pt_regs *ctx, struct sock *sk)
 static void tcp_lifetime_hack(struct pt_regs *ctx, struct sock *sk)
 {
   struct tcp_open_socket_t *sk_info;
-  sk_info = tcp_open_sockets.lookup(&sk);
+  sk_info = bpf_map_lookup_elem(&tcp_open_sockets, &sk);
   if (sk_info) {
 #if DEBUG_TCP_SOCKET_ERRORS
     bpf_trace_printk("tcp_lifetime_hack: tcp_lifetime_hack, sk=%llx, cpu=%u\n", sk, bpf_get_smp_processor_id());
@@ -1009,7 +1023,7 @@ int on_inet_csk_accept(struct pt_regs *ctx, struct sock *sk, int flags, int *err
 #if TCP_STATS_ON_PARENT
 #if TCP_EXISTING_HACK // Only need to do this if we are using the parent stats reporting and need the socket to exist
   struct tcp_open_socket_t *sk_info;
-  sk_info = tcp_open_sockets.lookup(&sk);
+  sk_info = bpf_map_lookup_elem(&tcp_open_sockets, &sk);
   if (!sk_info) {
 
     sk_info = tcp_existing_hack(ctx, sk);
@@ -1125,7 +1139,7 @@ int on_tcp46_seq_show(struct pt_regs *ctx, struct seq_file *seq, void *v)
   struct sock *sk = v;
 
   u32 ino = (u32)sk->sk_socket->file->f_inode->i_ino;
-  u32 *lookup_tgid = seen_inodes.lookup(&ino);
+  u32 *lookup_tgid = bpf_map_lookup_elem(&seen_inodes, &ino);
   if (!lookup_tgid) {
 #if DEBUG_TCP_SOCKET_ERRORS
     bpf_trace_printk("on_tcp46_seq_show: ignoring socket %llx because of missing inode %u\n", sk, ino);
@@ -1139,7 +1153,7 @@ int on_tcp46_seq_show(struct pt_regs *ctx, struct seq_file *seq, void *v)
 #endif
 
   /* we don't want to explore this inode again */
-  seen_inodes.delete(&ino);
+  bpf_map_delete_elem(&seen_inodes, &ino);
 
   int ret = ensure_tcp_existing(ctx, sk, tgid);
   if (ret == 0) {
@@ -1180,7 +1194,7 @@ static inline int add_udp_open_socket(struct pt_regs *ctx, struct sock *sk, u32 
   struct udp_open_socket_t sk_info = {
       .tgid = tgid,
   };
-  int ret = udp_open_sockets.insert(&sk, &sk_info);
+  int ret = bpf_map_update_elem(&udp_open_sockets, &sk, &sk_info, BPF_ANY);
   if (ret == -E2BIG || ret == -ENOMEM || ret == -EINVAL) {
 #if DEBUG_UDP_SOCKET_ERRORS
     bpf_trace_printk("add_udp_open_socket: udp_open_sockets table is full, dropping socket sk=%llx (tgid=%u)\n", sk, tgid);
@@ -1258,7 +1272,7 @@ static struct udp_open_socket_t *udp_existing_hack(struct pt_regs *ctx, struct s
     bpf_trace_printk("udp_existing_hack: add_udp_open_socket failed: %llx (tgid=%u)\n", sk, _tgid);
   }
 #endif
-  struct udp_open_socket_t *sk_info_p = udp_open_sockets.lookup(&sk);
+  struct udp_open_socket_t *sk_info_p = bpf_map_lookup_elem(&udp_open_sockets, &sk);
   return sk_info_p;
 }
 #endif
@@ -1292,7 +1306,7 @@ static void udp_send_stats_if_nonempty(struct pt_regs *ctx, u64 now, struct sock
 static void remove_udp_open_socket(struct pt_regs *ctx, struct sock *sk)
 {
   struct udp_open_socket_t *sk_info_p;
-  sk_info_p = udp_open_sockets.lookup(&sk);
+  sk_info_p = bpf_map_lookup_elem(&udp_open_sockets, &sk);
   if (!sk_info_p) {
     return;
   }
@@ -1305,7 +1319,7 @@ static void remove_udp_open_socket(struct pt_regs *ctx, struct sock *sk)
   // successful.
   struct udp_open_socket_t sk_info = *sk_info_p;
 
-  int ret = udp_open_sockets.delete(&sk);
+  int ret = bpf_map_delete_elem(&udp_open_sockets, &sk);
   if (ret != 0) {
     // Another thread must have already deleted the entry for this sk.
     return;
@@ -1325,7 +1339,7 @@ static void remove_udp_open_socket(struct pt_regs *ctx, struct sock *sk)
 static void udp_lifetime_hack(struct pt_regs *ctx, struct sock *sk)
 {
   struct udp_open_socket_t *sk_info;
-  sk_info = udp_open_sockets.lookup(&sk);
+  sk_info = bpf_map_lookup_elem(&udp_open_sockets, &sk);
   if (sk_info) {
 #if DEBUG_UDP_SOCKET_ERRORS
     bpf_trace_printk("udp_lifetime_hack: udp_lifetime_hack sk=%llx cpu=%u\n", sk, bpf_get_smp_processor_id());
@@ -1346,7 +1360,7 @@ int on_udp46_seq_show(struct pt_regs *ctx, struct seq_file *seq, void *v)
   struct sock *sk = v;
 
   u32 ino = (u32)sk->sk_socket->file->f_inode->i_ino;
-  u32 *lookup_tgid = seen_inodes.lookup(&ino);
+  u32 *lookup_tgid = bpf_map_lookup_elem(&seen_inodes, &ino);
   if (!lookup_tgid) {
 #if DEBUG_UDP_SOCKET_ERRORS
     bpf_trace_printk("on_udp46_seq_show: ignoring socket %llx because of missing inode %u\n", sk, ino);
@@ -1356,7 +1370,7 @@ int on_udp46_seq_show(struct pt_regs *ctx, struct seq_file *seq, void *v)
   u32 tgid = *lookup_tgid;
 
   /* we don't want to explore this inode again */
-  seen_inodes.delete(&ino);
+  bpf_map_delete_elem(&seen_inodes, &ino);
 
   int ret = ensure_udp_existing(ctx, sk, tgid);
   if (ret == 0) {
@@ -1379,7 +1393,7 @@ int on_udp_v46_get_port(struct pt_regs *ctx, struct sock *sk)
 {
   GET_PID_TGID;
 
-  int ret = udp_get_port_hash.insert(&_cpu, &sk);
+  int ret = bpf_map_update_elem(&udp_get_port_hash, &_cpu, &sk, BPF_ANY);
   if (ret == -E2BIG || ret == -ENOMEM || ret == -EINVAL) {
 #if DEBUG_OTHER_MAP_ERRORS
     bpf_trace_printk("on_udp_v46_get_port: udp_get_port_hash table is full, dropping call (tgid=%u, cpu=%u)\n", _tgid, _cpu);
@@ -1407,7 +1421,7 @@ int onret_udp_v46_get_port(struct pt_regs *ctx)
   GET_PID_TGID;
   int retval = (int)PT_REGS_RC(ctx);
 
-  found = udp_get_port_hash.lookup(&_cpu);
+  found = bpf_map_lookup_elem(&udp_get_port_hash, &_cpu);
   if (!found)
     return 0;
   sk = *found;
@@ -1440,7 +1454,7 @@ int onret_udp_v46_get_port(struct pt_regs *ctx)
 #endif
   }
 
-  udp_get_port_hash.delete(&_cpu);
+  bpf_map_delete_elem(&udp_get_port_hash, &_cpu);
 
   return 0;
 }
@@ -1461,7 +1475,7 @@ static inline void remove_open_socket(struct pt_regs *ctx, struct sock *sk)
   {
     // TCP(v4/v6) Socket?
     struct tcp_open_socket_t *tcp_sk_info;
-    tcp_sk_info = tcp_open_sockets.lookup(&sk);
+    tcp_sk_info = bpf_map_lookup_elem(&tcp_open_sockets, &sk);
     if (tcp_sk_info) {
       remove_tcp_open_socket(ctx, sk);
       return;
@@ -1470,7 +1484,7 @@ static inline void remove_open_socket(struct pt_regs *ctx, struct sock *sk)
   {
     // UDP(v4/v6) Socket?
     struct udp_open_socket_t *udp_sk_info;
-    udp_sk_info = udp_open_sockets.lookup(&sk);
+    udp_sk_info = bpf_map_lookup_elem(&udp_open_sockets, &sk);
     if (udp_sk_info) {
       remove_udp_open_socket(ctx, sk);
       return;
@@ -1532,7 +1546,7 @@ int onret_inet_release(struct pt_regs *ctx)
 // TCP reset
 static void handle_tcp_reset(struct pt_regs *ctx, struct sock *sk, u8 is_rx)
 {
-  if (!tcp_open_sockets.lookup(&sk)) {
+  if (!bpf_map_lookup_elem(&tcp_open_sockets, &sk)) {
     // don't send an event on sockets we never notified userspace about
     // bpf_trace_printk("handle_tcp_reset: no socket\n");
     return;
@@ -1571,7 +1585,7 @@ static void udp_update_stats(
   struct udp_open_socket_t *sk_info_p;
   struct udp_stats_t *stats;
 
-  sk_info_p = udp_open_sockets.lookup(&sk);
+  sk_info_p = bpf_map_lookup_elem(&udp_open_sockets, &sk);
   if (sk_info_p == NULL) {
 #if UDP_EXISTING_HACK
 
@@ -1885,7 +1899,7 @@ int on_tcp_rtt_estimator(struct pt_regs *ctx, struct sock *sk)
     return 0;
   }
 
-  sk_info = tcp_open_sockets.lookup(&sk);
+  sk_info = bpf_map_lookup_elem(&tcp_open_sockets, &sk);
   if (!sk_info) {
     // Okay if socket is not yet tracked because it could be in kernel accept
     // queue but not returned by inet_csk_accept yet.
@@ -1900,7 +1914,7 @@ int on_tcp_rtt_estimator(struct pt_regs *ctx, struct sock *sk)
 int on_tcp_rcv_established(struct pt_regs *ctx, struct sock *sk, struct sk_buff *skb)
 {
   struct tcp_open_socket_t *sk_info;
-  sk_info = tcp_open_sockets.lookup(&sk);
+  sk_info = bpf_map_lookup_elem(&tcp_open_sockets, &sk);
   if (!sk_info) {
     // Okay if socket is not yet tracked because it could be in kernel accept
     // queue but not returned by inet_csk_accept yet.
@@ -1932,7 +1946,7 @@ int on_tcp_rcv_established(struct pt_regs *ctx, struct sock *sk, struct sk_buff 
 int on_tcp_event_data_recv(struct pt_regs *ctx, struct sock *sk, struct sk_buff *skb)
 {
   struct tcp_open_socket_t *sk_info;
-  sk_info = tcp_open_sockets.lookup(&sk);
+  sk_info = bpf_map_lookup_elem(&tcp_open_sockets, &sk);
   if (!sk_info) {
     // Okay if socket is not yet tracked because it could be in kernel accept
     // queue but not returned by inet_csk_accept yet.
@@ -1964,7 +1978,7 @@ static void handle_syn_timeout(struct pt_regs *ctx, struct sock *sk)
     return;
   }
 
-  if (!tcp_open_sockets.lookup(&sk)) {
+  if (!bpf_map_lookup_elem(&tcp_open_sockets, &sk)) {
     // don't send a retransmit event on sockets we never notified userspace about
     return;
   }
@@ -2008,7 +2022,7 @@ int on_tcp_syn_ack_timeout(
     bpf_probe_read(&sk, sizeof(sk), &(req->sk));
 
     struct tcp_open_socket_t *sk_info;
-    sk_info = tcp_open_sockets.lookup(&sk);
+    sk_info = bpf_map_lookup_elem(&tcp_open_sockets, &sk);
     if (!sk_info) {
       //  don't send a retransmit event on sockets we never notified userspace about
       return 0;
@@ -2459,7 +2473,7 @@ int on_nf_nat_cleanup_conntrack(struct pt_regs *ctx, struct nf_conn *ct)
       (u16)ct->tuplehash[0].tuple.dst.u.all,
       (u8)ct->tuplehash[0].tuple.dst.protonum);
 
-  seen_conntracks.delete(&ct);
+  bpf_map_delete_elem(&seen_conntracks, &ct);
 
   return 0;
 }
@@ -2480,7 +2494,7 @@ int on_nf_conntrack_alter_reply(struct pt_regs *ctx, struct nf_conn *ct, const s
     return 0;
   }
 
-  int ret = seen_conntracks.insert(&ct, &ct);
+  int ret = bpf_map_update_elem(&seen_conntracks, &ct, &ct, BPF_ANY);
   if (ret == -E2BIG || ret == -ENOMEM || ret == -EINVAL) {
 #if DEBUG_OTHER_MAP_ERRORS
     bpf_trace_printk("on_nf_conntrack_alter_reply: seen_conntracks table is full, dropping conntrack\n");

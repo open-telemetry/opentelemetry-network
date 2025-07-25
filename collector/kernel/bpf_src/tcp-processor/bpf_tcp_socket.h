@@ -63,9 +63,19 @@ struct tcp_connection_t {
 #endif
 };
 
-BPF_HASH(_tcp_connections, struct sock *, struct tcp_connection_t, TCP_CONNECTION_HASH_SIZE);
+struct {
+    __uint(type, BPF_MAP_TYPE_HASH);
+    __type(key, struct sock *);
+    __type(value, struct tcp_connection_t);
+    __uint(max_entries, TCP_CONNECTION_HASH_SIZE);
+} _tcp_connections SEC(".maps");
 
-BPF_HASH(_tcp_control, struct tcp_control_key_t, struct tcp_control_value_t, TCP_CONNECTION_HASH_SIZE);
+struct {
+    __uint(type, BPF_MAP_TYPE_HASH);
+    __type(key, struct tcp_control_key_t);
+    __type(value, struct tcp_control_value_t);
+    __uint(max_entries, TCP_CONNECTION_HASH_SIZE);
+} _tcp_control SEC(".maps");
 
 //
 // TCP Connection Lifecycle Management
@@ -77,13 +87,13 @@ static struct tcp_connection_t *lookup_tcp_connection(struct sock *sk)
   //   DEBUG_PRINTK("tcp_connections.lookup(%llx)\n", sk);
   // #endif
 
-  struct tcp_connection_t *pconn = _tcp_connections.lookup(&sk);
+  struct tcp_connection_t *pconn = bpf_map_lookup_elem(&_tcp_connections, &sk);
   return pconn;
 }
 
 static struct tcp_connection_t *create_tcp_connection(struct pt_regs *ctx, struct sock *sk)
 {
-  struct tcp_connection_t *pconn = _tcp_connections.lookup(&sk);
+  struct tcp_connection_t *pconn = bpf_map_lookup_elem(&_tcp_connections, &sk);
   if (pconn) {
 #if TCP_LIFETIME_HACK
 #if DEBUG_TCP_CONNECTION
@@ -91,7 +101,7 @@ static struct tcp_connection_t *create_tcp_connection(struct pt_regs *ctx, struc
 #endif
     // xxx: disable this for now because we know it happens all the time and it's too chatty
     // bpf_log(ctx, BPF_LOG_LIFETIME_HACK, BPF_TABLE_TCP_CONNECTIONS, (u64)sk, 0);
-    _tcp_connections.delete(&sk);
+    bpf_map_delete_elem(&_tcp_connections, &sk);
 #else
     DEBUG_PRINTK("create_tcp_connection: socket already exists sk=%llx\n", sk);
     return pconn;
@@ -118,8 +128,12 @@ static struct tcp_connection_t *create_tcp_connection(struct pt_regs *ctx, struc
   struct tcp_control_value_t value = {
       .streams[ST_SEND].enable = 1, .streams[ST_SEND].start = 0, .streams[ST_RECV].enable = 1, .streams[ST_RECV].start = 0};
 
-  pconn = _tcp_connections.lookup_or_init(&sk, &zero);
-  _tcp_control.insert(&key, &value);
+  pconn = bpf_map_lookup_elem(&_tcp_connections, &sk);
+  if (!pconn) {
+    bpf_map_update_elem(&_tcp_connections, &sk, &zero, BPF_NOEXIST);
+    pconn = bpf_map_lookup_elem(&_tcp_connections, &sk);
+  }
+  bpf_map_update_elem(&_tcp_control, &key, &value, BPF_ANY);
 
   return pconn;
 }
@@ -127,7 +141,7 @@ static struct tcp_connection_t *create_tcp_connection(struct pt_regs *ctx, struc
 static struct tcp_control_value_t *get_tcp_control(struct tcp_connection_t *pconn)
 {
   struct tcp_control_key_t key = {.sk = (u64)pconn->sk};
-  struct tcp_control_value_t *pvalue = _tcp_control.lookup(&key);
+  struct tcp_control_value_t *pvalue = bpf_map_lookup_elem(&_tcp_control, &key);
   return pvalue;
 }
 
@@ -156,9 +170,9 @@ static void delete_tcp_connection(struct pt_regs *ctx, struct tcp_connection_t *
   // remove from kernel data structures
   struct tcp_control_key_t key = {.sk = (u64)pconn->sk};
 
-  _tcp_control.delete(&key);
+  bpf_map_delete_elem(&_tcp_control, &key);
 
-  int ret = _tcp_connections.delete(&sk);
+  int ret = bpf_map_delete_elem(&_tcp_connections, &sk);
   if (ret != 0) {
 #if DEBUG_TCP_CONNECTION
     DEBUG_PRINTK("delete_tcp_connection: delete on non-existent socket sk=%llx\n", sk);
