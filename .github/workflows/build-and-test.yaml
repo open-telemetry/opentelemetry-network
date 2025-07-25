@@ -87,6 +87,7 @@ jobs:
         
         # Export reducer container
         mkdir -p container-exports
+        docker pull localhost:5000/reducer
         docker save localhost:5000/reducer > container-exports/reducer.tar
         
         # Clean up registry
@@ -134,6 +135,7 @@ jobs:
         
         # Export kernel-collector container
         mkdir -p container-exports
+        docker pull localhost:5000/kernel-collector
         docker save localhost:5000/kernel-collector > container-exports/kernel-collector.tar
         
         # Clean up registry
@@ -181,6 +183,7 @@ jobs:
         
         # Export kernel-collector-test container
         mkdir -p container-exports
+        docker pull localhost:5000/kernel-collector-test
         docker save localhost:5000/kernel-collector-test > container-exports/kernel-collector-test.tar
         
         # Clean up registry
