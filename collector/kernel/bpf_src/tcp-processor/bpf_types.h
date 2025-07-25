@@ -117,7 +117,7 @@ struct {
     __uint(max_entries, BPF_MAX_CPUS);
 } bpf_log_globals_per_cpu SEC(".maps");
 
-#define bpf_log(...) _bpf_log(__FILELINEID__, __VA_ARGS__)
+#define bpf_log(...) _bpf_log(__LINE__, __VA_ARGS__)
 static void _bpf_log(int filelineid, struct pt_regs *ctx, enum BPF_LOG_CODE code, u64 arg0, u64 arg1, u64 arg2)
 {
   // Get timestamp in milliseconds
