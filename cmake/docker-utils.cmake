@@ -189,7 +189,7 @@ function(build_custom_docker_image IMAGE_NAME)
         TARGET
           "${IMAGE_NAME}-docker-registry"
         COMMAND
-          docker tag "${IMAGE_NAME}" "${IMAGE_NAME}:${IMAGE_TAG}"
+          podman tag "${IMAGE_NAME}" "${IMAGE_NAME}:${IMAGE_TAG}"
         COMMAND
           "${CMAKE_SOURCE_DIR}/dev/docker-registry-push.sh"
             "${IMAGE_NAME}" "${IMAGE_TAG}" --no-login "${ARG_DOCKER_REGISTRY}"
