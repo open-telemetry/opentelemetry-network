@@ -78,10 +78,10 @@ jobs:
         # Build reducer with registry access
         docker run -t \
         --rm \
-        --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
         --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/home/user/src,readonly" \
         --env EBPF_NET_SRC_ROOT=/home/user/src \
         --network host \
+        --privileged \
         $BENV_IMAGE \
         ./build.sh reducer-docker-registry
         
@@ -125,10 +125,10 @@ jobs:
         # Build kernel-collector with registry access
         docker run -t \
         --rm \
-        --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
         --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/home/user/src,readonly" \
         --env EBPF_NET_SRC_ROOT=/home/user/src \
         --network host \
+        --privileged \
         $BENV_IMAGE \
         ./build.sh kernel-collector-docker-registry
         
@@ -172,10 +172,10 @@ jobs:
         # Build kernel-collector-test with registry access
         docker run -t \
         --rm \
-        --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
         --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/home/user/src,readonly" \
         --env EBPF_NET_SRC_ROOT=/home/user/src \
         --network host \
+        --privileged \
         $BENV_IMAGE \
         ./build.sh kernel-collector-test-docker-registry
         
