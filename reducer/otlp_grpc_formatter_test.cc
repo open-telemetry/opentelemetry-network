@@ -154,7 +154,7 @@ protected:
                       [&](double val) { EXPECT_EQ(val, data_point.at("as_double")); }},
                   metric_value);
               EXPECT_EQ(
-                  (unsigned)integer_time<std::chrono::nanoseconds>(timestamp),
+                  (u64)integer_time<std::chrono::nanoseconds>(timestamp),
                   std::stoull(std::string(data_point.at("time_unix_nano"))));
               for (auto const &attribute : data_point.at("attributes")) {
                 auto key = attribute.at("key");
