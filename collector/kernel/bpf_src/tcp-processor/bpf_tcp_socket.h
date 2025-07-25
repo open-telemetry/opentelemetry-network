@@ -15,7 +15,6 @@
 //   Set the TCP socket buffer size, #define TCP_SOCKET_BUFFER_SIZE, which
 //   must be a multiple of 8 bytes
 
-#include <net/sock.h>
 
 #include "bpf_debug.h"
 #include "bpf_types.h"

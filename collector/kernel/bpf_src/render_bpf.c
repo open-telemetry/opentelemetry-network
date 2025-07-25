@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <uapi/linux/ptrace.h>
 
 #ifndef KBUILD_MODNAME
 #define KBUILD_MODNAME "ebpf_net"
@@ -13,29 +12,8 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wenum-conversion"
 #pragma clang diagnostic ignored "-Wtautological-compare"
-#include <net/sock.h>
+#include <vmlinux.h>
 #pragma clang diagnostic pop
-
-#include <bcc/proto.h>
-#include <linux/delayacct.h>
-#include <linux/in.h>
-#include <linux/ip.h>
-#include <linux/sched.h>
-#include <linux/tcp.h>
-#include <linux/udp.h>
-#include <linux/version.h>
-
-#pragma passthrough on
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
-#include <linux/sched/signal.h>
-#endif
-#pragma passthrough off
-
-#include <net/flow.h>
-#include <net/net_namespace.h>
-#include <net/netfilter/nf_conntrack_tuple.h>
-#include <net/netfilter/nf_nat.h>
-#include <net/tcp.h>
 
 // Configuration
 #include "config.h"

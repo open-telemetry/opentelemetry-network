@@ -7,16 +7,12 @@
 
 #define KBUILD_MODNAME "bpf_http"
 #include "../render_bpf.h"
+#include <vmlinux.h>
 
 // Include this from render_bpf.c so we can use tail calls in tcp processor test code
 BPF_PROG_ARRAY(tail_calls, NUM_TAIL_CALLS);
 
 #endif
-
-#include <linux/skbuff.h>
-#include <linux/tcp.h>
-#include <linux/version.h>
-#include <net/sock.h>
 
 // Verify kernel is >= 4.4
 // #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 4, 0)

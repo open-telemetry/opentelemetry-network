@@ -211,6 +211,95 @@ target_include_directories(
     ${CMAKE_BINARY_DIR}
 )
 
+
+################################################################################
+# libbpf skeleton
+#
+
+set(BPF_SKEL_HEADER "${CMAKE_BINARY_DIR}/generated/render_bpf.skel.h")
+set(BPF_OBJECT_FILE "${CMAKE_BINARY_DIR}/generated/render_bpf.bpf.o")
+set(BPFTOOL "${CMAKE_INSTALL_PREFIX}/usr/local/sbin/bpftool")
+set(CLANG clang)
+
+# Get Clang's system includes for BPF compilation
+execute_process(
+  COMMAND ${CLANG} -v -E - 
+  INPUT_FILE /dev/null
+  ERROR_VARIABLE CLANG_VERBOSE_OUTPUT
+  OUTPUT_QUIET
+)
+string(REGEX MATCH "#include <\\.\\.\\.> search starts here:(.*)End of search list\\." _ "${CLANG_VERBOSE_OUTPUT}")
+string(REGEX REPLACE "\n" ";" CLANG_INCLUDES "${CMAKE_MATCH_1}")
+set(CLANG_BPF_SYS_INCLUDES "")
+foreach(INCLUDE_PATH ${CLANG_INCLUDES})
+  string(STRIP "${INCLUDE_PATH}" INCLUDE_PATH)
+  if(NOT "${INCLUDE_PATH}" STREQUAL "")
+    list(APPEND CLANG_BPF_SYS_INCLUDES "-idirafter" "${INCLUDE_PATH}")
+  endif()
+endforeach()
+
+# Determine architecture for vmlinux.h
+execute_process(
+  COMMAND uname -m
+  OUTPUT_VARIABLE ARCH_RAW
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+string(REGEX REPLACE "x86_64" "x86" ARCH "${ARCH_RAW}")
+string(REGEX REPLACE "arm.*" "arm" ARCH "${ARCH}")
+string(REGEX REPLACE "aarch64" "arm64" ARCH "${ARCH}")
+string(REGEX REPLACE "ppc64le" "powerpc" ARCH "${ARCH}")
+string(REGEX REPLACE "mips.*" "mips" ARCH "${ARCH}")
+string(REGEX REPLACE "riscv64" "riscv" ARCH "${ARCH}")
+string(REGEX REPLACE "loongarch64" "loongarch" ARCH "${ARCH}")
+
+set(VMLINUX_H "${PROJECT_SOURCE_DIR}/ext/vmlinux.h/include/${ARCH}/vmlinux.h")
+get_filename_component(VMLINUX_DIR "${VMLINUX_H}" DIRECTORY)
+
+
+# Compile BPF source to object file for libbpf skeleton
+add_custom_command(
+  OUTPUT
+    "${BPF_OBJECT_FILE}"
+  COMMAND
+    "${CLANG}"
+    -g -O2 -target bpf
+    -D__TARGET_ARCH_${ARCH}
+    -D_PROCESSING_BPF=1
+    -I "${CMAKE_BINARY_DIR}/generated"
+    -I "${CMAKE_BINARY_DIR}"
+    -I "${CMAKE_INSTALL_PREFIX}/usr/lib64"
+    -I "${CMAKE_CURRENT_SOURCE_DIR}"
+    -I "${PROJECT_SOURCE_DIR}"
+    -I "${VMLINUX_DIR}"
+    ${CLANG_BPF_SYS_INCLUDES}
+    -c "${CMAKE_CURRENT_SOURCE_DIR}/bpf_src/render_bpf.c"
+    -o "${BPF_OBJECT_FILE}.tmp"
+  COMMAND
+    "${BPFTOOL}" gen object "${BPF_OBJECT_FILE}" "${BPF_OBJECT_FILE}.tmp"
+  DEPENDS "${BPF_DEPENDENCIES}" "${VMLINUX_H}"
+  COMMENT "Compiling BPF source to object file for skeleton generation"
+  VERBATIM
+)
+
+# Generate BPF skeleton header
+add_custom_command(
+  OUTPUT
+    "${BPF_SKEL_HEADER}"
+  COMMAND
+    "${BPFTOOL}" gen skeleton "${BPF_OBJECT_FILE}" > "${BPF_SKEL_HEADER}"
+  DEPENDS
+    "${BPF_OBJECT_FILE}"
+  COMMENT "Generating BPF skeleton header"
+  VERBATIM
+)
+
+# Target for libbpf skeleton generation
+add_custom_target(
+  generate_bpf_skeleton
+  DEPENDS
+    "${BPF_SKEL_HEADER}"
+)
+
 ################################################################################
 
 # Shell scripts
