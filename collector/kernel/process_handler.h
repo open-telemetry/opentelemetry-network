@@ -5,7 +5,6 @@
 
 #pragma once
 
-#include <util/counter_to_rate.h>
 #include <util/logger.h>
 #include <util/stop_watch.h>
 
