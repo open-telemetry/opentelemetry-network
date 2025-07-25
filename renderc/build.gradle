@@ -1,7 +1,7 @@
 buildscript {
   apply from: "${rootDir}/gradle/repositories.gradle"
   dependencies {
-    classpath 'org.xtext:xtext-gradle-plugin:2.0.8'
+    classpath 'org.xtext:xtext-gradle-plugin:4.0.0'
   }
 }
 
