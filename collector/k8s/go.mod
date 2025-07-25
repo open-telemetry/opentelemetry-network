@@ -5,7 +5,7 @@ go 1.22
 toolchain go1.24.4
 
 require (
-	google.golang.org/grpc v1.69.2
+	google.golang.org/grpc v1.74.2
 	k8s.io/api v0.26.1
 	k8s.io/apimachinery v0.26.1
 	k8s.io/client-go v0.26.1
