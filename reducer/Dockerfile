@@ -9,7 +9,7 @@ LABEL org.label-schema.vcs-url="https://github.com/open-telemetry/opentelemetry-
 LABEL org.label-schema.schema-version="1.0"
 
 # required by entrypoint.sh and health_check.sh scripts
-RUN install_packages bc coreutils netcat-openbsd sed
+RUN install_packages bc coreutils netcat-openbsd sed   libcurlpp0 libgrpc++1.51
 
 ARG BUILD_TYPE
 RUN if [ "$BUILD_TYPE" = "Debug" ]; then \
