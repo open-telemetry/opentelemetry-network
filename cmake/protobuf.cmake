@@ -23,6 +23,7 @@ function (build_protobuf NAME)
   cmake_parse_arguments(ARG "CPP;GRPC;GRPC_GATEWAY" "GO" "DEPENDS;DEPENDENCY_OF" ${ARGN})
 
   set(TARGET_PREPARE "${NAME}-protobuf-prepare")
+  set(TARGET "${NAME}-protobuf")
 
   add_custom_target(
     "${TARGET_PREPARE}"
@@ -132,6 +133,12 @@ function (build_protobuf NAME)
     DEPENDS
       "${CMAKE_CURRENT_SOURCE_DIR}/${NAME}.proto"
       ${TARGET_PREPARE}
+  )
+
+  add_custom_target(
+    "${TARGET}"
+    DEPENDS
+      ${GEN_FILES_ALL}
   )
 
   if (ARG_CPP)
