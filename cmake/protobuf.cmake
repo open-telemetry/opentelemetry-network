@@ -22,10 +22,10 @@ set(GO_PROTOBUF_GOOGLEAPIS_DIR /usr/local/go/src/github.com/grpc-ecosystem/grpc-
 function (build_protobuf NAME)
   cmake_parse_arguments(ARG "CPP;GRPC;GRPC_GATEWAY" "GO" "DEPENDS;DEPENDENCY_OF" ${ARGN})
 
-  set(TARGET "${NAME}-protobuf")
+  set(TARGET_PREPARE "${NAME}-protobuf-prepare")
 
   add_custom_target(
-    "${TARGET}"
+    "${TARGET_PREPARE}"
     DEPENDS
       ${ARG_DEPENDS}
   )
@@ -45,7 +45,7 @@ function (build_protobuf NAME)
 
     add_custom_command(
       TARGET
-        "${TARGET}"
+        "${TARGET_PREPARE}"
       COMMAND
         ${CMAKE_COMMAND} -E make_directory
           "${CMAKE_CURRENT_BINARY_DIR}/generated"
@@ -85,7 +85,7 @@ function (build_protobuf NAME)
     )
 
     add_dependencies(
-      "${TARGET}"
+      "${TARGET_PREPARE}"
         "${ARG_GO}-go-module"
     )
 
@@ -131,6 +131,7 @@ function (build_protobuf NAME)
         ${PROTOBUF_ARGS}
     DEPENDS
       "${CMAKE_CURRENT_SOURCE_DIR}/${NAME}.proto"
+      ${TARGET_PREPARE}
   )
 
   if (ARG_CPP)
@@ -160,14 +161,16 @@ function (build_protobuf NAME)
         "${CMAKE_CURRENT_BINARY_DIR}"
     )
 
-    add_dependencies(
-      "${CPP_TARGET}"
-        "${TARGET}"
-    )
   endif()
 
   if (DEFINED ARG_GO)
     set(GO_TARGET "${NAME}-go-protobuf")
+
+    set_source_files_properties(
+    ${GEN_FILES_GO}
+    PROPERTIES
+      GENERATED TRUE
+    )
 
     add_custom_target(
       "${GO_TARGET}"
@@ -177,6 +180,6 @@ function (build_protobuf NAME)
   endif()
 
   foreach(DEPENDENCY ${ARG_DEPENDENCY_OF})
-    add_dependencies(${DEPENDENCY} ${TARGET})
+    add_dependencies(${DEPENDENCY} ${TARGET_PREPARE})
   endforeach()
 endfunction()
