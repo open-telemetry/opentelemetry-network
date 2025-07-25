@@ -268,6 +268,7 @@ add_custom_command(
     -I "${CMAKE_BINARY_DIR}/generated"
     -I "${CMAKE_BINARY_DIR}"
     -I "${CMAKE_INSTALL_PREFIX}/usr/lib64"
+    -I "${CMAKE_INSTALL_PREFIX}/usr/include"
     -I "${CMAKE_CURRENT_SOURCE_DIR}"
     -I "${PROJECT_SOURCE_DIR}"
     -I "${VMLINUX_DIR}"
