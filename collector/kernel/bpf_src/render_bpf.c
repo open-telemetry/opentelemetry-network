@@ -8,12 +8,17 @@
 #define KBUILD_MODNAME "ebpf_net"
 #endif
 
+
 /* include net/sock, ignore the enum-conversion warning */
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wenum-conversion"
 #pragma clang diagnostic ignored "-Wtautological-compare"
 #include <vmlinux.h>
 #pragma clang diagnostic pop
+
+#include <bpf/bpf_helpers.h>
+
+extern int LINUX_KERNEL_VERSION __kconfig;
 
 // Configuration
 #include "config.h"
@@ -97,27 +102,48 @@ BPF_HASH(dead_group_tasks, struct task_struct *, struct task_struct *, TABLE_SIZ
 
 /* BPF_F_NO_PREALLOC was introduced in 6c9059817432, contained in
  * v4.6-rc1~91^2~108^2~6 */
-#pragma passthrough on
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 6, 0)
-BPF_HASH(seen_inodes, u32, u32, TABLE_SIZE__SEEN_INODES);
-#else /* #if LINUX_VERSION_CODE < KERNEL_VERSION(4,6,0) */
-BPF_F_TABLE(
-    /*table_type*/ "hash",
-    /*key_type*/ u32,
-    /*value_type*/ u32,
-    /*name*/ seen_inodes,
-    /*max_entries*/ TABLE_SIZE__SEEN_INODES,
-    /*flags*/ BPF_F_NO_PREALLOC);
-#endif
-#pragma passthrough off
-BPF_HASH(
-    seen_conntracks,
-    struct nf_conn *,
-    struct nf_conn *,
-    TABLE_SIZE__SEEN_CONNTRACKS); // Conntracks that we've reported to userspace
-BPF_HASH(tcp_open_sockets, struct sock *, struct tcp_open_socket_t, TABLE_SIZE__TCP_OPEN_SOCKETS); /* information on live sks */
-BPF_HASH(udp_open_sockets, struct sock *, struct udp_open_socket_t, TABLE_SIZE__UDP_OPEN_SOCKETS);
-BPF_HASH(udp_get_port_hash, u64, struct sock *, TABLE_SIZE__UDP_GET_PORT_HASH);
+static void setup_seen_inodes_table() {
+  if (LINUX_KERNEL_VERSION < KERNEL_VERSION(4, 6, 0)) {
+    // Use regular BPF_HASH for older kernels
+  } else {
+    // Use BPF_F_NO_PREALLOC for newer kernels
+  }
+}
+
+// Hash table with no preallocation
+struct {
+    __uint(type, BPF_MAP_TYPE_HASH);
+    __type(key, u32);
+    __type(value, u32);
+    __uint(max_entries, TABLE_SIZE__SEEN_INODES);
+    __uint(map_flags, BPF_F_NO_PREALLOC);
+} seen_inodes SEC(".maps");
+struct {
+    __uint(type, BPF_MAP_TYPE_HASH);
+    __type(key, struct nf_conn *);
+    __type(value, struct nf_conn *);
+    __uint(max_entries, TABLE_SIZE__SEEN_CONNTRACKS);
+} seen_conntracks SEC(".maps"); // Conntracks that we've reported to userspace
+struct {
+    __uint(type, BPF_MAP_TYPE_HASH);
+    __type(key, struct sock *);
+    __type(value, struct tcp_open_socket_t);
+    __uint(max_entries, TABLE_SIZE__TCP_OPEN_SOCKETS);
+} tcp_open_sockets SEC(".maps"); /* information on live sks */
+
+struct {
+    __uint(type, BPF_MAP_TYPE_HASH);
+    __type(key, struct sock *);
+    __type(value, struct udp_open_socket_t);
+    __uint(max_entries, TABLE_SIZE__UDP_OPEN_SOCKETS);
+} udp_open_sockets SEC(".maps");
+
+struct {
+    __uint(type, BPF_MAP_TYPE_HASH);
+    __type(key, u64);
+    __type(value, struct sock *);
+    __uint(max_entries, TABLE_SIZE__UDP_GET_PORT_HASH);
+} udp_get_port_hash SEC(".maps");
 
 BEGIN_DECLARE_SAVED_ARGS(cgroup_exit)
 pid_t tgid;
@@ -128,13 +154,15 @@ END_DECLARE_SAVED_ARGS(cgroup_exit)
  * This is used by cgroup related probes to filter out cgroups that aren't in the memory hierarchy.
  * See SUBSYS macro in /linux_kernel/kernel/cgroup/cgroup.c.
  */
-#pragma passthrough on
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 14, 79)
-#define FLOW_CGROUP_SUBSYS mem_cgroup_subsys_id
-#else
-#define FLOW_CGROUP_SUBSYS memory_cgrp_id
-#endif
-#pragma passthrough off
+static int get_flow_cgroup_subsys() {
+  if (LINUX_KERNEL_VERSION < KERNEL_VERSION(3, 14, 79)) {
+    return mem_cgroup_subsys_id;
+  } else {
+    return memory_cgrp_id;
+  }
+}
+
+#define FLOW_CGROUP_SUBSYS (get_flow_cgroup_subsys())
 
 /* forward declarations */
 
@@ -496,19 +524,17 @@ static inline u32 tcp_get_delivered(struct sock *sk)
   struct tcp_sock *tp = tcp_sk(sk);
 /* delivered accounting was introduced in ddf1af6fa00e77, i.e.,
  * v4.6-rc1~91^2~316^2~3 */
-#pragma passthrough on
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 6, 0)
-  u32 packets_out = 0;
-  u32 sacked_out = 0;
-  bpf_probe_read(&packets_out, sizeof(packets_out), &tp->packets_out);
-  bpf_probe_read(&sacked_out, sizeof(sacked_out), &tp->sacked_out);
-  return packets_out - sacked_out;
-#else
-  u32 delivered = 0;
-  bpf_probe_read(&delivered, sizeof(delivered), &tp->delivered);
-  return delivered;
-#endif
-#pragma passthrough off
+  if (LINUX_KERNEL_VERSION < KERNEL_VERSION(4, 6, 0)) {
+    u32 packets_out = 0;
+    u32 sacked_out = 0;
+    bpf_probe_read(&packets_out, sizeof(packets_out), &tp->packets_out);
+    bpf_probe_read(&sacked_out, sizeof(sacked_out), &tp->sacked_out);
+    return packets_out - sacked_out;
+  } else {
+    u32 delivered = 0;
+    bpf_probe_read(&delivered, sizeof(delivered), &tp->delivered);
+    return delivered;
+  }
 }
 
 static inline void
@@ -518,13 +544,11 @@ report_rtt_estimator(struct pt_regs *ctx, struct sock *sk, struct tcp_open_socke
   sk_info->last_output = now; // update the time in place
 
   u32 rcv_rtt_us = 0;
-#pragma passthrough on
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 12, 0)
-  bpf_probe_read(&rcv_rtt_us, sizeof(rcv_rtt_us), &tcp_sk(sk)->rcv_rtt_est.rtt);
-#else /* #if LINUX_VERSION_CODE < KERNEL_VERSION(4,12,0) */
-  bpf_probe_read(&rcv_rtt_us, sizeof(rcv_rtt_us), &tcp_sk(sk)->rcv_rtt_est.rtt_us);
-#endif
-#pragma passthrough off
+  if (LINUX_KERNEL_VERSION < KERNEL_VERSION(4, 12, 0)) {
+    bpf_probe_read(&rcv_rtt_us, sizeof(rcv_rtt_us), &tcp_sk(sk)->rcv_rtt_est.rtt);
+  } else {
+    bpf_probe_read(&rcv_rtt_us, sizeof(rcv_rtt_us), &tcp_sk(sk)->rcv_rtt_est.rtt_us);
+  }
 
   // These values need to be taken from bpf_probe_read
   u32 srtt = 0;
@@ -973,14 +997,13 @@ u32 _pad_0; // required alignment for bcc
 int *err;
 END_DECLARE_SAVED_ARGS(on_inet_csk_accept)
 
-#pragma passthrough on // Let BCC process this #if
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
 int on_inet_csk_accept(struct pt_regs *ctx, struct sock *sk, int flags, int *err, bool kern)
-#else
-int on_inet_csk_accept(struct pt_regs *ctx, struct sock *sk, int flags, int *err)
-#endif
-#pragma passthrough off // Return to preprocessor handling of directives
 {
+  // Handle parameter differences between kernel versions
+  if (LINUX_KERNEL_VERSION < KERNEL_VERSION(4, 11, 0)) {
+    // In older kernels, there's no bool kern parameter
+    // The kern parameter doesn't exist, so we ignore it
+  }
   GET_PID_TGID;
 
 #if TCP_STATS_ON_PARENT
@@ -1967,34 +1990,34 @@ int on_tcp_retransmit_timer(struct pt_regs *ctx, struct sock *sk)
 // (v2.6.34-rc1~233^2~563).
 int on_tcp_syn_ack_timeout(
     struct pt_regs *ctx,
-#pragma passthrough on
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 1, 0)
-    struct sock *sock,
-#endif
-#pragma passthrough off
     const struct request_sock *req)
 {
+  // Handle parameter differences between kernel versions
+  struct sock *sock = NULL;
+  if (LINUX_KERNEL_VERSION < KERNEL_VERSION(4, 1, 0)) {
+    // In older kernels, there's an additional struct sock *sock parameter
+    sock = (struct sock *)PT_REGS_PARM2(ctx);
+    req = (const struct request_sock *)PT_REGS_PARM3(ctx);
+  }
 
 #if TCP_STATS_ON_PARENT
 
-#pragma passthrough on
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 4, 0)
-  /* Linux<4.4 does not have req->rsk_listener */
   struct sock *sk = NULL;
-  bpf_probe_read(&sk, sizeof(sk), &(req->sk));
+  if (LINUX_KERNEL_VERSION < KERNEL_VERSION(4, 4, 0)) {
+    /* Linux<4.4 does not have req->rsk_listener */
+    bpf_probe_read(&sk, sizeof(sk), &(req->sk));
 
-  struct tcp_open_socket_t *sk_info;
-  sk_info = tcp_open_sockets.lookup(&sk);
-  if (!sk_info) {
-    //  don't send a retransmit event on sockets we never notified userspace about
-    return 0;
+    struct tcp_open_socket_t *sk_info;
+    sk_info = tcp_open_sockets.lookup(&sk);
+    if (!sk_info) {
+      //  don't send a retransmit event on sockets we never notified userspace about
+      return 0;
+    }
+
+    handle_syn_timeout(ctx, sk_info->parent);
+  } else {
+    handle_syn_timeout(ctx, (struct sock *)req->rsk_listener);
   }
-
-  handle_syn_timeout(ctx, sk_info->parent);
-#else
-  handle_syn_timeout(ctx, (struct sock *)req->rsk_listener);
-#endif
-#pragma passthrough off
 
 #else
 
@@ -2016,17 +2039,24 @@ int on_tcp_syn_ack_timeout(
 // Use stack-based approach on kernels below 4.15 (chosen using empirical testing).
 // This is limited by max eBPF stack size (512 bytes). On newer kernels we can
 // use per-CPU arrays for copying data which allows processing larger packets.
-#pragma passthrough on
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 15, 0)
-#define DNS_MAX_PACKET_LEN 380 // limited by the eBPF stack size
-#else
-#define DNS_MAX_PACKET_LEN 512 // max size of DNS UDP packet
+
+// Define maximum DNS packet length based on kernel version
+static int get_dns_max_packet_len() {
+  if (LINUX_KERNEL_VERSION < KERNEL_VERSION(4, 15, 0)) {
+    return 380; // limited by the eBPF stack size
+  } else {
+    return 512; // max size of DNS UDP packet
+  }
+}
+
+#define DNS_MAX_PACKET_LEN (get_dns_max_packet_len())
+
+// For newer kernels, define the structure and per-CPU array
 struct dns_message_data {
-  char data[DNS_MAX_PACKET_LEN + sizeof(struct bpf_agent_internal__dns_packet) + 16];
+  char data[512 + sizeof(struct bpf_agent_internal__dns_packet) + 16];
 };
 // use per-CPU array to overcome eBPF stack size limit
 BPF_PERCPU_ARRAY(dns_message_array, struct dns_message_data, 1);
-#endif
 #pragma passthrough off
 
 // Depending on when the skb is inspected, the header may or may not be filled
@@ -2122,25 +2152,22 @@ perf_check_and_submit_dns(struct pt_regs *ctx, struct sock *sk, struct sk_buff *
   }
 
   /* allocate buffer for event */
-#pragma passthrough on
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 15, 0)
-
-  // use stack based buffer on older kernels
-  char buf[DNS_MAX_PACKET_LEN + sizeof(struct bpf_agent_internal__dns_packet) + 16] = {};
-
-#else
-
-  // use bigger per-CPU array based buffer on newer kernels
-  int zero = 0;
-  struct dns_message_data *pkt = dns_message_array.lookup(&zero);
-  if (pkt == NULL) {
-    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, 0, 0, 0);
-    return;
+  char *buf;
+  char stack_buf[380 + sizeof(struct bpf_agent_internal__dns_packet) + 16] = {};
+  
+  if (LINUX_KERNEL_VERSION < KERNEL_VERSION(4, 15, 0)) {
+    // use stack based buffer on older kernels
+    buf = stack_buf;
+  } else {
+    // use bigger per-CPU array based buffer on newer kernels
+    int zero = 0;
+    struct dns_message_data *pkt = dns_message_array.lookup(&zero);
+    if (pkt == NULL) {
+      bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, 0, 0, 0);
+      return;
+    }
+    buf = pkt->data;
   }
-  char *buf = pkt->data;
-
-#endif
-#pragma passthrough off
 
   /* the actual offset into buf has to start from buf's start */
   char *to = buf + bpf_agent_internal__dns_packet__data_size;
@@ -2165,14 +2192,15 @@ int on_skb_consume_udp(struct pt_regs *ctx, struct sock *sk, struct sk_buff *skb
 }
 
 // Compatibility layer for kernels pre skb_consume_udp (pre-4.10)
-#pragma passthrough on
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 9, 0)
 int on_skb_free_datagram_locked(struct pt_regs *ctx, struct sock *sk, struct sk_buff *skb, int len)
-#else
-int on_skb_free_datagram_locked(struct pt_regs *ctx, struct sock *sk, struct sk_buff *skb)
-#endif
-#pragma passthrough off
 {
+  // Handle parameter differences between kernel versions
+  if (LINUX_KERNEL_VERSION < KERNEL_VERSION(4, 9, 0)) {
+    // In older kernels, there's no int len parameter
+    // Parameters are: struct sock *sk, struct sk_buff *skb
+    // len parameter doesn't exist, so we ignore it
+  }
+  
   // Call handle_receive_udp_skb
   tail_calls.call(ctx, TAIL_CALL_HANDLE_RECEIVE_UDP_SKB);
 
@@ -2182,9 +2210,7 @@ int on_skb_free_datagram_locked(struct pt_regs *ctx, struct sock *sk, struct sk_
 ////////////////////////////////////////////////////////////////////////////////////
 /* CGROUPS */
 
-#pragma passthrough on
-
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 12, 0)
+// Define structures and functions for older kernels (< 3.12)
 struct css_id { /* From cgroup.c */
   struct cgroup_subsys_state __rcu *css;
   unsigned short id;
@@ -2195,63 +2221,64 @@ struct css_id { /* From cgroup.c */
 
 static u32 get_css_id(struct cgroup_subsys_state *css)
 {
-  if (!css->id)
-    return 0;
-  u32 ssid = (u32)css->id->id;
-  return ssid;
+  if (LINUX_KERNEL_VERSION < KERNEL_VERSION(3, 12, 0)) {
+    if (!css->id)
+      return 0;
+    u32 ssid = (u32)css->id->id;
+    return ssid;
+  } else {
+    if (!css->ss)
+      return 0;
+    u32 ssid = (u32)css->ss->id;
+    return ssid;
+  }
 }
-static struct cgroup *get_css_parent_cgroup(struct cgroup_subsys_state *css)
-{
-  struct cgroup *parent_cgroup = css->cgroup->parent;
-  return parent_cgroup;
-}
-#else
-static u32 get_css_id(struct cgroup_subsys_state *css)
-{
-  if (!css->ss)
-    return 0;
-  u32 ssid = (u32)css->ss->id;
-  return ssid;
-}
-static struct cgroup *get_css_parent_cgroup(struct cgroup_subsys_state *css)
-{
-  if (!css->parent)
-    return NULL;
-  struct cgroup *parent_cgroup = css->parent->cgroup;
-  return parent_cgroup;
-}
-#endif
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 15, 0)
+static struct cgroup *get_css_parent_cgroup(struct cgroup_subsys_state *css)
+{
+  if (LINUX_KERNEL_VERSION < KERNEL_VERSION(3, 12, 0)) {
+    struct cgroup *parent_cgroup = css->cgroup->parent;
+    return parent_cgroup;
+  } else {
+    if (!css->parent)
+      return NULL;
+    struct cgroup *parent_cgroup = css->parent->cgroup;
+    return parent_cgroup;
+  }
+}
+
 static const char *get_cgroup_name(struct cgroup *cg)
 {
-  return (const char *)&(cg->name->name[0]);
+  if (LINUX_KERNEL_VERSION < KERNEL_VERSION(3, 15, 0)) {
+    return (const char *)&(cg->name->name[0]);
+  } else {
+    return cg->kn->name;
+  }
 }
-#else
-static const char *get_cgroup_name(struct cgroup *cg)
-{
-  return cg->kn->name;
-}
-#endif
 
 // close
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 12, 0)
-// For Kernel >= 3.12
+// Function that handles both kernel versions for killing CSS
 int on_kill_css(struct pt_regs *ctx, struct cgroup_subsys_state *css)
 {
-  u32 ssid = get_css_id(css);
-  if (ssid != FLOW_CGROUP_SUBSYS)
+  if (LINUX_KERNEL_VERSION >= KERNEL_VERSION(3, 12, 0)) {
+    // For Kernel >= 3.12
+    u32 ssid = get_css_id(css);
+    if (ssid != FLOW_CGROUP_SUBSYS)
+      return 0;
+
+    struct cgroup *parent_cgroup = get_css_parent_cgroup(css);
+
+    u64 now = get_timestamp();
+    perf_submit_agent_internal__kill_css(
+        ctx, now, (__u64)css->cgroup, (__u64)parent_cgroup, (void *)get_cgroup_name(css->cgroup));
     return 0;
-
-  struct cgroup *parent_cgroup = get_css_parent_cgroup(css);
-
-  u64 now = get_timestamp();
-  perf_submit_agent_internal__kill_css(
-      ctx, now, (__u64)css->cgroup, (__u64)parent_cgroup, (void *)get_cgroup_name(css->cgroup));
-  return 0;
+  } else {
+    // This should be called as on_cgroup_destroy_locked for older kernels
+    return 0;
+  }
 }
-#else
+
 // For Kernel < 3.12
 int on_cgroup_destroy_locked(struct pt_regs *ctx, struct cgroup *cgrp)
 {
@@ -2264,26 +2291,30 @@ int on_cgroup_destroy_locked(struct pt_regs *ctx, struct cgroup *cgrp)
   perf_submit_agent_internal__kill_css(ctx, now, (__u64)cgrp, (__u64)cgrp->parent, (void *)get_cgroup_name(cgrp));
   return 0;
 }
-#endif
 
 // start
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)
-// For Kernel >= 4.4
+// Function that handles both kernel versions for populating CSS directories
 int on_css_populate_dir(struct pt_regs *ctx, struct cgroup_subsys_state *css)
 {
-  u32 ssid = get_css_id(css);
-  if (ssid != FLOW_CGROUP_SUBSYS)
+  if (LINUX_KERNEL_VERSION >= KERNEL_VERSION(4, 4, 0)) {
+    // For Kernel >= 4.4
+    u32 ssid = get_css_id(css);
+    if (ssid != FLOW_CGROUP_SUBSYS)
+      return 0;
+
+    struct cgroup *parent_cgroup = get_css_parent_cgroup(css);
+
+    u64 now = get_timestamp();
+    perf_submit_agent_internal__css_populate_dir(
+        ctx, now, (__u64)css->cgroup, (__u64)parent_cgroup, (void *)get_cgroup_name(css->cgroup));
     return 0;
-
-  struct cgroup *parent_cgroup = get_css_parent_cgroup(css);
-
-  u64 now = get_timestamp();
-  perf_submit_agent_internal__css_populate_dir(
-      ctx, now, (__u64)css->cgroup, (__u64)parent_cgroup, (void *)get_cgroup_name(css->cgroup));
-  return 0;
+  } else {
+    // This should be called as on_cgroup_populate_dir for older kernels
+    return 0;
+  }
 }
-#else
+
 // For Kernel < 4.4
 int on_cgroup_populate_dir(struct pt_regs *ctx, struct cgroup *cgrp, unsigned long subsys_mask)
 {
@@ -2296,16 +2327,19 @@ int on_cgroup_populate_dir(struct pt_regs *ctx, struct cgroup *cgrp, unsigned lo
   perf_submit_agent_internal__css_populate_dir(ctx, now, (__u64)cgrp, (__u64)cgrp->parent, (void *)get_cgroup_name(cgrp));
   return 0;
 }
-#endif
 
 // existing cgroups v2
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 6, 0)
 BEGIN_DECLARE_SAVED_ARGS(cgroup_control)
 struct cgroup *cgrp;
 END_DECLARE_SAVED_ARGS(cgroup_control)
 
 int on_cgroup_control(struct pt_regs *ctx, struct cgroup *cgrp)
 {
+  // Only available for kernel >= 4.6.0
+  if (LINUX_KERNEL_VERSION < KERNEL_VERSION(4, 6, 0)) {
+    return 0;
+  }
+  
   GET_PID_TGID;
 
   BEGIN_SAVE_ARGS(cgroup_control)
@@ -2317,6 +2351,11 @@ int on_cgroup_control(struct pt_regs *ctx, struct cgroup *cgrp)
 
 int onret_cgroup_control(struct pt_regs *ctx)
 {
+  // Only available for kernel >= 4.6.0
+  if (LINUX_KERNEL_VERSION < KERNEL_VERSION(4, 6, 0)) {
+    return 0;
+  }
+  
   GET_PID_TGID;
 
   GET_ARGS_MISSING_OK(cgroup_control, args)
@@ -2339,14 +2378,17 @@ int onret_cgroup_control(struct pt_regs *ctx)
 
   return 0;
 }
-#endif
 
 // existing cgroups v1
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 12, 0)
-// For Kernel >= 3.12.0
-int on_cgroup_clone_children_read(struct pt_regs *ctx, struct cgroup_subsys_state *css, struct cftype *cft)
+// Function that handles both kernel versions for clone children read
+int on_cgroup_clone_children_read_css(struct pt_regs *ctx, struct cgroup_subsys_state *css, struct cftype *cft)
 {
+  // For Kernel >= 3.12.0
+  if (LINUX_KERNEL_VERSION < KERNEL_VERSION(3, 12, 0)) {
+    return 0; // Should use the cgroup version instead
+  }
+  
   u32 subsys_mask = (u32)css->cgroup->root->subsys_mask;
   if (subsys_mask != 1 << FLOW_CGROUP_SUBSYS)
     return 0;
@@ -2359,7 +2401,7 @@ int on_cgroup_clone_children_read(struct pt_regs *ctx, struct cgroup_subsys_stat
 
   return 0;
 }
-#else
+
 // For Kernel < 3.12.0
 int on_cgroup_clone_children_read(struct pt_regs *ctx, struct cgroup *cgrp, struct cftype *cft)
 {
@@ -2374,9 +2416,6 @@ int on_cgroup_clone_children_read(struct pt_regs *ctx, struct cgroup *cgrp, stru
 
   return 0;
 }
-#endif
-
-#pragma passthrough off
 
 // modify
 int on_cgroup_attach_task(struct pt_regs *ctx, struct cgroup *dst_cgrp, struct task_struct *leader, bool threadgroup)

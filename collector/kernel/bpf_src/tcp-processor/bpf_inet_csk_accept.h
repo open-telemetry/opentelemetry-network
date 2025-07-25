@@ -14,6 +14,8 @@
 #include "bpf_tcp_socket.h"
 #include "bpf_types.h"
 
+extern int LINUX_KERNEL_VERSION __kconfig;
+
 BEGIN_DECLARE_SAVED_ARGS(inet_csk_accept)
 struct sock *sk;
 int flags;
@@ -23,14 +25,14 @@ END_DECLARE_SAVED_ARGS(inet_csk_accept)
 
 // --- inet_csk_accept --------------------------------------------------
 // Called when a listen socket accepts gets a connection
-#pragma passthrough on // Let BCC process this #if
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
 int handle_kprobe__inet_csk_accept(struct pt_regs *ctx, struct sock *sk, int flags, int *err, bool kern)
-#else
-int handle_kprobe__inet_csk_accept(struct pt_regs *ctx, struct sock *sk, int flags, int *err)
-#endif
-#pragma passthrough off // Return to preprocessor handling of directives
 {
+  // Handle parameter differences between kernel versions
+  if (LINUX_KERNEL_VERSION < KERNEL_VERSION(4, 11, 0)) {
+    // In older kernels, there's no bool kern parameter
+    // Parameters are: struct sock *sk, int flags, int *err
+    // The kern parameter doesn't exist, so we ignore it
+  }
   GET_PID_TGID
 
   // Ensure the parent socket has a tcp_connection

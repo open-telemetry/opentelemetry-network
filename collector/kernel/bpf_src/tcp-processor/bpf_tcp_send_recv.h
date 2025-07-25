@@ -17,6 +17,8 @@
 #include "bpf_tcp_socket.h"
 #include "bpf_types.h"
 
+extern int LINUX_KERNEL_VERSION __kconfig;
+
 #ifndef TCP_CLIENT_HANDLER
 #error "Must define TCP_CLIENT_HANDLER"
 #endif
@@ -104,14 +106,17 @@ static void tcp_recv_stream_handler(
 // --- tcp_sendmsg ----------------------------------------------------
 // Called when data is to be send to a TCP socket
 
-#pragma passthrough on
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 1, 0)
-int handle_kprobe__tcp_sendmsg(struct pt_regs *ctx, struct kiocb *iocb, struct sock *sk, struct msghdr *msg, size_t size)
-#else
 int handle_kprobe__tcp_sendmsg(struct pt_regs *ctx, struct sock *sk, struct msghdr *msg, size_t size)
-#endif
-#pragma passthrough off
 {
+  // Handle parameter differences between kernel versions
+  if (LINUX_KERNEL_VERSION < KERNEL_VERSION(4, 1, 0)) {
+    // In older kernels, there's an additional struct kiocb *iocb parameter
+    // Parameters are: struct kiocb *iocb, struct sock *sk, struct msghdr *msg, size_t size
+    // We need to extract the real parameters from the correct positions
+    sk = (struct sock *)PT_REGS_PARM2(ctx);
+    msg = (struct msghdr *)PT_REGS_PARM3(ctx);
+    size = (size_t)PT_REGS_PARM4(ctx);
+  }
   GET_PID_TGID
 
   struct tcp_connection_t *pconn;
@@ -157,35 +162,34 @@ int handle_kprobe__tcp_sendmsg(struct pt_regs *ctx, struct sock *sk, struct msgh
   struct iovec *iov = NULL;
   unsigned long nr_segs = 0;
   size_t iov_offset = 0;
-#pragma passthrough on
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 19, 0)
-  bpf_probe_read(&iov, sizeof(iov), &(msg->msg_iov));
-  bpf_probe_read(&nr_segs, sizeof(nr_segs), &(msg->msg_iovlen));
-  // iov_offset is not a thing in older kernels
-#else
-#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 14, 0)
-  unsigned int type;
-  bpf_probe_read(&type, sizeof(type), &(msg->msg_iter.type));
-#else
-  u8 type;
-  bpf_probe_read(&type, sizeof(type), &(msg->msg_iter.iter_type));
-#endif
-  // ensure this is an IOVEC or KVEC, low bit indicates read/write
-  // note: iov_iter.iov and iov_iter.kvec are union and have same layout
-  // first condition makes it work on pre-5 kernels where ITER_IOVEC=0
-  if (type > 1 && !(type & (ITER_IOVEC | ITER_KVEC))) {
+  if (LINUX_KERNEL_VERSION < KERNEL_VERSION(3, 19, 0)) {
+    bpf_probe_read(&iov, sizeof(iov), &(msg->msg_iov));
+    bpf_probe_read(&nr_segs, sizeof(nr_segs), &(msg->msg_iovlen));
+    // iov_offset is not a thing in older kernels
+  } else {
+    u32 type;
+    if (LINUX_KERNEL_VERSION < KERNEL_VERSION(5, 14, 0)) {
+      bpf_probe_read(&type, sizeof(unsigned int), &(msg->msg_iter.type));
+    } else {
+      u8 type_u8;
+      bpf_probe_read(&type_u8, sizeof(type_u8), &(msg->msg_iter.iter_type));
+      type = type_u8;
+    }
+    // ensure this is an IOVEC or KVEC, low bit indicates read/write
+    // note: iov_iter.iov and iov_iter.kvec are union and have same layout
+    // first condition makes it work on pre-5 kernels where ITER_IOVEC=0
+    if (type > 1 && !(type & (ITER_IOVEC | ITER_KVEC))) {
 #if DEBUG_TCP_SEND
-    DEBUG_PRINTK("unsupported iov type: %d\n", type);
+      DEBUG_PRINTK("unsupported iov type: %d\n", type);
 #endif
-    bpf_log(ctx, BPF_LOG_UNSUPPORTED_IO, (u64)ST_SEND, (u64)sk, (u64)type);
-    return 0;
+      bpf_log(ctx, BPF_LOG_UNSUPPORTED_IO, (u64)ST_SEND, (u64)sk, (u64)type);
+      return 0;
+    }
+    // can access through iov since iov and kvec are union and have same layout
+    bpf_probe_read(&iov, sizeof(iov), &(msg->msg_iter.iov));
+    bpf_probe_read(&nr_segs, sizeof(nr_segs), &(msg->msg_iter.nr_segs));
+    bpf_probe_read(&iov_offset, sizeof(iov_offset), &(msg->msg_iter.iov_offset));
   }
-  // can access through iov since iov and kvec are union and have same layout
-  bpf_probe_read(&iov, sizeof(iov), &(msg->msg_iter.iov));
-  bpf_probe_read(&nr_segs, sizeof(nr_segs), &(msg->msg_iter.nr_segs));
-  bpf_probe_read(&iov_offset, sizeof(iov_offset), &(msg->msg_iter.iov_offset));
-#endif
-#pragma passthrough off
 
   void *iov_ptr = NULL;
   size_t iov_len = 0;
@@ -309,22 +313,20 @@ int continue_tcp_sendmsg(struct pt_regs *ctx)
 // --- tcp_recvmsg ----------------------------------------------------
 // Called when data is to be received by a TCP socket
 
-#pragma passthrough on
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 1, 0)
-int handle_kprobe__tcp_recvmsg(
-    struct pt_regs *ctx,
-    struct kiocb *iocb,
-    struct sock *sk,
-    struct msghdr *msg,
-    size_t len,
-    int nonblock,
-    int flags /*, int *addr_len*/)
-#else
 int handle_kprobe__tcp_recvmsg(
     struct pt_regs *ctx, struct sock *sk, struct msghdr *msg, size_t len, int nonblock, int flags, int *addr_len)
-#endif
-#pragma passthrough off
 {
+  // Handle parameter differences between kernel versions
+  if (LINUX_KERNEL_VERSION < KERNEL_VERSION(4, 1, 0)) {
+    // In older kernels, there's an additional struct kiocb *iocb parameter
+    // Parameters are: struct kiocb *iocb, struct sock *sk, struct msghdr *msg, size_t len, int nonblock, int flags
+    sk = (struct sock *)PT_REGS_PARM2(ctx);
+    msg = (struct msghdr *)PT_REGS_PARM3(ctx);
+    len = (size_t)PT_REGS_PARM4(ctx);
+    nonblock = (int)PT_REGS_PARM5(ctx);
+    flags = (int)PT_REGS_PARM6(ctx);
+    // addr_len parameter doesn't exist in older kernels
+  }
   GET_PID_TGID
 
   struct tcp_connection_t *pconn;
@@ -368,31 +370,30 @@ int handle_kprobe__tcp_recvmsg(
   // decode msg
 
   struct iovec *iov = NULL;
-#pragma passthrough on
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 19, 0)
-  bpf_probe_read(&iov, sizeof(iov), &(msg->msg_iov));
-#else
-#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 14, 0)
-  unsigned int type;
-  bpf_probe_read(&type, sizeof(type), &(msg->msg_iter.type));
-#else
-  u8 type;
-  bpf_probe_read(&type, sizeof(type), &(msg->msg_iter.iter_type));
-#endif
-  // ensure this is an IOVEC or KVEC, low bit indicates read/write
-  // note: iov_iter.iov and iov_iter.kvec are union and have same layout
-  // first condition makes it work on pre-5 kernels where ITER_IOVEC=0
-  if (type > 1 && !(type & (ITER_IOVEC | ITER_KVEC))) {
+  if (LINUX_KERNEL_VERSION < KERNEL_VERSION(3, 19, 0)) {
+    bpf_probe_read(&iov, sizeof(iov), &(msg->msg_iov));
+  } else {
+    u32 type;
+    if (LINUX_KERNEL_VERSION < KERNEL_VERSION(5, 14, 0)) {
+      bpf_probe_read(&type, sizeof(unsigned int), &(msg->msg_iter.type));
+    } else {
+      u8 type_u8;
+      bpf_probe_read(&type_u8, sizeof(type_u8), &(msg->msg_iter.iter_type));
+      type = type_u8;
+    }
+    // ensure this is an IOVEC or KVEC, low bit indicates read/write
+    // note: iov_iter.iov and iov_iter.kvec are union and have same layout
+    // first condition makes it work on pre-5 kernels where ITER_IOVEC=0
+    if (type > 1 && !(type & (ITER_IOVEC | ITER_KVEC))) {
 #if DEBUG_TCP_RECEIVE
-    DEBUG_PRINTK("unsupported iov type: %d\n", type);
+      DEBUG_PRINTK("unsupported iov type: %d\n", type);
 #endif
-    bpf_log(ctx, BPF_LOG_UNSUPPORTED_IO, (u64)ST_RECV, (u64)sk, (u64)type);
-    return 0;
+      bpf_log(ctx, BPF_LOG_UNSUPPORTED_IO, (u64)ST_RECV, (u64)sk, (u64)type);
+      return 0;
+    }
+    // can access through iov since iov and kvec are union and have same layout
+    bpf_probe_read(&iov, sizeof(iov), &(msg->msg_iter.iov));
   }
-  // can access through iov since iov and kvec are union and have same layout
-  bpf_probe_read(&iov, sizeof(iov), &(msg->msg_iter.iov));
-#endif
-#pragma passthrough off
 
   void *iov_base = NULL;
   size_t iov_len = 0;

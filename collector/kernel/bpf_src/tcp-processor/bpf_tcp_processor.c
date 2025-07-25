@@ -15,7 +15,7 @@ BPF_PROG_ARRAY(tail_calls, NUM_TAIL_CALLS);
 #endif
 
 // Verify kernel is >= 4.4
-// #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 4, 0)
+// #if LINUX_KERNEL_VERSION < KERNEL_VERSION(4, 4, 0)
 // #error "Kernel version needs to be 4.4 or newer"
 // #endif
 
