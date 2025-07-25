@@ -69,7 +69,7 @@ jobs:
           ref: ${{ env.REF }}
 
       - name: Build and push base image
-        uses: ./.github/actions/build-push-container//
+        uses: ./.github/actions/build-tools-single-stage/
         with:
           directory: base
           registry: ${{ env.CACHE_REGISTRY }}
@@ -89,7 +89,7 @@ jobs:
           ref: ${{ env.REF }}
 
       - name: Build and push bcc image
-        uses: ./.github/actions/build-push-container/
+        uses: ./.github/actions/build-tools-single-stage/
         with:
           directory: bcc
           registry: ${{ env.CACHE_REGISTRY }}
@@ -109,7 +109,7 @@ jobs:
           ref: ${{ env.REF }}
 
       - name: Build and push libuv image
-        uses: ./.github/actions/build-push-container/
+        uses: ./.github/actions/build-tools-single-stage/
         with:
           directory: libuv
           registry: ${{ env.CACHE_REGISTRY }}
@@ -129,7 +129,7 @@ jobs:
           ref: ${{ env.REF }}
 
       - name: Build and push cpp_misc image
-        uses: ./.github/actions/build-push-container/
+        uses: ./.github/actions/build-tools-single-stage/
         with:
           directory: cpp_misc
           registry: ${{ env.CACHE_REGISTRY }}
@@ -149,7 +149,7 @@ jobs:
           ref: ${{ env.REF }}
 
       - name: Build and push go image
-        uses: ./.github/actions/build-push-container/
+        uses: ./.github/actions/build-tools-single-stage/
         with:
           directory: go
           registry: ${{ env.CACHE_REGISTRY }}
@@ -169,7 +169,7 @@ jobs:
           ref: ${{ env.REF }}
 
       - name: Build and push libmaxminddb image
-        uses: ./.github/actions/build-push-container/
+        uses: ./.github/actions/build-tools-single-stage/
         with:
           directory: libmaxminddb
           registry: ${{ env.CACHE_REGISTRY }}
@@ -189,7 +189,7 @@ jobs:
           ref: ${{ env.REF }}
 
       - name: Build and push libbpf image
-        uses: ./.github/actions/build-push-container/
+        uses: ./.github/actions/build-tools-single-stage/
         with:
           directory: libbpf
           registry: ${{ env.CACHE_REGISTRY }}
@@ -209,7 +209,7 @@ jobs:
           ref: ${{ env.REF }}
 
       - name: Build and push aws_sdk image
-        uses: ./.github/actions/build-push-container/
+        uses: ./.github/actions/build-tools-single-stage/
         with:
           directory: aws_sdk
           registry: ${{ env.CACHE_REGISTRY }}
@@ -229,7 +229,7 @@ jobs:
           ref: ${{ env.REF }}
 
       - name: Build and push gcp_cpp image
-        uses: ./.github/actions/build-push-container/
+        uses: ./.github/actions/build-tools-single-stage/
         with:
           directory: gcp_cpp
           registry: ${{ env.CACHE_REGISTRY }}
@@ -249,7 +249,7 @@ jobs:
           ref: ${{ env.REF }}
 
       - name: Build and push opentelemetry image
-        uses: ./.github/actions/build-push-container/
+        uses: ./.github/actions/build-tools-single-stage/
         with:
           directory: opentelemetry
           registry: ${{ env.CACHE_REGISTRY }}
@@ -284,7 +284,7 @@ jobs:
 
       - name: Build and push final image to cache registry
         id: build
-        uses: ./.github/actions/build-push-container/
+        uses: ./.github/actions/build-tools-single-stage/
         with:
           directory: final
           registry: ${{ env.CACHE_REGISTRY }}
