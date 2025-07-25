@@ -53,8 +53,6 @@ fi
 push_args=""
 if [[ "${docker_registry}" == "localhost:5000" ]]; then
   push_args="--tls-verify=false"
-else
-  push_args=""
 fi
 
 (set -x; \
