@@ -162,7 +162,7 @@ runs:
         RECURSIVE_HASH=$(compute_recursive_hash "$BASE_DIRECTORY")
         
         # Create image tag
-        IMAGE_TAG="${{ github.repository_owner }}/benv-${BASE_DIRECTORY}:${RECURSIVE_HASH}"
+        IMAGE_TAG="${{ github.repository_owner }}/opentelemetry-network-build-tools-cache:${BASE_DIRECTORY}-${RECURSIVE_HASH}"
         FULL_IMAGE_TAG="${{ inputs.registry }}/${IMAGE_TAG}"
         
         echo "image-tag=${IMAGE_TAG}" >> $GITHUB_OUTPUT
@@ -179,7 +179,7 @@ runs:
         for dir in $ALL_DIRS; do
           if [[ "$dir" != "$BASE_DIRECTORY" ]]; then
             dir_hash=$(compute_recursive_hash "$dir")
-            dir_image_tag="${{ github.repository_owner }}/benv-${dir}:${dir_hash}"
+            dir_image_tag="${{ github.repository_owner }}/opentelemetry-network-build-tools-cache:${dir}-${dir_hash}"
             dir_full_tag="${{ inputs.registry }}/${dir_image_tag}"
             
             # Export as environment variable for use in build args
