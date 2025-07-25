@@ -20,7 +20,7 @@ std::optional<std::string> get_request_json(const T &request)
   // Updated configuration options
   json_print_options.add_whitespace = true;
   
-  // This option is not available in the protobuf library in Debian bullseye, 
+  // This option is not available in the protobuf library in Debian bookworm, 
   // we might bring it back as we update base distro
 #if false
   json_print_options.always_print_fields_with_no_presence = true;
