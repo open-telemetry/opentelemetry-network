@@ -50,6 +50,7 @@ if [[ "${do_login}" == true ]]; then
 fi
 
 # add --tls-verify=false for default registry (localhost:5000)
+push_args=""
 if [[ "${docker_registry}" == "localhost:5000" ]]; then
   push_args="--tls-verify=false"
 else
