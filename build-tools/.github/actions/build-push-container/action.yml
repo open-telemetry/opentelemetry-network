@@ -1,0 +1,277 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+name: 'Build and Push Container'
+description: 'Build and push a Docker container with dependency management and registry caching'
+
+inputs:
+  directory:
+    description: 'Directory name to build'
+    required: true
+  registry:
+    description: 'Container registry to use'
+    required: true
+    default: 'ghcr.io'
+  registry_username:
+    description: 'Registry username'
+    required: true
+  registry_password:
+    description: 'Registry password/token'
+    required: true
+  image_prefix:
+    description: 'Prefix for image names'
+    required: false
+    default: 'benv'
+  ref:
+    description: 'Git ref to checkout'
+    required: false
+    default: 'main'
+  force_rebuild:
+    description: 'Force rebuild and push even if image exists in registry'
+    required: false
+    default: 'false'
+
+outputs:
+  image-tag:
+    description: 'The computed image tag'
+    value: ${{ steps.compute-recursive-tags.outputs.image-tag }}
+  full-image-tag:
+    description: 'The full image tag with registry'
+    value: ${{ steps.compute-recursive-tags.outputs.full-image-tag }}
+  image-exists:
+    description: 'Whether the image already exists in registry'
+    value: ${{ steps.check-exists.outputs.exists }}
+  build-needed:
+    description: 'Whether a build was needed'
+    value: ${{ steps.check-exists.outputs.exists == 'false' }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Checkout sources
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      with:
+        ref: ${{ inputs.ref }}
+        fetch-depth: 0
+
+    - name: Compute recursive tags for all directories
+      id: compute-recursive-tags
+      shell: bash
+      env:
+        DOCKER_TAG_PREFIX: ${{ github.repository_owner }}/
+      run: |
+        DIRECTORY="${{ inputs.directory }}"
+        
+        # Define dependency mapping based on CMakeLists.txt
+        declare -A DEPS
+        DEPS["base"]=""
+        DEPS["bcc"]="base"
+        DEPS["libuv"]="base"
+        DEPS["cpp_misc"]="base"
+        DEPS["go"]="base"
+        DEPS["libmaxminddb"]="base"
+        DEPS["libbpf"]="base"
+        DEPS["aws_sdk"]="base"
+        DEPS["gcp_cpp"]="base"
+        DEPS["opentelemetry"]="base"
+        DEPS["final"]="base bcc libuv aws_sdk cpp_misc go libmaxminddb gcp_cpp opentelemetry libbpf"
+        
+        # Compute direct hashes for all directories upfront
+        declare -A DIRECT_HASHES
+        ALL_DIRS="base bcc libuv cpp_misc go libmaxminddb libbpf aws_sdk gcp_cpp opentelemetry final"
+        
+        echo "Computing direct hashes..." >&2
+        for dir in $ALL_DIRS; do
+          direct_hash=$(git log -1 --format=%h "${dir}")
+          DIRECT_HASHES[$dir]=$direct_hash
+          echo "Direct hash for $dir: $direct_hash" >&2
+        done
+        
+        # Function to compute dependency closure (all transitive dependencies)
+        compute_closure() {
+          local target="$1"
+          local visited_key="VISITED_$target"
+          
+          # Check for circular dependency
+          if [[ -n "${!visited_key:-}" ]]; then
+            echo "ERROR: Circular dependency detected for $target" >&2
+            exit 1
+          fi
+          
+          # Mark as visiting
+          declare -g "$visited_key=1"
+          
+          # Start with direct dependencies
+          local deps="${DEPS[$target]:-}"
+          local closure_set=""
+          
+          # Add direct dependencies
+          for dep in $deps; do
+            closure_set="$closure_set $dep"
+            
+            # Recursively add their closures
+            local dep_closure=$(compute_closure "$dep")
+            closure_set="$closure_set $dep_closure"
+          done
+          
+          # Remove duplicates by converting to array and back
+          local unique_closure=($(echo $closure_set | tr ' ' '\n' | sort -u | tr '\n' ' '))
+          
+          # Unmark visiting
+          unset "$visited_key"
+          
+          echo "${unique_closure[@]}"
+        }
+        
+        # Function to compute recursive hash using closure approach
+        compute_recursive_hash() {
+          local dir="$1"
+          
+          # Get the full dependency closure
+          local closure=$(compute_closure "$dir")
+          
+          # Include the directory itself in the hash computation
+          local all_dirs_for_hash="$dir $closure"
+          
+          # Sort all directories
+          local sorted_dirs=($(echo $all_dirs_for_hash | tr ' ' '\n' | sort -u | tr '\n' ' '))
+          
+          # Concatenate their direct hashes with dashes
+          local hash_input=""
+          for d in "${sorted_dirs[@]}"; do
+            if [[ -n "$d" ]]; then
+              if [[ -n "$hash_input" ]]; then
+                hash_input="$hash_input-${DIRECT_HASHES[$d]}"
+              else
+                hash_input="${DIRECT_HASHES[$d]}"
+              fi
+            fi
+          done
+          
+          # Use the dash-separated hashes directly as the tag
+          local final_hash="$hash_input"
+          
+          echo "Closure for $dir: ${sorted_dirs[@]}" >&2
+          echo "Final hash for $dir: $final_hash" >&2
+          
+          echo "$final_hash"
+        }
+        
+        # Compute recursive hash for target directory
+        RECURSIVE_HASH=$(compute_recursive_hash "$DIRECTORY")
+        
+        # Create image tag
+        IMAGE_TAG="${{ github.repository_owner }}/benv-${DIRECTORY}:${RECURSIVE_HASH}"
+        FULL_IMAGE_TAG="${{ inputs.registry }}/${IMAGE_TAG}"
+        
+        echo "image-tag=${IMAGE_TAG}" >> $GITHUB_OUTPUT
+        echo "full-image-tag=${FULL_IMAGE_TAG}" >> $GITHUB_OUTPUT
+        echo "recursive-hash=${RECURSIVE_HASH}" >> $GITHUB_OUTPUT
+        
+        echo "Computed recursive image tag: ${IMAGE_TAG}" >&2
+        echo "Full image tag: ${FULL_IMAGE_TAG}" >&2
+        echo "Recursive hash: ${RECURSIVE_HASH}" >&2
+        
+        # Compute all dependency tags for build args
+        echo "Computing all dependency tags..." >&2
+        
+        for dir in $ALL_DIRS; do
+          if [[ "$dir" != "$DIRECTORY" ]]; then
+            dir_hash=$(compute_recursive_hash "$dir")
+            dir_image_tag="${{ github.repository_owner }}/benv-${dir}:${dir_hash}"
+            dir_full_tag="${{ inputs.registry }}/${dir_image_tag}"
+            
+            # Export as environment variable for use in build args
+            export "${dir}_IMAGE_TAG=${dir_full_tag}"
+            echo "${dir}_IMAGE_TAG=${dir_full_tag}" >> $GITHUB_OUTPUT
+            
+            echo "Dependency: ${dir} -> ${dir_full_tag}" >&2
+          fi
+        done
+
+    - name: Check if image exists in registry
+      id: check-exists
+      shell: bash
+      run: |
+        FULL_IMAGE_TAG="${{ steps.compute-recursive-tags.outputs.full-image-tag }}"
+        
+        if [[ "${{ inputs.force_rebuild }}" == "true" ]]; then
+          echo "exists=false" >> $GITHUB_OUTPUT
+          echo "Force rebuild enabled - will rebuild ${FULL_IMAGE_TAG} regardless of registry state"
+        elif docker manifest inspect "${FULL_IMAGE_TAG}" >/dev/null 2>&1; then
+          echo "exists=true" >> $GITHUB_OUTPUT
+          echo "Image ${FULL_IMAGE_TAG} already exists in registry"
+        else
+          echo "exists=false" >> $GITHUB_OUTPUT
+          echo "Image ${FULL_IMAGE_TAG} does not exist in registry"
+        fi
+
+    - name: Initialize directory submodules
+      if: steps.check-exists.outputs.exists == 'false'
+      shell: bash
+      run: |
+        DIRECTORY="${{ inputs.directory }}"
+        echo "Initializing submodules for directory: ${DIRECTORY}"
+        
+        # Initialize submodules for the specific directory path
+        git submodule update --init --recursive -- "${DIRECTORY}/"
+
+
+    - name: Log in to Container Registry
+      if: steps.check-exists.outputs.exists == 'false'
+      uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
+      with:
+        registry: ${{ inputs.registry }}
+        username: ${{ inputs.registry_username }}
+        password: ${{ inputs.registry_password }}
+
+    - name: Build and push image
+      if: steps.check-exists.outputs.exists == 'false'
+      shell: bash
+      run: |
+        DIRECTORY="${{ inputs.directory }}"
+        FULL_IMAGE_TAG="${{ steps.compute-recursive-tags.outputs.full-image-tag }}"
+        
+        # Start building the docker command
+        BUILD_ARGS="--build-arg NPROC=$(nproc)"
+        
+        # Add all dependency image tags as build args using outputs from compute-recursive-tags step
+        BUILD_ARGS="${BUILD_ARGS} --build-arg base_IMAGE_TAG=${{ steps.compute-recursive-tags.outputs.base_IMAGE_TAG }}"
+        BUILD_ARGS="${BUILD_ARGS} --build-arg bcc_IMAGE_TAG=${{ steps.compute-recursive-tags.outputs.bcc_IMAGE_TAG }}"
+        BUILD_ARGS="${BUILD_ARGS} --build-arg libuv_IMAGE_TAG=${{ steps.compute-recursive-tags.outputs.libuv_IMAGE_TAG }}"
+        BUILD_ARGS="${BUILD_ARGS} --build-arg cpp_misc_IMAGE_TAG=${{ steps.compute-recursive-tags.outputs.cpp_misc_IMAGE_TAG }}"
+        BUILD_ARGS="${BUILD_ARGS} --build-arg go_IMAGE_TAG=${{ steps.compute-recursive-tags.outputs.go_IMAGE_TAG }}"
+        BUILD_ARGS="${BUILD_ARGS} --build-arg libmaxminddb_IMAGE_TAG=${{ steps.compute-recursive-tags.outputs.libmaxminddb_IMAGE_TAG }}"
+        BUILD_ARGS="${BUILD_ARGS} --build-arg libbpf_IMAGE_TAG=${{ steps.compute-recursive-tags.outputs.libbpf_IMAGE_TAG }}"
+        BUILD_ARGS="${BUILD_ARGS} --build-arg aws_sdk_IMAGE_TAG=${{ steps.compute-recursive-tags.outputs.aws_sdk_IMAGE_TAG }}"
+        BUILD_ARGS="${BUILD_ARGS} --build-arg gcp_cpp_IMAGE_TAG=${{ steps.compute-recursive-tags.outputs.gcp_cpp_IMAGE_TAG }}"
+        BUILD_ARGS="${BUILD_ARGS} --build-arg opentelemetry_IMAGE_TAG=${{ steps.compute-recursive-tags.outputs.opentelemetry_IMAGE_TAG }}"
+        BUILD_ARGS="${BUILD_ARGS} --build-arg final_IMAGE_TAG=${{ steps.compute-recursive-tags.outputs.final_IMAGE_TAG }}"
+        
+        # Add environment-specific build args if they exist
+        if [ -n "${BENV_BASE_IMAGE_DISTRO}" ]; then
+          BUILD_ARGS="${BUILD_ARGS} --build-arg BENV_BASE_IMAGE_DISTRO=${BENV_BASE_IMAGE_DISTRO}"
+        fi
+        
+        if [ -n "${BENV_BASE_IMAGE_VERSION}" ]; then
+          BUILD_ARGS="${BUILD_ARGS} --build-arg BENV_BASE_IMAGE_VERSION=${BENV_BASE_IMAGE_VERSION}"
+        fi
+        
+        # Add CMAKE_BUILD_TYPE (defaults to Release if not set)
+        CMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE:-Release}"
+        BUILD_ARGS="${BUILD_ARGS} --build-arg CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}"
+        
+        # Add BUILD_CFLAGS based on build type
+        if [ "${CMAKE_BUILD_TYPE}" = "Debug" ]; then
+          BUILD_ARGS="${BUILD_ARGS} --build-arg BUILD_CFLAGS='-O0 -g'"
+        fi
+        
+        # Build the image
+        echo "Building image: ${FULL_IMAGE_TAG}"
+        echo "Build args: ${BUILD_ARGS}"
+        
+        docker build -t "${FULL_IMAGE_TAG}" ${BUILD_ARGS} "${DIRECTORY}/"
+        
+        # Always push intermediate builds to cache registry (dry_run only affects final Docker Hub push)
+        echo "Pushing image to cache registry: ${FULL_IMAGE_TAG}"
+        docker push "${FULL_IMAGE_TAG}"
