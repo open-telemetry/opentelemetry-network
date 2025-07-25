@@ -174,7 +174,7 @@ class BpfGenerator {
     {
       struct «bpf_struct_name» __msg = {};
       bpf_fill_«app.name»__«msg.name»(&__msg, __now «msg.commaCallPrototype»);
-      return events.perf_submit(ctx, &__msg.unpadded_size, «bpf_struct_name»__perf_size);
+      return bpf_perf_event_output(ctx, &events, BPF_F_CURRENT_CPU, &__msg.unpadded_size, «bpf_struct_name»__perf_size);
     }
     '''
   }
