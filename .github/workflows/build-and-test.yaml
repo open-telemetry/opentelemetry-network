@@ -42,8 +42,12 @@ jobs:
 
     - name: Runs format checker
       run: |
+        # disable man page updates for faster apt install
+        echo "set man-db/auto-update false" | sudo debconf-communicate || true
+        sudo dpkg-reconfigure man-db
+
         sudo apt update
-        sudo apt install -y clang-format
+        sudo apt install -y --no-install-recommends clang-format
         cd ${{ github.workspace }}
         ./.github/workflows/scripts/check-clang-format.sh
 
@@ -67,13 +71,35 @@ jobs:
         echo "github.workspace = ${{ github.workspace }}"
         docker pull $BENV_IMAGE
         git submodule update  --init --recursive
+        
+        # Start local registry for the build process
+        docker run -d -p 5000:5000 --name registry docker.io/library/registry:2
+        
+        # Build reducer with registry access
         docker run -t \
         --rm \
         --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
-        --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/root/src,readonly" \
+        --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/root/src" \
         --env EBPF_NET_SRC_ROOT=/root/src \
+        --network host \
         $BENV_IMAGE \
-        ./build.sh reducer
+        ./build.sh reducer-docker-registry
+        
+        # Export reducer container
+        mkdir -p container-exports
+        docker save localhost:5000/reducer > container-exports/reducer.tar
+        
+        # Clean up registry
+        docker stop registry
+        docker rm registry
+
+    - name: Upload reducer container
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      with:
+        name: reducer-container
+        path: container-exports/reducer.tar
+        if-no-files-found: error
+        retention-days: 1
 
   build-kernel-collector:
     name: build-kernel-collector
@@ -92,13 +118,82 @@ jobs:
         echo "github.workspace = ${{ github.workspace }}"
         docker pull $BENV_IMAGE
         git submodule update  --init --recursive
+        
+        # Start local registry for the build process
+        docker run -d -p 5000:5000 --name registry docker.io/library/registry:2
+        
+        # Build kernel-collector with registry access
         docker run -t \
         --rm \
         --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
-        --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/root/src,readonly" \
+        --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/root/src" \
         --env EBPF_NET_SRC_ROOT=/root/src \
+        --network host \
         $BENV_IMAGE \
-        ./build.sh kernel-collector
+        ./build.sh kernel-collector-docker-registry
+        
+        # Export kernel-collector container
+        mkdir -p container-exports
+        docker save localhost:5000/kernel-collector > container-exports/kernel-collector.tar
+        
+        # Clean up registry
+        docker stop registry
+        docker rm registry
+
+    - name: Upload kernel collector container
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      with:
+        name: kernel-collector-container
+        path: container-exports/kernel-collector.tar
+        if-no-files-found: error
+        retention-days: 1
+
+  build-kernel-collector-test:
+    name: build-kernel-collector-test
+    runs-on: ubuntu-24.04
+    needs: [clang-format-check]
+    steps:
+    - name: Check out the codebase
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      with:
+        fetch-depth: 0
+
+    - name: build kernel-collector-test container
+      env:
+        PASS: ${{ secrets.DOCKER_PASSWORD }}
+      run: |
+        echo "github.workspace = ${{ github.workspace }}"
+        docker pull $BENV_IMAGE
+        git submodule update  --init --recursive
+        
+        # Start local registry for the build process
+        docker run -d -p 5000:5000 --name registry docker.io/library/registry:2
+        
+        # Build kernel-collector-test with registry access
+        docker run -t \
+        --rm \
+        --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
+        --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/root/src" \
+        --env EBPF_NET_SRC_ROOT=/root/src \
+        --network host \
+        $BENV_IMAGE \
+        ./build.sh kernel-collector-test-docker-registry
+        
+        # Export kernel-collector-test container
+        mkdir -p container-exports
+        docker save localhost:5000/kernel-collector-test > container-exports/kernel-collector-test.tar
+        
+        # Clean up registry
+        docker stop registry
+        docker rm registry
+
+    - name: Upload kernel-collector-test container
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      with:
+        name: kernel-collector-test-container
+        path: container-exports/kernel-collector-test.tar
+        if-no-files-found: error
+        retention-days: 1
 
   build-k8s-relay:
     name: build-k8s-relay
@@ -218,10 +313,34 @@ jobs:
 
   run-kernel-header-tests:
     name: run-kernel-header-tests
-    needs: [clang-format-check]
-    runs-on: macos-13
-    env:
-      EBPF_NET_SRC_ROOT: ${{ github.workspace }}
+    needs: [build-kernel-collector]
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # renovate: datasource=docker depName=quay.io/lvh-images/complexity-test
+          - kernel: '4.19-20250721.013324'
+            description: 'Kernel 4.19'
+          # renovate: datasource=docker depName=quay.io/lvh-images/complexity-test
+          - kernel: '5.4-20250721.013324'
+            description: 'Kernel 5.4'
+          # renovate: datasource=docker depName=quay.io/lvh-images/complexity-test
+          - kernel: '5.10-20250507.063028'
+            description: 'Kernel 5.10'
+          # renovate: datasource=docker depName=quay.io/lvh-images/complexity-test
+          - kernel: '5.15-20250507.063028'
+            description: 'Kernel 5.15'
+          # renovate: datasource=docker depName=quay.io/lvh-images/complexity-test
+          - kernel: '6.1-20250507.063028'
+            description: 'Kernel 6.1'
+          # renovate: datasource=docker depName=quay.io/lvh-images/complexity-test
+          - kernel: '6.6-20250507.063028'
+            description: 'Kernel 6.6'
+          # renovate: datasource=docker depName=quay.io/lvh-images/complexity-test
+          - kernel: '6.12-20250507.063028'
+            description: 'Kernel 6.12'
+    timeout-minutes: 10
     steps:
     - name: Check out the codebase
       uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -251,53 +370,179 @@ jobs:
           github:
             - '.github/**'
 
-    - name: Run kernel header tests on multiple linux distributions
-      id: run-kernel-header-tests
+    - name: Download kernel-collector container
       if: steps.changes.outputs.kernel == 'true' || steps.changes.outputs.github == 'true'
+      uses: actions/download-artifact@v4
+      with:
+        name: kernel-collector-container
+        path: ./container-exports
+
+    - name: Run kernel header tests on ${{ matrix.description }}
+      if: steps.changes.outputs.kernel == 'true' || steps.changes.outputs.github == 'true'
+      uses: yonch/little-vm-helper@main
+      with:
+        test-name: kernel-header-test-${{ matrix.kernel }}
+        image: 'complexity-test'
+        image-version: ${{ matrix.kernel }}
+        host-mount: ./
+        images-folder-parent: "/tmp"
+        cpu: 2
+        mem: 2G
+        cpu-kind: 'host,pmu=on'
+        lvh-version: "v0.0.23"
+        install-dependencies: 'true'
+        verbose: 'true'
+        cmd: |
+          set -e  # Exit on any error
+          cd /host
+          
+          # Load container images
+          docker load < container-exports/kernel-collector.tar
+          
+          # Setup environment
+          export RUNNING_KERNEL_VERSION="$(uname -r)"
+          export DEBIAN_FRONTEND="noninteractive"
+          mkdir -p /var/cache/ebpf_net
+          
+          test_failures=0
+          
+          # Test 1: Fetch headers when none installed (3-fetch.sh equivalent)
+          echo "=== Test 1: Header fetch test ==="
+          # Clear any existing headers
+          sudo rm -rf /var/cache/ebpf_net/kernel-headers || true
+          sudo apt-get purge --auto-remove --purge -y --no-install-recommends \
+            --allow-unauthenticated --allow-downgrades --allow-remove-essential \
+            --allow-change-held-packages "linux-headers-${RUNNING_KERNEL_VERSION}" || true
+          
+          # Run kernel collector with header auto-fetch
+          container_id=$(docker create \
+            --name "test-kernel-collector-fetch" \
+            --env EBPF_NET_INTAKE_PORT="8000" \
+            --env EBPF_NET_INTAKE_HOST="127.0.0.1" \
+            --env EBPF_NET_KERNEL_HEADERS_AUTO_FETCH="true" \
+            --env EBPF_NET_HOST_DIR="/hostfs" \
+            --privileged --pid host --network host \
+            --volume /sys/fs/cgroup:/hostfs/sys/fs/cgroup \
+            --volume /usr/src:/hostfs/usr/src \
+            --volume /lib/modules:/hostfs/lib/modules \
+            --volume /etc:/hostfs/etc \
+            --volume /var/cache:/hostfs/cache \
+            --volume /var/run/docker.sock:/var/run/docker.sock \
+            --entrypoint "/srv/test-entrypoint.sh" \
+            localhost:5000/kernel-collector --log-console --debug)
+          
+          echo "Running header fetch test..."
+          if ! timeout 60 docker start -i $container_id; then
+            echo "Header fetch test failed"
+            test_failures=$((test_failures + 1))
+          else
+            echo "Header fetch test passed"
+          fi
+          docker rm $container_id || true
+          
+          # Test 2: Use cached headers (4-cached.sh equivalent)
+          echo "=== Test 2: Cached headers test ==="
+          container_id=$(docker create \
+            --name "test-kernel-collector-cached" \
+            --env EBPF_NET_INTAKE_PORT="8000" \
+            --env EBPF_NET_INTAKE_HOST="127.0.0.1" \
+            --env EBPF_NET_KERNEL_HEADERS_AUTO_FETCH="true" \
+            --env EBPF_NET_HOST_DIR="/hostfs" \
+            --privileged --pid host --network host \
+            --volume /sys/fs/cgroup:/hostfs/sys/fs/cgroup \
+            --volume /usr/src:/hostfs/usr/src \
+            --volume /lib/modules:/hostfs/lib/modules \
+            --volume /etc:/hostfs/etc \
+            --volume /var/cache:/hostfs/cache \
+            --volume /var/run/docker.sock:/var/run/docker.sock \
+            --entrypoint "/srv/test-entrypoint.sh" \
+            localhost:5000/kernel-collector --log-console --debug)
+          
+          echo "Running cached headers test..."
+          if ! timeout 60 docker start -i $container_id; then
+            echo "Cached headers test failed"
+            test_failures=$((test_failures + 1))
+          else
+            echo "Cached headers test passed"
+          fi
+          docker rm $container_id || true
+          
+          # Test 3: Use pre-installed headers (5-pre-installed.sh equivalent)
+          echo "=== Test 3: Pre-installed headers test ==="
+          # Install kernel headers
+          sudo apt-get update -y
+          sudo apt-get install -y --no-install-recommends \
+            --allow-unauthenticated --allow-downgrades --allow-remove-essential \
+            --allow-change-held-packages "linux-headers-${RUNNING_KERNEL_VERSION}" || true
+          
+          container_id=$(docker create \
+            --name "test-kernel-collector-preinstalled" \
+            --env EBPF_NET_INTAKE_PORT="8000" \
+            --env EBPF_NET_INTAKE_HOST="127.0.0.1" \
+            --env EBPF_NET_KERNEL_HEADERS_AUTO_FETCH="true" \
+            --env EBPF_NET_HOST_DIR="/hostfs" \
+            --privileged --pid host --network host \
+            --volume /sys/fs/cgroup:/hostfs/sys/fs/cgroup \
+            --volume /usr/src:/hostfs/usr/src \
+            --volume /lib/modules:/hostfs/lib/modules \
+            --volume /etc:/hostfs/etc \
+            --volume /var/cache:/hostfs/cache \
+            --volume /var/run/docker.sock:/var/run/docker.sock \
+            --entrypoint "/srv/test-entrypoint.sh" \
+            localhost:5000/kernel-collector --log-console --debug)
+          
+          echo "Running pre-installed headers test..."
+          if ! timeout 60 docker start -i $container_id; then
+            echo "Pre-installed headers test failed"
+            test_failures=$((test_failures + 1))
+          else
+            echo "Pre-installed headers test passed"
+          fi
+          docker rm $container_id || true
+          
+          echo "Kernel header tests completed. Failures: $test_failures"
+          if [ $test_failures -gt 0 ]; then
+            echo "Some tests failed!"
+            exit 1
+          else
+            echo "All tests passed!"
+          fi
+
+    - name: Stop qemu
+      if: always()
       run: |
-        sudo spctl --add /usr/local/bin/brew
-        # These following 4 lines are added to overcome brew link failures seen while executing brew update.
-        rm /usr/local/bin/2to3*
-        rm /usr/local/bin/idle*
-        rm /usr/local/bin/pydoc*
-        rm /usr/local/bin/python3*
-        brew update
-        brew install podman
-        sudo spctl --add /usr/local/bin/podman
-        podman machine init --rootful --cpus 3 --disk-size 14 --memory 12384
-        podman machine start
-        podman pull $BENV_IMAGE
-
-        podman machine ssh 'cat > /etc/containers/registries.conf.d/localhost.conf' <<EOF
-        [[registry]]
-        location = "localhost:5000"
-        insecure = true
-        EOF
-        podman machine ssh systemctl restart podman
-        podman container run -dt -p 5000:5000 --name registry docker.io/library/registry:2
-        podman info
-        git submodule update  --init --recursive
-
-        podman run -t --rm \
-        --mount type=bind,source=$PWD,destination=/root/src,readonly \
-        --mount type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock \
-        --env EBPF_NET_SRC_ROOT=/root/src \
-        --name benv \
-        --privileged \
-        $BENV_IMAGE \
-        ./build.sh -j 3 reducer-docker-registry kernel-collector-docker-registry
-
-        vagrant plugin install vagrant-sshfs
-        vagrant plugin install vagrant-scp
-
-        ./test/kernel/run-tests.sh --kernel-header-test
+        sudo pkill -f qemu-system-x86_64 || true
 
   run-kernel-collector-tests:
     name: run-kernel-collector-tests
-    needs: [clang-format-check]
-    runs-on: macos-13
-    env:
-      EBPF_NET_SRC_ROOT: ${{ github.workspace }}
+    needs: [build-reducer, build-kernel-collector, build-kernel-collector-test]
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # renovate: datasource=docker depName=quay.io/lvh-images/complexity-test
+          - kernel: '4.19-20250721.013324'
+            description: 'Kernel 4.19'
+          # renovate: datasource=docker depName=quay.io/lvh-images/complexity-test
+          - kernel: '5.4-20250721.013324'
+            description: 'Kernel 5.4'
+          # renovate: datasource=docker depName=quay.io/lvh-images/complexity-test
+          - kernel: '5.10-20250507.063028'
+            description: 'Kernel 5.10'
+          # renovate: datasource=docker depName=quay.io/lvh-images/complexity-test
+          - kernel: '5.15-20250507.063028'
+            description: 'Kernel 5.15'
+          # renovate: datasource=docker depName=quay.io/lvh-images/complexity-test
+          - kernel: '6.1-20250507.063028'
+            description: 'Kernel 6.1'
+          # renovate: datasource=docker depName=quay.io/lvh-images/complexity-test
+          - kernel: '6.6-20250507.063028'
+            description: 'Kernel 6.6'
+          # renovate: datasource=docker depName=quay.io/lvh-images/complexity-test
+          - kernel: '6.12-20250507.063028'
+            description: 'Kernel 6.12'
+    timeout-minutes: 10
     steps:
     - name: Check out the codebase
       uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -327,43 +572,98 @@ jobs:
           github:
             - '.github/**'
 
-    - name: Run kernel_collector_test on multiple linux distributions
-      id: run-kernel-collector-test
+    - name: Download reducer container
       if: steps.changes.outputs.kernel == 'true' || steps.changes.outputs.github == 'true'
+      uses: actions/download-artifact@v4
+      with:
+        name: reducer-container
+        path: ./container-exports
+
+    - name: Download kernel-collector-test container
+      if: steps.changes.outputs.kernel == 'true' || steps.changes.outputs.github == 'true'
+      uses: actions/download-artifact@v4
+      with:
+        name: kernel-collector-test-container
+        path: ./container-exports
+
+    - name: Run kernel collector tests on ${{ matrix.description }}
+      if: steps.changes.outputs.kernel == 'true' || steps.changes.outputs.github == 'true'
+      uses: yonch/little-vm-helper@main
+      with:
+        test-name: kernel-collector-test-${{ matrix.kernel }}
+        image: 'complexity-test'
+        image-version: ${{ matrix.kernel }}
+        host-mount: ./
+        images-folder-parent: "/tmp"
+        cpu: 2
+        mem: 2G
+        cpu-kind: 'host,pmu=on'
+        lvh-version: "v0.0.23"
+        install-dependencies: 'true'
+        verbose: 'true'
+        cmd: |
+          set -e  # Exit on any error
+          cd /host
+          
+          # Load container images
+          docker load < container-exports/reducer.tar
+          docker load < container-exports/kernel-collector-test.tar
+          
+          # Create data directory
+          mkdir -p data
+          
+          # Start reducer
+          reducer_id=$(docker run --detach --rm \
+            --network=host \
+            localhost:5000/reducer \
+            --port 8000 \
+            --prom 0.0.0.0:7000 \
+            --partitions-per-shard 1 \
+            --num-ingest-shards=1 \
+            --num-matching-shards=1 \
+            --num-aggregation-shards=1 \
+            --enable-aws-enrichment \
+            --enable-otlp-grpc-metrics \
+            --log-console \
+            --debug)
+          
+          echo "Reducer started with ID: $reducer_id"
+          
+          # Wait a moment for reducer to start
+          sleep 5
+          
+          # Run kernel collector test
+          container_id=$(docker create -t --rm \
+            --env EBPF_NET_HOST_DIR="/hostfs" \
+            --privileged \
+            --volume /sys/fs/cgroup:/hostfs/sys/fs/cgroup \
+            --volume /usr/src:/hostfs/usr/src \
+            --volume /lib/modules:/hostfs/lib/modules \
+            --volume /etc:/hostfs/etc \
+            --volume /var/cache:/hostfs/cache \
+            --volume /var/run/docker.sock:/var/run/docker.sock \
+            --env EBPF_NET_KERNEL_HEADERS_AUTO_FETCH="true" \
+            --env EBPF_NET_EXPORT_BPF_SRC_FILE="/hostfs/data/bpf.src.c" \
+            --env EBPF_NET_MINIDUMP_DIR="/hostfs/data/minidump" \
+            --volume "$(pwd)/data:/hostfs/data" \
+            localhost:5000/kernel-collector-test \
+            --log-console)
+          
+          echo "Starting kernel collector test..."
+          docker start -a $container_id
+
+          set +e  # disable exit on error
+          docker wait $container_id
+          test_exit_code=$?
+          set -e  # re-enable exit on error
+          
+          # Stop reducer
+          docker stop $reducer_id || true
+          
+          echo "Test completed with exit code: $test_exit_code"
+          exit $test_exit_code
+
+    - name: Stop qemu
+      if: always()
       run: |
-        sudo spctl --add /usr/local/bin/brew
-        # These following 4 lines are added to overcome brew link failures seen while executing brew update.
-        rm /usr/local/bin/2to3*
-        rm /usr/local/bin/idle*
-        rm /usr/local/bin/pydoc*
-        rm /usr/local/bin/python3*
-        brew update
-        brew install podman
-        sudo spctl --add /usr/local/bin/podman
-        podman machine init --rootful --cpus 3 --disk-size 14 --memory 12348
-        podman machine start
-        podman pull $BENV_IMAGE
-
-        podman machine ssh 'cat > /etc/containers/registries.conf.d/localhost.conf' <<EOF
-        [[registry]]
-        location = "localhost:5000"
-        insecure = true
-        EOF
-        podman machine ssh systemctl restart podman
-        podman container run -dt -p 5000:5000 --name registry docker.io/library/registry:2
-        podman info
-        git submodule update  --init --recursive
-
-        podman run -t --rm \
-        --mount type=bind,source=$PWD,destination=/root/src,readonly \
-        --mount type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock \
-        --env EBPF_NET_SRC_ROOT=/root/src \
-        --name benv \
-        --privileged \
-        $BENV_IMAGE \
-        ./build.sh -j 3 kernel-collector-test-docker-registry
-
-        vagrant plugin install vagrant-sshfs
-        vagrant plugin install vagrant-scp
-
-        ./test/kernel/run-tests.sh --kernel-collector-test
+        sudo pkill -f qemu-system-x86_64 || true
