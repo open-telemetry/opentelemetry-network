@@ -93,11 +93,15 @@ class MessageGenerator {
     #endif /* __cplusplus */
 
     /* static asserts that memory layout of message «msg.name» conforms to jitbuf's assumptions */
-    #define JB_ASSERT(name, predicate) typedef char _jitbuf_static_assert_##name[2*!!(predicate)-1];
+    #ifdef __cplusplus
+        #define JB_ASSERT(name, predicate) static_assert(predicate, #name ": " #predicate)
+    #else
+        #define JB_ASSERT(name, predicate) _Static_assert(predicate, #name ": " #predicate)
+    #endif
     «FOR field : xmsg.fields»
-      JB_ASSERT(«xmsg.struct_name»_«field.name»_has_correct_offset,offsetof(struct «xmsg.struct_name»,«field.name») == «if (wire_message) field.wire_pos else field.parsed_pos»)
+      JB_ASSERT(«xmsg.struct_name»_«field.name»_has_correct_offset,offsetof(struct «xmsg.struct_name»,«field.name») == «if (wire_message) field.wire_pos else field.parsed_pos»);
     «ENDFOR»
-    JB_ASSERT(«xmsg.struct_name»_has_correct_sizeof,((sizeof(struct «xmsg.struct_name») + 1) & ~1) >= «xmsg.size»)
+    JB_ASSERT(«xmsg.struct_name»_has_correct_sizeof,((sizeof(struct «xmsg.struct_name») + 1) & ~1) >= «xmsg.size»);
     #undef JB_ASSERT
 
     #define «xmsg.struct_name»__rpc_id    «xmsg.rpc_id»
