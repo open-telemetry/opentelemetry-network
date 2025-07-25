@@ -9,7 +9,7 @@ LABEL org.label-schema.vcs-url="https://github.com/open-telemetry/opentelemetry-
 LABEL org.label-schema.schema-version="1.0"
 
 # ca-certificates are required by libcurl
-RUN apt-get update && apt-get install -y ca-certificates
+RUN install_packages ca-certificates
 ENV SSL_CERT_DIR=/etc/ssl/certs
 
 ENTRYPOINT [ "/srv/entrypoint.sh" ]
