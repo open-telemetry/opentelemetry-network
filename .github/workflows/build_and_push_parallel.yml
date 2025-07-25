@@ -298,6 +298,7 @@ jobs:
     name: Push final image to Docker Hub
     runs-on: ubuntu-24.04
     needs: build-final
+    if: github.event_name == 'workflow_dispatch'
     steps:
       - name: Checkout sources
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
