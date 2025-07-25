@@ -8,6 +8,9 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'build-tools/**'
+      - '.github/workflows/build_and_push_parallel.yml'
   workflow_dispatch:
     inputs:
       ref:
