@@ -60,7 +60,8 @@ runs:
       env:
         DOCKER_TAG_PREFIX: ${{ github.repository_owner }}/
       run: |
-        DIRECTORY="${{ inputs.directory }}"
+        DIRECTORY="build-tools/${{ inputs.directory }}"
+        BASE_DIRECTORY="${{ inputs.directory }}"
         
         # Define dependency mapping based on CMakeLists.txt
         declare -A DEPS
@@ -82,7 +83,7 @@ runs:
         
         echo "Computing direct hashes..." >&2
         for dir in $ALL_DIRS; do
-          direct_hash=$(git log -1 --format=%h "${dir}")
+          direct_hash=$(git log -1 --format=%h "build-tools/${dir}")
           DIRECT_HASHES[$dir]=$direct_hash
           echo "Direct hash for $dir: $direct_hash" >&2
         done
@@ -158,10 +159,10 @@ runs:
         }
         
         # Compute recursive hash for target directory
-        RECURSIVE_HASH=$(compute_recursive_hash "$DIRECTORY")
+        RECURSIVE_HASH=$(compute_recursive_hash "$BASE_DIRECTORY")
         
         # Create image tag
-        IMAGE_TAG="${{ github.repository_owner }}/benv-${DIRECTORY}:${RECURSIVE_HASH}"
+        IMAGE_TAG="${{ github.repository_owner }}/benv-${BASE_DIRECTORY}:${RECURSIVE_HASH}"
         FULL_IMAGE_TAG="${{ inputs.registry }}/${IMAGE_TAG}"
         
         echo "image-tag=${IMAGE_TAG}" >> $GITHUB_OUTPUT
@@ -176,7 +177,7 @@ runs:
         echo "Computing all dependency tags..." >&2
         
         for dir in $ALL_DIRS; do
-          if [[ "$dir" != "$DIRECTORY" ]]; then
+          if [[ "$dir" != "$BASE_DIRECTORY" ]]; then
             dir_hash=$(compute_recursive_hash "$dir")
             dir_image_tag="${{ github.repository_owner }}/benv-${dir}:${dir_hash}"
             dir_full_tag="${{ inputs.registry }}/${dir_image_tag}"
@@ -210,10 +211,10 @@ runs:
       if: steps.check-exists.outputs.exists == 'false'
       shell: bash
       run: |
-        DIRECTORY="${{ inputs.directory }}"
+        DIRECTORY="build-tools/${{ inputs.directory }}"
         echo "Initializing submodules for directory: ${DIRECTORY}"
         
-        # Initialize submodules for the specific directory path
+        # Initialize submodules for the specific directory path  
         git submodule update --init --recursive -- "${DIRECTORY}/"
 
 
@@ -229,7 +230,7 @@ runs:
       if: steps.check-exists.outputs.exists == 'false'
       shell: bash
       run: |
-        DIRECTORY="${{ inputs.directory }}"
+        DIRECTORY="build-tools/${{ inputs.directory }}"
         FULL_IMAGE_TAG="${{ steps.compute-recursive-tags.outputs.full-image-tag }}"
         
         # Start building the docker command
