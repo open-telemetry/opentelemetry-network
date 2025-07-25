@@ -14,7 +14,7 @@ permissions:
   contents: read
 
 env:
-  BENV_IMAGE: docker.io/otel/opentelemetry-network-build-tools
+  BENV_IMAGE: ${{ vars.BENV_IMAGE || 'docker.io/otel/opentelemetry-network-build-tools' }}
 
 concurrency:
   group: build-and-test-${{ github.event.pull_request_number || github.ref }}
@@ -47,7 +47,7 @@ jobs:
         sudo dpkg-reconfigure man-db
 
         sudo apt update
-        sudo apt install -y --no-install-recommends clang-format
+        sudo apt install -y --no-install-recommends clang-format-16
         cd ${{ github.workspace }}
         ./.github/workflows/scripts/check-clang-format.sh
 
@@ -78,10 +78,10 @@ jobs:
         # Build reducer with registry access
         docker run -t \
         --rm \
-        --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
-        --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/root/src" \
-        --env EBPF_NET_SRC_ROOT=/root/src \
+        --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/home/user/src,readonly" \
+        --env EBPF_NET_SRC_ROOT=/home/user/src \
         --network host \
+        --privileged \
         $BENV_IMAGE \
         ./build.sh reducer-docker-registry
         
@@ -125,10 +125,10 @@ jobs:
         # Build kernel-collector with registry access
         docker run -t \
         --rm \
-        --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
-        --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/root/src" \
-        --env EBPF_NET_SRC_ROOT=/root/src \
+        --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/home/user/src,readonly" \
+        --env EBPF_NET_SRC_ROOT=/home/user/src \
         --network host \
+        --privileged \
         $BENV_IMAGE \
         ./build.sh kernel-collector-docker-registry
         
@@ -172,10 +172,10 @@ jobs:
         # Build kernel-collector-test with registry access
         docker run -t \
         --rm \
-        --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
-        --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/root/src" \
-        --env EBPF_NET_SRC_ROOT=/root/src \
+        --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/home/user/src,readonly" \
+        --env EBPF_NET_SRC_ROOT=/home/user/src \
         --network host \
+        --privileged \
         $BENV_IMAGE \
         ./build.sh kernel-collector-test-docker-registry
         
@@ -213,8 +213,8 @@ jobs:
         docker run -t \
         --rm \
         --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
-        --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/root/src,readonly" \
-        --env EBPF_NET_SRC_ROOT=/root/src \
+        --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/home/user/src,readonly" \
+        --env EBPF_NET_SRC_ROOT=/home/user/src \
         $BENV_IMAGE \
         ./build.sh k8s-relay
 
@@ -236,8 +236,8 @@ jobs:
         docker run -t \
         --rm \
         --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
-        --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/root/src,readonly" \
-        --env EBPF_NET_SRC_ROOT=/root/src \
+        --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/home/user/src,readonly" \
+        --env EBPF_NET_SRC_ROOT=/home/user/src \
         $BENV_IMAGE \
         ./build.sh cloud-collector
 
@@ -259,8 +259,8 @@ jobs:
         docker run -t \
         --rm \
         --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
-        --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/root/src,readonly" \
-        --env EBPF_NET_SRC_ROOT=/root/src \
+        --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/home/user/src,readonly" \
+        --env EBPF_NET_SRC_ROOT=/home/user/src \
         $BENV_IMAGE \
         ./build.sh k8s-watcher
 
@@ -281,8 +281,8 @@ jobs:
         docker run -t \
         --rm \
         --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
-        --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/root/src,readonly" \
-        --env EBPF_NET_SRC_ROOT=/root/src \
+        --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/home/user/src,readonly" \
+        --env EBPF_NET_SRC_ROOT=/home/user/src \
         --env ARGS="--output-on-failure --repeat until-pass:3" \
         --env SPDLOG_LEVEL="trace" \
         $BENV_IMAGE \
@@ -304,8 +304,8 @@ jobs:
         docker run -t \
         --rm \
         --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
-        --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/root/src,readonly" \
-        --env EBPF_NET_SRC_ROOT=/root/src \
+        --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/home/user/src,readonly" \
+        --env EBPF_NET_SRC_ROOT=/home/user/src \
         --env ARGS="--output-on-failure --repeat until-pass:3" \
         --env SPDLOG_LEVEL="trace" \
         $BENV_IMAGE \

@@ -12,6 +12,8 @@
 #include <curlpp/Options.hpp>
 #include <curlpp/cURLpp.hpp>
 
+#include <spdlog/fmt/chrono.h>
+
 namespace reducer_test {
 
 // Conditions to be met before stopping test

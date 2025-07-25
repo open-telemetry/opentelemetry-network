@@ -32,6 +32,7 @@
 #include <sys/wait.h>
 
 #include <chrono>
+#include <spdlog/fmt/chrono.h>
 #include <filesystem>
 #include <fstream>
 #include <sstream>

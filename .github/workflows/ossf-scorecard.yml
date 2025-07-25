@@ -12,6 +12,7 @@ permissions: read-all
 
 jobs:
   analysis:
+    if: github.repository == 'open-telemetry/opentelemetry-network-build-tools'
     runs-on: ubuntu-latest
     permissions:
       # Needed for Code scanning upload

@@ -636,12 +636,12 @@ static int add_tcp_open_socket(struct pt_regs *ctx, struct sock *sk, u32 tgid, u
 #endif
 
   struct tcp_open_socket_t sk_info = {
-      .tgid = tgid,
-      .last_output = 0, // always do the first reporting
-      .rcv_holes = 0,
-      .rcv_delivered = 0,
+    .tgid = tgid,
+    .last_output = 0, // always do the first reporting
+    .rcv_holes = 0,
+    .rcv_delivered = 0,
 #if TCP_STATS_ON_PARENT
-      .parent = parent
+    .parent = parent
 #endif
   };
 

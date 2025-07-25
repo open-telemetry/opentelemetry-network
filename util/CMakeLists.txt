@@ -150,7 +150,7 @@ target_link_libraries(
   PUBLIC
     libuv-interface
     element_queue_writer
-    curl-static
+    CURL::libcurl
 )
 
 add_library(
@@ -346,7 +346,6 @@ add_unit_test(lookup3_hasher LIBS fastpass_util)
 add_unit_test(jitter)
 add_unit_test(bits)
 add_unit_test(counter)
-add_unit_test(counter_to_rate)
 add_unit_test(gauge)
 add_unit_test(cgroup_parser LIBS cgroup_parser logging)
 add_unit_test(defer LIBS logging)

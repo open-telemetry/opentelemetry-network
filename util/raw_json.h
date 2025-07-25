@@ -132,6 +132,14 @@ template <typename T, typename Out> Out &&print_json_value(Out &&out, T const &v
   } else if constexpr (std::is_same_v<std::uint8_t, T> || std::is_same_v<unsigned char, T>) {
     // avoid printing the raw character
     out << static_cast<std::uint16_t>(value);
+  } else if constexpr (std::is_same_v<__int128, T> || std::is_same_v<__int128 unsigned, T>) {
+    // __int128 types don't have built-in operator<< for std::ostream
+    // Output as hex using two u64 values with leading zeros
+    __int128 unsigned uval = static_cast<__int128 unsigned>(value);
+    std::uint64_t high = static_cast<std::uint64_t>(uval >> 64);
+    std::uint64_t low = static_cast<std::uint64_t>(uval);
+    out << "\"0x" << std::setfill('0') << std::hex << std::setw(16) << high 
+        << std::setw(16) << low << std::dec << "\"";
   } else if constexpr (std::is_integral_v<T>) {
     out << value;
   } else {

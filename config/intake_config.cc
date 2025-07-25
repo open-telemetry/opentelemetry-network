@@ -13,12 +13,12 @@
 
 namespace config {
 
-const IntakeConfig IntakeConfig::DEFAULT_CONFIG = {
-    .host = "127.0.0.1",
-    .port = "8000",
-    .record_output_path = "",
-    .encoder_ = IntakeEncoder::binary,
-};
+const IntakeConfig IntakeConfig::DEFAULT_CONFIG = IntakeConfig(
+    "127.0.0.1",          // host
+    "8000",               // port
+    "",                   // record_output_path
+    IntakeEncoder::binary // encoder
+);
 
 FileDescriptor IntakeConfig::create_output_record_file() const
 {

@@ -3,14 +3,9 @@
 
 include_guard()
 
-find_library(CURL_STATIC_LIBRARY NAMES libcurl.a)
-message(STATUS "curl static library: ${CURL_STATIC_LIBRARY}")
-add_library(curl-static INTERFACE)
-target_link_libraries(
-  curl-static
-  INTERFACE
-    ${CURL_STATIC_LIBRARY}
-    OpenSSL::SSL
-    OpenSSL::Crypto
-    z
-)
+find_package(CURL)
+if(NOT CURL_FOUND)
+  message(FATAL_ERROR "cURL not found! Please install cURL development files.")
+endif()
+
+message(STATUS "Found cURL: ${CURL_LIBRARIES}")

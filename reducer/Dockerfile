@@ -1,7 +1,7 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
-FROM bitnami/minideb:bullseye@sha256:a6f3a96622f1a2e0eb049e08e3aa4db29c725318c7f410a050f333e074793e88
+FROM docker.io/bitnami/minideb:bookworm@sha256:db4e7a5ee36239d56b31bc0ab0058f9833c29533c16994b9e68de50e39d4933a
 
 LABEL org.label-schema.name="opentelemetry-ebpf-reducer"
 LABEL org.label-schema.description="OpenTelemetry eBPF reducer"
@@ -9,7 +9,7 @@ LABEL org.label-schema.vcs-url="https://github.com/open-telemetry/opentelemetry-
 LABEL org.label-schema.schema-version="1.0"
 
 # required by entrypoint.sh and health_check.sh scripts
-RUN install_packages bc coreutils netcat-openbsd sed
+RUN install_packages bc coreutils netcat-openbsd sed   libcurlpp0 libgrpc++1.51
 
 ARG BUILD_TYPE
 RUN if [ "$BUILD_TYPE" = "Debug" ]; then \

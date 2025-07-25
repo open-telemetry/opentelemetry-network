@@ -12,6 +12,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <jitbuf/jb.h>
+#include <spdlog/fmt/chrono.h>
 #include <util/aws_instance_metadata.h>
 #include <util/boot_time.h>
 #include <util/code_timing.h>
@@ -185,13 +186,13 @@ protected:
     print_message_counts();
 
     // NOTE: use EXPECT_s here because ASSERT_s fail fast, returning from the current function, skipping the cleanup below
-    EXPECT_EQ(0, get_probe_handler().num_failed_probes_);
+    EXPECT_EQ(0ull, get_probe_handler().num_failed_probes_);
     EXPECT_TRUE(binary_messages_check_counts());
-    EXPECT_EQ(0u, get_test_channel()->get_num_failed_sends());
+    EXPECT_EQ(0ull, get_test_channel()->get_num_failed_sends());
     EXPECT_EQ(false, timeout_exceeded_);
 
     auto &message_counts = get_test_channel()->get_message_counts();
-    EXPECT_EQ(0, message_counts["bpf_log"]);
+    EXPECT_EQ(0ull, message_counts["bpf_log"]);
 
     kernel_collector_->on_close();
 

@@ -50,7 +50,7 @@ if [[ "${do_login}" == true ]]; then
 fi
 
 (set -x; \
-  docker tag "${image_name}:${image_tag}" \
+  podman tag "${image_name}:${image_tag}" \
     "${docker_registry}/${image_name}:${image_tag}"; \
-  docker push "${docker_registry}/${image_name}:${image_tag}"; \
+  podman push "${docker_registry}/${image_name}:${image_tag}"; \
 )

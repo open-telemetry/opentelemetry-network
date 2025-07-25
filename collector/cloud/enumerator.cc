@@ -71,7 +71,7 @@ void translate_interfaces_to_spans(
     auto const &description = interface.GetDescription();
 
     auto const add_entry = [&](IPv6Address const &ipv6) {
-      auto handle = index.aws_network_interface.by_key({.ip = ipv6.as_int()});
+      auto handle = index.aws_network_interface.by_key(ebpf_net::cloud_collector::keys::aws_network_interface{ipv6.as_int()});
 
       LOG::trace(
           "network_interface_info:"

@@ -8,6 +8,7 @@
 #include <channel/callbacks.h>
 #include <channel/network_channel.h>
 #include <platform/platform.h>
+#include <memory>
 
 #include <uv.h>
 

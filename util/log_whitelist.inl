@@ -102,7 +102,7 @@ template <typename Which> void set_log_whitelist(std::list<Which> whitelist)
   LogWhitelist<Which>::set_whitelist(std::move(whitelist));
 }
 
-template <typename Whitelist, typename = std::enable_if_t<std::is_enum_v<Whitelist>>> bool is_log_whitelisted(Whitelist which)
+template <typename Whitelist, typename> bool is_log_whitelisted(Whitelist which)
 {
   return LogWhitelist<Whitelist>::is_whitelisted(which);
 }

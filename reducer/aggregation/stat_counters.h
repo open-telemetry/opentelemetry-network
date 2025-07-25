@@ -34,10 +34,10 @@ public:
   // calls the callback with signature (index is i-th counter)
   // `(std::string_view field_name, std::size_t count, std::size_t index)`
   // for each supported field truncation counter
-  template <typename Fn>
-  void foreach_field_truncation(Fn &&fn) const {
+  template <typename Fn> void foreach_field_truncation(Fn &&fn) const
+  {
 #define CALL_TRUNCATION_FIELD_CALLBACK(Field, Index) fn(#Field, trunc_##Field, Index);
-      AGG_CORE_TRUNCATION_FIELDS(CALL_TRUNCATION_FIELD_CALLBACK)
+    AGG_CORE_TRUNCATION_FIELDS(CALL_TRUNCATION_FIELD_CALLBACK)
 #undef CALL_TRUNCATION_FIELD_CALLBACK
   }
 
