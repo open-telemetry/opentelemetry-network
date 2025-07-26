@@ -43,6 +43,7 @@ extern int LINUX_KERNEL_VERSION __kconfig;
 #define fl4_dport		uli.ports.dport
 #define fl6_sport		uli.ports.sport
 #define fl6_dport		uli.ports.dport
+#define rsk_listener			__req_common.skc_listener
 
 // Configuration
 #include "config.h"
