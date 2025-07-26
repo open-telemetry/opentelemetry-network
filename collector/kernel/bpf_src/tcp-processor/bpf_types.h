@@ -68,14 +68,15 @@ typedef u64 TIMESTAMP;
 #define END_SAVE_ARGS(FUNC)                                                                                                    \
   }                                                                                                                            \
   ;                                                                                                                            \
-  int __ret = bpf_map_update_elem(&SAVED_ARGS_TABLE(FUNC), &SAVED_ARGS_TABLE_KEY, &__saved_args, BPF_ANY);                   \
-  if (__ret == -E2BIG || __ret == -ENOMEM || __ret == -EINVAL) {                                                               \
-    __DEBUG_OTHER_MAP_ERRORS_PRINTK || bpf_trace_printk(#FUNC ": args table is full, dropped insert. tgid=%u\n", _tgid);       \
-  } else if (__ret == -EEXIST) {                                                                                               \
-    __DEBUG_OTHER_MAP_ERRORS_PRINTK || bpf_trace_printk(#FUNC ": duplicate arg insert. tgid=%u\n", _tgid);                     \
-  } else if (__ret != 0) {                                                                                                     \
-    __DEBUG_OTHER_MAP_ERRORS_PRINTK ||                                                                                         \
-        bpf_trace_printk(#FUNC ": unknown return code from map insert: ret=%d (tgid=%u)\n", __ret, _tgid);                     \
+  int __ret = bpf_map_update_elem(&SAVED_ARGS_TABLE(FUNC), &SAVED_ARGS_TABLE_KEY, &__saved_args, BPF_NOEXIST);                   \
+  if (__ret != 0 && __DEBUG_OTHER_MAP_ERRORS_PRINTK) {                                                                                                            \
+    /* Check if key already exists to distinguish duplicate vs table full */                                                  \
+    void *existing = bpf_map_lookup_elem(&SAVED_ARGS_TABLE(FUNC), &SAVED_ARGS_TABLE_KEY);                                     \
+    if (existing) {                                                                                                            \
+      bpf_trace_printk(#FUNC ": duplicate arg insert. tgid=%u\n", _tgid);                 \
+    } else {                                                                                                                   \
+      bpf_trace_printk(#FUNC ": args table is full, dropped insert. tgid=%u\n", _tgid);   \
+    }                                                                                                                          \
   }                                                                                                                            \
   }
 #undef __DEBUG_OTHER_MAP_ERRORS_PRINTK

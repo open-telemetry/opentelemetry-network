@@ -194,25 +194,23 @@ static int report_pid_exit(TIMESTAMP timestamp, struct pt_regs *ctx, struct task
 
 static int set_task_group_dead(struct pt_regs *ctx, struct task_struct *tsk)
 {
-  int ret = bpf_map_update_elem(&dead_group_tasks, &tsk, &tsk, BPF_ANY);
-  if (ret == -E2BIG || ret == -ENOMEM || ret == -EINVAL) {
+  int ret = bpf_map_update_elem(&dead_group_tasks, &tsk, &tsk, BPF_NOEXIST);
+  if (ret != 0) {
+    // Check if key already exists to distinguish duplicate vs table full
+    void *existing = bpf_map_lookup_elem(&dead_group_tasks, &tsk);
+    if (existing) {
 #if DEBUG_OTHER_MAP_ERRORS
-    bpf_trace_printk("set_task_group_dead: set_task_group_dead table is full, dropping tsk tsk=%llx\n", tsk);
+      bpf_trace_printk("set_task_group_dead: set_task_group_dead duplicate insert, dropping tsk tsk=%llx\n", tsk);
 #endif
-    bpf_log(ctx, BPF_LOG_TABLE_FULL, BPF_TABLE_DEAD_GROUP_TASKS, 0, (u64)tsk);
-    return 0;
-  } else if (ret == -EEXIST) {
+      bpf_log(ctx, BPF_LOG_TABLE_DUPLICATE_INSERT, BPF_TABLE_DEAD_GROUP_TASKS, 0, (u64)tsk);
+      return 0;
+    } else {
 #if DEBUG_OTHER_MAP_ERRORS
-    bpf_trace_printk("set_task_group_dead: set_task_group_dead duplicate insert, dropping tsk tsk=%llx\n", tsk);
+      bpf_trace_printk("set_task_group_dead: set_task_group_dead table is full, dropping tsk tsk=%llx\n", tsk);
 #endif
-    bpf_log(ctx, BPF_LOG_TABLE_DUPLICATE_INSERT, BPF_TABLE_DEAD_GROUP_TASKS, 0, (u64)tsk);
-    return 0;
-  } else if (ret != 0) {
-#if DEBUG_OTHER_MAP_ERRORS
-    bpf_trace_printk("set_task_group_dead: unknown return code from map insert: ret=%d (tsk=%llx)\n", ret, tsk);
-#endif
-    bpf_log(ctx, BPF_LOG_TABLE_BAD_INSERT, BPF_TABLE_DEAD_GROUP_TASKS, 0, abs_val(ret));
-    return 0;
+      bpf_log(ctx, BPF_LOG_TABLE_FULL, BPF_TABLE_DEAD_GROUP_TASKS, 0, (u64)tsk);
+      return 0;
+    }
   }
 
   return 1;
@@ -328,24 +326,22 @@ static pid_t get_task_parent(struct pt_regs *ctx, struct task_struct *tsk)
 // returns 1 if a task is new and was inserted
 static int insert_tgid_info(struct pt_regs *ctx, TGID tgid)
 {
-  int ret = bpf_map_update_elem(&tgid_info_table, &tgid, &tgid, BPF_ANY);
-  if (ret == -E2BIG || ret == -ENOMEM || ret == -EINVAL) {
+  int ret = bpf_map_update_elem(&tgid_info_table, &tgid, &tgid, BPF_NOEXIST);
+  if (ret != 0) {
+    // Check if key already exists to distinguish duplicate vs table full
+    void *existing = bpf_map_lookup_elem(&tgid_info_table, &tgid);
+    if (existing) {
+      // if we've already seen it, then don't make a duplicate msg
+      // could arise if a new task shows up during the initial scan
+      // or this is a thread inside an existing group, so we're seeing the tgid again
+      return 0;
+    } else {
 #if DEBUG_OTHER_MAP_ERRORS
-    bpf_trace_printk("insert_tgid_info: tgid_info table is full, dropping task tgid=%u\n", tgid);
+      bpf_trace_printk("insert_tgid_info: tgid_info table is full, dropping task tgid=%u\n", tgid);
 #endif
-    bpf_log(ctx, BPF_LOG_TABLE_FULL, BPF_TABLE_TGID_INFO, tgid, tgid);
-    return 0;
-  } else if (ret == -EEXIST) {
-    // if we've already seen it, then don't make a duplicate msg
-    // could arise if a new task shows up during the initial scan
-    // or this is a thread inside an existing group, so we're seeing the tgid again
-    return 0;
-  } else if (ret != 0) {
-#if DEBUG_OTHER_MAP_ERRORS
-    bpf_trace_printk("insert_tgid_info: unknown return code from map insert: ret=%d (tgid=%u)\n", ret, tgid);
-#endif
-    bpf_log(ctx, BPF_LOG_TABLE_BAD_INSERT, BPF_TABLE_TGID_INFO, tgid, abs_val(ret));
-    return 0;
+      bpf_log(ctx, BPF_LOG_TABLE_FULL, BPF_TABLE_TGID_INFO, tgid, tgid);
+      return 0;
+    }
   }
 
   return 1;
@@ -667,22 +663,20 @@ static int add_tcp_open_socket(struct pt_regs *ctx, struct sock *sk, u32 tgid, u
     return -1;
   }
 
-  ret = bpf_map_update_elem(&tcp_open_sockets, &sk, &sk_info, BPF_ANY);
+  ret = bpf_map_update_elem(&tcp_open_sockets, &sk, &sk_info, BPF_NOEXIST);
 
-  if (ret == -E2BIG || ret == -ENOMEM || ret == -EINVAL) {
+  if (ret != 0) {
+    // Check if key already exists to distinguish duplicate vs table full
+    void *existing = bpf_map_lookup_elem(&tcp_open_sockets, &sk);
+    if (existing) {
+      return 0;
+    } else {
 #if DEBUG_TCP_SOCKET_ERRORS
-    bpf_trace_printk("add_tcp_open_socket: tcp_open_sockets table is full, dropping socket sk=%llx (tgid=%u)\n", sk, tgid);
+      bpf_trace_printk("add_tcp_open_socket: tcp_open_sockets table is full, dropping socket sk=%llx (tgid=%u)\n", sk, tgid);
 #endif
-    bpf_log(ctx, BPF_LOG_TABLE_FULL, BPF_TABLE_TCP_OPEN_SOCKETS, tgid, (u64)sk);
-    return -1;
-  } else if (ret == -EEXIST) {
-    return 0;
-  } else if (ret != 0) {
-#if DEBUG_TCP_SOCKET_ERRORS
-    bpf_trace_printk("add_tcp_open_socket: unknown return code from map insert: ret=%d sk=%llx (tgid=%u)\n", ret, sk, tgid);
-#endif
-    bpf_log(ctx, BPF_LOG_TABLE_BAD_INSERT, BPF_TABLE_TCP_OPEN_SOCKETS, tgid, abs_val(ret));
-    return -1;
+      bpf_log(ctx, BPF_LOG_TABLE_FULL, BPF_TABLE_TCP_OPEN_SOCKETS, tgid, (u64)sk);
+      return -1;
+    }
   }
   return 1;
 }
@@ -1194,21 +1188,19 @@ static inline int add_udp_open_socket(struct pt_regs *ctx, struct sock *sk, u32 
   struct udp_open_socket_t sk_info = {
       .tgid = tgid,
   };
-  int ret = bpf_map_update_elem(&udp_open_sockets, &sk, &sk_info, BPF_ANY);
-  if (ret == -E2BIG || ret == -ENOMEM || ret == -EINVAL) {
+  int ret = bpf_map_update_elem(&udp_open_sockets, &sk, &sk_info, BPF_NOEXIST);
+  if (ret != 0) {
+    // Check if key already exists to distinguish duplicate vs table full
+    void *existing = bpf_map_lookup_elem(&udp_open_sockets, &sk);
+    if (existing) {
+      return 0;
+    } else {
 #if DEBUG_UDP_SOCKET_ERRORS
-    bpf_trace_printk("add_udp_open_socket: udp_open_sockets table is full, dropping socket sk=%llx (tgid=%u)\n", sk, tgid);
+      bpf_trace_printk("add_udp_open_socket: udp_open_sockets table is full, dropping socket sk=%llx (tgid=%u)\n", sk, tgid);
 #endif
-    bpf_log(ctx, BPF_LOG_TABLE_FULL, BPF_TABLE_UDP_OPEN_SOCKETS, (u64)tgid, (u64)sk);
-    return -1;
-  } else if (ret == -EEXIST) {
-    return 0;
-  } else if (ret != 0) {
-#if DEBUG_UDP_SOCKET_ERRORS
-    bpf_trace_printk("add_udp_open_socket: unknown return code from map insert: ret=%d sk=%llx (tgid=%u)\n", ret, sk, tgid);
-#endif
-    bpf_log(ctx, BPF_LOG_TABLE_BAD_INSERT, BPF_TABLE_UDP_OPEN_SOCKETS, (u64)tgid, abs_val(ret));
-    return -1;
+      bpf_log(ctx, BPF_LOG_TABLE_FULL, BPF_TABLE_UDP_OPEN_SOCKETS, (u64)tgid, (u64)sk);
+      return -1;
+    }
   }
   return 1;
 }
@@ -1393,24 +1385,22 @@ int on_udp_v46_get_port(struct pt_regs *ctx, struct sock *sk)
 {
   GET_PID_TGID;
 
-  int ret = bpf_map_update_elem(&udp_get_port_hash, &_cpu, &sk, BPF_ANY);
-  if (ret == -E2BIG || ret == -ENOMEM || ret == -EINVAL) {
+  int ret = bpf_map_update_elem(&udp_get_port_hash, &_cpu, &sk, BPF_NOEXIST);
+  if (ret != 0) {
+    // Check if key already exists to distinguish duplicate vs table full
+    void *existing = bpf_map_lookup_elem(&udp_get_port_hash, &_cpu);
+    if (existing) {
 #if DEBUG_OTHER_MAP_ERRORS
-    bpf_trace_printk("on_udp_v46_get_port: udp_get_port_hash table is full, dropping call (tgid=%u, cpu=%u)\n", _tgid, _cpu);
+      bpf_trace_printk("on_udp_v46_get_port: should not see existing hash entry (tgid=%u, cpu=%u)\n", _tgid, _cpu);
 #endif
-    return 0;
-  } else if (ret == -EEXIST) {
+      return 0;
+    } else {
 #if DEBUG_OTHER_MAP_ERRORS
-    bpf_trace_printk("on_udp_v46_get_port: should not see existing hash entry (tgid=%u, cpu=%u)\n", _tgid, _cpu);
+      bpf_trace_printk("on_udp_v46_get_port: udp_get_port_hash table is full, dropping call (tgid=%u, cpu=%u)\n", _tgid, _cpu);
 #endif
-    return 0;
+      return 0;
+    }
   }
-#if DEBUG_OTHER_MAP_ERRORS
-  else if (ret != 0) {
-    bpf_trace_printk("on_udp_v46_get_port: unknown return code from map insert: ret=%d (tgid=%u, cpu=%u)\n", ret, _tgid, _cpu);
-    return 0;
-  }
-#endif
   return 0;
 }
 
@@ -2494,22 +2484,15 @@ int on_nf_conntrack_alter_reply(struct pt_regs *ctx, struct nf_conn *ct, const s
     return 0;
   }
 
+  // Permit duplicates in this table, because they may represent a changed conntrack
   int ret = bpf_map_update_elem(&seen_conntracks, &ct, &ct, BPF_ANY);
-  if (ret == -E2BIG || ret == -ENOMEM || ret == -EINVAL) {
+  if (!ret) {
 #if DEBUG_OTHER_MAP_ERRORS
     bpf_trace_printk("on_nf_conntrack_alter_reply: seen_conntracks table is full, dropping conntrack\n");
 #endif
     return 0;
-  } else if (ret == -EEXIST) {
-    // Permit duplicates in this table, because they may represent a changed conntrack
   }
-#if DEBUG_OTHER_MAP_ERRORS
-  else if (ret != 0) {
-    bpf_trace_printk("on_nf_conntrack_alter_reply: unknown return code from map insert: ret=%d\n", ret);
-    return 0;
-  }
-#endif
-
+  
   // Note that the nf_conntrack_tuple has dir=1, so we flip
   // src and dst when reporting the connection to the agent
   // to preserve four-tuple order.
