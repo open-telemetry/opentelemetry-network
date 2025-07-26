@@ -1,0 +1,11 @@
+#!/bin/bash
+
+docker_args+=(
+  --mount "type=bind,source=/lib/modules/`uname --kernel-release`,destination=/lib/modules/`uname --kernel-release`,readonly"
+  --mount "type=bind,source=/lib/modules/`uname --kernel-release`/build,destination=/lib/modules/`uname --kernel-release`/build,readonly"
+  --mount "type=bind,source=/lib/modules/`uname --kernel-release`/build/scripts,destination=/lib/modules/`uname --kernel-release`/build/scripts,readonly"
+  --mount "type=bind,source=/lib/modules/`uname --kernel-release`/build/tools,destination=/lib/modules/`uname --kernel-release`/build/tools,readonly"
+  --mount "type=bind,source=/lib/modules/`uname --kernel-release`/source,destination=/lib/modules/`uname --kernel-release`/source,readonly"
+  --mount "type=bind,source=/lib/modules/`uname --kernel-release`/source/scripts,destination=/lib/modules/`uname --kernel-release`/source/scripts,readonly"
+  --mount "type=bind,source=/lib/modules/`uname --kernel-release`/source/tools,destination=/lib/modules/`uname --kernel-release`/source/tools,readonly"
+)

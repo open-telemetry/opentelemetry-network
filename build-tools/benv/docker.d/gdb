@@ -1,0 +1,6 @@
+#!/bin/bash
+
+docker_args+=(
+  --cap-add=SYS_PTRACE
+  --security-opt seccomp=unconfined
+)
