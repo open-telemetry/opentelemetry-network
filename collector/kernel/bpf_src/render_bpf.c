@@ -1843,7 +1843,7 @@ int on_ip6_send_skb(struct pt_regs *ctx, struct sk_buff *skb)
 int handle_receive_udp_skb(struct pt_regs *ctx, struct sock *sk, struct sk_buff *skb)
 {
   // find offsets for ip and udp headers
-  char *skb_head = skb->head;
+  unsigned char *skb_head = skb->head;
   __u16 transport_header = skb->transport_header;
   __u16 network_header = skb->network_header;
 
