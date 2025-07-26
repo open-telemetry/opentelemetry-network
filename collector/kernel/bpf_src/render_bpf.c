@@ -45,40 +45,7 @@ extern int LINUX_KERNEL_VERSION __kconfig;
 #define fl6_dport		uli.ports.dport
 #define rsk_listener			__req_common.skc_listener
 
-// Structs missing from vmlinux.h
-struct nf_conn {
-  struct nf_conntrack_tuple_hash tuplehash[2];
-} __attribute__((preserve_access_index));
-
-union nf_inet_addr {
-	__u32		all[4];
-	__be32		ip;
-	__be32		ip6[4];
-	struct in_addr	in;
-	struct in6_addr	in6;
-} __attribute__((preserve_access_index));
-
-union nf_conntrack_man_proto {
-  __be16 all;
- } __attribute__((preserve_access_index));
-
-struct nf_conntrack_man {
-	union nf_inet_addr u3;
-	union nf_conntrack_man_proto u;
-} __attribute__((preserve_access_index));
-
-struct nf_conntrack_tuple {
-  struct nf_conntrack_man src;
-  struct {
-    union nf_inet_addr u3;
-    union {
-			__be16 all;
-		} u;
-
-    u_int8_t protonum;
-		u_int8_t dir;
-  } dst;
-} __attribute__((preserve_access_index));
+#include "vmlinux_extensions.h"
 
 // Configuration
 #include "config.h"
