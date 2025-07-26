@@ -2208,8 +2208,8 @@ perf_check_and_submit_dns(struct pt_regs *ctx, struct sock *sk, struct sk_buff *
   struct jb_blob blob = {to, valid_len};
   bpf_fill_agent_internal__dns_packet(msg, get_timestamp(), (u64)sk, blob, len, is_rx);
 
-  events.perf_submit(
-      ctx, &msg->unpadded_size, ((DNS_MAX_PACKET_LEN + sizeof(struct jb_agent_internal__dns_packet) + 8 + 7) / 8) * 8 + 4);
+  bpf_perf_event_output(
+      ctx, &events, BPF_F_CURRENT_CPU, &msg->unpadded_size, ((DNS_MAX_PACKET_LEN + sizeof(struct jb_agent_internal__dns_packet) + 8 + 7) / 8) * 8 + 4);
 }
 
 // - Receive UDP packets ---------------------------------------
