@@ -358,9 +358,6 @@ static int remove_tgid_info(struct pt_regs *ctx, TGID tgid)
 #if DEBUG_OTHER_MAP_ERRORS
     bpf_trace_printk("remove_tgid_info: can't remove missing tgid=%u\n", tgid);
 #endif
-    if (ret != -ENOENT) {
-      bpf_log(ctx, BPF_LOG_TABLE_BAD_REMOVE, BPF_TABLE_TGID_INFO, tgid, abs_val(ret));
-    }
     return 0;
   }
 
