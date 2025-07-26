@@ -46,6 +46,8 @@ extern int LINUX_KERNEL_VERSION __kconfig;
 #define rsk_listener			__req_common.skc_listener
 
 #include "vmlinux_extensions.h"
+#include "vmlinux_compat.h"
+
 
 // Configuration
 #include "config.h"

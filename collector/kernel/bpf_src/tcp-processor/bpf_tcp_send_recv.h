@@ -163,12 +163,14 @@ int handle_kprobe__tcp_sendmsg(struct pt_regs *ctx, struct sock *sk, struct msgh
   unsigned long nr_segs = 0;
   size_t iov_offset = 0;
   if (LINUX_KERNEL_VERSION < KERNEL_VERSION(3, 19, 0)) {
+    struct msghdr___3_18_140 *msg = msg;
     bpf_probe_read(&iov, sizeof(iov), &(msg->msg_iov));
     bpf_probe_read(&nr_segs, sizeof(nr_segs), &(msg->msg_iovlen));
     // iov_offset is not a thing in older kernels
   } else {
     u32 type;
     if (LINUX_KERNEL_VERSION < KERNEL_VERSION(5, 14, 0)) {
+      struct msghdr___5_13_19 *msg = msg;
       bpf_probe_read(&type, sizeof(unsigned int), &(msg->msg_iter.type));
     } else {
       u8 type_u8;
@@ -186,7 +188,7 @@ int handle_kprobe__tcp_sendmsg(struct pt_regs *ctx, struct sock *sk, struct msgh
       return 0;
     }
     // can access through iov since iov and kvec are union and have same layout
-    bpf_probe_read(&iov, sizeof(iov), &(msg->msg_iter.iov));
+    bpf_probe_read(&iov, sizeof(iov), &(msg->msg_iter.__iov));
     bpf_probe_read(&nr_segs, sizeof(nr_segs), &(msg->msg_iter.nr_segs));
     bpf_probe_read(&iov_offset, sizeof(iov_offset), &(msg->msg_iter.iov_offset));
   }
@@ -371,10 +373,12 @@ int handle_kprobe__tcp_recvmsg(
 
   struct iovec *iov = NULL;
   if (LINUX_KERNEL_VERSION < KERNEL_VERSION(3, 19, 0)) {
+    struct msghdr___3_18_140 *msg = msg;
     bpf_probe_read(&iov, sizeof(iov), &(msg->msg_iov));
   } else {
     u32 type;
     if (LINUX_KERNEL_VERSION < KERNEL_VERSION(5, 14, 0)) {
+      struct msghdr___5_13_19 *msg = msg;
       bpf_probe_read(&type, sizeof(unsigned int), &(msg->msg_iter.type));
     } else {
       u8 type_u8;
@@ -392,7 +396,7 @@ int handle_kprobe__tcp_recvmsg(
       return 0;
     }
     // can access through iov since iov and kvec are union and have same layout
-    bpf_probe_read(&iov, sizeof(iov), &(msg->msg_iter.iov));
+    bpf_probe_read(&iov, sizeof(iov), &(msg->msg_iter.__iov));
   }
 
   void *iov_base = NULL;
