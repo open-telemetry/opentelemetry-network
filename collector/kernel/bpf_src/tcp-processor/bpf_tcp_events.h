@@ -42,8 +42,12 @@ struct tcp_events_t {
   };
 };
 
-// The perf buffer
-BPF_PERF_OUTPUT(tcp_events);
+// The perf event array map for libbpf
+struct {
+    __uint(type, BPF_MAP_TYPE_PERF_EVENT_ARRAY);
+    __uint(key_size, sizeof(__u32));
+    __uint(value_size, sizeof(__u32));
+} tcp_events SEC(".maps");
 
 #endif
 
@@ -63,7 +67,7 @@ tcp_events_submit_http_response(struct pt_regs *ctx, struct sock *sk, u16 code, 
   event.http_response.dir = (u8)dir;
   event.http_response.latency = latency;
 
-  tcp_events.perf_submit(ctx, &event, sizeof(event));
+  bpf_perf_event_output(ctx, &tcp_events, BPF_F_CURRENT_CPU, &event, sizeof(event));
 
 #else
 
@@ -103,7 +107,7 @@ static void tcp_events_submit_tcp_data(
   event.tcp_data.is_server = (u8)is_server;
   event.tcp_data.offset = pconn->streams[streamtype].total;
 
-  tcp_events.perf_submit(ctx, &event, sizeof(event));
+  bpf_perf_event_output(ctx, &tcp_events, BPF_F_CURRENT_CPU, &event, sizeof(event));
 
 #else
 
