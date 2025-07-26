@@ -17,6 +17,7 @@
 #pragma clang diagnostic pop
 
 #include <bpf/bpf_helpers.h>
+#include <bpf/bpf_endian.h>
 
 extern int LINUX_KERNEL_VERSION __kconfig;
 
@@ -726,7 +727,7 @@ static inline void submit_set_state_ipv6(struct pt_regs *ctx, u64 now, int tx_rx
   bpf_probe_read(&sport, sizeof(sport), &(skp->sk_num));
   bpf_probe_read(daddr, sizeof(daddr), (uint8_t *)(sk->sk_v6_daddr.in6_u.u6_addr32));
   bpf_probe_read(saddr, sizeof(saddr), (uint8_t *)(sk->sk_v6_rcv_saddr.in6_u.u6_addr32));
-  perf_submit_agent_internal__set_state_ipv6(ctx, now, daddr, saddr, ntohs(dport), sport, (__u64)sk, tx_rx);
+  perf_submit_agent_internal__set_state_ipv6(ctx, now, daddr, saddr, bpf_ntohs(dport), sport, (__u64)sk, tx_rx);
 }
 
 // state - we want to get the 5-tuple as early as possible.
@@ -744,7 +745,7 @@ static inline void submit_set_state_ipv4(struct pt_regs *ctx, u64 now, int tx_rx
   bpf_probe_read(&dport, sizeof(dport), &(skp->sk_dport));
   bpf_probe_read(&sport, sizeof(sport), &(skp->sk_num));
 
-  perf_submit_agent_internal__set_state_ipv4(ctx, now, sk->sk_daddr, sk->sk_rcv_saddr, ntohs(dport), sport, (__u64)sk, tx_rx);
+  perf_submit_agent_internal__set_state_ipv4(ctx, now, sk->sk_daddr, sk->sk_rcv_saddr, bpf_ntohs(dport), sport, (__u64)sk, tx_rx);
 }
 
 static inline void submit_reset_tcp_counters(struct pt_regs *ctx, u64 now, u64 pid, struct sock *sk)
@@ -1107,13 +1108,13 @@ int onret_inet_csk_accept(struct pt_regs *ctx)
 
   if (family == AF_INET) {
     perf_submit_agent_internal__set_state_ipv4(
-        ctx, now, newsk->sk_daddr, newsk->sk_rcv_saddr, ntohs(dport), sport, (__u64)newsk, 2);
+        ctx, now, newsk->sk_daddr, newsk->sk_rcv_saddr, bpf_ntohs(dport), sport, (__u64)newsk, 2);
   } else if (family == AF_INET6) {
     uint8_t daddr[16] = {};
     uint8_t saddr[16] = {};
     bpf_probe_read(daddr, sizeof(daddr), (uint8_t *)(newsk->sk_v6_daddr.in6_u.u6_addr32));
     bpf_probe_read(saddr, sizeof(saddr), (uint8_t *)(newsk->sk_v6_rcv_saddr.in6_u.u6_addr32));
-    perf_submit_agent_internal__set_state_ipv6(ctx, now, daddr, saddr, ntohs(dport), sport, (__u64)newsk, 2);
+    perf_submit_agent_internal__set_state_ipv6(ctx, now, daddr, saddr, bpf_ntohs(dport), sport, (__u64)newsk, 2);
   }
 
 #if TRACE_TCP_SOCKETS
