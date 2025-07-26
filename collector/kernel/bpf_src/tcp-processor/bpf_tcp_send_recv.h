@@ -228,7 +228,7 @@ int handle_kretprobe__tcp_sendmsg(struct pt_regs *ctx)
 {
   // This call recurses up to TCP_TAIL_CALL_MAX_DEPTH times,
   // writing up to DATA_CHANNEL_CHUNK_MAX each time
-  tail_calls.call(ctx, TAIL_CALL_CONTINUE_TCP_SENDMSG);
+  bpf_tail_call(ctx, &tail_calls, TAIL_CALL_CONTINUE_TCP_SENDMSG);
   return 0;
 }
 
@@ -304,7 +304,7 @@ int continue_tcp_sendmsg(struct pt_regs *ctx)
     DELETE_ARGS(tcp_sendmsg);
   } else {
     args->depth++;
-    tail_calls.call(ctx, TAIL_CALL_CONTINUE_TCP_SENDMSG);
+    bpf_tail_call(ctx, &tail_calls, TAIL_CALL_CONTINUE_TCP_SENDMSG);
   }
 
   return 0;
@@ -435,7 +435,7 @@ int handle_kretprobe__tcp_recvmsg(struct pt_regs *ctx)
 {
   // This call recurses up to TCP_TAIL_CALL_MAX_DEPTH times,
   // writing up to DATA_CHANNEL_CHUNK_MAX each time
-  tail_calls.call(ctx, TAIL_CALL_CONTINUE_TCP_RECVMSG);
+  bpf_tail_call(ctx, &tail_calls, TAIL_CALL_CONTINUE_TCP_RECVMSG);
   return 0;
 }
 
@@ -480,7 +480,7 @@ int continue_tcp_recvmsg(struct pt_regs *ctx)
     DELETE_ARGS(tcp_recvmsg);
   } else {
     args->depth++;
-    tail_calls.call(ctx, TAIL_CALL_CONTINUE_TCP_RECVMSG);
+    bpf_tail_call(ctx, &tail_calls, TAIL_CALL_CONTINUE_TCP_RECVMSG);
   }
 
   return 0;

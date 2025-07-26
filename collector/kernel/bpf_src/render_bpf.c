@@ -1706,7 +1706,7 @@ int on_udp_send_skb(struct pt_regs *ctx, struct sk_buff *skb, struct flowi4 *fl4
   udp_update_stats(ctx, skb->sk, skb, &laddr, fl4->fl4_sport, &raddr, fl4->fl4_dport, 0);
 
   // Call on_udp_send_skb__2
-  tail_calls.call(ctx, TAIL_CALL_ON_UDP_SEND_SKB__2);
+  bpf_tail_call(ctx, &tail_calls, TAIL_CALL_ON_UDP_SEND_SKB__2);
 
   return 0;
 }
@@ -1728,7 +1728,7 @@ int on_udp_v6_send_skb(struct pt_regs *ctx, struct sk_buff *skb, struct flowi6 *
   udp_update_stats(ctx, skb->sk, skb, &laddr, fl6->fl6_sport, &raddr, fl6->fl6_dport, 0);
 
   // Call on_udp_v6_send_skb__2
-  tail_calls.call(ctx, TAIL_CALL_ON_UDP_V6_SEND_SKB__2);
+  bpf_tail_call(ctx, &tail_calls, TAIL_CALL_ON_UDP_V6_SEND_SKB__2);
 
   return 0;
 }
@@ -1770,7 +1770,7 @@ int on_ip_send_skb(struct pt_regs *ctx, struct net *net, struct sk_buff *skb)
   }
 
   // Call on_ip_send_skb__2
-  tail_calls.call(ctx, TAIL_CALL_ON_IP_SEND_SKB__2);
+  bpf_tail_call(ctx, &tail_calls, TAIL_CALL_ON_IP_SEND_SKB__2);
 
   return 0;
 }
@@ -1810,7 +1810,7 @@ int on_ip6_send_skb(struct pt_regs *ctx, struct sk_buff *skb)
   }
 
   // Call on_ip6_send_skb__2
-  tail_calls.call(ctx, TAIL_CALL_ON_IP6_SEND_SKB__2);
+  bpf_tail_call(ctx, &tail_calls, TAIL_CALL_ON_IP6_SEND_SKB__2);
 
   return 0;
 }
@@ -1858,7 +1858,7 @@ int handle_receive_udp_skb(struct pt_regs *ctx, struct sock *sk, struct sk_buff 
 
   udp_update_stats(ctx, sk, skb, &laddr, udp_hdr->dest, &raddr, udp_hdr->source, 1);
 
-  tail_calls.call(ctx, TAIL_CALL_HANDLE_RECEIVE_UDP_SKB__2);
+  bpf_tail_call(ctx, &tail_calls, TAIL_CALL_HANDLE_RECEIVE_UDP_SKB__2);
   return 0;
 }
 
@@ -2193,7 +2193,7 @@ perf_check_and_submit_dns(struct pt_regs *ctx, struct sock *sk, struct sk_buff *
 int on_skb_consume_udp(struct pt_regs *ctx, struct sock *sk, struct sk_buff *skb, int len)
 {
   // Call handle_receive_udp_skb
-  tail_calls.call(ctx, TAIL_CALL_HANDLE_RECEIVE_UDP_SKB);
+  bpf_tail_call(ctx, &tail_calls, TAIL_CALL_HANDLE_RECEIVE_UDP_SKB);
 
   return 0;
 }
@@ -2209,7 +2209,7 @@ int on_skb_free_datagram_locked(struct pt_regs *ctx, struct sock *sk, struct sk_
   }
   
   // Call handle_receive_udp_skb
-  tail_calls.call(ctx, TAIL_CALL_HANDLE_RECEIVE_UDP_SKB);
+  bpf_tail_call(ctx, &tail_calls, TAIL_CALL_HANDLE_RECEIVE_UDP_SKB);
 
   return 0;
 }
