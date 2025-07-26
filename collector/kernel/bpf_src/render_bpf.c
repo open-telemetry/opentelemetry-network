@@ -429,7 +429,7 @@ int onret_cgroup_exit(struct pt_regs *ctx)
   char comm[16] = {};
   bpf_get_current_comm(comm, sizeof(comm));
 
-  perf_submit_agent_internal__pid_close(ctx, now, tgid, comm);
+  perf_submit_agent_internal__pid_close(ctx, now, tgid, (u8 *)comm);
 
   return 0;
 }
