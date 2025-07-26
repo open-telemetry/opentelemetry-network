@@ -2087,7 +2087,12 @@ struct dns_message_data {
   char data[512 + sizeof(struct bpf_agent_internal__dns_packet) + 16];
 };
 // use per-CPU array to overcome eBPF stack size limit
-BPF_PERCPU_ARRAY(dns_message_array, struct dns_message_data, 1);
+struct {
+  __uint(type, BPF_MAP_TYPE_PERCPU_ARRAY);
+  __uint(max_entries, 1);
+  __type(key, __u32);
+  __type(value, struct dns_message_data);
+} dns_message_array SEC(".maps");
 #pragma passthrough off
 
 // Depending on when the skb is inspected, the header may or may not be filled
@@ -2191,8 +2196,8 @@ perf_check_and_submit_dns(struct pt_regs *ctx, struct sock *sk, struct sk_buff *
     buf = stack_buf;
   } else {
     // use bigger per-CPU array based buffer on newer kernels
-    int zero = 0;
-    struct dns_message_data *pkt = dns_message_array.lookup(&zero);
+    __u32 zero = 0;
+    struct dns_message_data *pkt = bpf_map_lookup_elem(&dns_message_array, &zero);
     if (pkt == NULL) {
       bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, 0, 0, 0);
       return;
