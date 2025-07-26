@@ -21,6 +21,28 @@
 
 extern int LINUX_KERNEL_VERSION __kconfig;
 
+// Networking macros
+#define tcp_sk(ptr) container_of(ptr, struct tcp_sock, inet_conn.icsk_inet.sk)
+#define inet_csk(ptr) container_of(ptr, struct inet_connection_sock, icsk_inet.sk)
+#define inet_sk(ptr) container_of(ptr, struct inet_sock, sk)
+#define sk_num			__sk_common.skc_num
+#define sk_dport		__sk_common.skc_dport
+#define sk_v6_daddr		__sk_common.skc_v6_daddr
+#define sk_v6_rcv_saddr	__sk_common.skc_v6_rcv_saddr
+#define sk_daddr		__sk_common.skc_daddr
+#define sk_rcv_saddr		__sk_common.skc_rcv_saddr
+#define sk_family		__sk_common.skc_family
+#define sk_state		__sk_common.skc_state
+#define AF_INET		2	/* Internet IP Protocol 	*/
+#define AF_INET6	10	/* IP version 6			*/
+#define s6_addr16		in6_u.u6_addr16
+#define s6_addr32		in6_u.u6_addr32
+#define inet_num		sk.__sk_common.skc_num
+#define fl4_sport		uli.ports.sport
+#define fl4_dport		uli.ports.dport
+#define fl6_sport		uli.ports.sport
+#define fl6_dport		uli.ports.dport
+
 // Configuration
 #include "config.h"
 #include "render_bpf.h"
