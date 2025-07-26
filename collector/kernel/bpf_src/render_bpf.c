@@ -200,9 +200,9 @@ END_DECLARE_SAVED_ARGS(cgroup_exit)
  */
 static int get_flow_cgroup_subsys() {
   if (LINUX_KERNEL_VERSION < KERNEL_VERSION(3, 14, 79)) {
-    return mem_cgroup_subsys_id;
+    return bpf_core_enum_value(enum cgroup_subsys_id, mem_cgroup_subsys_id);
   } else {
-    return memory_cgrp_id;
+    return bpf_core_enum_value(enum cgroup_subsys_id, memory_cgrp_id);
   }
 }
 
