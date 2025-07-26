@@ -79,7 +79,6 @@ typedef u64 TIMESTAMP;
     }                                                                                                                          \
   }                                                                                                                            \
   }
-#undef __DEBUG_OTHER_MAP_ERRORS_PRINTK
 
 #define GET_ARGS(FUNC, NAME)                                                                                                   \
   SAVED_ARGS_TYPE(FUNC) *NAME = bpf_map_lookup_elem(&SAVED_ARGS_TABLE(FUNC), &SAVED_ARGS_TABLE_KEY);                          \
