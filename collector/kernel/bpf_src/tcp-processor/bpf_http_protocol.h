@@ -19,7 +19,7 @@ static enum TCP_PROTOCOL_DETECT_RESULT http_detect(
     struct tcp_connection_t *pconn,
     struct tcp_control_value_t *pctrl,
     enum STREAM_TYPE streamtype,
-    const u8 *data,
+    const char *data,
     size_t data_len)
 {
 #if TRACE_HTTP_PROTOCOL

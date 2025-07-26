@@ -2461,7 +2461,7 @@ int on_cgroup_attach_task(struct pt_regs *ctx, struct cgroup *dst_cgrp, struct t
     return 0;
 
   u64 now = get_timestamp();
-  perf_submit_agent_internal__cgroup_attach_task(ctx, now, (__u64)dst_cgrp, leader->pid, leader->comm);
+  perf_submit_agent_internal__cgroup_attach_task(ctx, now, (__u64)dst_cgrp, leader->pid, (u8 *)leader->comm);
   return 0;
 }
 
