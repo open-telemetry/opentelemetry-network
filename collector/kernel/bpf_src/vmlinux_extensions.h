@@ -26,15 +26,6 @@
 
 #define rcu_head callback_head
 
-struct nf_conntrack_tuple_hash {
-        struct hlist_nulls_node hnnode;
-        struct nf_conntrack_tuple tuple;
-};
-
-struct nf_conn {
-  struct nf_conntrack_tuple_hash tuplehash[2];
-} __attribute__((preserve_access_index));
-
 union nf_inet_addr {
 	__u32		all[4];
 	__be32		ip;
@@ -48,9 +39,10 @@ union nf_conntrack_man_proto {
  } __attribute__((preserve_access_index));
 
 struct nf_conntrack_man {
-	union nf_inet_addr u3;
-	union nf_conntrack_man_proto u;
-} __attribute__((preserve_access_index));
+        union nf_inet_addr u3;
+        union nf_conntrack_man_proto u;
+        uint16_t l3num;
+};
 
 struct nf_conntrack_tuple {
   struct nf_conntrack_man src;
@@ -65,27 +57,44 @@ struct nf_conntrack_tuple {
   } dst;
 } __attribute__((preserve_access_index));
 
+struct nf_conntrack_tuple_hash {
+        struct hlist_nulls_node hnnode;
+        struct nf_conntrack_tuple tuple;
+};
 
-struct cgroup_root {
-        struct kernfs_root *kf_root;
-        unsigned int subsys_mask;
-        int hierarchy_id;
-        struct list_head root_list;
-        struct callback_head rcu;
-        long: 64;
-        long: 64;
-        struct cgroup cgrp;
-        struct cgroup *cgrp_ancestor_storage;
-        atomic_t nr_cgrps;
-        unsigned int flags;
-        char release_agent_path[4096];
+struct nf_conn {
+  struct nf_conntrack_tuple_hash tuplehash[2];
+} __attribute__((preserve_access_index));
+
+
+struct cgroup;
+struct cgroup_subsys;
+
+struct cftype {
         char name[64];
-        long: 64;
-        long: 64;
-        long: 64;
-        long: 64;
-        long: 64;
-        long: 64;
+        long unsigned int private;
+        size_t max_write_len;
+        unsigned int flags;
+        unsigned int file_offset;
+        struct cgroup_subsys *ss;
+        struct list_head node;
+        struct kernfs_ops *kf_ops;
+};
+
+struct cgroup_subsys {
+        struct cgroup_subsys_state * (*css_alloc)(struct cgroup_subsys_state *);
+        bool early_init: 1;
+        bool implicit_on_dfl: 1;
+        bool threaded: 1;
+        int id;
+        const char *name;
+        const char *legacy_name;
+        struct cgroup_root *root;
+        struct idr css_idr;
+        struct list_head cfts;
+        struct cftype *dfl_cftypes;
+        struct cftype *legacy_cftypes;
+        unsigned int depends_on;
 };
 
 struct cgroup_subsys_state {
@@ -144,34 +153,62 @@ struct cgroup {
         wait_queue_head_t offline_waitq;
         struct work_struct release_agent_work;
         struct psi_group *psi;
-        struct cgroup_bpf bpf;
+        // struct cgroup_bpf bpf;
         atomic_t congestion_count;
         // struct cgroup_freezer_state freezer;
         struct bpf_local_storage *bpf_cgrp_storage;
         struct cgroup *ancestors[0];
 } __attribute__((preserve_access_index));
 
-struct cftype {
-        char name[64];
-        long unsigned int private;
-        size_t max_write_len;
+struct cgroup_root {
+        struct kernfs_root *kf_root;
+        unsigned int subsys_mask;
+        int hierarchy_id;
+        struct list_head root_list;
+        struct callback_head rcu;
+        long: 64;
+        long: 64;
+        struct cgroup cgrp;
+        struct cgroup *cgrp_ancestor_storage;
+        atomic_t nr_cgrps;
         unsigned int flags;
-        unsigned int file_offset;
-        struct cgroup_subsys *ss;
-        struct list_head node;
-        struct kernfs_ops *kf_ops;
-        int (*open)(struct kernfs_open_file *);
-        void (*release)(struct kernfs_open_file *);
-        u64 (*read_u64)(struct cgroup_subsys_state *, struct cftype *);
-        s64 (*read_s64)(struct cgroup_subsys_state *, struct cftype *);
-        int (*seq_show)(struct seq_file *, void *);
-        void * (*seq_start)(struct seq_file *, loff_t *);
-        void * (*seq_next)(struct seq_file *, void *, loff_t *);
-        void (*seq_stop)(struct seq_file *, void *);
-        int (*write_u64)(struct cgroup_subsys_state *, struct cftype *, u64);
-        int (*write_s64)(struct cgroup_subsys_state *, struct cftype *, s64);
-        ssize_t (*write)(struct kernfs_open_file *, char *, size_t, loff_t);
-        __poll_t (*poll)(struct kernfs_open_file *, struct poll_table_struct *);
+        char release_agent_path[4096];
+        char name[64];
+        long: 64;
+        long: 64;
+        long: 64;
+        long: 64;
+        long: 64;
+        long: 64;
+};
+
+struct css_set {
+        struct cgroup_subsys_state *subsys[14];
+        refcount_t refcount;
+        struct css_set *dom_cset;
+        struct cgroup *dfl_cgrp;
+        int nr_tasks;
+        struct list_head tasks;
+        struct list_head mg_tasks;
+        struct list_head dying_tasks;
+        struct list_head task_iters;
+        struct list_head e_cset_node[14];
+        struct list_head threaded_csets;
+        struct list_head threaded_csets_node;
+        struct hlist_node hlist;
+        struct list_head cgrp_links;
+        struct list_head mg_src_preload_node;
+        struct list_head mg_dst_preload_node;
+        struct list_head mg_node;
+        struct cgroup *mg_src_cgrp;
+        struct cgroup *mg_dst_cgrp;
+        struct css_set *mg_dst_cset;
+        bool dead;
+        struct callback_head callback_head;
+};
+
+struct task_struct___with_css_set {
+	struct css_set *cgroups;
 };
 
 // remove the instruction to add preserve_access_index

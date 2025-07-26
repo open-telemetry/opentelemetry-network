@@ -19,6 +19,7 @@
 #include <bpf/bpf_helpers.h>
 #include <bpf/bpf_endian.h>
 #include <bpf/bpf_tracing.h>
+#include <bpf/bpf_core_read.h>
 
 extern int LINUX_KERNEL_VERSION __kconfig;
 
@@ -293,7 +294,7 @@ static u64 get_task_cgroup(struct pt_regs *ctx, struct task_struct *tsk)
   }
 
   struct css_set *set = NULL;
-  ret = bpf_probe_read(&set, sizeof(set), &tsk->cgroups);
+  ret = bpf_probe_read(&set, sizeof(set), &((struct task_struct___with_css_set *)tsk)->cgroups);
   if (ret != 0) {
     bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, abs_val(ret), 0, 0);
     return 0;
@@ -581,7 +582,7 @@ report_rtt_estimator(struct pt_regs *ctx, struct sock *sk, struct tcp_open_socke
 
   u32 rcv_rtt_us = 0;
   if (LINUX_KERNEL_VERSION < KERNEL_VERSION(4, 12, 0)) {
-    bpf_probe_read(&rcv_rtt_us, sizeof(rcv_rtt_us), &tcp_sk(sk)->rcv_rtt_est.rtt);
+    bpf_probe_read(&rcv_rtt_us, sizeof(rcv_rtt_us), &((struct tcp_sock___rcv_rtt_est_rtt *)tcp_sk(sk))->rcv_rtt_est.rtt);
   } else {
     bpf_probe_read(&rcv_rtt_us, sizeof(rcv_rtt_us), &tcp_sk(sk)->rcv_rtt_est.rtt_us);
   }
@@ -2250,18 +2251,10 @@ int on_skb_free_datagram_locked(struct pt_regs *ctx, struct sock *sk, struct sk_
 ////////////////////////////////////////////////////////////////////////////////////
 /* CGROUPS */
 
-// Define structures and functions for older kernels (< 3.12)
-struct css_id { /* From cgroup.c */
-  struct cgroup_subsys_state __rcu *css;
-  unsigned short id;
-  unsigned short depth;
-  struct rcu_head rcu_head;
-  unsigned short stack[0]; /* Array of Length (depth+1) */
-};
-
 static u32 get_css_id(struct cgroup_subsys_state *css)
 {
   if (LINUX_KERNEL_VERSION < KERNEL_VERSION(3, 12, 0)) {
+    struct cgroup_subsys_state___3_11 *css = css;
     if (!css->id)
       return 0;
     u32 ssid = (u32)css->id->id;
@@ -2277,6 +2270,7 @@ static u32 get_css_id(struct cgroup_subsys_state *css)
 static struct cgroup *get_css_parent_cgroup(struct cgroup_subsys_state *css)
 {
   if (LINUX_KERNEL_VERSION < KERNEL_VERSION(3, 12, 0)) {
+    struct cgroup_subsys_state___3_11 *css = css;
     struct cgroup *parent_cgroup = css->cgroup->parent;
     return parent_cgroup;
   } else {
@@ -2290,9 +2284,20 @@ static struct cgroup *get_css_parent_cgroup(struct cgroup_subsys_state *css)
 static const char *get_cgroup_name(struct cgroup *cg)
 {
   if (LINUX_KERNEL_VERSION < KERNEL_VERSION(3, 15, 0)) {
+    struct cgroup___3_11 *cg = cg;
     return (const char *)&(cg->name->name[0]);
   } else {
     return cg->kn->name;
+  }
+}
+
+static struct cgroup *get_cgroup_parent(struct cgroup *cgrp) {
+  if (bpf_core_field_exists(cgrp->self)) {
+    // introduced in kernel 3.16
+    return get_css_parent_cgroup(&cgrp->self);
+  } else {
+    struct cgroup___3_11 *cg = cg;
+    return cg->parent;
   }
 }
 
@@ -2322,13 +2327,16 @@ int on_kill_css(struct pt_regs *ctx, struct cgroup_subsys_state *css)
 // For Kernel < 3.12
 int on_cgroup_destroy_locked(struct pt_regs *ctx, struct cgroup *cgrp)
 {
-  struct cgroup_subsys_state *css = NULL;
-  bpf_probe_read(&css, sizeof(css), &(cgrp->subsys[FLOW_CGROUP_SUBSYS]));
-  if (css == NULL)
-    return 0;
+  if (LINUX_KERNEL_VERSION < KERNEL_VERSION(3, 12, 0)) {
+    struct cgroup_subsys_state *css = NULL;
+    bpf_probe_read(&css, sizeof(css), &(cgrp->subsys[FLOW_CGROUP_SUBSYS]));
+    if (css == NULL)
+      return 0;
 
-  u64 now = get_timestamp();
-  perf_submit_agent_internal__kill_css(ctx, now, (__u64)cgrp, (__u64)cgrp->parent, (void *)get_cgroup_name(cgrp));
+    u64 now = get_timestamp();
+    perf_submit_agent_internal__kill_css(ctx, now, (__u64)cgrp, (__u64)get_cgroup_parent(cgrp), (void *)get_cgroup_name(cgrp));
+  }
+
   return 0;
 }
 
@@ -2364,7 +2372,7 @@ int on_cgroup_populate_dir(struct pt_regs *ctx, struct cgroup *cgrp, unsigned lo
     return 0;
 
   u64 now = get_timestamp();
-  perf_submit_agent_internal__css_populate_dir(ctx, now, (__u64)cgrp, (__u64)cgrp->parent, (void *)get_cgroup_name(cgrp));
+  perf_submit_agent_internal__css_populate_dir(ctx, now, (__u64)cgrp, (__u64)get_cgroup_parent(cgrp), (void *)get_cgroup_name(cgrp));
   return 0;
 }
 
@@ -2450,7 +2458,7 @@ int on_cgroup_clone_children_read(struct pt_regs *ctx, struct cgroup *cgrp, stru
     return 0;
 
   u64 now = get_timestamp();
-  struct cgroup *parent_cgroup = cgrp->parent;
+  struct cgroup *parent_cgroup = get_cgroup_parent(cgrp);
 
   perf_submit_agent_internal__existing_cgroup_probe(ctx, now, (__u64)cgrp, (__u64)parent_cgroup, (void *)get_cgroup_name(cgrp));
 
