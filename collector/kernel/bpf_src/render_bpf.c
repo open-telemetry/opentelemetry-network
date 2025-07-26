@@ -2099,7 +2099,7 @@ perf_check_and_submit_dns(struct pt_regs *ctx, struct sock *sk, struct sk_buff *
   bpf_probe_read(&len, sizeof(len), &skb->len);
 
   // Filter for DNS requests and responses
-  if (!((proto == IPPROTO_UDP) && ((sport == htons(53)) || (dport == htons(53))) && (len > 0))) {
+  if (!((proto == IPPROTO_UDP) && ((sport == bpf_htons(53)) || (dport == bpf_htons(53))) && (len > 0))) {
     return;
   }
 
