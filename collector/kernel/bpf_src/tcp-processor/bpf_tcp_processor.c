@@ -10,7 +10,12 @@
 #include <vmlinux.h>
 
 // Include this from render_bpf.c so we can use tail calls in tcp processor test code
-BPF_PROG_ARRAY(tail_calls, NUM_TAIL_CALLS);
+struct {
+	__uint(type, BPF_MAP_TYPE_PROG_ARRAY);
+	__uint(max_entries, NUM_TAIL_CALLS);
+	__uint(key_size, sizeof(__u32));
+	__uint(value_size, sizeof(__u32));
+} tail_calls SEC(".maps");
 
 #endif
 

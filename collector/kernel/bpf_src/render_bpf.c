@@ -1647,7 +1647,12 @@ static void udp_update_stats(
 }
 
 /* Tail calls used by kprobes below, so we can have enough stack space */
-BPF_PROG_ARRAY(tail_calls, NUM_TAIL_CALLS);
+struct {
+	__uint(type, BPF_MAP_TYPE_PROG_ARRAY);
+	__uint(max_entries, NUM_TAIL_CALLS);
+	__uint(key_size, sizeof(__u32));
+	__uint(value_size, sizeof(__u32));
+} tail_calls SEC(".maps");
 
 int on_udp_send_skb__2(struct pt_regs *ctx, struct sk_buff *skb, struct flowi4 *fl4)
 {
