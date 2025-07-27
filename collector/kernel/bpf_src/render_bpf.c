@@ -213,8 +213,7 @@ static int get_flow_cgroup_subsys() {
 
 /* forward declarations */
 
-static void
-perf_check_and_submit_dns(struct pt_regs *ctx, struct sock *sk, struct sk_buff *skb, u8 proto, u16 sport, u16 dport, int is_rx);
+static __always_inline void perf_check_and_submit_dns(struct pt_regs *ctx, struct sock *sk, struct sk_buff *skb, u8 proto, u16 sport, u16 dport, int is_rx);
 
 ////////////////////////////////////////////////////////////////////////////////////
 /* PROCESSES */
@@ -2106,7 +2105,7 @@ struct {
 // Depending on when the skb is inspected, the header may or may not be filled
 // in yet so we are passing in protocol and port components as parameters here
 // sport and dport are in -network byte order-
-static void
+static __always_inline void
 perf_check_and_submit_dns(struct pt_regs *ctx, struct sock *sk, struct sk_buff *skb, u8 proto, u16 sport, u16 dport, int is_rx)
 {
   unsigned int len = 0;
