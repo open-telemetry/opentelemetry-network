@@ -2492,7 +2492,7 @@ int on_nf_nat_cleanup_conntrack(struct pt_regs *ctx, struct nf_conn *ct)
   // entries that this probe will trigger on and which we don't need to process.
   // XXX: more testing and verification of this to be done after completion of
   // "existing" conntrack probing.
-  struct nf_conn **seen_conntrack = seen_conntracks.lookup(&ct);
+  struct nf_conn **seen_conntrack = bpf_map_lookup_elem(&seen_conntracks, &ct);
   if (!seen_conntrack) {
     return 0;
   }
