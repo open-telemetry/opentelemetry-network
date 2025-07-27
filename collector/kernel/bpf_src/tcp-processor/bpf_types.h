@@ -117,9 +117,27 @@ struct {
     __uint(max_entries, BPF_MAX_CPUS);
 } bpf_log_globals_per_cpu SEC(".maps");
 
-#define bpf_log(...) _bpf_log(__LINE__, __VA_ARGS__)
-static void _bpf_log(int filelineid, struct pt_regs *ctx, enum BPF_LOG_CODE code, u64 arg0, u64 arg1, u64 arg2)
+struct bpf_log_args {
+  enum BPF_LOG_CODE code;
+  u64 arg0;
+  u64 arg1;
+  u64 arg2;
+};
+
+#define bpf_log(ctx, _code, _arg0, _arg1, _arg2) \
+  do { \
+    struct bpf_log_args __log_args = { \
+      .code = (_code), \
+      .arg0 = (_arg0), \
+      .arg1 = (_arg1), \
+      .arg2 = (_arg2) \
+    }; \
+    _bpf_log(__LINE__, ctx, &__log_args); \
+  } while (0)
+
+static void _bpf_log(int filelineid, struct pt_regs *ctx, struct bpf_log_args *args)
 {
+
   // Get timestamp in milliseconds
   TIMESTAMP now = get_timestamp();
   u32 now_ms = (u32)(now / 1000000ull);
@@ -155,10 +173,10 @@ static void _bpf_log(int filelineid, struct pt_regs *ctx, enum BPF_LOG_CODE code
 #endif
   } else if (globals->count <= BPF_LOG_THROTTLE_MAX_PER_PERIOD) {
 #ifdef STANDALONE_TCP_PROCESSOR
-    bpf_trace_printk("bpf_log: filelineid=%d, code=%u, now=%llu\n", filelineid, code, now);
-    bpf_trace_printk("         args=%llu, %llu, %llu\n", arg0, arg1, arg2);
+    bpf_trace_printk("bpf_log: filelineid=%d, code=%u, now=%llu\n", filelineid, args->code, now);
+    bpf_trace_printk("         args=%llu, %llu, %llu\n", args->arg0, args->arg1, args->arg2);
 #else
-    perf_submit_agent_internal__bpf_log(ctx, now, (u64)filelineid, (u64)code, arg0, arg1, arg2);
+    perf_submit_agent_internal__bpf_log(ctx, now, (u64)filelineid, (u64)args->code, args->arg0, args->arg1, args->arg2);
 #endif
   }
 }
