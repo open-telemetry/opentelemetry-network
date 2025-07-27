@@ -215,7 +215,7 @@ struct task_struct___with_css_set {
 enum cgroup_subsys_id {
     mem_cgroup_subsys_id,
     memory_cgrp_id
-} __attribute__((preserve_access_index));
+};
 
 // remove the instruction to add preserve_access_index
 #pragma clang attribute pop
