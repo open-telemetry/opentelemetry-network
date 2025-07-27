@@ -3,6 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+// Global variables that can be set from userspace
+volatile const long boot_time_adjustment = 0;
+volatile const long filter_ns = 1000000000;  // Default 1 second in nanoseconds
 
 #ifndef KBUILD_MODNAME
 #define KBUILD_MODNAME "ebpf_net"
@@ -1631,7 +1634,7 @@ static void udp_update_stats(
 
   u64 now = get_timestamp();
 
-  if (changed || ((now - stats->last_output) >= FILTER_NS)) {
+  if (changed || ((now - stats->last_output) >= filter_ns)) {
 
     /* set the address */
     if (lchanged) {
@@ -1907,7 +1910,7 @@ static void report_rtt_estimator_if_time(struct pt_regs *ctx, struct sock *sk, s
 {
   u64 now = get_timestamp();
 
-  if ((now - sk_info->last_output) < FILTER_NS)
+  if ((now - sk_info->last_output) < filter_ns)
     return; // too little time passed
 
   report_rtt_estimator(ctx, sk, sk_info, now, false);

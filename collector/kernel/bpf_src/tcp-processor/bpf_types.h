@@ -101,7 +101,7 @@ static TIMESTAMP get_timestamp(void)
   return (TIMESTAMP)bpf_ktime_get_ns();
 #else
   // Get time, adjust for boot
-  return bpf_ktime_get_ns() + BOOT_TIME_ADJUSTMENT;
+  return bpf_ktime_get_ns() + boot_time_adjustment;
 #endif
 }
 
