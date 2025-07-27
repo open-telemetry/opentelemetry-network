@@ -315,7 +315,33 @@ int continue_tcp_sendmsg(struct pt_regs *ctx)
 // --- tcp_recvmsg ----------------------------------------------------
 // Called when data is to be received by a TCP socket
 
-int handle_kprobe__tcp_recvmsg(
+struct handle_kprobe__tcp_recvmsg_args {
+  struct pt_regs *ctx;
+  struct sock *sk;
+  struct msghdr *msg;
+  size_t len;
+  int nonblock;
+  int flags;
+  int *addr_len;
+};
+
+static int handle_kprobe__tcp_recvmsg_wrapper(struct handle_kprobe__tcp_recvmsg_args *args);
+
+#define handle_kprobe__tcp_recvmsg(ctx, sk, msg, len, nonblock, flags, addr_len) \
+  ({ \
+    struct handle_kprobe__tcp_recvmsg_args __args = { \
+      .ctx = (ctx), \
+      .sk = (sk), \
+      .msg = (msg), \
+      .len = (len), \
+      .nonblock = (nonblock), \
+      .flags = (flags), \
+      .addr_len = (addr_len) \
+    }; \
+    handle_kprobe__tcp_recvmsg_wrapper(&__args); \
+  })
+
+static inline int handle_kprobe__tcp_recvmsg_impl(
     struct pt_regs *ctx, struct sock *sk, struct msghdr *msg, size_t len, int nonblock, int flags, int *addr_len)
 {
   // Handle parameter differences between kernel versions

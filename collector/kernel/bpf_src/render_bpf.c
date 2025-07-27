@@ -1590,7 +1590,35 @@ int on_tcp_reset(struct pt_regs *ctx, struct sock *sk)
 
 // laddr, raddr is in big endian format, lport and rport are in little endian
 // format
-static void udp_update_stats(
+struct udp_update_stats_args {
+  struct pt_regs *ctx;
+  struct sock *sk;
+  struct sk_buff *skb;
+  struct in6_addr *laddr;
+  u16 lport;
+  struct in6_addr *raddr;
+  u16 rport;
+  u8 is_rx;
+};
+
+static void udp_update_stats_wrapper(struct udp_update_stats_args *args);
+
+#define udp_update_stats(ctx_, sk_, skb_, laddr_, lport_, raddr_, rport_, is_rx_) \
+  do { \
+    struct udp_update_stats_args __args = { \
+      .ctx = (ctx_), \
+      .sk = (sk_), \
+      .skb = (skb_), \
+      .laddr = (laddr_), \
+      .lport = (lport_), \
+      .raddr = (raddr_), \
+      .rport = (rport_), \
+      .is_rx = (is_rx_) \
+    }; \
+    udp_update_stats_wrapper(&__args); \
+  } while (0)
+
+static inline void udp_update_stats_impl(
     struct pt_regs *ctx,
     struct sock *sk,
     struct sk_buff *skb,
@@ -1675,6 +1703,11 @@ static void udp_update_stats(
    */
 
   return;
+}
+
+static void udp_update_stats_wrapper(struct udp_update_stats_args *args)
+{
+  udp_update_stats_impl(args->ctx, args->sk, args->skb, args->laddr, args->lport, args->raddr, args->rport, args->is_rx);
 }
 
 /* Tail calls used by kprobes below, so we can have enough stack space */

@@ -44,22 +44,58 @@ struct {
 
 // TCP send/receive handling
 
-static void tcp_client_handler(
+struct tcp_handler_args {
+  struct pt_regs *ctx;
+  struct tcp_connection_t *pconn;
+  struct tcp_control_value_t *pctrl;
+  enum STREAM_TYPE streamtype;
+  const void *data;
+  size_t data_len;
+};
+
+static void tcp_client_handler_wrapper(struct tcp_handler_args *args);
+static void tcp_server_handler_wrapper(struct tcp_handler_args *args);
+
+#define TCP_CLIENT_HANDLER(CTX, CONN, CTRL, ST, DATA, LEN) \
+  do { \
+    struct tcp_handler_args __args = { \
+      .ctx = (CTX), \
+      .pconn = (CONN), \
+      .pctrl = (CTRL), \
+      .streamtype = (ST), \
+      .data = (DATA), \
+      .data_len = (LEN) \
+    }; \
+    tcp_client_handler_wrapper(&__args); \
+  } while (0)
+
+#define TCP_SERVER_HANDLER(CTX, CONN, CTRL, ST, DATA, LEN) \
+  do { \
+    struct tcp_handler_args __args = { \
+      .ctx = (CTX), \
+      .pconn = (CONN), \
+      .pctrl = (CTRL), \
+      .streamtype = (ST), \
+      .data = (DATA), \
+      .data_len = (LEN) \
+    }; \
+    tcp_server_handler_wrapper(&__args); \
+  } while (0)
+
+static inline void tcp_client_handler_impl(
     struct pt_regs *ctx,
     struct tcp_connection_t *pconn,
     struct tcp_control_value_t *pctrl,
     enum STREAM_TYPE streamtype,
     const void *data,
     size_t data_len);
-static void tcp_server_handler(
+static inline void tcp_server_handler_impl(
     struct pt_regs *ctx,
     struct tcp_connection_t *pconn,
     struct tcp_control_value_t *pctrl,
     enum STREAM_TYPE streamtype,
     const void *data,
     size_t data_len);
-#define TCP_CLIENT_HANDLER(CTX, CONN, CTRL, ST, DATA, LEN) tcp_client_handler(CTX, CONN, CTRL, ST, DATA, LEN)
-#define TCP_SERVER_HANDLER(CTX, CONN, CTRL, ST, DATA, LEN) tcp_server_handler(CTX, CONN, CTRL, ST, DATA, LEN)
 
 #include "bpf_tcp_send_recv.h"
 
@@ -76,7 +112,7 @@ static void tcp_server_handler(
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void tcp_client_handler(
+static inline void tcp_client_handler_impl(
     struct pt_regs *ctx,
     struct tcp_connection_t *pconn,
     struct tcp_control_value_t *pctrl,
@@ -135,7 +171,7 @@ static void tcp_client_handler(
 #pragma passthrough off
 }
 
-static void tcp_server_handler(
+static inline void tcp_server_handler_impl(
     struct pt_regs *ctx,
     struct tcp_connection_t *pconn,
     struct tcp_control_value_t *pctrl,
@@ -171,4 +207,15 @@ static void tcp_server_handler(
 #pragma passthrough on
 #endif
 #pragma passthrough off
+}
+
+
+static void tcp_client_handler_wrapper(struct tcp_handler_args *args)
+{
+  tcp_client_handler_impl(args->ctx, args->pconn, args->pctrl, args->streamtype, args->data, args->data_len);
+}
+
+static void tcp_server_handler_wrapper(struct tcp_handler_args *args)
+{
+  tcp_server_handler_impl(args->ctx, args->pconn, args->pctrl, args->streamtype, args->data, args->data_len);
 }
