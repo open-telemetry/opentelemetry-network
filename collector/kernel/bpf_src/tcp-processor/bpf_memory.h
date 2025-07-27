@@ -17,17 +17,14 @@ inline static int string_starts_with(const char *s1, const size_t s1_len, const 
 {
 
   char localdata[16] = {};
-  const size_t s2_len = bpf_probe_read_kernel_str(localdata, sizeof(localdata), s2);
+  size_t s2_len = bpf_probe_read_kernel_str(localdata, sizeof(localdata), s2);
 
   if (s1_len < s2_len) {
     return 0;
   }
 
-#pragma passthrough on
-#pragma unroll
-#pragma passthrough off
   for (int i = 0; i < s2_len; i++) {
-    if (localdata[i] != s2[i]) {
+    if (localdata[i] != s1[i]) {
       return 0;
     }
   }
