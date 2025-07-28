@@ -49,8 +49,9 @@ extern int LINUX_KERNEL_VERSION __kconfig;
 #define fl6_dport uli.ports.dport
 #define rsk_listener __req_common.skc_listener
 
-#include "vmlinux_compat.h"
 #include "vmlinux_extensions.h"
+
+#include "vmlinux_compat.h"
 
 // Configuration
 #include "config.h"
