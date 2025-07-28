@@ -17,19 +17,6 @@ data_dir=${EBPF_NET_DATA_DIR:-/var/run/ebpf_net}
 dump_dir="${data_dir}/dump"
 mkdir -p "${data_dir}" "${dump_dir}"
 
-kernel_headers_info_path="${data_dir}/kernel_headers.cfg"
-kernel_headers_log_path="${data_dir}/kernel_headers.log"
-echo "resolving kernel headers..."
-if ! "${install_dir}/kernel_headers.sh" "${kernel_headers_info_path}" \
-  > "${kernel_headers_log_path}" 2>&1
-then
-  echo "kernel_headers.sh failed"
-  echo "--- BEGIN log from kernel headers resolution -------------"
-  cat "${kernel_headers_log_path}" || true
-  echo "---  END  log from kernel headers resolution -------------"
-  exit 1
-fi
-
 mount -t debugfs none /sys/kernel/debug
 
 cmd_args=( \
