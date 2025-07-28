@@ -313,7 +313,6 @@ lint_shell_script_bundle(
   SOURCES
     entrypoint.sh
     entrypoint-kct.sh
-    kernel_headers.sh
 )
 
 # Docker image

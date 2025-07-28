@@ -18,9 +18,6 @@ ENV EBPF_NET_DATA_DIR=/var/run/ebpf_net
 
 ENTRYPOINT [ "/srv/entrypoint.sh" ]
 
-# required by kernel_headers.sh script
-RUN install_packages coreutils curl sed tar dnf rpm
-
 ARG BUILD_TYPE
 RUN if [ "$BUILD_TYPE" = "Debug" ]; then \
       install_packages bc cgdb gawk gdb gzip iputils-ping jq netcat-openbsd procps ripgrep vim valgrind; \
