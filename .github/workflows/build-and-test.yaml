@@ -16,9 +16,9 @@ permissions:
 env:
   BENV_IMAGE: ${{ vars.BENV_IMAGE || 'docker.io/otel/opentelemetry-network-build-tools' }}
 
-concurrency:
-  group: build-and-test-${{ github.event.pull_request_number || github.ref }}
-  cancel-in-progress: true
+# concurrency:
+#   group: build-and-test-${{ github.event.pull_request_number || github.ref }}
+#   cancel-in-progress: true
 
 jobs:
   clang-format-check:
