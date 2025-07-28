@@ -41,7 +41,7 @@ BPFHandler::BPFHandler(
 
   // Configure global variables before loading
   probe_handler_.configure_bpf_skeleton(bpf_skel_, enable_userland_tcp);
-  
+
   // Now load the skeleton and set up perf rings
   int res = probe_handler_.load_and_setup_bpf_skeleton(bpf_skel_, perf_);
   if (res != 0) {
@@ -49,7 +49,7 @@ BPFHandler::BPFHandler(
     bpf_skel_ = nullptr;
     throw std::system_error(errno, std::generic_category(), "ProbeHandler couldn't load BPF skeleton");
   }
-  
+
   // Note: The full_program parameter is now unused since we use pre-compiled skeleton
   // The enable_tcp_data_stream global variable has been configured based on enable_userland_tcp
 }
@@ -191,8 +191,7 @@ void BPFHandler::load_probes(::ebpf_net::ingest::Writer &writer)
   probe_handler_.register_tail_call(bpf_skel_, "tail_calls", TAIL_CALL_ON_IP_SEND_SKB__2, "on_ip_send_skb__2");
   probe_handler_.register_tail_call(bpf_skel_, "tail_calls", TAIL_CALL_ON_IP6_SEND_SKB__2, "on_ip6_send_skb__2");
   probe_handler_.register_tail_call(bpf_skel_, "tail_calls", TAIL_CALL_HANDLE_RECEIVE_UDP_SKB, "handle_receive_udp_skb");
-  probe_handler_.register_tail_call(
-      bpf_skel_, "tail_calls", TAIL_CALL_HANDLE_RECEIVE_UDP_SKB__2, "handle_receive_udp_skb__2");
+  probe_handler_.register_tail_call(bpf_skel_, "tail_calls", TAIL_CALL_HANDLE_RECEIVE_UDP_SKB__2, "handle_receive_udp_skb__2");
   probe_handler_.register_tail_call(bpf_skel_, "tail_calls", TAIL_CALL_CONTINUE_TCP_SENDMSG, "continue_tcp_sendmsg");
   probe_handler_.register_tail_call(bpf_skel_, "tail_calls", TAIL_CALL_CONTINUE_TCP_RECVMSG, "continue_tcp_recvmsg");
 

@@ -25,6 +25,7 @@ END_DECLARE_SAVED_ARGS(inet_csk_accept)
 
 // --- inet_csk_accept --------------------------------------------------
 // Called when a listen socket accepts gets a connection
+SEC("kprobe/inet_csk_accept")
 int handle_kprobe__inet_csk_accept(struct pt_regs *ctx, struct sock *sk, int flags, int *err, bool kern)
 {
   // Handle parameter differences between kernel versions
@@ -63,6 +64,7 @@ int handle_kprobe__inet_csk_accept(struct pt_regs *ctx, struct sock *sk, int fla
 
   return 0;
 }
+SEC("kretprobe/inet_csk_accept")
 int handle_kretprobe__inet_csk_accept(struct pt_regs *ctx)
 {
   GET_PID_TGID

@@ -10,10 +10,10 @@
 #include <map>
 #include <memory>
 
-#include <uv.h>
 #include <generated/ebpf_net/ingest/writer.h>
 #include <platform/platform.h>
 #include <util/logger.h>
+#include <uv.h>
 
 #include "collector/agent_log.h"
 #include "collector/kernel/bpf_src/tcp-processor/tcp_processor.h"

@@ -57,7 +57,7 @@ SocketProber::SocketProber(
   /* First step: fill up the "seen_inodes" bpf hashmap: inode -> pid */
   struct bpf_map *seen_inodes_map = probe_handler.get_bpf_map(skel, "seen_inodes");
   int map_fd = bpf_map__fd(seen_inodes_map);
-  
+
   // Clear the map
   u32 key, next_key;
   while (bpf_map_get_next_key(map_fd, &key, &next_key) == 0) {

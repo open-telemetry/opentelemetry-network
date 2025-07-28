@@ -7,9 +7,9 @@
 
 // TCP Data sent to userland - perf event array map for libbpf
 struct {
-    __uint(type, BPF_MAP_TYPE_PERF_EVENT_ARRAY);
-    __uint(key_size, sizeof(__u32));
-    __uint(value_size, sizeof(__u32));
+  __uint(type, BPF_MAP_TYPE_PERF_EVENT_ARRAY);
+  __uint(key_size, sizeof(__u32));
+  __uint(value_size, sizeof(__u32));
 } data_channel SEC(".maps");
 
 // Slightly more compact fore than COPY_BIT(2) + COPY_BIT(1)
@@ -21,15 +21,15 @@ struct {
     break;                                                                                                                     \
   case 1:                                                                                                                      \
     bpf_probe_read(&msg.data, 1, in);                                                                                          \
-    bpf_perf_event_output(ctx, &data_channel, BPF_F_CURRENT_CPU, &msg, sizeof(struct data_channel_header_t) + 1);                                             \
+    bpf_perf_event_output(ctx, &data_channel, BPF_F_CURRENT_CPU, &msg, sizeof(struct data_channel_header_t) + 1);              \
     break;                                                                                                                     \
   case 2:                                                                                                                      \
     bpf_probe_read(&msg.data, 2, in);                                                                                          \
-    bpf_perf_event_output(ctx, &data_channel, BPF_F_CURRENT_CPU, &msg, sizeof(struct data_channel_header_t) + 2);                                             \
+    bpf_perf_event_output(ctx, &data_channel, BPF_F_CURRENT_CPU, &msg, sizeof(struct data_channel_header_t) + 2);              \
     break;                                                                                                                     \
   case 3:                                                                                                                      \
     bpf_probe_read(&msg.data, 3, in);                                                                                          \
-    bpf_perf_event_output(ctx, &data_channel, BPF_F_CURRENT_CPU, &msg, sizeof(struct data_channel_header_t) + 3);                                             \
+    bpf_perf_event_output(ctx, &data_channel, BPF_F_CURRENT_CPU, &msg, sizeof(struct data_channel_header_t) + 3);              \
     break;                                                                                                                     \
   }
 
@@ -37,13 +37,13 @@ struct {
   if (len & B) {                                                                                                               \
     msg.hdr.length = B;                                                                                                        \
     bpf_probe_read(&msg.data, B, in);                                                                                          \
-    bpf_perf_event_output(ctx, &data_channel, BPF_F_CURRENT_CPU, &msg, sizeof(struct data_channel_header_t) + B);                                             \
+    bpf_perf_event_output(ctx, &data_channel, BPF_F_CURRENT_CPU, &msg, sizeof(struct data_channel_header_t) + B);              \
     in += B;                                                                                                                   \
   }
 
 #define COPY_CHUNK_256                                                                                                         \
   bpf_probe_read(&msg.data, 256, in);                                                                                          \
-  bpf_perf_event_output(ctx, &data_channel, BPF_F_CURRENT_CPU, &msg, sizeof(struct data_channel_header_t) + 256);                                             \
+  bpf_perf_event_output(ctx, &data_channel, BPF_F_CURRENT_CPU, &msg, sizeof(struct data_channel_header_t) + 256);              \
   in += 256;
 
 #define COPY_BIT_256                                                                                                           \

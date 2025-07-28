@@ -11,7 +11,7 @@
 
 ///////// render_bpf.c config
 
-#define BPF_MAX_CPUS 1024             // Maximum number of CPUs to support
+#define BPF_MAX_CPUS 1024           // Maximum number of CPUs to support
 #define TABLE_SIZE__TGID_INFO 65536 // Task (TGID) information - compile-time constant needed for map definition
 #define TABLE_SIZE__SEEN_INODES                                                                                                \
   70000 // XXX: Is this even necessary? could this tracking be done in userland with non-limited tables?

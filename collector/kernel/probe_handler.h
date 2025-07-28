@@ -7,9 +7,9 @@
 
 #include "kernel_symbols.h"
 
-#include <linux/bpf.h>
-#include <bpf/libbpf.h>
 #include <bpf/bpf.h>
+#include <bpf/libbpf.h>
+#include <linux/bpf.h>
 
 #include <collector/kernel/perf_reader.h>
 #include <util/logger.h>
@@ -205,7 +205,7 @@ private:
     int index_;
   };
   std::vector<int> fds_;
-  std::vector<struct bpf_link*> probes_;
+  std::vector<struct bpf_link *> probes_;
   std::vector<TailCallTuple> tail_calls_;
   std::vector<std::string> probe_names_;
   size_t num_failed_probes_; // number of kprobes, kretprobes, and tail_calls that failed to attach

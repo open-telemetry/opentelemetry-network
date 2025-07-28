@@ -7,8 +7,8 @@
 #include <linux/bpf.h>
 #include <util/log.h>
 
-#include <bpf/libbpf.h>
 #include <bpf/bpf.h>
+#include <bpf/libbpf.h>
 
 #include <collector/agent_log.h>
 #include <collector/kernel/bpf_src/render_bpf.h>
@@ -28,7 +28,8 @@ extern "C" {
 #define DATA_CHANNEL_PERF_RING_N_WATERMARK_BYTES (1)
 
 // Helper function to get online CPUs
-std::vector<int> get_online_cpus() {
+std::vector<int> get_online_cpus()
+{
   std::vector<int> cpus;
   int num_cpus = libbpf_num_possible_cpus();
   for (int i = 0; i < num_cpus; i++) {
@@ -115,10 +116,10 @@ void ProbeHandler::configure_bpf_skeleton(struct render_bpf_bpf *skel, bool enab
     LOG::error("Cannot configure BPF skeleton: null skeleton");
     return;
   }
-  
+
   // Configure global variables before loading
   skel->rodata->enable_tcp_data_stream = enable_tcp_data_stream ? 1 : 0;
-  
+
   LOG::info("TCP data stream processing {}", enable_tcp_data_stream ? "enabled" : "disabled");
 }
 
@@ -171,27 +172,48 @@ int ProbeHandler::load_and_setup_bpf_skeleton(struct render_bpf_bpf *skel, PerfC
 
 struct bpf_map *ProbeHandler::get_bpf_map(struct render_bpf_bpf *skel, const std::string &name)
 {
-  if (name == "cgroup_exit_active") return skel->maps.cgroup_exit_active;
-  if (name == "tcp_open_sockets") return skel->maps.tcp_open_sockets;
-  if (name == "on_inet_csk_accept_active") return skel->maps.on_inet_csk_accept_active;
-  if (name == "seen_inodes") return skel->maps.seen_inodes;
-  if (name == "udp_get_port_hash") return skel->maps.udp_get_port_hash;
-  if (name == "inet_release_active") return skel->maps.inet_release_active;
-  if (name == "tail_calls") return skel->maps.tail_calls;
-  if (name == "cgroup_control_active") return skel->maps.cgroup_control_active;
-  if (name == "seen_conntracks") return skel->maps.seen_conntracks;
-  if (name == "inet_csk_accept_active") return skel->maps.inet_csk_accept_active;
-  if (name == "tcp_sendmsg_active") return skel->maps.tcp_sendmsg_active;
-  if (name == "tcp_recvmsg_active") return skel->maps.tcp_recvmsg_active;
-  if (name == "events") return skel->maps.events;
-  if (name == "bpf_log_globals_per_cpu") return skel->maps.bpf_log_globals_per_cpu;
-  if (name == "tgid_info_table") return skel->maps.tgid_info_table;
-  if (name == "dead_group_tasks") return skel->maps.dead_group_tasks;
-  if (name == "udp_open_sockets") return skel->maps.udp_open_sockets;
-  if (name == "dns_message_array") return skel->maps.dns_message_array;
-  if (name == "_tcp_connections") return skel->maps._tcp_connections;
-  if (name == "_tcp_control") return skel->maps._tcp_control;
-  if (name == "data_channel") return skel->maps.data_channel;
+  if (name == "cgroup_exit_active")
+    return skel->maps.cgroup_exit_active;
+  if (name == "tcp_open_sockets")
+    return skel->maps.tcp_open_sockets;
+  if (name == "on_inet_csk_accept_active")
+    return skel->maps.on_inet_csk_accept_active;
+  if (name == "seen_inodes")
+    return skel->maps.seen_inodes;
+  if (name == "udp_get_port_hash")
+    return skel->maps.udp_get_port_hash;
+  if (name == "inet_release_active")
+    return skel->maps.inet_release_active;
+  if (name == "tail_calls")
+    return skel->maps.tail_calls;
+  if (name == "cgroup_control_active")
+    return skel->maps.cgroup_control_active;
+  if (name == "seen_conntracks")
+    return skel->maps.seen_conntracks;
+  if (name == "inet_csk_accept_active")
+    return skel->maps.inet_csk_accept_active;
+  if (name == "tcp_sendmsg_active")
+    return skel->maps.tcp_sendmsg_active;
+  if (name == "tcp_recvmsg_active")
+    return skel->maps.tcp_recvmsg_active;
+  if (name == "events")
+    return skel->maps.events;
+  if (name == "bpf_log_globals_per_cpu")
+    return skel->maps.bpf_log_globals_per_cpu;
+  if (name == "tgid_info_table")
+    return skel->maps.tgid_info_table;
+  if (name == "dead_group_tasks")
+    return skel->maps.dead_group_tasks;
+  if (name == "udp_open_sockets")
+    return skel->maps.udp_open_sockets;
+  if (name == "dns_message_array")
+    return skel->maps.dns_message_array;
+  if (name == "_tcp_connections")
+    return skel->maps._tcp_connections;
+  if (name == "_tcp_control")
+    return skel->maps._tcp_control;
+  if (name == "data_channel")
+    return skel->maps.data_channel;
   return nullptr;
 }
 
@@ -239,11 +261,11 @@ int ProbeHandler::register_tail_call(
 std::string ProbeHandler::get_stack_trace(struct render_bpf_bpf *skel, s32 kernel_stack_id, s32 user_stack_id, u32 tgid)
 {
   std::string out;
-  
+
   // TODO: Implement stack trace functionality for libbpf
   // This requires additional implementation for stack trace handling
   out += "Stack trace functionality not yet implemented for libbpf\n";
-  
+
   stack_trace_count_++;
   return out;
 }
@@ -271,13 +293,13 @@ int ProbeHandler::start_probe_common(
 
   /* attach the probe */
   std::string probe_name = (is_kretprobe ? kretprobe_prefix_ : probe_prefix_) + k_func_name + event_id_suffix;
-  
+
   struct bpf_link *link;
   link = bpf_program__attach_kprobe(
       bpf_object__find_program_by_name(skel->obj, func_name.c_str()),
       is_kretprobe, /* retprobe */
       k_func_name.c_str());
-  
+
   if (!link) {
     LOG::debug_in(
         AgentLogKind::BPF,
@@ -337,8 +359,7 @@ std::string ProbeHandler::start_probe_common(
     throw std::runtime_error("ProbeHandler:start_probe_common() no alternatives provided");
   }
   for (const auto &func_and_kfunc : probe_alternatives.func_names) {
-    int ret =
-        start_probe_common(skel, is_kretprobe, func_and_kfunc.func_name, func_and_kfunc.k_func_name, event_id_suffix);
+    int ret = start_probe_common(skel, is_kretprobe, func_and_kfunc.func_name, func_and_kfunc.k_func_name, event_id_suffix);
     if (ret == 0) {
       LOG::debug_in(
           AgentLogKind::BPF,

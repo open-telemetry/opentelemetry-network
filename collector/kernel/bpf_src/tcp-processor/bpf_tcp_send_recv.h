@@ -106,6 +106,7 @@ static void tcp_recv_stream_handler(
 // --- tcp_sendmsg ----------------------------------------------------
 // Called when data is to be send to a TCP socket
 
+SEC("kprobe/tcp_sendmsg")
 int handle_kprobe__tcp_sendmsg(struct pt_regs *ctx, struct sock *sk, struct msghdr *msg, size_t size)
 {
   // Handle parameter differences between kernel versions
@@ -226,6 +227,7 @@ int handle_kprobe__tcp_sendmsg(struct pt_regs *ctx, struct sock *sk, struct msgh
   return 0;
 }
 
+SEC("kretprobe/tcp_sendmsg")
 int handle_kretprobe__tcp_sendmsg(struct pt_regs *ctx)
 {
   // This call recurses up to TCP_TAIL_CALL_MAX_DEPTH times,
@@ -327,18 +329,17 @@ struct handle_kprobe__tcp_recvmsg_args {
 
 static int handle_kprobe__tcp_recvmsg_wrapper(struct handle_kprobe__tcp_recvmsg_args *args);
 
-#define handle_kprobe__tcp_recvmsg(ctx, sk, msg, len, nonblock, flags, addr_len) \
-  ({ \
-    struct handle_kprobe__tcp_recvmsg_args __args = { \
-      .ctx = (ctx), \
-      .sk = (sk), \
-      .msg = (msg), \
-      .len = (len), \
-      .nonblock = (nonblock), \
-      .flags = (flags), \
-      .addr_len = (addr_len) \
-    }; \
-    handle_kprobe__tcp_recvmsg_wrapper(&__args); \
+#define handle_kprobe__tcp_recvmsg(ctx, sk, msg, len, nonblock, flags, addr_len)                                               \
+  ({                                                                                                                           \
+    struct handle_kprobe__tcp_recvmsg_args __args = {                                                                          \
+        .ctx = (ctx),                                                                                                          \
+        .sk = (sk),                                                                                                            \
+        .msg = (msg),                                                                                                          \
+        .len = (len),                                                                                                          \
+        .nonblock = (nonblock),                                                                                                \
+        .flags = (flags),                                                                                                      \
+        .addr_len = (addr_len)};                                                                                               \
+    handle_kprobe__tcp_recvmsg_wrapper(&__args);                                                                               \
   })
 
 static inline int handle_kprobe__tcp_recvmsg_impl(
@@ -461,6 +462,7 @@ static inline int handle_kprobe__tcp_recvmsg_impl(
   return 0;
 }
 
+SEC("kretprobe/tcp_recvmsg")
 int handle_kretprobe__tcp_recvmsg(struct pt_regs *ctx)
 {
   // This call recurses up to TCP_TAIL_CALL_MAX_DEPTH times,

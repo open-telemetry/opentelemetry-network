@@ -5,13 +5,12 @@
 
 // Global variables that can be set from userspace
 volatile const long boot_time_adjustment = 0;
-volatile const long filter_ns = 1000000000;  // Default 1 second in nanoseconds
-volatile const int enable_tcp_data_stream = 0;  // Set to 1 to enable TCP data stream processing
+volatile const long filter_ns = 1000000000;    // Default 1 second in nanoseconds
+volatile const int enable_tcp_data_stream = 0; // Set to 1 to enable TCP data stream processing
 
 #ifndef KBUILD_MODNAME
 #define KBUILD_MODNAME "ebpf_net"
 #endif
-
 
 /* include net/sock, ignore the enum-conversion warning */
 #pragma clang diagnostic push
@@ -20,10 +19,10 @@ volatile const int enable_tcp_data_stream = 0;  // Set to 1 to enable TCP data s
 #include <vmlinux.h>
 #pragma clang diagnostic pop
 
-#include <bpf/bpf_helpers.h>
-#include <bpf/bpf_endian.h>
-#include <bpf/bpf_tracing.h>
 #include <bpf/bpf_core_read.h>
+#include <bpf/bpf_endian.h>
+#include <bpf/bpf_helpers.h>
+#include <bpf/bpf_tracing.h>
 
 extern int LINUX_KERNEL_VERSION __kconfig;
 
@@ -31,37 +30,36 @@ extern int LINUX_KERNEL_VERSION __kconfig;
 #define tcp_sk(ptr) container_of(ptr, struct tcp_sock, inet_conn.icsk_inet.sk)
 #define inet_csk(ptr) container_of(ptr, struct inet_connection_sock, icsk_inet.sk)
 #define inet_sk(ptr) container_of(ptr, struct inet_sock, sk)
-#define sk_num			__sk_common.skc_num
-#define sk_dport		__sk_common.skc_dport
-#define sk_v6_daddr		__sk_common.skc_v6_daddr
-#define sk_v6_rcv_saddr	__sk_common.skc_v6_rcv_saddr
-#define sk_daddr		__sk_common.skc_daddr
-#define sk_rcv_saddr		__sk_common.skc_rcv_saddr
-#define sk_family		__sk_common.skc_family
-#define sk_state		__sk_common.skc_state
-#define AF_INET		2	/* Internet IP Protocol 	*/
-#define AF_INET6	10	/* IP version 6			*/
-#define s6_addr16		in6_u.u6_addr16
-#define s6_addr32		in6_u.u6_addr32
-#define inet_num		sk.__sk_common.skc_num
-#define fl4_sport		uli.ports.sport
-#define fl4_dport		uli.ports.dport
-#define fl6_sport		uli.ports.sport
-#define fl6_dport		uli.ports.dport
-#define rsk_listener			__req_common.skc_listener
+#define sk_num __sk_common.skc_num
+#define sk_dport __sk_common.skc_dport
+#define sk_v6_daddr __sk_common.skc_v6_daddr
+#define sk_v6_rcv_saddr __sk_common.skc_v6_rcv_saddr
+#define sk_daddr __sk_common.skc_daddr
+#define sk_rcv_saddr __sk_common.skc_rcv_saddr
+#define sk_family __sk_common.skc_family
+#define sk_state __sk_common.skc_state
+#define AF_INET 2   /* Internet IP Protocol 	*/
+#define AF_INET6 10 /* IP version 6			*/
+#define s6_addr16 in6_u.u6_addr16
+#define s6_addr32 in6_u.u6_addr32
+#define inet_num sk.__sk_common.skc_num
+#define fl4_sport uli.ports.sport
+#define fl4_dport uli.ports.dport
+#define fl6_sport uli.ports.sport
+#define fl6_dport uli.ports.dport
+#define rsk_listener __req_common.skc_listener
 
-#include "vmlinux_extensions.h"
 #include "vmlinux_compat.h"
-
+#include "vmlinux_extensions.h"
 
 // Configuration
 #include "config.h"
 #include "render_bpf.h"
 // Perf events - per-CPU perf ring buffer
 struct {
-    __uint(type, BPF_MAP_TYPE_PERF_EVENT_ARRAY);
-    __uint(key_size, sizeof(u32));
-    __uint(value_size, sizeof(u32));
+  __uint(type, BPF_MAP_TYPE_PERF_EVENT_ARRAY);
+  __uint(key_size, sizeof(u32));
+  __uint(value_size, sizeof(u32));
 } events SEC(".maps");
 #include "ebpf_net/agent_internal/bpf.h"
 
@@ -135,22 +133,23 @@ struct udp_open_socket_t {
 };
 
 struct {
-    __uint(type, BPF_MAP_TYPE_HASH);
-    __type(key, TGID);
-    __type(value, TGID);
-    __uint(max_entries, TABLE_SIZE__TGID_INFO);
+  __uint(type, BPF_MAP_TYPE_HASH);
+  __type(key, TGID);
+  __type(value, TGID);
+  __uint(max_entries, TABLE_SIZE__TGID_INFO);
 } tgid_info_table SEC(".maps");
 
 struct {
-    __uint(type, BPF_MAP_TYPE_HASH);
-    __type(key, struct task_struct *);
-    __type(value, struct task_struct *);
-    __uint(max_entries, TABLE_SIZE__DEAD_GROUP_TASKS);
+  __uint(type, BPF_MAP_TYPE_HASH);
+  __type(key, struct task_struct *);
+  __type(value, struct task_struct *);
+  __uint(max_entries, TABLE_SIZE__DEAD_GROUP_TASKS);
 } dead_group_tasks SEC(".maps");
 
 /* BPF_F_NO_PREALLOC was introduced in 6c9059817432, contained in
  * v4.6-rc1~91^2~108^2~6 */
-static void setup_seen_inodes_table() {
+static void setup_seen_inodes_table()
+{
   if (LINUX_KERNEL_VERSION < KERNEL_VERSION(4, 6, 0)) {
     // Use regular BPF_HASH for older kernels
   } else {
@@ -160,37 +159,37 @@ static void setup_seen_inodes_table() {
 
 // Hash table with no preallocation
 struct {
-    __uint(type, BPF_MAP_TYPE_HASH);
-    __type(key, u32);
-    __type(value, u32);
-    __uint(max_entries, TABLE_SIZE__SEEN_INODES);
-    __uint(map_flags, BPF_F_NO_PREALLOC);
+  __uint(type, BPF_MAP_TYPE_HASH);
+  __type(key, u32);
+  __type(value, u32);
+  __uint(max_entries, TABLE_SIZE__SEEN_INODES);
+  __uint(map_flags, BPF_F_NO_PREALLOC);
 } seen_inodes SEC(".maps");
 struct {
-    __uint(type, BPF_MAP_TYPE_HASH);
-    __type(key, struct nf_conn *);
-    __type(value, struct nf_conn *);
-    __uint(max_entries, TABLE_SIZE__SEEN_CONNTRACKS);
+  __uint(type, BPF_MAP_TYPE_HASH);
+  __type(key, struct nf_conn *);
+  __type(value, struct nf_conn *);
+  __uint(max_entries, TABLE_SIZE__SEEN_CONNTRACKS);
 } seen_conntracks SEC(".maps"); // Conntracks that we've reported to userspace
 struct {
-    __uint(type, BPF_MAP_TYPE_HASH);
-    __type(key, struct sock *);
-    __type(value, struct tcp_open_socket_t);
-    __uint(max_entries, TABLE_SIZE__TCP_OPEN_SOCKETS);
+  __uint(type, BPF_MAP_TYPE_HASH);
+  __type(key, struct sock *);
+  __type(value, struct tcp_open_socket_t);
+  __uint(max_entries, TABLE_SIZE__TCP_OPEN_SOCKETS);
 } tcp_open_sockets SEC(".maps"); /* information on live sks */
 
 struct {
-    __uint(type, BPF_MAP_TYPE_HASH);
-    __type(key, struct sock *);
-    __type(value, struct udp_open_socket_t);
-    __uint(max_entries, TABLE_SIZE__UDP_OPEN_SOCKETS);
+  __uint(type, BPF_MAP_TYPE_HASH);
+  __type(key, struct sock *);
+  __type(value, struct udp_open_socket_t);
+  __uint(max_entries, TABLE_SIZE__UDP_OPEN_SOCKETS);
 } udp_open_sockets SEC(".maps");
 
 struct {
-    __uint(type, BPF_MAP_TYPE_HASH);
-    __type(key, u64);
-    __type(value, struct sock *);
-    __uint(max_entries, TABLE_SIZE__UDP_GET_PORT_HASH);
+  __uint(type, BPF_MAP_TYPE_HASH);
+  __type(key, u64);
+  __type(value, struct sock *);
+  __uint(max_entries, TABLE_SIZE__UDP_GET_PORT_HASH);
 } udp_get_port_hash SEC(".maps");
 
 BEGIN_DECLARE_SAVED_ARGS(cgroup_exit)
@@ -202,7 +201,8 @@ END_DECLARE_SAVED_ARGS(cgroup_exit)
  * This is used by cgroup related probes to filter out cgroups that aren't in the memory hierarchy.
  * See SUBSYS macro in /linux_kernel/kernel/cgroup/cgroup.c.
  */
-static int get_flow_cgroup_subsys() {
+static int get_flow_cgroup_subsys()
+{
   if (LINUX_KERNEL_VERSION < KERNEL_VERSION(3, 14, 79)) {
     return bpf_core_enum_value(enum cgroup_subsys_id, mem_cgroup_subsys_id);
   } else {
@@ -214,7 +214,8 @@ static int get_flow_cgroup_subsys() {
 
 /* forward declarations */
 
-static __always_inline void perf_check_and_submit_dns(struct pt_regs *ctx, struct sock *sk, struct sk_buff *skb, u8 proto, u16 sport, u16 dport, int is_rx);
+static __always_inline void
+perf_check_and_submit_dns(struct pt_regs *ctx, struct sock *sk, struct sk_buff *skb, u8 proto, u16 sport, u16 dport, int is_rx);
 
 ////////////////////////////////////////////////////////////////////////////////////
 /* PROCESSES */
@@ -562,8 +563,8 @@ int onret_get_pid_task(struct pt_regs *ctx)
 static inline u32 tcp_get_delivered(struct sock *sk)
 {
   struct tcp_sock *tp = tcp_sk(sk);
-/* delivered accounting was introduced in ddf1af6fa00e77, i.e.,
- * v4.6-rc1~91^2~316^2~3 */
+  /* delivered accounting was introduced in ddf1af6fa00e77, i.e.,
+   * v4.6-rc1~91^2~316^2~3 */
   if (LINUX_KERNEL_VERSION < KERNEL_VERSION(4, 6, 0)) {
     u32 packets_out = 0;
     u32 sacked_out = 0;
@@ -777,7 +778,8 @@ static inline void submit_set_state_ipv4(struct pt_regs *ctx, u64 now, int tx_rx
   bpf_probe_read(&dport, sizeof(dport), &(skp->sk_dport));
   bpf_probe_read(&sport, sizeof(sport), &(skp->sk_num));
 
-  perf_submit_agent_internal__set_state_ipv4(ctx, now, sk->sk_daddr, sk->sk_rcv_saddr, bpf_ntohs(dport), sport, (__u64)sk, tx_rx);
+  perf_submit_agent_internal__set_state_ipv4(
+      ctx, now, sk->sk_daddr, sk->sk_rcv_saddr, bpf_ntohs(dport), sport, (__u64)sk, tx_rx);
 }
 
 static inline void submit_reset_tcp_counters(struct pt_regs *ctx, u64 now, u64 pid, struct sock *sk)
@@ -1604,19 +1606,18 @@ struct udp_update_stats_args {
 
 static void udp_update_stats_wrapper(struct udp_update_stats_args *args);
 
-#define udp_update_stats(ctx_, sk_, skb_, laddr_, lport_, raddr_, rport_, is_rx_) \
-  do { \
-    struct udp_update_stats_args __args = { \
-      .ctx = (ctx_), \
-      .sk = (sk_), \
-      .skb = (skb_), \
-      .laddr = (laddr_), \
-      .lport = (lport_), \
-      .raddr = (raddr_), \
-      .rport = (rport_), \
-      .is_rx = (is_rx_) \
-    }; \
-    udp_update_stats_wrapper(&__args); \
+#define udp_update_stats(ctx_, sk_, skb_, laddr_, lport_, raddr_, rport_, is_rx_)                                              \
+  do {                                                                                                                         \
+    struct udp_update_stats_args __args = {                                                                                    \
+        .ctx = (ctx_),                                                                                                         \
+        .sk = (sk_),                                                                                                           \
+        .skb = (skb_),                                                                                                         \
+        .laddr = (laddr_),                                                                                                     \
+        .lport = (lport_),                                                                                                     \
+        .raddr = (raddr_),                                                                                                     \
+        .rport = (rport_),                                                                                                     \
+        .is_rx = (is_rx_)};                                                                                                    \
+    udp_update_stats_wrapper(&__args);                                                                                         \
   } while (0)
 
 static inline void udp_update_stats_impl(
@@ -1713,10 +1714,10 @@ static void udp_update_stats_wrapper(struct udp_update_stats_args *args)
 
 /* Tail calls used by kprobes below, so we can have enough stack space */
 struct {
-	__uint(type, BPF_MAP_TYPE_PROG_ARRAY);
-	__uint(max_entries, NUM_TAIL_CALLS);
-	__uint(key_size, sizeof(__u32));
-	__uint(value_size, sizeof(__u32));
+  __uint(type, BPF_MAP_TYPE_PROG_ARRAY);
+  __uint(max_entries, NUM_TAIL_CALLS);
+  __uint(key_size, sizeof(__u32));
+  __uint(value_size, sizeof(__u32));
 } tail_calls SEC(".maps");
 
 int on_udp_send_skb__2(struct pt_regs *ctx, struct sk_buff *skb, struct flowi4 *fl4)
@@ -2060,9 +2061,7 @@ int on_tcp_retransmit_timer(struct pt_regs *ctx, struct sock *sk)
 // See kernel commit 42cb80a2353f4, (v4.1-rc1~128^2~175^2~6).
 // the function seems to have been around since 72659ecce6858
 // (v2.6.34-rc1~233^2~563).
-int on_tcp_syn_ack_timeout(
-    struct pt_regs *ctx,
-    const struct request_sock *req)
+int on_tcp_syn_ack_timeout(struct pt_regs *ctx, const struct request_sock *req)
 {
   // Handle parameter differences between kernel versions
   struct sock *sock = NULL;
@@ -2113,7 +2112,8 @@ int on_tcp_syn_ack_timeout(
 // use per-CPU arrays for copying data which allows processing larger packets.
 
 // Define maximum DNS packet length based on kernel version
-static int get_dns_max_packet_len() {
+static int get_dns_max_packet_len()
+{
   if (LINUX_KERNEL_VERSION < KERNEL_VERSION(4, 15, 0)) {
     return 380; // limited by the eBPF stack size
   } else {
@@ -2231,7 +2231,7 @@ perf_check_and_submit_dns(struct pt_regs *ctx, struct sock *sk, struct sk_buff *
   /* allocate buffer for event */
   char *buf;
   char stack_buf[380 + sizeof(struct bpf_agent_internal__dns_packet) + 16] = {};
-  
+
   if (LINUX_KERNEL_VERSION < KERNEL_VERSION(4, 15, 0)) {
     // use stack based buffer on older kernels
     buf = stack_buf;
@@ -2256,7 +2256,11 @@ perf_check_and_submit_dns(struct pt_regs *ctx, struct sock *sk, struct sk_buff *
   bpf_fill_agent_internal__dns_packet(msg, get_timestamp(), (u64)sk, blob, len, is_rx);
 
   bpf_perf_event_output(
-      ctx, &events, BPF_F_CURRENT_CPU, &msg->unpadded_size, ((DNS_MAX_PACKET_LEN + sizeof(struct jb_agent_internal__dns_packet) + 8 + 7) / 8) * 8 + 4);
+      ctx,
+      &events,
+      BPF_F_CURRENT_CPU,
+      &msg->unpadded_size,
+      ((DNS_MAX_PACKET_LEN + sizeof(struct jb_agent_internal__dns_packet) + 8 + 7) / 8) * 8 + 4);
 }
 
 // - Receive UDP packets ---------------------------------------
@@ -2277,7 +2281,7 @@ int on_skb_free_datagram_locked(struct pt_regs *ctx, struct sock *sk, struct sk_
     // Parameters are: struct sock *sk, struct sk_buff *skb
     // len parameter doesn't exist, so we ignore it
   }
-  
+
   // Call handle_receive_udp_skb
   bpf_tail_call(ctx, &tail_calls, TAIL_CALL_HANDLE_RECEIVE_UDP_SKB);
 
@@ -2327,7 +2331,8 @@ static const char *get_cgroup_name(struct cgroup *cg)
   }
 }
 
-static struct cgroup *get_cgroup_parent(struct cgroup *cgrp) {
+static struct cgroup *get_cgroup_parent(struct cgroup *cgrp)
+{
   if (bpf_core_field_exists(cgrp->self)) {
     // introduced in kernel 3.16
     return get_css_parent_cgroup(&cgrp->self);
@@ -2408,7 +2413,8 @@ int on_cgroup_populate_dir(struct pt_regs *ctx, struct cgroup *cgrp, unsigned lo
     return 0;
 
   u64 now = get_timestamp();
-  perf_submit_agent_internal__css_populate_dir(ctx, now, (__u64)cgrp, (__u64)get_cgroup_parent(cgrp), (void *)get_cgroup_name(cgrp));
+  perf_submit_agent_internal__css_populate_dir(
+      ctx, now, (__u64)cgrp, (__u64)get_cgroup_parent(cgrp), (void *)get_cgroup_name(cgrp));
   return 0;
 }
 
@@ -2423,7 +2429,7 @@ int on_cgroup_control(struct pt_regs *ctx, struct cgroup *cgrp)
   if (LINUX_KERNEL_VERSION < KERNEL_VERSION(4, 6, 0)) {
     return 0;
   }
-  
+
   GET_PID_TGID;
 
   BEGIN_SAVE_ARGS(cgroup_control)
@@ -2439,7 +2445,7 @@ int onret_cgroup_control(struct pt_regs *ctx)
   if (LINUX_KERNEL_VERSION < KERNEL_VERSION(4, 6, 0)) {
     return 0;
   }
-  
+
   GET_PID_TGID;
 
   GET_ARGS_MISSING_OK(cgroup_control, args)
@@ -2472,7 +2478,7 @@ int on_cgroup_clone_children_read_css(struct pt_regs *ctx, struct cgroup_subsys_
   if (LINUX_KERNEL_VERSION < KERNEL_VERSION(3, 12, 0)) {
     return 0; // Should use the cgroup version instead
   }
-  
+
   u32 subsys_mask = (u32)css->cgroup->root->subsys_mask;
   if (subsys_mask != 1 << FLOW_CGROUP_SUBSYS)
     return 0;
@@ -2572,7 +2578,7 @@ int on_nf_conntrack_alter_reply(struct pt_regs *ctx, struct nf_conn *ct, const s
 #endif
     return 0;
   }
-  
+
   // Note that the nf_conntrack_tuple has dir=1, so we flip
   // src and dst when reporting the connection to the agent
   // to preserve four-tuple order.

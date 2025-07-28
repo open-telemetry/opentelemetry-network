@@ -46,10 +46,10 @@ typedef u64 TIMESTAMP;
   ;                                                                                                                            \
                                                                                                                                \
   struct {                                                                                                                     \
-      __uint(type, BPF_MAP_TYPE_HASH);                                                                                         \
-      __type(key, u64);                                                                                                        \
-      __type(value, SAVED_ARGS_TYPE(FUNC));                                                                                   \
-      __uint(max_entries, 1024);                                                                                              \
+    __uint(type, BPF_MAP_TYPE_HASH);                                                                                           \
+    __type(key, u64);                                                                                                          \
+    __type(value, SAVED_ARGS_TYPE(FUNC));                                                                                      \
+    __uint(max_entries, 1024);                                                                                                 \
   } SAVED_ARGS_TABLE(FUNC) SEC(".maps");
 
 #define BEGIN_SAVE_ARGS(FUNC)                                                                                                  \
@@ -68,25 +68,26 @@ typedef u64 TIMESTAMP;
 #define END_SAVE_ARGS(FUNC)                                                                                                    \
   }                                                                                                                            \
   ;                                                                                                                            \
-  int __ret = bpf_map_update_elem(&SAVED_ARGS_TABLE(FUNC), &SAVED_ARGS_TABLE_KEY, &__saved_args, BPF_NOEXIST);                   \
-  if (__ret != 0 && __DEBUG_OTHER_MAP_ERRORS_PRINTK) {                                                                                                            \
-    /* Check if key already exists to distinguish duplicate vs table full */                                                  \
-    void *existing = bpf_map_lookup_elem(&SAVED_ARGS_TABLE(FUNC), &SAVED_ARGS_TABLE_KEY);                                     \
+  int __ret = bpf_map_update_elem(&SAVED_ARGS_TABLE(FUNC), &SAVED_ARGS_TABLE_KEY, &__saved_args, BPF_NOEXIST);                 \
+  if (__ret != 0 && __DEBUG_OTHER_MAP_ERRORS_PRINTK) {                                                                         \
+    /* Check if key already exists to distinguish duplicate vs table full */                                                   \
+    void *existing = bpf_map_lookup_elem(&SAVED_ARGS_TABLE(FUNC), &SAVED_ARGS_TABLE_KEY);                                      \
     if (existing) {                                                                                                            \
-      bpf_trace_printk(#FUNC ": duplicate arg insert. tgid=%u\n", _tgid);                 \
+      bpf_trace_printk(#FUNC ": duplicate arg insert. tgid=%u\n", _tgid);                                                      \
     } else {                                                                                                                   \
-      bpf_trace_printk(#FUNC ": args table is full, dropped insert. tgid=%u\n", _tgid);   \
+      bpf_trace_printk(#FUNC ": args table is full, dropped insert. tgid=%u\n", _tgid);                                        \
     }                                                                                                                          \
   }                                                                                                                            \
   }
 
 #define GET_ARGS(FUNC, NAME)                                                                                                   \
-  SAVED_ARGS_TYPE(FUNC) *NAME = bpf_map_lookup_elem(&SAVED_ARGS_TABLE(FUNC), &SAVED_ARGS_TABLE_KEY);                          \
+  SAVED_ARGS_TYPE(FUNC) *NAME = bpf_map_lookup_elem(&SAVED_ARGS_TABLE(FUNC), &SAVED_ARGS_TABLE_KEY);                           \
   if (NAME == NULL) {                                                                                                          \
     __DEBUG_OTHER_MAP_ERRORS_PRINTK || bpf_trace_printk(#FUNC ": args table missing key. tgid=%u\n", _tgid);                   \
   }
 
-#define GET_ARGS_MISSING_OK(FUNC, NAME) SAVED_ARGS_TYPE(FUNC) *NAME = bpf_map_lookup_elem(&SAVED_ARGS_TABLE(FUNC), &SAVED_ARGS_TABLE_KEY);
+#define GET_ARGS_MISSING_OK(FUNC, NAME)                                                                                        \
+  SAVED_ARGS_TYPE(FUNC) *NAME = bpf_map_lookup_elem(&SAVED_ARGS_TABLE(FUNC), &SAVED_ARGS_TABLE_KEY);
 
 #define DELETE_ARGS(FUNC) bpf_map_delete_elem(&SAVED_ARGS_TABLE(FUNC), &SAVED_ARGS_TABLE_KEY);
 
@@ -111,10 +112,10 @@ struct BPF_LOG_GLOBALS {
   u32 count;
 };
 struct {
-    __uint(type, BPF_MAP_TYPE_ARRAY);
-    __type(key, u32);
-    __type(value, struct BPF_LOG_GLOBALS);
-    __uint(max_entries, BPF_MAX_CPUS);
+  __uint(type, BPF_MAP_TYPE_ARRAY);
+  __type(key, u32);
+  __type(value, struct BPF_LOG_GLOBALS);
+  __uint(max_entries, BPF_MAX_CPUS);
 } bpf_log_globals_per_cpu SEC(".maps");
 
 struct bpf_log_args {
@@ -124,15 +125,10 @@ struct bpf_log_args {
   u64 arg2;
 };
 
-#define bpf_log(ctx, _code, _arg0, _arg1, _arg2) \
-  do { \
-    struct bpf_log_args __log_args = { \
-      .code = (_code), \
-      .arg0 = (_arg0), \
-      .arg1 = (_arg1), \
-      .arg2 = (_arg2) \
-    }; \
-    _bpf_log(__LINE__, ctx, &__log_args); \
+#define bpf_log(ctx, _code, _arg0, _arg1, _arg2)                                                                               \
+  do {                                                                                                                         \
+    struct bpf_log_args __log_args = {.code = (_code), .arg0 = (_arg0), .arg1 = (_arg1), .arg2 = (_arg2)};                     \
+    _bpf_log(__LINE__, ctx, &__log_args);                                                                                      \
   } while (0)
 
 static void _bpf_log(int filelineid, struct pt_regs *ctx, struct bpf_log_args *args)

@@ -15,7 +15,6 @@
 //   Set the TCP socket buffer size, #define TCP_SOCKET_BUFFER_SIZE, which
 //   must be a multiple of 8 bytes
 
-
 #include "bpf_debug.h"
 #include "bpf_types.h"
 
@@ -64,17 +63,17 @@ struct tcp_connection_t {
 };
 
 struct {
-    __uint(type, BPF_MAP_TYPE_HASH);
-    __type(key, struct sock *);
-    __type(value, struct tcp_connection_t);
-    __uint(max_entries, TCP_CONNECTION_HASH_SIZE);
+  __uint(type, BPF_MAP_TYPE_HASH);
+  __type(key, struct sock *);
+  __type(value, struct tcp_connection_t);
+  __uint(max_entries, TCP_CONNECTION_HASH_SIZE);
 } _tcp_connections SEC(".maps");
 
 struct {
-    __uint(type, BPF_MAP_TYPE_HASH);
-    __type(key, struct tcp_control_key_t);
-    __type(value, struct tcp_control_value_t);
-    __uint(max_entries, TCP_CONNECTION_HASH_SIZE);
+  __uint(type, BPF_MAP_TYPE_HASH);
+  __type(key, struct tcp_control_key_t);
+  __type(value, struct tcp_control_value_t);
+  __uint(max_entries, TCP_CONNECTION_HASH_SIZE);
 } _tcp_control SEC(".maps");
 
 //
@@ -231,6 +230,7 @@ static void write_to_tcp_stream(
 
 // --- tcp_init_sock ----------------------------------------------------
 // Where the start of TCP socket lifetimes is for IPv4 and IPv6
+SEC("kprobe/tcp_init_sock")
 int handle_kprobe__tcp_init_sock(struct pt_regs *ctx, struct sock *sk)
 {
   struct tcp_connection_t *pconn;
@@ -249,6 +249,7 @@ int handle_kprobe__tcp_init_sock(struct pt_regs *ctx, struct sock *sk)
 
 // --- security_sk_free ----------------------------------------------
 // This is where final socket destruction happens for all socket types
+SEC("kprobe/security_sk_free")
 int handle_kprobe__security_sk_free(struct pt_regs *ctx, struct sock *sk)
 {
   struct tcp_connection_t *pconn = lookup_tcp_connection(sk);

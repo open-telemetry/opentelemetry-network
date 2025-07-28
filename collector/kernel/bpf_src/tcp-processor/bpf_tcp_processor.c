@@ -11,10 +11,10 @@
 
 // Include this from render_bpf.c so we can use tail calls in tcp processor test code
 struct {
-	__uint(type, BPF_MAP_TYPE_PROG_ARRAY);
-	__uint(max_entries, NUM_TAIL_CALLS);
-	__uint(key_size, sizeof(__u32));
-	__uint(value_size, sizeof(__u32));
+  __uint(type, BPF_MAP_TYPE_PROG_ARRAY);
+  __uint(max_entries, NUM_TAIL_CALLS);
+  __uint(key_size, sizeof(__u32));
+  __uint(value_size, sizeof(__u32));
 } tail_calls SEC(".maps");
 
 #endif
@@ -56,30 +56,18 @@ struct tcp_handler_args {
 static void tcp_client_handler_wrapper(struct tcp_handler_args *args);
 static void tcp_server_handler_wrapper(struct tcp_handler_args *args);
 
-#define TCP_CLIENT_HANDLER(CTX, CONN, CTRL, ST, DATA, LEN) \
-  do { \
-    struct tcp_handler_args __args = { \
-      .ctx = (CTX), \
-      .pconn = (CONN), \
-      .pctrl = (CTRL), \
-      .streamtype = (ST), \
-      .data = (DATA), \
-      .data_len = (LEN) \
-    }; \
-    tcp_client_handler_wrapper(&__args); \
+#define TCP_CLIENT_HANDLER(CTX, CONN, CTRL, ST, DATA, LEN)                                                                     \
+  do {                                                                                                                         \
+    struct tcp_handler_args __args = {                                                                                         \
+        .ctx = (CTX), .pconn = (CONN), .pctrl = (CTRL), .streamtype = (ST), .data = (DATA), .data_len = (LEN)};                \
+    tcp_client_handler_wrapper(&__args);                                                                                       \
   } while (0)
 
-#define TCP_SERVER_HANDLER(CTX, CONN, CTRL, ST, DATA, LEN) \
-  do { \
-    struct tcp_handler_args __args = { \
-      .ctx = (CTX), \
-      .pconn = (CONN), \
-      .pctrl = (CTRL), \
-      .streamtype = (ST), \
-      .data = (DATA), \
-      .data_len = (LEN) \
-    }; \
-    tcp_server_handler_wrapper(&__args); \
+#define TCP_SERVER_HANDLER(CTX, CONN, CTRL, ST, DATA, LEN)                                                                     \
+  do {                                                                                                                         \
+    struct tcp_handler_args __args = {                                                                                         \
+        .ctx = (CTX), .pconn = (CONN), .pctrl = (CTRL), .streamtype = (ST), .data = (DATA), .data_len = (LEN)};                \
+    tcp_server_handler_wrapper(&__args);                                                                                       \
   } while (0)
 
 static inline void tcp_client_handler_impl(
@@ -208,7 +196,6 @@ static inline void tcp_server_handler_impl(
 #endif
 #pragma passthrough off
 }
-
 
 static void tcp_client_handler_wrapper(struct tcp_handler_args *args)
 {
