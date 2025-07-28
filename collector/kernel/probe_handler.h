@@ -203,7 +203,7 @@ private:
     int index_;
   };
   std::vector<int> fds_;
-  std::vector<int> probes_;
+  std::vector<struct bpf_link*> probes_;
   std::vector<TailCallTuple> tail_calls_;
   std::vector<std::string> probe_names_;
   size_t num_failed_probes_; // number of kprobes, kretprobes, and tail_calls that failed to attach

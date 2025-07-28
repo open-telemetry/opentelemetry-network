@@ -75,7 +75,7 @@ int ProbeHandler::setup_mmap(int cpu, int perf_fd, PerfContainer &perf, bool is_
   }
 
   /* set the file descriptor in the kernel */
-  int res = bpf_update_elem(perf_fd, static_cast<void *>(&cpu), static_cast<void *>(&mmap_fd), 0);
+  int res = bpf_map_update_elem(perf_fd, static_cast<void *>(&cpu), static_cast<void *>(&mmap_fd), 0);
   if (res < 0) {
     LOG::error("cannot set perf fd {} for cpu {} to point to ring fd {}", perf_fd, cpu, mmap_fd);
     return -4;
@@ -253,17 +253,10 @@ int ProbeHandler::start_probe_common(
   std::string probe_name = (is_kretprobe ? kretprobe_prefix_ : probe_prefix_) + k_func_name + event_id_suffix;
   
   struct bpf_link *link;
-  if (is_kretprobe) {
-    link = bpf_program__attach_kretprobe(
-        bpf_object__find_program_by_name(skel->obj, func_name.c_str()),
-        false, /* retprobe */
-        k_func_name.c_str());
-  } else {
-    link = bpf_program__attach_kprobe(
-        bpf_object__find_program_by_name(skel->obj, func_name.c_str()),
-        false, /* retprobe */
-        k_func_name.c_str());
-  }
+  link = bpf_program__attach_kprobe(
+      bpf_object__find_program_by_name(skel->obj, func_name.c_str()),
+      is_kretprobe, /* retprobe */
+      k_func_name.c_str());
   
   if (!link) {
     LOG::debug_in(
@@ -279,7 +272,7 @@ int ProbeHandler::start_probe_common(
 
   // Store the link pointer instead of the old BCC attachment handle
   fds_.push_back(prog_fd);
-  probes_.push_back(reinterpret_cast<int>(link)); // Store link as int for compatibility
+  probes_.push_back(link);
   probe_names_.push_back(probe_name);
   return 0;
 }
@@ -365,7 +358,6 @@ std::string ProbeHandler::start_kretprobe(
 void ProbeHandler::cleanup_probes()
 {
   while (!fds_.empty()) {
-    int fd = fds_.back();
     fds_.pop_back();
     auto probe = probes_.back();
     probes_.pop_back();
@@ -375,9 +367,8 @@ void ProbeHandler::cleanup_probes()
     LOG::debug_in(AgentLogKind::BPF, "cleanup probe for {}", probe_name);
 
     // Clean up the bpf_link
-    struct bpf_link *link = reinterpret_cast<struct bpf_link *>(probe);
-    if (link) {
-      bpf_link__destroy(link);
+    if (probe) {
+      bpf_link__destroy(probe);
     }
   }
 
@@ -406,7 +397,6 @@ void ProbeHandler::cleanup_probe_common(const std::string &probe_name)
   int i = 0;
   for (std::vector<std::string>::iterator it = probe_names_.begin(); it != probe_names_.end(); ++it) {
     if (!probe_names_[i].compare(probe_name)) {
-      int fd = fds_[i];
       auto probe = probes_[i];
       std::string probe_name = probe_names_[i];
 
@@ -417,9 +407,8 @@ void ProbeHandler::cleanup_probe_common(const std::string &probe_name)
       LOG::debug_in(AgentLogKind::BPF, "cleanup probe for {}", probe_name);
 
       // Clean up the bpf_link
-      struct bpf_link *link = reinterpret_cast<struct bpf_link *>(probe);
-      if (link) {
-        bpf_link__destroy(link);
+      if (probe) {
+        bpf_link__destroy(probe);
       }
       return;
     }

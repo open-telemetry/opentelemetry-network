@@ -7,10 +7,14 @@
 
 #include <linux/bpf.h>
 
-#include <bcc/BPF.h>
 #include <functional>
 #include <memory>
 #include <platform/types.h>
+
+// Include the generated skeleton
+extern "C" {
+#include "/home/user/out/generated/render_bpf.skel.h"
+}
 
 /* forward declarations */
 class ProbeHandler;

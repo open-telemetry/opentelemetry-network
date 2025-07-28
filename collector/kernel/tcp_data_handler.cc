@@ -3,6 +3,7 @@
 
 #include <platform/platform.h>
 
+#include <bpf/bpf.h>
 #include "spdlog/common.h"
 #include "spdlog/fmt/bin_to_hex.h"
 #include <collector/kernel/bpf_src/render_bpf.h>
@@ -26,19 +27,14 @@ bool TCPDataHandler::tcp_control_key_t_comparator::operator()(const tcp_control_
 
 TCPDataHandler::TCPDataHandler(
     uv_loop_t &loop,
-    ebpf::BPFModule &bpf_module,
+    struct render_bpf_bpf *skel,
     ::ebpf_net::ingest::Writer &writer,
     PerfContainer &container,
     logging::Logger &log)
-    : loop_(loop), bpf_module_(bpf_module), writer_(writer), container_(container), log_(log)
+    : loop_(loop), skel_(skel), writer_(writer), container_(container), log_(log)
 {
-  // Get tcp control hash table
-  ebpf::TableStorage::iterator it;
-  ebpf::Path path({bpf_module.id(), "_tcp_control"});
-  if (!bpf_module.table_storage().Find(path, it)) {
-    throw std::runtime_error("missing _tcp_control hash table");
-  }
-  tcp_control_desc_ = it->second.dup();
+  // Get tcp control hash table map file descriptor
+  tcp_control_map_fd_ = bpf_map__fd(skel_->maps._tcp_control);
 }
 
 TCPDataHandler::~TCPDataHandler() {}
@@ -78,7 +74,7 @@ void TCPDataHandler::upgrade_protocol_handler(
 void TCPDataHandler::enable_stream(const tcp_control_key_t &key, STREAM_TYPE stream_type, bool enable)
 {
   // Get the file descriptor for the tcp control map
-  int fd = (int)tcp_control_desc_.fd;
+  int fd = tcp_control_map_fd_;
 
   // Get the key pointer in a form that bpf can accept
   void *keyptr = const_cast<void *>(static_cast<const void *>(&key));
@@ -86,7 +82,7 @@ void TCPDataHandler::enable_stream(const tcp_control_key_t &key, STREAM_TYPE str
   // Get the previous value
   tcp_control_value_t value;
   int err;
-  if ((err = bpf_lookup_elem(fd, keyptr, &value)) < 0) {
+  if ((err = bpf_map_lookup_elem(fd, keyptr, &value)) < 0) {
     // It's okay for this to fail, it means that BPF deleted the tcp connection record
     // before this got called, which means we should do nothing in this case
     LOG::debug_in(
@@ -98,7 +94,7 @@ void TCPDataHandler::enable_stream(const tcp_control_key_t &key, STREAM_TYPE str
   value.streams[stream_type].enable = enable;
 
   // Update the value if it is still in the table
-  if ((err = bpf_update_elem(fd, keyptr, &value, BPF_EXIST)) < 0) {
+  if ((err = bpf_map_update_elem(fd, keyptr, &value, BPF_EXIST)) < 0) {
     // It's okay for this to fail, it means that BPF deleted the tcp connection record
     // before this got called, which means we should do nothing in this case
     LOG::debug_in(
@@ -118,7 +114,7 @@ void TCPDataHandler::enable_stream(const tcp_control_key_t &key, STREAM_TYPE str
 void TCPDataHandler::enable_stream(const tcp_control_key_t &key, bool enable)
 {
   // Get the file descriptor for the tcp control map
-  int fd = (int)tcp_control_desc_.fd;
+  int fd = tcp_control_map_fd_;
 
   // Get the key pointer in a form that bpf can accept
   void *keyptr = const_cast<void *>(static_cast<const void *>(&key));
@@ -126,7 +122,7 @@ void TCPDataHandler::enable_stream(const tcp_control_key_t &key, bool enable)
   // Get the previous value
   tcp_control_value_t value;
   int err;
-  if ((err = bpf_lookup_elem(fd, keyptr, &value)) < 0) {
+  if ((err = bpf_map_lookup_elem(fd, keyptr, &value)) < 0) {
     // It's okay for this to fail, it means that BPF deleted the tcp connection record
     // before this got called, which means we should do nothing in this case
     LOG::debug_in(
@@ -139,7 +135,7 @@ void TCPDataHandler::enable_stream(const tcp_control_key_t &key, bool enable)
   value.streams[ST_RECV].enable = enable;
 
   // Update the value if it is still in the table
-  if ((err = bpf_update_elem(fd, keyptr, &value, BPF_EXIST)) < 0) {
+  if ((err = bpf_map_update_elem(fd, keyptr, &value, BPF_EXIST)) < 0) {
     // It's okay for this to fail, it means that BPF deleted the tcp connection record
     // before this got called, which means we should do nothing in this case
     LOG::debug_in(
@@ -153,7 +149,7 @@ void TCPDataHandler::enable_stream(const tcp_control_key_t &key, bool enable)
 void TCPDataHandler::update_stream_start(const tcp_control_key_t &key, STREAM_TYPE stream_type, u64 start)
 {
   // Get the file descriptor for the tcp control map
-  int fd = (int)tcp_control_desc_.fd;
+  int fd = tcp_control_map_fd_;
 
   // Get the key pointer in a form that bpf can accept
   void *keyptr = const_cast<void *>(static_cast<const void *>(&key));
@@ -161,7 +157,7 @@ void TCPDataHandler::update_stream_start(const tcp_control_key_t &key, STREAM_TY
   // Get the previous value
   tcp_control_value_t value;
   int err;
-  if ((err = bpf_lookup_elem(fd, keyptr, &value)) < 0) {
+  if ((err = bpf_map_lookup_elem(fd, keyptr, &value)) < 0) {
     // It's okay for this to fail, it means that BPF deleted the tcp connection record
     // before this got called, which means we should do nothing in this case
     LOG::debug_in(
@@ -173,7 +169,7 @@ void TCPDataHandler::update_stream_start(const tcp_control_key_t &key, STREAM_TY
   value.streams[stream_type].start = start;
 
   // Update the value if it is still in the table
-  if ((err = bpf_update_elem(fd, keyptr, &value, BPF_EXIST)) < 0) {
+  if ((err = bpf_map_update_elem(fd, keyptr, &value, BPF_EXIST)) < 0) {
     // It's okay for this to fail, it means that BPF deleted the tcp connection record
     // before this got called, which means we should do nothing in this case
     LOG::debug_in(

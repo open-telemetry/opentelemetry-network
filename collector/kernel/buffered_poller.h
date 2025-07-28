@@ -16,6 +16,11 @@
 #include <channel/buffered_writer.h>
 #include <collector/kernel/bpf_src/render_bpf.h>
 #include <collector/kernel/cgroup_handler.h>
+
+// Include the generated skeleton
+extern "C" {
+#include "/home/user/out/generated/render_bpf.skel.h"
+}
 #include <collector/kernel/dns_requests.h>
 #include <collector/kernel/nat_handler.h>
 #include <collector/kernel/perf_poller.h>
@@ -64,7 +69,7 @@ public:
       FileDescriptor &bpf_dump_file,
       logging::Logger &log,
       ProbeHandler &probe_handler,
-      ebpf::BPFModule &bpf_module,
+      struct render_bpf_bpf *skel,
       u64 socket_stats_interval_sec,
       CgroupHandler::CgroupSettings const &cgroup_settings,
       ::ebpf_net::ingest::Encoder *encoder,
@@ -315,7 +320,7 @@ private:
   logging::Logger &log_;
   IBufferedWriter &buffered_writer_;
   ProbeHandler &probe_handler_;
-  ebpf::BPFModule &bpf_module_;
+  struct render_bpf_bpf *skel_;
   ::ebpf_net::ingest::Writer writer_;
   std::unique_ptr<TCPDataHandler> tcp_data_handler_;
   ::ebpf_net::kernel_collector::Index collector_index_;

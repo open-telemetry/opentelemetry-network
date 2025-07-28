@@ -16,7 +16,7 @@ static constexpr u32 periodic_cb_mask = 0x3f;
 
 SocketProber::SocketProber(
     ProbeHandler &probe_handler,
-    ebpf::BPFModule &bpf_module,
+    struct render_bpf_bpf *skel,
     std::function<void(void)> periodic_cb,
     std::function<void(std::string)> check_cb,
     logging::Logger &log)
@@ -24,43 +24,50 @@ SocketProber::SocketProber(
 {
   // END
   // NOTE: Covers all protocols
-  probe_handler.start_probe(bpf_module, "on_security_sk_free", "security_sk_free");
+  probe_handler.start_probe(skel, "on_security_sk_free", "security_sk_free");
 
   // inet END
-  probe_handler.start_probe(bpf_module, "on_inet_release", "inet_release");
-  probe_handler.start_kretprobe(bpf_module, "onret_inet_release", "inet_release");
+  probe_handler.start_probe(skel, "on_inet_release", "inet_release");
+  probe_handler.start_kretprobe(skel, "onret_inet_release", "inet_release");
 
   // CHANGE OF STATE
-  probe_handler.start_probe(bpf_module, "on_tcp_connect", "tcp_connect");
-  probe_handler.start_probe(bpf_module, "on_inet_csk_listen_start", "inet_csk_listen_start");
+  probe_handler.start_probe(skel, "on_tcp_connect", "tcp_connect");
+  probe_handler.start_probe(skel, "on_inet_csk_listen_start", "inet_csk_listen_start");
 
   // START
-  probe_handler.start_probe(bpf_module, "on_tcp_init_sock", "tcp_init_sock");
+  probe_handler.start_probe(skel, "on_tcp_init_sock", "tcp_init_sock");
   // NOTE: these probes also sends out state information
-  probe_handler.start_kretprobe(bpf_module, "onret_inet_csk_accept", "inet_csk_accept");
-  probe_handler.start_probe(bpf_module, "on_inet_csk_accept", "inet_csk_accept");
+  probe_handler.start_kretprobe(skel, "onret_inet_csk_accept", "inet_csk_accept");
+  probe_handler.start_probe(skel, "on_inet_csk_accept", "inet_csk_accept");
   // UDP START
-  probe_handler.start_kretprobe(bpf_module, "onret_udp_v46_get_port", "udp_v4_get_port");
-  probe_handler.start_kretprobe(bpf_module, "onret_udp_v46_get_port", "udp_v6_get_port");
-  probe_handler.start_probe(bpf_module, "on_udp_v46_get_port", "udp_v4_get_port");
-  probe_handler.start_probe(bpf_module, "on_udp_v46_get_port", "udp_v6_get_port");
+  probe_handler.start_kretprobe(skel, "onret_udp_v46_get_port", "udp_v4_get_port");
+  probe_handler.start_kretprobe(skel, "onret_udp_v46_get_port", "udp_v6_get_port");
+  probe_handler.start_probe(skel, "on_udp_v46_get_port", "udp_v4_get_port");
+  probe_handler.start_probe(skel, "on_udp_v46_get_port", "udp_v6_get_port");
 
   // EXISTING
-  probe_handler.start_probe(bpf_module, "on_tcp46_seq_show", "tcp4_seq_show");
-  probe_handler.start_probe(bpf_module, "on_tcp46_seq_show", "tcp6_seq_show");
-  probe_handler.start_probe(bpf_module, "on_udp46_seq_show", "udp4_seq_show");
-  probe_handler.start_probe(bpf_module, "on_udp46_seq_show", "udp6_seq_show");
+  probe_handler.start_probe(skel, "on_tcp46_seq_show", "tcp4_seq_show");
+  probe_handler.start_probe(skel, "on_tcp46_seq_show", "tcp6_seq_show");
+  probe_handler.start_probe(skel, "on_udp46_seq_show", "udp4_seq_show");
+  probe_handler.start_probe(skel, "on_udp46_seq_show", "udp6_seq_show");
 
   periodic_cb();
   check_cb("socket prober startup");
 
   /* First step: fill up the "seen_inodes" bpf hashmap: inode -> pid */
-  ebpf::BPFHashTable<u32, u32> seen_inodes = probe_handler.get_hash_table(bpf_module, "seen_inodes");
-  seen_inodes.clear_table_non_atomic();
+  struct bpf_map *seen_inodes_map = skel->maps.seen_inodes;
+  int map_fd = bpf_map__fd(seen_inodes_map);
+  
+  // Clear the map
+  u32 key, next_key;
+  while (bpf_map_get_next_key(map_fd, &key, &next_key) == 0) {
+    bpf_map_delete_elem(map_fd, &next_key);
+    key = next_key;
+  }
   periodic_cb();
   check_cb("clear inode table");
 
-  fill_inode_to_pid_map(seen_inodes, periodic_cb);
+  fill_inode_to_pid_map(map_fd, periodic_cb);
   check_cb("fill_inode_to_pid_map()");
 
   // now iterate over processes again but look through network namespaces
@@ -83,7 +90,7 @@ SocketProber::SocketProber(
   check_cb("socket prober cleanup (4)");
 }
 
-void SocketProber::fill_inode_to_pid_map(ebpf::BPFHashTable<u32, u32> &map, std::function<void(void)> periodic_cb)
+void SocketProber::fill_inode_to_pid_map(int map_fd, std::function<void(void)> periodic_cb)
 {
   // iterate over /proc/
   ProcReader proc_reader;
@@ -116,20 +123,20 @@ void SocketProber::fill_inode_to_pid_map(ebpf::BPFHashTable<u32, u32> &map, std:
     while (!fd_reader.next_fd()) {
       int ino = fd_reader.get_inode();
       if (ino > 0) {
+        u32 key = (u32)ino;
         u32 lookup_pid = 0;
-        ebpf::StatusTuple stat = map.get_value((u32)ino, lookup_pid);
-        if (stat.code() == 0) {
+        int lookup_result = bpf_map_lookup_elem(map_fd, &key, &lookup_pid);
+        if (lookup_result == 0) {
           LOG::trace_in(
               AgentLogKind::SOCKET, "Duplicate file descriptor for pid={}, ino={} (lookup_pid={})", pid, ino, lookup_pid);
           continue;
         }
-        stat = map.update_value((u32)ino, (u32)pid);
-        if (stat.code()) {
+        u32 value = (u32)pid;
+        int update_result = bpf_map_update_elem(map_fd, &key, &value, 0);
+        if (update_result != 0) {
           // log at most 10 times
           if (++n_update_failures < 10) {
-            // bcc creates an unnecessary string copy in its getter
-            // waiving the logging overhead check for `msg`
-            LOG::debug("Error updating hash_map: {} - {}", stat.code(), log_waive(stat.msg()));
+            LOG::debug("Error updating hash_map: {} - {}", update_result, strerror(errno));
           }
           continue;
         }

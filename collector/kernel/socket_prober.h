@@ -5,7 +5,6 @@
 
 #pragma once
 
-#include <bcc/BPF.h>
 #include <linux/bpf.h>
 
 #include <functional>
@@ -14,6 +13,11 @@
 #include <platform/types.h>
 
 #include <util/logger.h>
+
+// Include the generated skeleton
+extern "C" {
+#include "/home/user/out/generated/render_bpf.skel.h"
+}
 
 /* forward declarations */
 class ProbeHandler;
@@ -34,7 +38,7 @@ public:
    */
   SocketProber(
       ProbeHandler &probe_handler,
-      ebpf::BPFModule &bpf_module,
+      struct render_bpf_bpf *skel,
       std::function<void(void)> periodic_cb,
       std::function<void(std::string)> check_cb,
       logging::Logger &log);
@@ -46,7 +50,7 @@ private:
    * @param map: the inode->pid map to fill
    * @param periodic_cb: callback to call after doing some work.
    */
-  void fill_inode_to_pid_map(ebpf::BPFHashTable<u32, u32> &map, std::function<void(void)> periodic_cb);
+  void fill_inode_to_pid_map(int map_fd, std::function<void(void)> periodic_cb);
 
   /**
    * Iterates through proc, and triggers the corresponding seq_show functions

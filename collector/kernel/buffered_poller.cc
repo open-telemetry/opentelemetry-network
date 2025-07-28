@@ -44,7 +44,7 @@ BufferedPoller::BufferedPoller(
     FileDescriptor &bpf_dump_file,
     logging::Logger &log,
     ProbeHandler &probe_handler,
-    ebpf::BPFModule &bpf_module,
+    struct render_bpf_bpf *skel,
     u64 socket_stats_interval_sec,
     CgroupHandler::CgroupSettings const &cgroup_settings,
     ::ebpf_net::ingest::Encoder *encoder,
@@ -56,7 +56,7 @@ BufferedPoller::BufferedPoller(
       log_(log),
       buffered_writer_(writer),
       probe_handler_(probe_handler),
-      bpf_module_(bpf_module),
+      skel_(skel),
       writer_(buffered_writer_, monotonic, time_adjustment, encoder),
       collector_index_({writer_}),
       process_handler_(writer_, collector_index_, log_),
@@ -108,7 +108,7 @@ BufferedPoller::BufferedPoller(
   }
 
   // Create a tcp data handler for the tcp_data message
-  tcp_data_handler_ = std::make_unique<TCPDataHandler>(loop_, bpf_module, writer_, container, log_);
+  tcp_data_handler_ = std::make_unique<TCPDataHandler>(loop_, skel, writer_, container, log_);
 
   // Set perf container callback for events
   container.set_callback(loop, this, [](void *ctx) { ((BufferedPoller *)ctx)->handle_event(); });
@@ -1268,7 +1268,7 @@ void BufferedPoller::handle_bpf_log(message_metadata const &metadata, jb_agent_i
 void BufferedPoller::handle_stack_trace(message_metadata const &metadata, jb_agent_internal__stack_trace &msg)
 {
 #if DEBUG_ENABLE_STACKTRACE
-  std::string stacktrace = probe_handler_.get_stack_trace(bpf_module_, msg.kernel_stack_id, msg.user_stack_id, msg.tgid);
+  std::string stacktrace = probe_handler_.get_stack_trace(skel_, msg.kernel_stack_id, msg.user_stack_id, msg.tgid);
   LOG::debug_in(
       AgentLogKind::BPF,
       "stack_trace: timestamp={}, kernel_stack_id={}, "
