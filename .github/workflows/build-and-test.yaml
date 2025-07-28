@@ -314,8 +314,8 @@ jobs:
         $BENV_IMAGE \
         ./build.sh --debug --asan unit_tests test
 
-  run-kernel-header-tests:
-    name: run-kernel-header-tests
+  run-kernel-collector-load-tests:
+    name: run-kernel-collector-load-tests
     needs: [build-kernel-collector]
     runs-on: ubuntu-24.04
     strategy:
@@ -380,11 +380,11 @@ jobs:
         name: kernel-collector-container
         path: ./container-exports
 
-    - name: Run kernel header tests on ${{ matrix.description }}
+    - name: Run kernel collector load tests on ${{ matrix.description }}
       if: steps.changes.outputs.kernel == 'true' || steps.changes.outputs.github == 'true'
       uses: yonch/little-vm-helper@main
       with:
-        test-name: kernel-header-test-${{ matrix.kernel }}
+        test-name: kernel-collector-load-test-${{ matrix.kernel }}
         image: 'complexity-test'
         image-version: ${{ matrix.kernel }}
         host-mount: ./
@@ -402,113 +402,39 @@ jobs:
           # Load container images
           docker load < container-exports/kernel-collector.tar
           
-          # Setup environment
-          export RUNNING_KERNEL_VERSION="$(uname -r)"
-          export DEBIAN_FRONTEND="noninteractive"
-          mkdir -p /var/cache/ebpf_net
+          # Test: Verify kernel collector loads successfully with libbpf
+          echo "=== Kernel Collector Load Test with libbpf ==="
           
-          test_failures=0
-          
-          # Test 1: Fetch headers when none installed (3-fetch.sh equivalent)
-          echo "=== Test 1: Header fetch test ==="
-          # Clear any existing headers
-          sudo rm -rf /var/cache/ebpf_net/kernel-headers || true
-          sudo apt-get purge --auto-remove --purge -y --no-install-recommends \
-            --allow-unauthenticated --allow-downgrades --allow-remove-essential \
-            --allow-change-held-packages "linux-headers-${RUNNING_KERNEL_VERSION}" || true
-          
-          # Run kernel collector with header auto-fetch
+          # Run kernel collector and verify it starts successfully
           container_id=$(docker create \
-            --name "test-kernel-collector-fetch" \
+            --name "test-kernel-collector-libbpf" \
             --env EBPF_NET_INTAKE_PORT="8000" \
             --env EBPF_NET_INTAKE_HOST="127.0.0.1" \
-            --env EBPF_NET_KERNEL_HEADERS_AUTO_FETCH="true" \
             --env EBPF_NET_HOST_DIR="/hostfs" \
             --privileged --pid host --network host \
             --volume /sys/fs/cgroup:/hostfs/sys/fs/cgroup \
-            --volume /usr/src:/hostfs/usr/src \
-            --volume /lib/modules:/hostfs/lib/modules \
             --volume /etc:/hostfs/etc \
-            --volume /var/cache:/hostfs/cache \
             --volume /var/run/docker.sock:/var/run/docker.sock \
-            --entrypoint "/srv/test-entrypoint.sh" \
             localhost:5000/kernel-collector --log-console --debug)
           
-          echo "Running header fetch test..."
-          if ! timeout 60 docker start -i $container_id; then
-            echo "Header fetch test failed"
-            test_failures=$((test_failures + 1))
+          echo "Starting kernel collector and running for 20 seconds..."
+          docker start $container_id &
+          collector_pid=$!
+          
+          # Wait for 20 seconds
+          sleep 20
+          
+          # Check if container is still running
+          if docker ps --filter "id=$container_id" --filter "status=running" | grep -q $container_id; then
+            echo "✓ Kernel collector loaded successfully and ran for 20 seconds"
+            docker stop $container_id || true
+            docker rm $container_id || true
+            exit 0
           else
-            echo "Header fetch test passed"
-          fi
-          docker rm $container_id || true
-          
-          # Test 2: Use cached headers (4-cached.sh equivalent)
-          echo "=== Test 2: Cached headers test ==="
-          container_id=$(docker create \
-            --name "test-kernel-collector-cached" \
-            --env EBPF_NET_INTAKE_PORT="8000" \
-            --env EBPF_NET_INTAKE_HOST="127.0.0.1" \
-            --env EBPF_NET_KERNEL_HEADERS_AUTO_FETCH="true" \
-            --env EBPF_NET_HOST_DIR="/hostfs" \
-            --privileged --pid host --network host \
-            --volume /sys/fs/cgroup:/hostfs/sys/fs/cgroup \
-            --volume /usr/src:/hostfs/usr/src \
-            --volume /lib/modules:/hostfs/lib/modules \
-            --volume /etc:/hostfs/etc \
-            --volume /var/cache:/hostfs/cache \
-            --volume /var/run/docker.sock:/var/run/docker.sock \
-            --entrypoint "/srv/test-entrypoint.sh" \
-            localhost:5000/kernel-collector --log-console --debug)
-          
-          echo "Running cached headers test..."
-          if ! timeout 60 docker start -i $container_id; then
-            echo "Cached headers test failed"
-            test_failures=$((test_failures + 1))
-          else
-            echo "Cached headers test passed"
-          fi
-          docker rm $container_id || true
-          
-          # Test 3: Use pre-installed headers (5-pre-installed.sh equivalent)
-          echo "=== Test 3: Pre-installed headers test ==="
-          # Install kernel headers
-          sudo apt-get update -y
-          sudo apt-get install -y --no-install-recommends \
-            --allow-unauthenticated --allow-downgrades --allow-remove-essential \
-            --allow-change-held-packages "linux-headers-${RUNNING_KERNEL_VERSION}" || true
-          
-          container_id=$(docker create \
-            --name "test-kernel-collector-preinstalled" \
-            --env EBPF_NET_INTAKE_PORT="8000" \
-            --env EBPF_NET_INTAKE_HOST="127.0.0.1" \
-            --env EBPF_NET_KERNEL_HEADERS_AUTO_FETCH="true" \
-            --env EBPF_NET_HOST_DIR="/hostfs" \
-            --privileged --pid host --network host \
-            --volume /sys/fs/cgroup:/hostfs/sys/fs/cgroup \
-            --volume /usr/src:/hostfs/usr/src \
-            --volume /lib/modules:/hostfs/lib/modules \
-            --volume /etc:/hostfs/etc \
-            --volume /var/cache:/hostfs/cache \
-            --volume /var/run/docker.sock:/var/run/docker.sock \
-            --entrypoint "/srv/test-entrypoint.sh" \
-            localhost:5000/kernel-collector --log-console --debug)
-          
-          echo "Running pre-installed headers test..."
-          if ! timeout 60 docker start -i $container_id; then
-            echo "Pre-installed headers test failed"
-            test_failures=$((test_failures + 1))
-          else
-            echo "Pre-installed headers test passed"
-          fi
-          docker rm $container_id || true
-          
-          echo "Kernel header tests completed. Failures: $test_failures"
-          if [ $test_failures -gt 0 ]; then
-            echo "Some tests failed!"
+            echo "✗ Kernel collector failed to run properly"
+            docker logs $container_id || true
+            docker rm $container_id || true
             exit 1
-          else
-            echo "All tests passed!"
           fi
 
     - name: Stop qemu
