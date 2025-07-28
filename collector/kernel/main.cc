@@ -28,6 +28,7 @@
 
 #include <curlpp/cURLpp.hpp>
 
+#include <bpf/bpf.h>
 #include <dirent.h>
 #include <linux/bpf.h>
 #include <linux/limits.h> /* PATH_MAX*/
@@ -38,7 +39,6 @@
 #include <sys/utsname.h>
 #include <unistd.h>
 #include <uv.h>
-#include <bpf/bpf.h>
 
 #include <fstream>
 #include <regex>
