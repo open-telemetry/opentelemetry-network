@@ -316,7 +316,7 @@ jobs:
 
   run-kernel-collector-load-tests:
     name: run-kernel-collector-load-tests
-    needs: [build-kernel-collector]
+    needs: [build-reducer, build-kernel-collector]
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
@@ -373,6 +373,13 @@ jobs:
           github:
             - '.github/**'
 
+    - name: Download reducer container
+      if: steps.changes.outputs.kernel == 'true' || steps.changes.outputs.github == 'true'
+      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+      with:
+        name: reducer-container
+        path: ./container-exports
+
     - name: Download kernel-collector container
       if: steps.changes.outputs.kernel == 'true' || steps.changes.outputs.github == 'true'
       uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
@@ -400,7 +407,28 @@ jobs:
           cd /host
           
           # Load container images
+          docker load < container-exports/reducer.tar
           docker load < container-exports/kernel-collector.tar
+          
+          # Start reducer
+          reducer_id=$(docker run --detach --rm \
+            --network=host \
+            localhost:5000/reducer \
+            --port 8000 \
+            --prom 0.0.0.0:7000 \
+            --partitions-per-shard 1 \
+            --num-ingest-shards=1 \
+            --num-matching-shards=1 \
+            --num-aggregation-shards=1 \
+            --enable-aws-enrichment \
+            --enable-otlp-grpc-metrics \
+            --log-console \
+            --debug)
+          
+          echo "Reducer started with ID: $reducer_id"
+          
+          # Wait a moment for reducer to start
+          sleep 5
           
           # Test: Verify kernel collector loads successfully with libbpf
           echo "=== Kernel Collector Load Test with libbpf ==="
@@ -429,11 +457,15 @@ jobs:
             echo "✓ Kernel collector loaded successfully and ran for 20 seconds"
             docker stop $container_id || true
             docker rm $container_id || true
+            # Stop reducer
+            docker stop $reducer_id || true
             exit 0
           else
             echo "✗ Kernel collector failed to run properly"
             docker logs $container_id || true
             docker rm $container_id || true
+            # Stop reducer
+            docker stop $reducer_id || true
             exit 1
           fi
 
