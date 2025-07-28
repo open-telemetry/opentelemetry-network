@@ -14,12 +14,8 @@
 
 #include <util/logger.h>
 
-// Include the generated skeleton
-extern "C" {
-#include "/home/user/out/generated/render_bpf.skel.h"
-}
-
 /* forward declarations */
+struct render_bpf_bpf;
 class ProbeHandler;
 
 /**

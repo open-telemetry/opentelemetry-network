@@ -16,11 +16,6 @@
 #include <channel/buffered_writer.h>
 #include <collector/kernel/bpf_src/render_bpf.h>
 #include <collector/kernel/cgroup_handler.h>
-
-// Include the generated skeleton
-extern "C" {
-#include "/home/user/out/generated/render_bpf.skel.h"
-}
 #include <collector/kernel/dns_requests.h>
 #include <collector/kernel/nat_handler.h>
 #include <collector/kernel/perf_poller.h>
@@ -34,6 +29,9 @@ extern "C" {
 #include <generated/ebpf_net/kernel_collector/index.h>
 
 #include <memory>
+
+// Forward declaration for the skeleton
+struct render_bpf_bpf;
 
 class KernelCollectorRestarter;
 

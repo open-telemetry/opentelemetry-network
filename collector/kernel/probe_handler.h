@@ -12,14 +12,14 @@
 #include <bpf/bpf.h>
 
 #include <collector/kernel/perf_reader.h>
-
-// Include the generated skeleton
-struct render_bpf_bpf;
 #include <util/logger.h>
 
 #include <optional>
 #include <string>
 #include <vector>
+
+// Forward declaration for the skeleton
+struct render_bpf_bpf;
 
 /**
  * ProbeAlternatives encapsulates multiple alternatives to attempt when attaching a probe.  Alternatives may be needed due to

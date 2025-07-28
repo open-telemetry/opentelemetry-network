@@ -11,12 +11,6 @@
 #include <memory>
 
 #include <uv.h>
-
-// Include the generated skeleton
-extern "C" {
-#include "/home/user/out/generated/render_bpf.skel.h"
-}
-
 #include <generated/ebpf_net/ingest/writer.h>
 #include <platform/platform.h>
 #include <util/logger.h>
@@ -25,6 +19,9 @@ extern "C" {
 #include "collector/kernel/bpf_src/tcp-processor/tcp_processor.h"
 #include "collector/kernel/perf_reader.h"
 #include "protocols/protocol_handler_base.h"
+
+/* forward declarations */
+struct render_bpf_bpf;
 
 class TCPDataHandler {
 public:

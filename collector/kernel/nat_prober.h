@@ -11,10 +11,8 @@
 #include <memory>
 #include <platform/types.h>
 
-// Include the generated skeleton
-extern "C" {
-#include "/home/user/out/generated/render_bpf.skel.h"
-}
+// Forward declaration for the skeleton
+struct render_bpf_bpf;
 
 /* forward declarations */
 class ProbeHandler;
