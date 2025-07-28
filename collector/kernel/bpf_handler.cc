@@ -11,11 +11,6 @@
 #include <collector/kernel/socket_prober.h>
 #include <common/host_info.h>
 
-// Include the generated skeleton
-extern "C" {
-#include "/home/user/out/generated/render_bpf.skel.h"
-}
-
 BPFHandler::BPFHandler(
     uv_loop_t &loop,
     std::string full_program,
@@ -45,17 +40,15 @@ BPFHandler::BPFHandler(
   }
 
   // Configure global variables before loading
-  bpf_skel_->rodata->enable_tcp_data_stream = enable_userland_tcp ? 1 : 0;
+  probe_handler_.configure_bpf_skeleton(bpf_skel_, enable_userland_tcp);
   
   // Now load the skeleton and set up perf rings
   int res = probe_handler_.load_and_setup_bpf_skeleton(bpf_skel_, perf_);
   if (res != 0) {
-    render_bpf_bpf__destroy(bpf_skel_);
+    probe_handler_.destroy_bpf_skeleton(bpf_skel_);
     bpf_skel_ = nullptr;
     throw std::system_error(errno, std::generic_category(), "ProbeHandler couldn't load BPF skeleton");
   }
-  
-  LOG::info("TCP data stream processing {}", enable_userland_tcp ? "enabled" : "disabled");
   
   // Note: The full_program parameter is now unused since we use pre-compiled skeleton
   // The enable_tcp_data_stream global variable has been configured based on enable_userland_tcp
@@ -67,7 +60,7 @@ BPFHandler::~BPFHandler()
   probe_handler_.cleanup_tail_calls(bpf_skel_);
   buf_poller_.reset();
   if (bpf_skel_) {
-    render_bpf_bpf__destroy(bpf_skel_);
+    probe_handler_.destroy_bpf_skeleton(bpf_skel_);
     bpf_skel_ = nullptr;
   }
 }

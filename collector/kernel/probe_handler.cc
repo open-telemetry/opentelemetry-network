@@ -109,6 +109,26 @@ struct render_bpf_bpf *ProbeHandler::open_bpf_skeleton()
   return skel;
 }
 
+void ProbeHandler::configure_bpf_skeleton(struct render_bpf_bpf *skel, bool enable_tcp_data_stream)
+{
+  if (!skel) {
+    LOG::error("Cannot configure BPF skeleton: null skeleton");
+    return;
+  }
+  
+  // Configure global variables before loading
+  skel->rodata->enable_tcp_data_stream = enable_tcp_data_stream ? 1 : 0;
+  
+  LOG::info("TCP data stream processing {}", enable_tcp_data_stream ? "enabled" : "disabled");
+}
+
+void ProbeHandler::destroy_bpf_skeleton(struct render_bpf_bpf *skel)
+{
+  if (skel) {
+    render_bpf_bpf__destroy(skel);
+  }
+}
+
 int ProbeHandler::load_and_setup_bpf_skeleton(struct render_bpf_bpf *skel, PerfContainer &perf)
 {
   int res = render_bpf_bpf__load(skel);

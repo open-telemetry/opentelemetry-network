@@ -65,7 +65,9 @@ public:
   void clear_kernel_symbols();
 
   struct render_bpf_bpf *open_bpf_skeleton();
+  void configure_bpf_skeleton(struct render_bpf_bpf *skel, bool enable_tcp_data_stream);
   int load_and_setup_bpf_skeleton(struct render_bpf_bpf *skel, PerfContainer &perf);
+  void destroy_bpf_skeleton(struct render_bpf_bpf *skel);
 
   /**
    * BPF table helpers

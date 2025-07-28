@@ -108,7 +108,7 @@ BufferedPoller::BufferedPoller(
   }
 
   // Create a tcp data handler for the tcp_data message
-  tcp_data_handler_ = std::make_unique<TCPDataHandler>(loop_, skel, writer_, container, log_);
+  tcp_data_handler_ = std::make_unique<TCPDataHandler>(loop_, probe_handler_, skel, writer_, container, log_);
 
   // Set perf container callback for events
   container.set_callback(loop, this, [](void *ctx) { ((BufferedPoller *)ctx)->handle_event(); });

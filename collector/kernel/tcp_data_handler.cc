@@ -9,6 +9,7 @@
 #include <collector/kernel/bpf_src/render_bpf.h>
 #include <collector/kernel/perf_reader.h>
 #include <collector/kernel/tcp_data_handler.h>
+#include <collector/kernel/probe_handler.h>
 #include <iostream>
 #include <stdexcept>
 #include <util/ip_address.h>
@@ -27,14 +28,16 @@ bool TCPDataHandler::tcp_control_key_t_comparator::operator()(const tcp_control_
 
 TCPDataHandler::TCPDataHandler(
     uv_loop_t &loop,
+    ProbeHandler &probe_handler,
     struct render_bpf_bpf *skel,
     ::ebpf_net::ingest::Writer &writer,
     PerfContainer &container,
     logging::Logger &log)
-    : loop_(loop), skel_(skel), writer_(writer), container_(container), log_(log)
+    : loop_(loop), probe_handler_(probe_handler), skel_(skel), writer_(writer), container_(container), log_(log)
 {
   // Get tcp control hash table map file descriptor
-  tcp_control_map_fd_ = bpf_map__fd(skel_->maps._tcp_control);
+  struct bpf_map *tcp_control_map = probe_handler_.get_bpf_map(skel_, "_tcp_control");
+  tcp_control_map_fd_ = bpf_map__fd(tcp_control_map);
 }
 
 TCPDataHandler::~TCPDataHandler() {}

@@ -22,6 +22,7 @@
 
 /* forward declarations */
 struct render_bpf_bpf;
+class ProbeHandler;
 
 class TCPDataHandler {
 public:
@@ -30,6 +31,7 @@ public:
    */
   TCPDataHandler(
       uv_loop_t &loop,
+      ProbeHandler &probe_handler,
       struct render_bpf_bpf *skel,
       ::ebpf_net::ingest::Writer &writer,
       PerfContainer &container,
@@ -73,6 +75,7 @@ protected:
 
 protected:
   uv_loop_t &loop_;
+  ProbeHandler &probe_handler_;
   struct render_bpf_bpf *skel_;
   ::ebpf_net::ingest::Writer &writer_;
   PerfContainer &container_;
