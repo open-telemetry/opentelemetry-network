@@ -4,8 +4,9 @@
 # Find libbpf library and create target
 
 # Since the .pc file has wrong prefix, let's find libbpf manually
+# Prefer static library over shared library
 find_library(LIBBPF_LIBRARY
-  NAMES bpf
+  NAMES libbpf.a bpf
   PATHS 
     ${CMAKE_INSTALL_PREFIX}/usr/lib64
     ${CMAKE_INSTALL_PREFIX}/lib64
