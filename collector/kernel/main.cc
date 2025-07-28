@@ -29,6 +29,7 @@
 #include <curlpp/cURLpp.hpp>
 
 #include <dirent.h>
+#include <linux/bpf.h>
 #include <linux/limits.h> /* PATH_MAX*/
 #include <sys/mount.h>
 #include <sys/resource.h>
@@ -37,6 +38,7 @@
 #include <sys/utsname.h>
 #include <unistd.h>
 #include <uv.h>
+#include <bpf/bpf.h>
 
 #include <fstream>
 #include <regex>
@@ -88,13 +90,13 @@ static void refill_log_rate_limit_cb(uv_timer_t *timer)
  */
 void check_permissions()
 {
-  int fd = bcc_create_map(BPF_MAP_TYPE_ARRAY, "", 0, 0, 0, 0);
+  int fd = bpf_map_create(BPF_MAP_TYPE_ARRAY, NULL, 0, 0, 0, NULL);
 
   if (fd == -1) {
     switch (errno) {
     case EPERM:
     case EACCES: {
-      std::string failstr = fmt::format("Test bcc_create_map() operation failed with errno {}", errno);
+      std::string failstr = fmt::format("Test bpf_map_create() operation failed with errno {}", errno);
       throw std::system_error(errno, std::generic_category(), failstr);
       break;
     }
