@@ -50,6 +50,7 @@ include(uv)
 include(breakpad)
 include(abseil)
 include(yamlcpp)
+include(libbpf)
 include(render)
 
 include_directories(

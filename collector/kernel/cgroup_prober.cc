@@ -21,7 +21,7 @@
 
 CgroupProber::CgroupProber(
     ProbeHandler &probe_handler,
-    ebpf::BPFModule &bpf_module,
+    struct render_bpf_bpf *skel,
     HostInfo const &host_info,
     std::function<void(void)> periodic_cb,
     std::function<void(std::string)> check_cb)
@@ -37,7 +37,7 @@ CgroupProber::CgroupProber(
           // If the previous two fail try an alternative for kernel versions older than 3.12.
           {"on_cgroup_destroy_locked", "cgroup_destroy_locked"},
       }};
-  probe_handler.start_probe(bpf_module, kill_kss_probe_alternatives);
+  probe_handler.start_probe(skel, kill_kss_probe_alternatives);
   periodic_cb();
 
   // START
@@ -47,13 +47,13 @@ CgroupProber::CgroupProber(
           {"on_css_populate_dir", "css_populate_dir"},
           {"on_cgroup_populate_dir", "cgroup_populate_dir"},
       }};
-  probe_handler.start_probe(bpf_module, css_populate_dir_probe_alternatives);
+  probe_handler.start_probe(skel, css_populate_dir_probe_alternatives);
   periodic_cb();
 
   // check both cgroups v1 and v2 because it is possible for active cgroups to exist in both (hybrid mode)
 
   // EXISTING cgroups v1
-  probe_handler.start_probe(bpf_module, "on_cgroup_clone_children_read", "cgroup_clone_children_read");
+  probe_handler.start_probe(skel, "on_cgroup_clone_children_read", "cgroup_clone_children_read");
 
   periodic_cb();
   check_cb("cgroup prober startup");
@@ -73,8 +73,8 @@ CgroupProber::CgroupProber(
   // EXISTING cgroups v2
   static const std::string cgroup_v2_first_kernel_version("4.6");
   if (host_info_.kernel_version >= cgroup_v2_first_kernel_version) {
-    probe_handler.start_probe(bpf_module, "on_cgroup_control", "cgroup_control");
-    probe_handler.start_kretprobe(bpf_module, "onret_cgroup_control", "cgroup_control");
+    probe_handler.start_probe(skel, "on_cgroup_control", "cgroup_control");
+    probe_handler.start_kretprobe(skel, "onret_cgroup_control", "cgroup_control");
 
     // locate the cgroup v2 mount directory
     std::string cgroup_v2_mountpoint = find_cgroup_v2_mountpoint();

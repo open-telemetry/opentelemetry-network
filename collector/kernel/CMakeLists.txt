@@ -124,10 +124,11 @@ target_link_libraries(
     absl::flat_hash_map
     absl::flat_hash_set
     stdc++fs
+    libbpf::libbpf
 )
 target_compile_options(agentlib PRIVATE -fPIC)
 # some agentlib sources include ${BPF_DEBUG_INFO}
-add_dependencies(agentlib preprocess_bpf)
+add_dependencies(agentlib preprocess_bpf generate_bpf_skeleton)
 
 
 ################################################################################
@@ -293,6 +294,8 @@ add_custom_command(
   COMMENT "Generating BPF skeleton header"
   VERBATIM
 )
+
+set_source_files_properties("${BPF_SKEL_HEADER}" PROPERTIES GENERATED TRUE)
 
 # Target for libbpf skeleton generation
 add_custom_target(

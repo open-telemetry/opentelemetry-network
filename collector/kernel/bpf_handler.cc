@@ -11,6 +11,11 @@
 #include <collector/kernel/socket_prober.h>
 #include <common/host_info.h>
 
+// Include the generated skeleton
+extern "C" {
+#include "/home/user/out/generated/render_bpf.skel.h"
+}
+
 BPFHandler::BPFHandler(
     uv_loop_t &loop,
     std::string full_program,
@@ -22,7 +27,7 @@ BPFHandler::BPFHandler(
     HostInfo const &host_info)
     : loop_(loop),
       probe_handler_(log),
-      bpf_module_(0),
+      bpf_skel_(nullptr),
       perf_(),
       encoder_(encoder),
       buf_poller_(nullptr),
@@ -33,20 +38,38 @@ BPFHandler::BPFHandler(
       last_lost_count_(0),
       host_info_(host_info)
 {
-  if (enable_userland_tcp) {
-    full_program = "#define ENABLE_TCP_DATA_STREAM 1\n" + full_program;
+  // Open the BPF skeleton (doesn't load yet)
+  bpf_skel_ = probe_handler_.open_bpf_skeleton();
+  if (!bpf_skel_) {
+    throw std::system_error(errno, std::generic_category(), "ProbeHandler couldn't open BPF skeleton");
   }
-  int res = probe_handler_.start_bpf_module(full_program, bpf_module_, perf_);
+
+  // Configure global variables before loading
+  bpf_skel_->rodata->enable_tcp_data_stream = enable_userland_tcp ? 1 : 0;
+  
+  // Now load the skeleton and set up perf rings
+  int res = probe_handler_.load_and_setup_bpf_skeleton(bpf_skel_, perf_);
   if (res != 0) {
-    throw std::system_error(errno, std::generic_category(), "ProbeHandler couldn't load BPFModule");
+    render_bpf_bpf__destroy(bpf_skel_);
+    bpf_skel_ = nullptr;
+    throw std::system_error(errno, std::generic_category(), "ProbeHandler couldn't load BPF skeleton");
   }
+  
+  LOG::info("TCP data stream processing {}", enable_userland_tcp ? "enabled" : "disabled");
+  
+  // Note: The full_program parameter is now unused since we use pre-compiled skeleton
+  // The enable_tcp_data_stream global variable has been configured based on enable_userland_tcp
 }
 
 BPFHandler::~BPFHandler()
 {
   probe_handler_.cleanup_probes();
-  probe_handler_.cleanup_tail_calls(bpf_module_);
+  probe_handler_.cleanup_tail_calls(bpf_skel_);
   buf_poller_.reset();
+  if (bpf_skel_) {
+    render_bpf_bpf__destroy(bpf_skel_);
+    bpf_skel_ = nullptr;
+  }
 }
 
 void BPFHandler::load_buffered_poller(
@@ -67,7 +90,7 @@ void BPFHandler::load_buffered_poller(
       bpf_dump_file_,
       log_,
       probe_handler_,
-      bpf_module_,
+      bpf_skel_,
       socket_stats_interval_sec,
       cgroup_settings,
       encoder_,
@@ -81,7 +104,7 @@ void BPFHandler::load_probes(::ebpf_net::ingest::Writer &writer)
 
   CgroupProber cgroup_prober(
       probe_handler_,
-      bpf_module_,
+      bpf_skel_,
       host_info_,
       [this]() { buf_poller_->start(1, 1); },
       [this](std::string error_loc) { check_cb(error_loc); });
@@ -93,11 +116,11 @@ void BPFHandler::load_probes(::ebpf_net::ingest::Writer &writer)
   /* Start instrumentation for processes */
   ProcessProber process_prober(
       probe_handler_,
-      bpf_module_,
+      bpf_skel_,
       [this]() { buf_poller_->start(1, 1); },
       [this](std::string error_loc) { check_cb(error_loc); });
 
-  NatProber nat_prober(probe_handler_, bpf_module_, [this]() { buf_poller_->start(1, 1); });
+  NatProber nat_prober(probe_handler_, bpf_skel_, [this]() { buf_poller_->start(1, 1); });
 
   // one more poll to make sure the perf rings are clear
   buf_poller_->start(1, 1);
@@ -120,12 +143,12 @@ void BPFHandler::load_probes(::ebpf_net::ingest::Writer &writer)
           // v2.6.32-rc6~9^2~3
           {"on_skb_free_datagram_locked", "skb_free_datagram_locked"},
       }};
-  probe_handler_.start_probe(bpf_module_, dns_probe_alternatives);
+  probe_handler_.start_probe(bpf_skel_, dns_probe_alternatives);
 
   // Start instrumentation for sockets
   SocketProber socket_prober(
       probe_handler_,
-      bpf_module_,
+      bpf_skel_,
       [this]() { buf_poller_->start(1, 1); },
       [this](std::string error_loc) { check_cb(error_loc); },
       log_);
@@ -144,17 +167,17 @@ void BPFHandler::load_probes(::ebpf_net::ingest::Writer &writer)
           {"on_tcp_rtt_estimator", "tcp_update_pacing_rate"},
           {"on_tcp_rtt_estimator", "tcp_ack"},
       }};
-  probe_handler_.start_probe(bpf_module_, probe_alternatives);
+  probe_handler_.start_probe(bpf_skel_, probe_alternatives);
 
   // SYN timeouts
-  probe_handler_.start_probe(bpf_module_, "on_tcp_retransmit_timer", "tcp_retransmit_timer");
+  probe_handler_.start_probe(bpf_skel_, "on_tcp_retransmit_timer", "tcp_retransmit_timer");
 
   // SYN-ACK timeouts
-  probe_handler_.start_probe(bpf_module_, "on_tcp_syn_ack_timeout", "tcp_syn_ack_timeout");
+  probe_handler_.start_probe(bpf_skel_, "on_tcp_syn_ack_timeout", "tcp_syn_ack_timeout");
 
   // TCP resets
-  probe_handler_.start_probe(bpf_module_, "on_tcp_reset", "tcp_reset");
-  probe_handler_.start_probe(bpf_module_, "on_tcp_send_active_reset", "tcp_send_active_reset");
+  probe_handler_.start_probe(bpf_skel_, "on_tcp_reset", "tcp_reset");
+  probe_handler_.start_probe(bpf_skel_, "on_tcp_send_active_reset", "tcp_send_active_reset");
 
   buf_poller_->start(1, 1);
   check_cb("loading rtt probes");
@@ -164,21 +187,21 @@ void BPFHandler::load_probes(::ebpf_net::ingest::Writer &writer)
    *   to the point we start the instrumentation below? we read some socket
    *   recv state when opening the socket
    */
-  probe_handler_.start_probe(bpf_module_, "on_tcp_event_data_recv", "tcp_event_data_recv");
-  probe_handler_.start_probe(bpf_module_, "on_tcp_rcv_established", "tcp_rcv_established");
+  probe_handler_.start_probe(bpf_skel_, "on_tcp_event_data_recv", "tcp_event_data_recv");
+  probe_handler_.start_probe(bpf_skel_, "on_tcp_rcv_established", "tcp_rcv_established");
   buf_poller_->start(1, 1);
   check_cb("loading tcp steady-state probes");
 
   // set up tail calls table
-  probe_handler_.register_tail_call(bpf_module_, "tail_calls", TAIL_CALL_ON_UDP_SEND_SKB__2, "on_udp_send_skb__2");
-  probe_handler_.register_tail_call(bpf_module_, "tail_calls", TAIL_CALL_ON_UDP_V6_SEND_SKB__2, "on_udp_v6_send_skb__2");
-  probe_handler_.register_tail_call(bpf_module_, "tail_calls", TAIL_CALL_ON_IP_SEND_SKB__2, "on_ip_send_skb__2");
-  probe_handler_.register_tail_call(bpf_module_, "tail_calls", TAIL_CALL_ON_IP6_SEND_SKB__2, "on_ip6_send_skb__2");
-  probe_handler_.register_tail_call(bpf_module_, "tail_calls", TAIL_CALL_HANDLE_RECEIVE_UDP_SKB, "handle_receive_udp_skb");
+  probe_handler_.register_tail_call(bpf_skel_, "tail_calls", TAIL_CALL_ON_UDP_SEND_SKB__2, "on_udp_send_skb__2");
+  probe_handler_.register_tail_call(bpf_skel_, "tail_calls", TAIL_CALL_ON_UDP_V6_SEND_SKB__2, "on_udp_v6_send_skb__2");
+  probe_handler_.register_tail_call(bpf_skel_, "tail_calls", TAIL_CALL_ON_IP_SEND_SKB__2, "on_ip_send_skb__2");
+  probe_handler_.register_tail_call(bpf_skel_, "tail_calls", TAIL_CALL_ON_IP6_SEND_SKB__2, "on_ip6_send_skb__2");
+  probe_handler_.register_tail_call(bpf_skel_, "tail_calls", TAIL_CALL_HANDLE_RECEIVE_UDP_SKB, "handle_receive_udp_skb");
   probe_handler_.register_tail_call(
-      bpf_module_, "tail_calls", TAIL_CALL_HANDLE_RECEIVE_UDP_SKB__2, "handle_receive_udp_skb__2");
-  probe_handler_.register_tail_call(bpf_module_, "tail_calls", TAIL_CALL_CONTINUE_TCP_SENDMSG, "continue_tcp_sendmsg");
-  probe_handler_.register_tail_call(bpf_module_, "tail_calls", TAIL_CALL_CONTINUE_TCP_RECVMSG, "continue_tcp_recvmsg");
+      bpf_skel_, "tail_calls", TAIL_CALL_HANDLE_RECEIVE_UDP_SKB__2, "handle_receive_udp_skb__2");
+  probe_handler_.register_tail_call(bpf_skel_, "tail_calls", TAIL_CALL_CONTINUE_TCP_SENDMSG, "continue_tcp_sendmsg");
+  probe_handler_.register_tail_call(bpf_skel_, "tail_calls", TAIL_CALL_CONTINUE_TCP_RECVMSG, "continue_tcp_recvmsg");
 
   // udp v4 send statistics and dns requests
   ProbeAlternatives udp_v4_alternatives{
@@ -187,7 +210,7 @@ void BPFHandler::load_probes(::ebpf_net::ingest::Writer &writer)
           {"on_udp_send_skb", "udp_send_skb"},
           {"on_ip_send_skb", "ip_send_skb"},
       }};
-  probe_handler_.start_probe(bpf_module_, udp_v4_alternatives);
+  probe_handler_.start_probe(bpf_skel_, udp_v4_alternatives);
 
   // udp v6 send statistics and dns requests
   ProbeAlternatives udp_v6_alternatives{
@@ -196,7 +219,7 @@ void BPFHandler::load_probes(::ebpf_net::ingest::Writer &writer)
           {"on_udp_v6_send_skb", "udp_v6_send_skb"},
           {"on_ip6_send_skb", "ip6_send_skb"},
       }};
-  probe_handler_.start_probe(bpf_module_, udp_v6_alternatives);
+  probe_handler_.start_probe(bpf_skel_, udp_v6_alternatives);
 
   // start the udp probes
   buf_poller_->start(1, 1);
@@ -213,14 +236,14 @@ void BPFHandler::load_probes(::ebpf_net::ingest::Writer &writer)
 
     LOG::debug("Adding TCP processor probes");
 
-    probe_handler_.start_probe(bpf_module_, "handle_kprobe__tcp_init_sock", "tcp_init_sock", "_tcpproc");
-    probe_handler_.start_probe(bpf_module_, "handle_kprobe__security_sk_free", "security_sk_free", "_tcpproc");
-    probe_handler_.start_kretprobe(bpf_module_, "handle_kretprobe__inet_csk_accept", "inet_csk_accept", "_tcpproc");
-    probe_handler_.start_probe(bpf_module_, "handle_kprobe__inet_csk_accept", "inet_csk_accept", "_tcpproc");
-    probe_handler_.start_kretprobe(bpf_module_, "handle_kretprobe__tcp_sendmsg", "tcp_sendmsg", "_tcpproc");
-    probe_handler_.start_probe(bpf_module_, "handle_kprobe__tcp_sendmsg", "tcp_sendmsg", "_tcpproc");
-    probe_handler_.start_kretprobe(bpf_module_, "handle_kretprobe__tcp_recvmsg", "tcp_recvmsg", "_tcpproc");
-    probe_handler_.start_probe(bpf_module_, "handle_kprobe__tcp_recvmsg", "tcp_recvmsg", "_tcpproc");
+    probe_handler_.start_probe(bpf_skel_, "handle_kprobe__tcp_init_sock", "tcp_init_sock", "_tcpproc");
+    probe_handler_.start_probe(bpf_skel_, "handle_kprobe__security_sk_free", "security_sk_free", "_tcpproc");
+    probe_handler_.start_kretprobe(bpf_skel_, "handle_kretprobe__inet_csk_accept", "inet_csk_accept", "_tcpproc");
+    probe_handler_.start_probe(bpf_skel_, "handle_kprobe__inet_csk_accept", "inet_csk_accept", "_tcpproc");
+    probe_handler_.start_kretprobe(bpf_skel_, "handle_kretprobe__tcp_sendmsg", "tcp_sendmsg", "_tcpproc");
+    probe_handler_.start_probe(bpf_skel_, "handle_kprobe__tcp_sendmsg", "tcp_sendmsg", "_tcpproc");
+    probe_handler_.start_kretprobe(bpf_skel_, "handle_kretprobe__tcp_recvmsg", "tcp_recvmsg", "_tcpproc");
+    probe_handler_.start_probe(bpf_skel_, "handle_kprobe__tcp_recvmsg", "tcp_recvmsg", "_tcpproc");
 
     buf_poller_->start(1, 1);
     check_cb("tcp processor probes");

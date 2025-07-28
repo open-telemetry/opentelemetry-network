@@ -8,11 +8,13 @@
 #include "kernel_symbols.h"
 
 #include <linux/bpf.h>
-
-#include <bcc/BPFTable.h>
-#include <bcc/bpf_module.h>
+#include <bpf/libbpf.h>
+#include <bpf/bpf.h>
 
 #include <collector/kernel/perf_reader.h>
+
+// Include the generated skeleton
+struct render_bpf_bpf;
 #include <util/logger.h>
 
 #include <optional>
@@ -62,20 +64,20 @@ public:
    */
   void clear_kernel_symbols();
 
-  int start_bpf_module(std::string full_program, ebpf::BPFModule &bpf_module, PerfContainer &perf);
+  struct render_bpf_bpf *open_bpf_skeleton();
+  int load_and_setup_bpf_skeleton(struct render_bpf_bpf *skel, PerfContainer &perf);
 
   /**
    * BPF table helpers
    **/
-  ebpf::BPFHashTable<u32, u32> get_hash_table(ebpf::BPFModule &bpf_module, const std::string &name);
-  ebpf::BPFProgTable get_prog_table(ebpf::BPFModule &bpf_module, const std::string &name);
-  ebpf::BPFStackTable get_stack_table(ebpf::BPFModule &bpf_module, const std::string &name);
+  struct bpf_map *get_bpf_map(struct render_bpf_bpf *skel, const std::string &name);
+  int get_prog_fd(struct render_bpf_bpf *skel, const std::string &name);
 
   /**
    * Register tail call in table
    */
   int register_tail_call(
-      ebpf::BPFModule &bpf_module, const std::string &prog_array_name, int index, const std::string &func_name);
+      struct render_bpf_bpf *skel, const std::string &prog_array_name, int index, const std::string &func_name);
 
   /**
    * Starts a kprobe
@@ -83,7 +85,7 @@ public:
    * @returns 0 on success, negative value on failure
    */
   int start_probe(
-      ebpf::BPFModule &bpf_module,
+      struct render_bpf_bpf *skel,
       const std::string &func_name,
       const std::string &k_func_name,
       const std::string &event_id_suffix = std::string());
@@ -94,7 +96,7 @@ public:
    * @returns 0 on success, negative value on failure
    */
   int start_kretprobe(
-      ebpf::BPFModule &bpf_module,
+      struct render_bpf_bpf *skel,
       const std::string &func_name,
       const std::string &k_func_name,
       const std::string &event_id_suffix = std::string());
@@ -106,7 +108,7 @@ public:
    * @returns string containing the k_func_name of the probe that was attached on success, empty string on failure
    */
   std::string start_probe(
-      ebpf::BPFModule &bpf_module,
+      struct render_bpf_bpf *skel,
       const ProbeAlternatives &probe_alternatives,
       const std::string &event_id_suffix = std::string());
 
@@ -117,7 +119,7 @@ public:
    * @returns string containing the k_func_name of the probe that was attached on success, empty string on failure
    */
   std::string start_kretprobe(
-      ebpf::BPFModule &bpf_module,
+      struct render_bpf_bpf *skel,
       const ProbeAlternatives &probe_alternatives,
       const std::string &event_id_suffix = std::string());
 
@@ -129,7 +131,7 @@ public:
   /**
    * Clean up all the registered tail calls
    */
-  void cleanup_tail_calls(ebpf::BPFModule &bpf_module);
+  void cleanup_tail_calls(struct render_bpf_bpf *skel);
 
   /**
    * Cleans up a single probe
@@ -145,7 +147,7 @@ public:
   /**
    * Gets a stack trace and removes it from the list
    */
-  std::string get_stack_trace(ebpf::BPFModule &bpf_module, s32 kernel_stack_id, s32 user_stack_id, u32 tgid);
+  std::string get_stack_trace(struct render_bpf_bpf *skel, s32 kernel_stack_id, s32 user_stack_id, u32 tgid);
 #endif
 
 protected:
@@ -154,7 +156,7 @@ protected:
    * @returns 0 on success, negative value on failure
    */
   int start_probe_common(
-      ebpf::BPFModule &bpf_module,
+      struct render_bpf_bpf *skel,
       bool is_kretprobe,
       const std::string &func_name,
       const std::string &k_func_name,
@@ -165,7 +167,7 @@ protected:
    * @returns string containing the k_func_name of the probe that was attached on success, empty string on failure
    */
   std::string start_probe_common(
-      ebpf::BPFModule &bpf_module,
+      struct render_bpf_bpf *skel,
       bool is_kretprobe,
       const ProbeAlternatives &probe_alternatives,
       const std::string &event_id_suffix = std::string());
@@ -178,7 +180,7 @@ protected:
   /**
    * Returns the file descriptor for a table declared in bpf
    */
-  int get_bpf_table_descriptor(ebpf::BPFModule &bpf_module, const char *table_name);
+  int get_bpf_map_fd(struct render_bpf_bpf *skel, const char *map_name);
 
   /**
    * Sets up memory mapping for perf rings

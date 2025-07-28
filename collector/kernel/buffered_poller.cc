@@ -1258,11 +1258,9 @@ void BufferedPoller::handle_existing_conntrack_tuple(
 
 void BufferedPoller::handle_bpf_log(message_metadata const &metadata, jb_agent_internal__bpf_log &msg)
 {
-  // eventually, pass this to server using individual error messages
-  // and turn this into LOG::debug_in(AgentLogKind::BPF,...)
-  auto const filelineid = msg.filelineid;
-  auto const linenumber = g_bpf_debug_line_info[filelineid];
-  std::string_view const filename = g_bpf_debug_file_info[filelineid];
+  // TODO: since removing the pre-processor, we have no line number information
+  auto const linenumber = 0;
+  std::string_view const filename = "TODO";
 
   writer_.bpf_log(jb_blob{filename}, linenumber, msg.code, msg.arg0, msg.arg1, msg.arg2);
 }

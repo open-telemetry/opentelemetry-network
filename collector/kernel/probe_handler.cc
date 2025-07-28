@@ -7,14 +7,17 @@
 #include <linux/bpf.h>
 #include <util/log.h>
 
-#include <bcc/BPF.h>
-#include <bcc/libbpf.h>
-#include <bcc/perf_reader.h>
-#include <bcc/table_storage.h>
+#include <bpf/libbpf.h>
+#include <bpf/bpf.h>
 
 #include <collector/agent_log.h>
 #include <collector/kernel/bpf_src/render_bpf.h>
 #include <collector/kernel/probe_handler.h>
+
+// Include the generated skeleton
+extern "C" {
+#include "/home/user/out/generated/render_bpf.skel.h"
+}
 
 #include <memory>
 #include <vector>
@@ -24,11 +27,15 @@
 #define DATA_CHANNEL_PERF_RING_N_BYTES (256 * 4096)
 #define DATA_CHANNEL_PERF_RING_N_WATERMARK_BYTES (1)
 
-namespace ebpf {
-// This function is declared in BCC's common.h, which is private (doesn't get installed).
-// TODO: remove this when bcc/common.h is made public.
-std::vector<int> get_online_cpus();
-} // namespace ebpf
+// Helper function to get online CPUs
+std::vector<int> get_online_cpus() {
+  std::vector<int> cpus;
+  int num_cpus = libbpf_num_possible_cpus();
+  for (int i = 0; i < num_cpus; i++) {
+    cpus.push_back(i);
+  }
+  return cpus;
+}
 
 ProbeHandler::ProbeHandler(logging::Logger &log) : log_(log), num_failed_probes_(0), stack_trace_count_(0){};
 
@@ -77,166 +84,154 @@ int ProbeHandler::setup_mmap(int cpu, int perf_fd, PerfContainer &perf, bool is_
   return 0;
 }
 
-int ProbeHandler::get_bpf_table_descriptor(ebpf::BPFModule &bpf_module, const char *table_name)
+int ProbeHandler::get_bpf_map_fd(struct render_bpf_bpf *skel, const char *map_name)
 {
-  ebpf::TableStorage::iterator it;
-  ebpf::Path path({bpf_module.id(), table_name});
-  int res = bpf_module.table_storage().Find(path, it);
-  if (res == 0) {
-    LOG::error("Cannot get '{}' table", table_name);
+  struct bpf_map *map = get_bpf_map(skel, map_name);
+  if (!map) {
+    LOG::error("Cannot get '{}' map", map_name);
     return -2;
   }
-  int events_fd = it->second.fd;
-  if (events_fd < 0) { /* sanity check */
-    LOG::error("'{}' table's fd<0: fd={}", table_name, events_fd);
+  int map_fd = bpf_map__fd(map);
+  if (map_fd < 0) {
+    LOG::error("'{}' map's fd<0: fd={}", map_name, map_fd);
     return -3;
   }
-
-  return events_fd;
+  return map_fd;
 }
 
-int ProbeHandler::start_bpf_module(std::string full_program, ebpf::BPFModule &bpf_module, PerfContainer &perf)
+struct render_bpf_bpf *ProbeHandler::open_bpf_skeleton()
 {
-  int res = bpf_module.load_string(full_program, nullptr, 0);
-  if (res != 0) {
-    LOG::error("Cannot initialize BPF program, res={}", res);
-    return -1;
+  struct render_bpf_bpf *skel = render_bpf_bpf__open();
+  if (!skel) {
+    LOG::error("Cannot open BPF skeleton");
+    return nullptr;
   }
-  LOG::info("eBPF program successfully compiled");
+  return skel;
+}
 
-  /* get events table descriptor */
-  int events_fd = get_bpf_table_descriptor(bpf_module, "events");
+int ProbeHandler::load_and_setup_bpf_skeleton(struct render_bpf_bpf *skel, PerfContainer &perf)
+{
+  int res = render_bpf_bpf__load(skel);
+  if (res != 0) {
+    LOG::error("Cannot load BPF skeleton, res={}", res);
+    return res;
+  }
+  LOG::info("eBPF program successfully loaded");
+
+  /* get events map descriptor */
+  int events_fd = get_bpf_map_fd(skel, "events");
   if (events_fd < 0) {
     return events_fd;
   }
 
-  /* get data_channel table descriptor */
-  int data_channel_fd = get_bpf_table_descriptor(bpf_module, "data_channel");
+  /* get data_channel map descriptor */
+  int data_channel_fd = get_bpf_map_fd(skel, "data_channel");
   if (data_channel_fd < 0) {
     return data_channel_fd;
   }
 
   /* get online cpus */
-  auto online_cpus = ebpf::get_online_cpus();
+  auto online_cpus = get_online_cpus();
 
   /* open mmaps */
   for (auto cpu : online_cpus) {
     res = setup_mmap(cpu, events_fd, perf, false, EVENTS_PERF_RING_N_BYTES, EVENTS_PERF_RING_N_WATERMARK_BYTES);
-    if (res < 0)
+    if (res < 0) {
       return res;
+    }
     res =
         setup_mmap(cpu, data_channel_fd, perf, true, DATA_CHANNEL_PERF_RING_N_BYTES, DATA_CHANNEL_PERF_RING_N_WATERMARK_BYTES);
-    if (res < 0)
+    if (res < 0) {
       return res;
+    }
   }
 
   return 0;
 }
 
-// template <class KeyType, class ValueType>
-ebpf::BPFHashTable<u32, u32> ProbeHandler::get_hash_table(ebpf::BPFModule &bpf_module, const std::string &name)
+struct bpf_map *ProbeHandler::get_bpf_map(struct render_bpf_bpf *skel, const std::string &name)
 {
-  ebpf::TableStorage::iterator it;
-  ebpf::Path path({bpf_module.id(), name});
-  if (bpf_module.table_storage().Find(path, it)) {
-    return ebpf::BPFHashTable<u32, u32>(it->second);
-  }
-  throw std::runtime_error("ProbeHandler: hash table not found");
+  if (name == "cgroup_exit_active") return skel->maps.cgroup_exit_active;
+  if (name == "tcp_open_sockets") return skel->maps.tcp_open_sockets;
+  if (name == "on_inet_csk_accept_active") return skel->maps.on_inet_csk_accept_active;
+  if (name == "seen_inodes") return skel->maps.seen_inodes;
+  if (name == "udp_get_port_hash") return skel->maps.udp_get_port_hash;
+  if (name == "inet_release_active") return skel->maps.inet_release_active;
+  if (name == "tail_calls") return skel->maps.tail_calls;
+  if (name == "cgroup_control_active") return skel->maps.cgroup_control_active;
+  if (name == "seen_conntracks") return skel->maps.seen_conntracks;
+  if (name == "inet_csk_accept_active") return skel->maps.inet_csk_accept_active;
+  if (name == "tcp_sendmsg_active") return skel->maps.tcp_sendmsg_active;
+  if (name == "tcp_recvmsg_active") return skel->maps.tcp_recvmsg_active;
+  if (name == "events") return skel->maps.events;
+  if (name == "bpf_log_globals_per_cpu") return skel->maps.bpf_log_globals_per_cpu;
+  if (name == "tgid_info_table") return skel->maps.tgid_info_table;
+  if (name == "dead_group_tasks") return skel->maps.dead_group_tasks;
+  if (name == "udp_open_sockets") return skel->maps.udp_open_sockets;
+  if (name == "dns_message_array") return skel->maps.dns_message_array;
+  if (name == "_tcp_connections") return skel->maps._tcp_connections;
+  if (name == "_tcp_control") return skel->maps._tcp_control;
+  if (name == "data_channel") return skel->maps.data_channel;
+  return nullptr;
 }
 
-ebpf::BPFProgTable ProbeHandler::get_prog_table(ebpf::BPFModule &bpf_module, const std::string &name)
+int ProbeHandler::get_prog_fd(struct render_bpf_bpf *skel, const std::string &name)
 {
-  ebpf::TableStorage::iterator it;
-  ebpf::Path path({bpf_module.id(), name});
-  if (bpf_module.table_storage().Find(path, it)) {
-    return ebpf::BPFProgTable(it->second);
+  // TCP processor programs need to be looked up by function name
+  struct bpf_program *prog = bpf_object__find_program_by_name(skel->obj, name.c_str());
+  if (!prog) {
+    return -1;
   }
-  throw std::runtime_error("ProbeHandler: prog table not found");
-}
-
-ebpf::BPFStackTable ProbeHandler::get_stack_table(ebpf::BPFModule &bpf_module, const std::string &name)
-{
-  ebpf::TableStorage::iterator it;
-  ebpf::Path path({bpf_module.id(), name});
-  if (bpf_module.table_storage().Find(path, it)) {
-    return ebpf::BPFStackTable(it->second, true, true);
-  }
-  throw std::runtime_error("ProbeHandler: stack table not found");
+  return bpf_program__fd(prog);
 }
 
 int ProbeHandler::register_tail_call(
-    ebpf::BPFModule &bpf_module, const std::string &prog_array_name, int index, const std::string &func_name)
+    struct render_bpf_bpf *skel, const std::string &prog_array_name, int index, const std::string &func_name)
 {
-  ebpf::BPFProgTable prog_array = get_prog_table(bpf_module, prog_array_name);
-
-  uint8_t *func_start = bpf_module.function_start(func_name);
-  if (func_start == nullptr) {
-    log_.error("Failed to register tail call for {}, could not get function start", func_name);
+  struct bpf_map *prog_array = get_bpf_map(skel, prog_array_name);
+  if (!prog_array) {
+    log_.error("Failed to find prog array map {}", prog_array_name);
     ++num_failed_probes_;
     return -1;
   }
-  size_t func_size = bpf_module.function_size(func_name);
-  int prog_fd = bcc_prog_load(
-      BPF_PROG_TYPE_KPROBE,
-      nullptr,
-      reinterpret_cast<struct bpf_insn *>(func_start),
-      func_size,
-      bpf_module.license(),
-      bpf_module.kern_version(),
-      0,
-      nullptr,
-      0);
+
+  int prog_fd = get_prog_fd(skel, func_name);
   if (prog_fd < 0) {
-    log_.error("Failed to register tail call for {}, could not load program, errno {}", func_name, errno);
+    log_.error("Failed to register tail call for {}, could not get program fd", func_name);
     ++num_failed_probes_;
     return -2;
   }
 
+  int map_fd = bpf_map__fd(prog_array);
+  int ret = bpf_map_update_elem(map_fd, &index, &prog_fd, 0);
+  if (ret < 0) {
+    log_.error("Failed to update prog array for tail call {}, errno {}", func_name, errno);
+    ++num_failed_probes_;
+    return -3;
+  }
+
   tail_calls_.emplace_back(prog_array_name, func_name, prog_fd, index);
-  return prog_array.update_value(index, prog_fd).code();
+  return 0;
 }
 
 #if DEBUG_ENABLE_STACKTRACE
 
-std::string ProbeHandler::get_stack_trace(ebpf::BPFModule &bpf_module, s32 kernel_stack_id, s32 user_stack_id, u32 tgid)
+std::string ProbeHandler::get_stack_trace(struct render_bpf_bpf *skel, s32 kernel_stack_id, s32 user_stack_id, u32 tgid)
 {
   std::string out;
-  ebpf::BPFStackTable stack_traces = get_stack_table(bpf_module, "stack_traces");
-
-  out += "Kernel Stack:\n";
-  if (kernel_stack_id >= 0) {
-    auto syms = stack_traces.get_stack_symbol(kernel_stack_id, -1);
-    for (auto sym : syms)
-      out += "  " + sym + "\n";
-  } else if (kernel_stack_id == -EFAULT) {
-    out += "  [UNAVAILABLE]";
-  } else {
-    out += "  [LOST]";
-  }
-  out += "User Stack:\n";
-  if (user_stack_id >= 0) {
-    auto syms = stack_traces.get_stack_symbol(user_stack_id, tgid);
-    for (auto sym : syms)
-      out += "  " + sym + "\n";
-  } else if (user_stack_id == -EFAULT) {
-    out += "  [UNAVAILABLE]";
-  } else {
-    out += "  [LOST]";
-  }
-
+  
+  // TODO: Implement stack trace functionality for libbpf
+  // This requires additional implementation for stack trace handling
+  out += "Stack trace functionality not yet implemented for libbpf\n";
+  
   stack_trace_count_++;
-  if (stack_trace_count_ >= WATERMARK_STACK_TRACES) {
-    stack_traces.clear_table_non_atomic();
-    stack_trace_count_ = 0;
-  }
-
   return out;
 }
 
 #endif
 
 int ProbeHandler::start_probe_common(
-    ebpf::BPFModule &bpf_module,
+    struct render_bpf_bpf *skel,
     bool is_kretprobe,
     const std::string &func_name,
     const std::string &k_func_name,
@@ -248,35 +243,29 @@ int ProbeHandler::start_probe_common(
     return -4;
   }
 
-  uint8_t *func_start = bpf_module.function_start(func_name);
-  if (func_start == nullptr) {
-    LOG::debug_in(AgentLogKind::BPF, "Could not get function start. func_name:{} k_func_name:{}", func_name, k_func_name);
-    return -1;
-  }
-  size_t func_size = bpf_module.function_size(func_name);
-  int prog_fd = bcc_prog_load(
-      BPF_PROG_TYPE_KPROBE,
-      nullptr,
-      reinterpret_cast<struct bpf_insn *>(func_start),
-      func_size,
-      bpf_module.license(),
-      bpf_module.kern_version(),
-      0,
-      nullptr,
-      0);
+  int prog_fd = get_prog_fd(skel, func_name);
   if (prog_fd < 0) {
-    LOG::debug_in(
-        AgentLogKind::BPF, "Failed to load prog. func_name:{} k_func_name:{} error:{}", func_name, k_func_name, prog_fd);
-    return -2;
+    LOG::debug_in(AgentLogKind::BPF, "Could not get program fd. func_name:{} k_func_name:{}", func_name, k_func_name);
+    return -1;
   }
 
   /* attach the probe */
   std::string probe_name = (is_kretprobe ? kretprobe_prefix_ : probe_prefix_) + k_func_name + event_id_suffix;
-  int attach_res = bpf_attach_kprobe(
-      prog_fd, (is_kretprobe ? BPF_PROBE_RETURN : BPF_PROBE_ENTRY), probe_name.c_str(), k_func_name.c_str(), 0, 0);
-  if (attach_res == -1) {
-    // we expect this to be triggered depending on kernel version
-    close(prog_fd);
+  
+  struct bpf_link *link;
+  if (is_kretprobe) {
+    link = bpf_program__attach_kretprobe(
+        bpf_object__find_program_by_name(skel->obj, func_name.c_str()),
+        false, /* retprobe */
+        k_func_name.c_str());
+  } else {
+    link = bpf_program__attach_kprobe(
+        bpf_object__find_program_by_name(skel->obj, func_name.c_str()),
+        false, /* retprobe */
+        k_func_name.c_str());
+  }
+  
+  if (!link) {
     LOG::debug_in(
         AgentLogKind::BPF,
         "Unable to attach {}. probe_name:{} func_name:{} k_func_name:{} errno:{}",
@@ -288,19 +277,20 @@ int ProbeHandler::start_probe_common(
     return -3;
   }
 
+  // Store the link pointer instead of the old BCC attachment handle
   fds_.push_back(prog_fd);
-  probes_.push_back(attach_res);
+  probes_.push_back(reinterpret_cast<int>(link)); // Store link as int for compatibility
   probe_names_.push_back(probe_name);
   return 0;
 }
 
 int ProbeHandler::start_probe(
-    ebpf::BPFModule &bpf_module,
+    struct render_bpf_bpf *skel,
     const std::string &func_name,
     const std::string &k_func_name,
     const std::string &event_id_suffix)
 {
-  auto ret = start_probe_common(bpf_module, false, func_name, k_func_name, event_id_suffix);
+  auto ret = start_probe_common(skel, false, func_name, k_func_name, event_id_suffix);
   if (ret != 0) {
     log_.error("Failed to attach {} kprobe, error {}", k_func_name, ret);
     ++num_failed_probes_;
@@ -309,12 +299,12 @@ int ProbeHandler::start_probe(
 }
 
 int ProbeHandler::start_kretprobe(
-    ebpf::BPFModule &bpf_module,
+    struct render_bpf_bpf *skel,
     const std::string &func_name,
     const std::string &k_func_name,
     const std::string &event_id_suffix)
 {
-  auto ret = start_probe_common(bpf_module, true, func_name, k_func_name, event_id_suffix);
+  auto ret = start_probe_common(skel, true, func_name, k_func_name, event_id_suffix);
   if (ret != 0) {
     log_.error("Failed to attach {} kretprobe, error {}", k_func_name, ret);
     ++num_failed_probes_;
@@ -323,7 +313,7 @@ int ProbeHandler::start_kretprobe(
 }
 
 std::string ProbeHandler::start_probe_common(
-    ebpf::BPFModule &bpf_module,
+    struct render_bpf_bpf *skel,
     bool is_kretprobe,
     const ProbeAlternatives &probe_alternatives,
     const std::string &event_id_suffix)
@@ -335,7 +325,7 @@ std::string ProbeHandler::start_probe_common(
   }
   for (const auto &func_and_kfunc : probe_alternatives.func_names) {
     int ret =
-        start_probe_common(bpf_module, is_kretprobe, func_and_kfunc.func_name, func_and_kfunc.k_func_name, event_id_suffix);
+        start_probe_common(skel, is_kretprobe, func_and_kfunc.func_name, func_and_kfunc.k_func_name, event_id_suffix);
     if (ret == 0) {
       LOG::debug_in(
           AgentLogKind::BPF,
@@ -361,15 +351,15 @@ std::string ProbeHandler::start_probe_common(
 }
 
 std::string ProbeHandler::start_probe(
-    ebpf::BPFModule &bpf_module, const ProbeAlternatives &probe_alternatives, const std::string &event_id_suffix)
+    struct render_bpf_bpf *skel, const ProbeAlternatives &probe_alternatives, const std::string &event_id_suffix)
 {
-  return start_probe_common(bpf_module, false, probe_alternatives, event_id_suffix);
+  return start_probe_common(skel, false, probe_alternatives, event_id_suffix);
 }
 
 std::string ProbeHandler::start_kretprobe(
-    ebpf::BPFModule &bpf_module, const ProbeAlternatives &probe_alternatives, const std::string &event_id_suffix)
+    struct render_bpf_bpf *skel, const ProbeAlternatives &probe_alternatives, const std::string &event_id_suffix)
 {
-  return start_probe_common(bpf_module, true, probe_alternatives, event_id_suffix);
+  return start_probe_common(skel, true, probe_alternatives, event_id_suffix);
 }
 
 void ProbeHandler::cleanup_probes()
@@ -384,35 +374,27 @@ void ProbeHandler::cleanup_probes()
 
     LOG::debug_in(AgentLogKind::BPF, "cleanup probe for {}", probe_name);
 
-    bpf_close_perf_event_fd(probe);
-
-    int res = close(fd);
-    if (res != 0) {
-      LOG::debug_in(AgentLogKind::BPF, "Error when unloading prog, res={}", res);
-    }
-
-    res = bpf_detach_kprobe(probe_name.c_str());
-    if (res != 0) {
-      LOG::debug_in(AgentLogKind::BPF, "Error when detaching, res={}", res);
+    // Clean up the bpf_link
+    struct bpf_link *link = reinterpret_cast<struct bpf_link *>(probe);
+    if (link) {
+      bpf_link__destroy(link);
     }
   }
 
   LOG::debug_in(AgentLogKind::BPF, "Done cleaning up probes");
 }
 
-void ProbeHandler::cleanup_tail_calls(ebpf::BPFModule &bpf_module)
+void ProbeHandler::cleanup_tail_calls(struct render_bpf_bpf *skel)
 {
   while (!tail_calls_.empty()) {
     const auto &tc = tail_calls_.back();
 
     LOG::debug_in(AgentLogKind::BPF, "cleanup tail call for {} from table {}", tc.func_, tc.table_);
 
-    ebpf::BPFProgTable prog_array = get_prog_table(bpf_module, tc.table_);
-    prog_array.remove_value(tc.index_);
-
-    int res = close(tc.fd_);
-    if (res != 0) {
-      LOG::debug_in(AgentLogKind::BPF, "Error when unloading prog, res={}", res);
+    struct bpf_map *prog_array = get_bpf_map(skel, tc.table_);
+    if (prog_array) {
+      int map_fd = bpf_map__fd(prog_array);
+      bpf_map_delete_elem(map_fd, &tc.index_);
     }
 
     tail_calls_.pop_back();
@@ -434,16 +416,10 @@ void ProbeHandler::cleanup_probe_common(const std::string &probe_name)
 
       LOG::debug_in(AgentLogKind::BPF, "cleanup probe for {}", probe_name);
 
-      bpf_close_perf_event_fd(probe);
-
-      int res = close(fd);
-      if (res != 0) {
-        LOG::debug_in(AgentLogKind::BPF, "Error when unloading prog, res={}", res);
-      }
-
-      res = bpf_detach_kprobe(probe_name.c_str());
-      if (res != 0) {
-        LOG::debug_in(AgentLogKind::BPF, "Error when detaching, res={}", res);
+      // Clean up the bpf_link
+      struct bpf_link *link = reinterpret_cast<struct bpf_link *>(probe);
+      if (link) {
+        bpf_link__destroy(link);
       }
       return;
     }

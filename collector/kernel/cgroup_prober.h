@@ -10,13 +10,12 @@
 
 #include <linux/bpf.h>
 
-#include <bcc/BPF.h>
-
 #include <functional>
 #include <string>
 
 /* forward declarations */
 class ProbeHandler;
+struct render_bpf_bpf;
 
 /**
  * Adds BPF probes for new and existing cgroups, and iterates through existing
@@ -34,7 +33,7 @@ public:
    */
   CgroupProber(
       ProbeHandler &probe_handler,
-      ebpf::BPFModule &bpf_module,
+      struct render_bpf_bpf *skel,
       HostInfo const &host_info,
       std::function<void(void)> periodic_cb,
       std::function<void(std::string)> check_cb);
