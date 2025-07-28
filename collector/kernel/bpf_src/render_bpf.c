@@ -401,6 +401,7 @@ static int remove_tgid_info(struct pt_regs *ctx, TGID tgid)
 
 // note is the tgid is dead or not
 // used later by on_cgroup_exit handling
+SEC("kprobe/taskstats_exit")
 int on_taskstats_exit(struct pt_regs *ctx, struct task_struct *tsk, int group_dead)
 {
 
@@ -413,6 +414,7 @@ int on_taskstats_exit(struct pt_regs *ctx, struct task_struct *tsk, int group_de
 // end
 // this routine is called by 'do_exit' near the end of the destruction of a task
 // but after all of the resources has been cleaned up, including file descriptor references
+SEC("kprobe/cgroup_exit")
 int on_cgroup_exit(struct pt_regs *ctx, struct task_struct *tsk)
 {
   int ret;
@@ -469,6 +471,7 @@ int onret_cgroup_exit(struct pt_regs *ctx)
 }
 
 // set_task_comm: notice when command line is set for a process
+SEC("kprobe/__set_task_comm")
 int on_set_task_comm(struct pt_regs *ctx, struct task_struct *tsk, const char *buf)
 {
   int ret;
@@ -493,6 +496,7 @@ int on_set_task_comm(struct pt_regs *ctx, struct task_struct *tsk, const char *b
 }
 
 // start
+SEC("kprobe/wake_up_new_task")
 int on_wake_up_new_task(struct pt_regs *ctx, struct task_struct *tsk)
 {
   int ret;
@@ -900,6 +904,7 @@ static void restart_tcp_socket(struct pt_regs *ctx, TIMESTAMP now, struct sock *
 }
 
 // connectors
+SEC("kprobe/tcp_connect")
 int on_tcp_connect(struct pt_regs *ctx, struct sock *sk)
 {
   struct tcp_open_socket_t *sk_info;
@@ -937,6 +942,7 @@ int on_tcp_connect(struct pt_regs *ctx, struct sock *sk)
 // XXX: this function might fail so maybe we want to do some sort of kretprobe?
 // I assume that if it fails, the user will handle things in a clever way
 // and destroy the socket. But who knows?
+SEC("kprobe/inet_csk_listen_start")
 int on_inet_csk_listen_start(struct pt_regs *ctx, struct sock *sk)
 {
   // filter out non-tcp connections
@@ -998,6 +1004,7 @@ static void tcp_lifetime_hack(struct pt_regs *ctx, struct sock *sk)
 
 // --- tcp_init_sock ----------------------------------------------------
 // Where the start of TCP socket lifetimes is for IPv4 and IPv6
+SEC("kprobe/tcp_init_sock")
 int on_tcp_init_sock(struct pt_regs *ctx, struct sock *sk)
 {
   GET_PID_TGID;
@@ -1038,6 +1045,7 @@ u32 _pad_0; // required alignment for bcc
 int *err;
 END_DECLARE_SAVED_ARGS(on_inet_csk_accept)
 
+SEC("kprobe/inet_csk_accept")
 int on_inet_csk_accept(struct pt_regs *ctx, struct sock *sk, int flags, int *err, bool kern)
 {
   // Handle parameter differences between kernel versions
@@ -1161,7 +1169,7 @@ int onret_inet_csk_accept(struct pt_regs *ctx)
 }
 
 // existing
-int on_tcp46_seq_show(struct pt_regs *ctx, struct seq_file *seq, void *v)
+static int tcp46_seq_show_impl(struct pt_regs *ctx, struct seq_file *seq, void *v)
 {
   struct sock *sk = v;
 
@@ -1196,6 +1204,24 @@ int on_tcp46_seq_show(struct pt_regs *ctx, struct seq_file *seq, void *v)
   }
 
   return 0;
+}
+
+SEC("kprobe/tcp4_seq_show")
+int on_tcp4_seq_show(struct pt_regs *ctx, struct seq_file *seq, void *v)
+{
+  return tcp46_seq_show_impl(ctx, seq, v);
+}
+
+SEC("kprobe/tcp6_seq_show")
+int on_tcp6_seq_show(struct pt_regs *ctx, struct seq_file *seq, void *v)
+{
+  return tcp46_seq_show_impl(ctx, seq, v);
+}
+
+// Keep the old function name for compatibility
+int on_tcp46_seq_show(struct pt_regs *ctx, struct seq_file *seq, void *v)
+{
+  return tcp46_seq_show_impl(ctx, seq, v);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -1380,7 +1406,7 @@ static void udp_lifetime_hack(struct pt_regs *ctx, struct sock *sk)
 #endif
 
 // EXISTING
-int on_udp46_seq_show(struct pt_regs *ctx, struct seq_file *seq, void *v)
+static int udp46_seq_show_impl(struct pt_regs *ctx, struct seq_file *seq, void *v)
 {
   struct sock *sk = v;
 
@@ -1413,8 +1439,26 @@ int on_udp46_seq_show(struct pt_regs *ctx, struct seq_file *seq, void *v)
   return 0;
 }
 
+SEC("kprobe/udp4_seq_show")
+int on_udp4_seq_show(struct pt_regs *ctx, struct seq_file *seq, void *v)
+{
+  return udp46_seq_show_impl(ctx, seq, v);
+}
+
+SEC("kprobe/udp6_seq_show")
+int on_udp6_seq_show(struct pt_regs *ctx, struct seq_file *seq, void *v)
+{
+  return udp46_seq_show_impl(ctx, seq, v);
+}
+
+// Keep the old function name for compatibility
+int on_udp46_seq_show(struct pt_regs *ctx, struct seq_file *seq, void *v)
+{
+  return udp46_seq_show_impl(ctx, seq, v);
+}
+
 // NEW
-int on_udp_v46_get_port(struct pt_regs *ctx, struct sock *sk)
+static int udp_v46_get_port_impl(struct pt_regs *ctx, struct sock *sk)
 {
   GET_PID_TGID;
 
@@ -1435,6 +1479,24 @@ int on_udp_v46_get_port(struct pt_regs *ctx, struct sock *sk)
     }
   }
   return 0;
+}
+
+SEC("kprobe/udp_v4_get_port")
+int on_udp_v4_get_port(struct pt_regs *ctx, struct sock *sk)
+{
+  return udp_v46_get_port_impl(ctx, sk);
+}
+
+SEC("kprobe/udp_v6_get_port")  
+int on_udp_v6_get_port(struct pt_regs *ctx, struct sock *sk)
+{
+  return udp_v46_get_port_impl(ctx, sk);
+}
+
+// Keep the old function name for compatibility
+int on_udp_v46_get_port(struct pt_regs *ctx, struct sock *sk)
+{
+  return udp_v46_get_port_impl(ctx, sk);
 }
 
 int onret_udp_v46_get_port(struct pt_regs *ctx)
@@ -1518,6 +1580,7 @@ static inline void remove_open_socket(struct pt_regs *ctx, struct sock *sk)
 
 // --- security_sk_free ----------------------------------------------------
 // This is where final socket destruction happens for all socket types
+SEC("kprobe/security_sk_free")
 int on_security_sk_free(struct pt_regs *ctx, struct sock *sk)
 {
   remove_open_socket(ctx, sk);
@@ -1528,6 +1591,7 @@ BEGIN_DECLARE_SAVED_ARGS(inet_release)
 struct sock *sk;
 END_DECLARE_SAVED_ARGS(inet_release)
 
+SEC("kprobe/inet_release")
 int on_inet_release(struct pt_regs *ctx, struct socket *sock)
 {
   GET_PID_TGID;
@@ -1581,6 +1645,7 @@ static void handle_tcp_reset(struct pt_regs *ctx, struct sock *sk, u8 is_rx)
 }
 
 // receive TCP RST
+SEC("kprobe/tcp_reset")
 int on_tcp_reset(struct pt_regs *ctx, struct sock *sk)
 {
   // bpf_trace_printk("on_tcp_reset\n");
@@ -1801,6 +1866,7 @@ int on_udp_v6_send_skb(struct pt_regs *ctx, struct sk_buff *skb, struct flowi6 *
 }
 
 // send TCP RST
+SEC("kprobe/tcp_send_active_reset")
 int on_tcp_send_active_reset(struct pt_regs *ctx, struct sock *sk, gfp_t priority)
 {
   // bpf_trace_printk("on_tcp_send_active_reset\n");
@@ -1971,6 +2037,7 @@ int on_tcp_rtt_estimator(struct pt_regs *ctx, struct sock *sk)
   return 0;
 }
 
+SEC("kprobe/tcp_rcv_established")
 int on_tcp_rcv_established(struct pt_regs *ctx, struct sock *sk, struct sk_buff *skb)
 {
   struct tcp_open_socket_t *sk_info;
@@ -2003,6 +2070,7 @@ int on_tcp_rcv_established(struct pt_regs *ctx, struct sock *sk, struct sk_buff 
   return 0;
 }
 
+SEC("kprobe/tcp_event_data_recv")
 int on_tcp_event_data_recv(struct pt_regs *ctx, struct sock *sk, struct sk_buff *skb)
 {
   struct tcp_open_socket_t *sk_info;
@@ -2052,6 +2120,7 @@ static void handle_syn_timeout(struct pt_regs *ctx, struct sock *sk)
 // same structure for a long time (since the initial git repo at 1da177e4c3f4,
 // "Linux-2.6.12-rc2"). The static qualifier was removed in f1ecd5d9e7366
 // (v2.6.32-rc1~703^2~172)
+SEC("kprobe/tcp_retransmit_timer")
 int on_tcp_retransmit_timer(struct pt_regs *ctx, struct sock *sk)
 {
   handle_syn_timeout(ctx, sk);
@@ -2062,6 +2131,7 @@ int on_tcp_retransmit_timer(struct pt_regs *ctx, struct sock *sk)
 // See kernel commit 42cb80a2353f4, (v4.1-rc1~128^2~175^2~6).
 // the function seems to have been around since 72659ecce6858
 // (v2.6.34-rc1~233^2~563).
+SEC("kprobe/tcp_syn_ack_timeout")
 int on_tcp_syn_ack_timeout(struct pt_regs *ctx, const struct request_sock *req)
 {
   // Handle parameter differences between kernel versions
@@ -2424,6 +2494,7 @@ BEGIN_DECLARE_SAVED_ARGS(cgroup_control)
 struct cgroup *cgrp;
 END_DECLARE_SAVED_ARGS(cgroup_control)
 
+SEC("kprobe/cgroup_control")
 int on_cgroup_control(struct pt_regs *ctx, struct cgroup *cgrp)
 {
   // Only available for kernel >= 4.6.0
@@ -2494,6 +2565,7 @@ int on_cgroup_clone_children_read_css(struct pt_regs *ctx, struct cgroup_subsys_
 }
 
 // For Kernel < 3.12.0
+SEC("kprobe/cgroup_clone_children_read")
 int on_cgroup_clone_children_read(struct pt_regs *ctx, struct cgroup *cgrp, struct cftype *cft)
 {
   u32 subsys_mask = (u32)cgrp->root->subsys_mask;
@@ -2509,6 +2581,7 @@ int on_cgroup_clone_children_read(struct pt_regs *ctx, struct cgroup *cgrp, stru
 }
 
 // modify
+SEC("kprobe/cgroup_attach_task")
 int on_cgroup_attach_task(struct pt_regs *ctx, struct cgroup *dst_cgrp, struct task_struct *leader, bool threadgroup)
 {
   u32 subsys_mask = (u32)dst_cgrp->root->subsys_mask;
@@ -2523,6 +2596,7 @@ int on_cgroup_attach_task(struct pt_regs *ctx, struct cgroup *dst_cgrp, struct t
 ////////////////////////////////////////////////////////////////////////////////////
 /* NAT */
 /* end */
+SEC("kprobe/nf_nat_cleanup_conntrack")
 int on_nf_nat_cleanup_conntrack(struct pt_regs *ctx, struct nf_conn *ct)
 {
   u64 now = get_timestamp();
@@ -2556,6 +2630,7 @@ int on_nf_nat_cleanup_conntrack(struct pt_regs *ctx, struct nf_conn *ct)
 }
 
 /* start */
+SEC("kprobe/nf_conntrack_alter_reply")
 int on_nf_conntrack_alter_reply(struct pt_regs *ctx, struct nf_conn *ct, const struct nf_conntrack_tuple *newreply)
 {
   u64 now = get_timestamp();
