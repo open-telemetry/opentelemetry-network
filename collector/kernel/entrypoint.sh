@@ -29,6 +29,7 @@ kernel_headers_source="libbpf"
 
 # cleanup kprobes previously created by the kernel collector
 mount -t debugfs none /sys/kernel/debug
+mount -t sysfs none /sys
 if [[ -f /sys/kernel/debug/tracing/kprobe_events ]]; then
   echo "cleaning up stale kprobes..."
   tmpfile="${data_dir}/ebpf_net_kprobes"

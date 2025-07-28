@@ -18,6 +18,7 @@ dump_dir="${data_dir}/dump"
 mkdir -p "${data_dir}" "${dump_dir}"
 
 mount -t debugfs none /sys/kernel/debug
+mount -t sysfs none /sys
 
 cmd_args=( \
   --host-distro "${host_distro:-unknown}"
