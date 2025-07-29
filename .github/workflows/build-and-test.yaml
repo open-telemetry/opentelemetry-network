@@ -436,6 +436,7 @@ jobs:
           # Run kernel collector and verify it starts successfully
           container_id=$(docker create \
             --name "test-kernel-collector-libbpf" \
+            --network host \
             --env EBPF_NET_INTAKE_PORT="8000" \
             --env EBPF_NET_INTAKE_HOST="127.0.0.1" \
             --env EBPF_NET_HOST_DIR="/hostfs" \
@@ -597,6 +598,7 @@ jobs:
           container_id=$(docker create -t --rm \
             --env EBPF_NET_HOST_DIR="/hostfs" \
             --privileged \
+            --network host \
             --volume /sys/fs/cgroup:/hostfs/sys/fs/cgroup \
             --volume /usr/src:/hostfs/usr/src \
             --volume /lib/modules:/hostfs/lib/modules \
