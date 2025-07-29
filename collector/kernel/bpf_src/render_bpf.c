@@ -2720,4 +2720,4 @@ int on_ctnetlink_dump_tuples(struct pt_regs *ctx, struct sk_buff *skb, const str
 
 #include "tcp-processor/bpf_tcp_processor.c"
 
-char _license[] SEC("license") = "Dual GPL/Apache-2.0";
+char _license[] SEC("license") = "Dual MIT/GPL";
