@@ -417,8 +417,9 @@ int on_taskstats_exit(struct pt_regs *ctx)
 // this routine is called by 'do_exit' near the end of the destruction of a task
 // but after all of the resources has been cleaned up, including file descriptor references
 SEC("kprobe/cgroup_exit")
-int on_cgroup_exit(struct pt_regs *ctx, struct task_struct *tsk)
+int on_cgroup_exit(struct pt_regs *ctx)
 {
+  struct task_struct *tsk = (struct task_struct *)PT_REGS_PARM1(ctx);
   int ret;
   pid_t tgid = 0;
   ret = bpf_probe_read(&tgid, sizeof(tgid), &(tsk->tgid));
@@ -907,8 +908,10 @@ static void restart_tcp_socket(struct pt_regs *ctx, TIMESTAMP now, struct sock *
 
 // connectors
 SEC("kprobe/tcp_connect")
-int on_tcp_connect(struct pt_regs *ctx, struct sock *sk)
+int on_tcp_connect(struct pt_regs *ctx)
 {
+  struct sock *sk = (struct sock *)PT_REGS_PARM1(ctx);
+  
   struct tcp_open_socket_t *sk_info;
   sk_info = bpf_map_lookup_elem(&tcp_open_sockets, &sk);
   if (!sk_info) {
@@ -945,8 +948,9 @@ int on_tcp_connect(struct pt_regs *ctx, struct sock *sk)
 // I assume that if it fails, the user will handle things in a clever way
 // and destroy the socket. But who knows?
 SEC("kprobe/inet_csk_listen_start")
-int on_inet_csk_listen_start(struct pt_regs *ctx, struct sock *sk)
+int on_inet_csk_listen_start(struct pt_regs *ctx)
 {
+  struct sock *sk = (struct sock *)PT_REGS_PARM1(ctx);
   // filter out non-tcp connections
   u16 family = sk->sk_family;
   if (family != AF_INET && family != AF_INET6)
@@ -1007,8 +1011,9 @@ static void tcp_lifetime_hack(struct pt_regs *ctx, struct sock *sk)
 // --- tcp_init_sock ----------------------------------------------------
 // Where the start of TCP socket lifetimes is for IPv4 and IPv6
 SEC("kprobe/tcp_init_sock")
-int on_tcp_init_sock(struct pt_regs *ctx, struct sock *sk)
+int on_tcp_init_sock(struct pt_regs *ctx)
 {
+  struct sock *sk = (struct sock *)PT_REGS_PARM1(ctx);
   GET_PID_TGID;
 
   u64 now = get_timestamp();
@@ -1048,13 +1053,15 @@ int *err;
 END_DECLARE_SAVED_ARGS(on_inet_csk_accept)
 
 SEC("kprobe/inet_csk_accept")
-int on_inet_csk_accept(struct pt_regs *ctx, struct sock *sk, int flags, int *err, bool kern)
+int on_inet_csk_accept(struct pt_regs *ctx)
 {
-  // Handle parameter differences between kernel versions
-  if (LINUX_KERNEL_VERSION < KERNEL_VERSION(4, 11, 0)) {
-    // In older kernels, there's no bool kern parameter
-    // The kern parameter doesn't exist, so we ignore it
-  }
+  struct sock *sk = (struct sock *)PT_REGS_PARM1(ctx);
+  int flags = (int)PT_REGS_PARM2(ctx);
+  int *err = (int *)PT_REGS_PARM3(ctx);
+
+  // In kernels before 4.11, there's no bool kern parameter
+  // The kern parameter doesn't exist, so we ignore it
+  // bool kern = (bool)PT_REGS_PARM4(ctx);
   GET_PID_TGID;
 
 #if TCP_STATS_ON_PARENT
@@ -1209,14 +1216,18 @@ static int tcp46_seq_show_impl(struct pt_regs *ctx, struct seq_file *seq, void *
 }
 
 SEC("kprobe/tcp4_seq_show")
-int on_tcp4_seq_show(struct pt_regs *ctx, struct seq_file *seq, void *v)
+int on_tcp4_seq_show(struct pt_regs *ctx)
 {
+  struct seq_file *seq = (struct seq_file *)PT_REGS_PARM1(ctx);
+  void *v = (void *)PT_REGS_PARM2(ctx);
   return tcp46_seq_show_impl(ctx, seq, v);
 }
 
 SEC("kprobe/tcp6_seq_show")
-int on_tcp6_seq_show(struct pt_regs *ctx, struct seq_file *seq, void *v)
+int on_tcp6_seq_show(struct pt_regs *ctx)
 {
+  struct seq_file *seq = (struct seq_file *)PT_REGS_PARM1(ctx);
+  void *v = (void *)PT_REGS_PARM2(ctx);
   return tcp46_seq_show_impl(ctx, seq, v);
 }
 
@@ -1442,14 +1453,18 @@ static int udp46_seq_show_impl(struct pt_regs *ctx, struct seq_file *seq, void *
 }
 
 SEC("kprobe/udp4_seq_show")
-int on_udp4_seq_show(struct pt_regs *ctx, struct seq_file *seq, void *v)
+int on_udp4_seq_show(struct pt_regs *ctx)
 {
+  struct seq_file *seq = (struct seq_file *)PT_REGS_PARM1(ctx);
+  void *v = (void *)PT_REGS_PARM2(ctx);
   return udp46_seq_show_impl(ctx, seq, v);
 }
 
 SEC("kprobe/udp6_seq_show")
-int on_udp6_seq_show(struct pt_regs *ctx, struct seq_file *seq, void *v)
+int on_udp6_seq_show(struct pt_regs *ctx)
 {
+  struct seq_file *seq = (struct seq_file *)PT_REGS_PARM1(ctx);
+  void *v = (void *)PT_REGS_PARM2(ctx);
   return udp46_seq_show_impl(ctx, seq, v);
 }
 
@@ -1484,14 +1499,16 @@ static int udp_v46_get_port_impl(struct pt_regs *ctx, struct sock *sk)
 }
 
 SEC("kprobe/udp_v4_get_port")
-int on_udp_v4_get_port(struct pt_regs *ctx, struct sock *sk)
+int on_udp_v4_get_port(struct pt_regs *ctx)
 {
+  struct sock *sk = (struct sock *)PT_REGS_PARM1(ctx);
   return udp_v46_get_port_impl(ctx, sk);
 }
 
 SEC("kprobe/udp_v6_get_port")
-int on_udp_v6_get_port(struct pt_regs *ctx, struct sock *sk)
+int on_udp_v6_get_port(struct pt_regs *ctx)
 {
+  struct sock *sk = (struct sock *)PT_REGS_PARM1(ctx);
   return udp_v46_get_port_impl(ctx, sk);
 }
 
@@ -1583,8 +1600,9 @@ static inline void remove_open_socket(struct pt_regs *ctx, struct sock *sk)
 // --- security_sk_free ----------------------------------------------------
 // This is where final socket destruction happens for all socket types
 SEC("kprobe/security_sk_free")
-int on_security_sk_free(struct pt_regs *ctx, struct sock *sk)
+int on_security_sk_free(struct pt_regs *ctx)
 {
+  struct sock *sk = (struct sock *)PT_REGS_PARM1(ctx);
   remove_open_socket(ctx, sk);
   return 0;
 }

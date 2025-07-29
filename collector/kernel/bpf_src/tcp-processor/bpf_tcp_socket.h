@@ -231,8 +231,10 @@ static void write_to_tcp_stream(
 // --- tcp_init_sock ----------------------------------------------------
 // Where the start of TCP socket lifetimes is for IPv4 and IPv6
 SEC("kprobe/tcp_init_sock")
-int handle_kprobe__tcp_init_sock(struct pt_regs *ctx, struct sock *sk)
+int handle_kprobe__tcp_init_sock(struct pt_regs *ctx)
 {
+  struct sock *sk = (struct sock *)PT_REGS_PARM1(ctx);
+  
   struct tcp_connection_t *pconn;
   pconn = create_tcp_connection(ctx, sk);
   if (!pconn) {
@@ -250,8 +252,10 @@ int handle_kprobe__tcp_init_sock(struct pt_regs *ctx, struct sock *sk)
 // --- security_sk_free ----------------------------------------------
 // This is where final socket destruction happens for all socket types
 SEC("kprobe/security_sk_free")
-int handle_kprobe__security_sk_free(struct pt_regs *ctx, struct sock *sk)
+int handle_kprobe__security_sk_free(struct pt_regs *ctx)
 {
+  struct sock *sk = (struct sock *)PT_REGS_PARM1(ctx);
+  
   struct tcp_connection_t *pconn = lookup_tcp_connection(sk);
   if (pconn) {
     delete_tcp_connection(ctx, pconn, sk);

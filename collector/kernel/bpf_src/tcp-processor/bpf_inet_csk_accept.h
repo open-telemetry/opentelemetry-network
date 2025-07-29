@@ -26,14 +26,13 @@ END_DECLARE_SAVED_ARGS(inet_csk_accept)
 // --- inet_csk_accept --------------------------------------------------
 // Called when a listen socket accepts gets a connection
 SEC("kprobe/inet_csk_accept")
-int handle_kprobe__inet_csk_accept(struct pt_regs *ctx, struct sock *sk, int flags, int *err, bool kern)
+int handle_kprobe__inet_csk_accept(struct pt_regs *ctx)
 {
-  // Handle parameter differences between kernel versions
-  if (LINUX_KERNEL_VERSION < KERNEL_VERSION(4, 11, 0)) {
-    // In older kernels, there's no bool kern parameter
-    // Parameters are: struct sock *sk, int flags, int *err
-    // The kern parameter doesn't exist, so we ignore it
-  }
+  struct sock *sk = (struct sock *)PT_REGS_PARM1(ctx);
+  int flags = (int)PT_REGS_PARM2(ctx);;
+  int *err (int *)PT_REGS_PARM3(ctx);;
+    // bool kern = (bool)PT_REGS_PARM4(ctx); // not used
+  
   GET_PID_TGID
 
   // Ensure the parent socket has a tcp_connection

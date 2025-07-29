@@ -107,16 +107,24 @@ static void tcp_recv_stream_handler(
 // Called when data is to be send to a TCP socket
 
 SEC("kprobe/tcp_sendmsg")
-int handle_kprobe__tcp_sendmsg(struct pt_regs *ctx, struct sock *sk, struct msghdr *msg, size_t size)
+int handle_kprobe__tcp_sendmsg(struct pt_regs *ctx)
 {
+  struct sock *sk;
+  struct msghdr *msg;
+  size_t size;
+  
   // Handle parameter differences between kernel versions
   if (LINUX_KERNEL_VERSION < KERNEL_VERSION(4, 1, 0)) {
     // In older kernels, there's an additional struct kiocb *iocb parameter
     // Parameters are: struct kiocb *iocb, struct sock *sk, struct msghdr *msg, size_t size
-    // We need to extract the real parameters from the correct positions
     sk = (struct sock *)PT_REGS_PARM2(ctx);
     msg = (struct msghdr *)PT_REGS_PARM3(ctx);
     size = (size_t)PT_REGS_PARM4(ctx);
+  } else {
+    // In newer kernels: struct sock *sk, struct msghdr *msg, size_t size
+    sk = (struct sock *)PT_REGS_PARM1(ctx);
+    msg = (struct msghdr *)PT_REGS_PARM2(ctx);
+    size = (size_t)PT_REGS_PARM3(ctx);
   }
   GET_PID_TGID
 
@@ -318,11 +326,14 @@ int continue_tcp_sendmsg(struct pt_regs *ctx)
 // Called when data is to be received by a TCP socket
 
 SEC("kprobe/tcp_recvmsg")
-int handle_kprobe__tcp_recvmsg(struct pt_regs *ctx, struct sock *sk, struct msghdr *msg, size_t len)
+int handle_kprobe__tcp_recvmsg(struct pt_regs *ctx)
 {
-  int nonblock = (int)PT_REGS_PARM4(ctx);
-  int flags = (int)PT_REGS_PARM5(ctx);
-  int *addr_len = (int *)PT_REGS_PARM6(ctx);
+  struct sock *sk;
+  struct msghdr *msg;
+  size_t len;
+  int nonblock;
+  int flags;
+  // int *addr_len = NULL;   -- unused
 
   // Handle parameter differences between kernel versions
   if (LINUX_KERNEL_VERSION < KERNEL_VERSION(4, 1, 0)) {
@@ -334,6 +345,13 @@ int handle_kprobe__tcp_recvmsg(struct pt_regs *ctx, struct sock *sk, struct msgh
     nonblock = (int)PT_REGS_PARM5(ctx);
     flags = (int)PT_REGS_PARM6(ctx);
     // addr_len parameter doesn't exist in older kernels
+  } else {
+    // In newer kernels: struct sock *sk, struct msghdr *msg, size_t len, int nonblock, int flags, int *addr_len
+    sk = (struct sock *)PT_REGS_PARM1(ctx);
+    msg = (struct msghdr *)PT_REGS_PARM2(ctx);
+    len = (size_t)PT_REGS_PARM3(ctx);
+    nonblock = (int)PT_REGS_PARM4(ctx);
+    flags = (int)PT_REGS_PARM5(ctx);
   }
   GET_PID_TGID
 
