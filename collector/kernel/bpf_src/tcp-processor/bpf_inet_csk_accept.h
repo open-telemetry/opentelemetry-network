@@ -29,10 +29,12 @@ SEC("kprobe/inet_csk_accept")
 int handle_kprobe__inet_csk_accept(struct pt_regs *ctx)
 {
   struct sock *sk = (struct sock *)PT_REGS_PARM1(ctx);
-  int flags = (int)PT_REGS_PARM2(ctx);;
-  int *err (int *)PT_REGS_PARM3(ctx);;
-    // bool kern = (bool)PT_REGS_PARM4(ctx); // not used
-  
+  int flags = (int)PT_REGS_PARM2(ctx);
+  ;
+  int *err(int *) PT_REGS_PARM3(ctx);
+  ;
+  // bool kern = (bool)PT_REGS_PARM4(ctx); // not used
+
   GET_PID_TGID
 
   // Ensure the parent socket has a tcp_connection

@@ -234,7 +234,7 @@ SEC("kprobe/tcp_init_sock")
 int handle_kprobe__tcp_init_sock(struct pt_regs *ctx)
 {
   struct sock *sk = (struct sock *)PT_REGS_PARM1(ctx);
-  
+
   struct tcp_connection_t *pconn;
   pconn = create_tcp_connection(ctx, sk);
   if (!pconn) {
@@ -255,7 +255,7 @@ SEC("kprobe/security_sk_free")
 int handle_kprobe__security_sk_free(struct pt_regs *ctx)
 {
   struct sock *sk = (struct sock *)PT_REGS_PARM1(ctx);
-  
+
   struct tcp_connection_t *pconn = lookup_tcp_connection(sk);
   if (pconn) {
     delete_tcp_connection(ctx, pconn, sk);

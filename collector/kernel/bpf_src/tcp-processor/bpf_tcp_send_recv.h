@@ -112,7 +112,7 @@ int handle_kprobe__tcp_sendmsg(struct pt_regs *ctx)
   struct sock *sk;
   struct msghdr *msg;
   size_t size;
-  
+
   // Handle parameter differences between kernel versions
   if (LINUX_KERNEL_VERSION < KERNEL_VERSION(4, 1, 0)) {
     // In older kernels, there's an additional struct kiocb *iocb parameter

@@ -914,7 +914,7 @@ SEC("kprobe/tcp_connect")
 int on_tcp_connect(struct pt_regs *ctx)
 {
   struct sock *sk = (struct sock *)PT_REGS_PARM1(ctx);
-  
+
   struct tcp_open_socket_t *sk_info;
   sk_info = bpf_map_lookup_elem(&tcp_open_sockets, &sk);
   if (!sk_info) {
