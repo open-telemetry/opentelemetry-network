@@ -453,8 +453,14 @@ jobs:
           sleep 20
           
           # Check if container is still running
-          if docker ps --filter "id=$container_id" --filter "status=running" | grep -q $container_id; then
+          echo Checking if container is still running:
+          docker ps --filter "id=$container_id" --filter "status=running" --quiet
+          if docker ps --filter "id=$container_id" --filter "status=running" --quiet > /dev/null; then
             echo "✓ Kernel collector loaded successfully and ran for 20 seconds"
+            echo "---Kernel collector logs:"
+            docker logs $container_id || true
+            echo "--- Reducer logs:"
+            docker logs $reducer_id || true
             docker stop $container_id || true
             docker rm $container_id || true
             # Stop reducer
@@ -462,7 +468,10 @@ jobs:
             exit 0
           else
             echo "✗ Kernel collector failed to run properly"
+            echo "---Kernel collector logs:"
             docker logs $container_id || true
+            echo "---Reducer logs:"
+            docker logs $reducer_id || true
             docker rm $container_id || true
             # Stop reducer
             docker stop $reducer_id || true
