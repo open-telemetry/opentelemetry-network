@@ -402,8 +402,10 @@ static int remove_tgid_info(struct pt_regs *ctx, TGID tgid)
 // note is the tgid is dead or not
 // used later by on_cgroup_exit handling
 SEC("kprobe/taskstats_exit")
-int on_taskstats_exit(struct pt_regs *ctx, struct task_struct *tsk, int group_dead)
+int on_taskstats_exit(struct pt_regs *ctx)
 {
+  struct task_struct *tsk = (struct task_struct *)PT_REGS_PARM1(ctx);
+  int group_dead = (int)PT_REGS_PARM2(ctx);
 
   if (group_dead) {
     set_task_group_dead(ctx, tsk);
