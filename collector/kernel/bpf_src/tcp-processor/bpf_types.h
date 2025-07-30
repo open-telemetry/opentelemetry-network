@@ -74,9 +74,9 @@ typedef u64 TIMESTAMP;
     /* Check if key already exists to distinguish duplicate vs table full */                                                   \
     void *existing = bpf_map_lookup_elem(&SAVED_ARGS_TABLE(FUNC), &SAVED_ARGS_TABLE_KEY);                                      \
     if (existing) {                                                                                                            \
-      bpf_trace_printk(#FUNC ": duplicate arg insert.");                                                                        \
+      bpf_trace_printk(#FUNC ": duplicate arg insert. pid_tgid=%ull", bpf_get_current_pid_tgid());                                                                        \
     } else {                                                                                                                   \
-      bpf_trace_printk(#FUNC ": args table is full, dropped insert.");                                                          \
+      bpf_trace_printk(#FUNC ": args table is full, dropped insert. pid_tgid=%ull", bpf_get_current_pid_tgid());                                                          \
     }                                                                                                                          \
   }                                                                                                                            \
   }
