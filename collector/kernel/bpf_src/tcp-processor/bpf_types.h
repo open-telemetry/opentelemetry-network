@@ -9,6 +9,11 @@ typedef u64 PID_TGID;
 typedef u32 TGID;
 typedef u32 PID;
 
+// global variables for error counts
+// TODO: expose error counts to userspace
+volatile long save_args_update_existing_error = 0;
+volatile long save_args_update_full_error = 0;
+
 // tgid is upper 32 bits of pid_tgid, lower 32 bits is pid
 #define TGID_FROM_PID_TGID(X) ((TGID)((X) >> 32))
 #define PID_FROM_PID_TGID(X) ((PID)((X)))
@@ -74,9 +79,9 @@ typedef u64 TIMESTAMP;
     /* Check if key already exists to distinguish duplicate vs table full */                                                   \
     void *existing = bpf_map_lookup_elem(&SAVED_ARGS_TABLE(FUNC), &SAVED_ARGS_TABLE_KEY);                                      \
     if (existing) {                                                                                                            \
-      bpf_trace_printk(#FUNC ": duplicate arg insert. dummy=%llu", 0ull/* removed due to verifier problem */);        \
+      save_args_update_existing_error++;                                                                                       \
     } else {                                                                                                                   \
-      bpf_trace_printk(#FUNC ": args table is full, dropped insert. dummy=%lld", 0ull/* removed due to verifier problem */);                                                          \
+      save_args_update_full_error++;                                                                                           \
     }                                                                                                                          \
   }                                                                                                                            \
   }
