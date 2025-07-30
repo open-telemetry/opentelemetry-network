@@ -17,8 +17,12 @@ data_dir=${EBPF_NET_DATA_DIR:-/var/run/ebpf_net}
 dump_dir="${data_dir}/dump"
 mkdir -p "${data_dir}" "${dump_dir}"
 
-mount -t debugfs none /sys/kernel/debug
-mount -t sysfs none /sys
+if ! mountpoint -q /sys/kernel/debug; then
+  mount -t debugfs none /sys/kernel/debug || echo "Warning: Could not mount debugfs"
+fi
+if ! mountpoint -q /sys; then
+  mount -t sysfs none /sys || echo "Warning: Could not mount sysfs"
+fi
 
 cmd_args=( \
   --host-distro "${host_distro:-unknown}"
