@@ -75,7 +75,7 @@ typedef u64 TIMESTAMP;
     if (existing) {                                                                                                            \
       bpf_trace_printk(#FUNC ": duplicate arg insert. pid_tgid=%ull\n", _pid_tgid);                                            \
     } else {                                                                                                                   \
-      bpf_trace_printk(#FUNC ": args table is full, dropped insert. pid_tgid=%ull\n", _pid_tgid));                             \
+      bpf_trace_printk(#FUNC ": args table is full, dropped insert. pid_tgid=%ull\n", _pid_tgid);                             \
     }                                                                                                                          \
   }                                                                                                                            \
   }
