@@ -15,6 +15,7 @@ typedef u32 PID;
 // common operation, use this macro to define _pid and _tgid for kprobes
 #define GET_PID_TGID                                                                                                           \
   PID_TGID _pid_tgid = bpf_get_current_pid_tgid();                                                                             \
+  _pid_tgid &= 0xFFFFFFFFFFFFFFFF;                                                                                             \
   TGID _tgid = TGID_FROM_PID_TGID(_pid_tgid);                                                                                  \
   PID _pid = PID_FROM_PID_TGID(_pid_tgid);                                                                                     \
   if (_tgid == 0 || _pid == 0) {                                                                                               \
