@@ -1845,6 +1845,7 @@ int on_ip6_send_skb__2(struct pt_regs *ctx, struct sk_buff *skb)
 
 // may be optimized out on some kernels, if hook fails, we will use
 // on_ip_send_skb
+SEC("kprobe/udp_send_skb")
 int on_udp_send_skb(struct pt_regs *ctx, struct sk_buff *skb, struct flowi4 *fl4)
 {
   GET_PID_TGID;
@@ -1862,6 +1863,7 @@ int on_udp_send_skb(struct pt_regs *ctx, struct sk_buff *skb, struct flowi4 *fl4
 
 // may be optimized out on some kernels, if hook fails, we will use
 // on_ip6_send_skb
+SEC("kprobe/udp_v6_send_skb")
 int on_udp_v6_send_skb(struct pt_regs *ctx, struct sk_buff *skb, struct flowi6 *fl6)
 {
   GET_PID_TGID;
@@ -1894,6 +1896,7 @@ int on_tcp_send_active_reset(struct pt_regs *ctx)
   return 0;
 }
 
+SEC("kprobe/ip_send_skb")
 int on_ip_send_skb(struct pt_regs *ctx, struct net *net, struct sk_buff *skb)
 {
   struct sock *sk = skb->sk;
@@ -1927,6 +1930,7 @@ int on_ip_send_skb(struct pt_regs *ctx, struct net *net, struct sk_buff *skb)
   return 0;
 }
 
+SEC("kprobe/ip6_send_skb")
 int on_ip6_send_skb(struct pt_regs *ctx, struct sk_buff *skb)
 {
   struct sock *sk = skb->sk;
@@ -2036,6 +2040,7 @@ static void report_rtt_estimator_if_time(struct pt_regs *ctx, struct sock *sk, s
   report_rtt_estimator(ctx, sk, sk_info, now, false);
 }
 
+SEC("kprobe/tcp_rtt_estimator")
 int on_tcp_rtt_estimator(struct pt_regs *ctx, struct sock *sk)
 {
   struct tcp_open_socket_t *sk_info; /* for filtering */
@@ -2463,6 +2468,7 @@ static struct cgroup *get_cgroup_parent(struct cgroup *cgrp)
 // close
 
 // Function that handles both kernel versions for killing CSS
+SEC("kprobe/kill_css")
 int on_kill_css(struct pt_regs *ctx, struct cgroup_subsys_state *css)
 {
   if (LINUX_KERNEL_VERSION >= KERNEL_VERSION(3, 12, 0)) {
@@ -2484,6 +2490,7 @@ int on_kill_css(struct pt_regs *ctx, struct cgroup_subsys_state *css)
 }
 
 // For Kernel < 3.12
+SEC("kprobe/cgroup_destroy_locked")
 int on_cgroup_destroy_locked(struct pt_regs *ctx, struct cgroup *cgrp)
 {
   if (LINUX_KERNEL_VERSION < KERNEL_VERSION(3, 12, 0)) {
@@ -2502,6 +2509,7 @@ int on_cgroup_destroy_locked(struct pt_regs *ctx, struct cgroup *cgrp)
 // start
 
 // Function that handles both kernel versions for populating CSS directories
+SEC("kprobe/css_populate_dir")
 int on_css_populate_dir(struct pt_regs *ctx, struct cgroup_subsys_state *css)
 {
   if (LINUX_KERNEL_VERSION >= KERNEL_VERSION(4, 4, 0)) {
@@ -2523,6 +2531,7 @@ int on_css_populate_dir(struct pt_regs *ctx, struct cgroup_subsys_state *css)
 }
 
 // For Kernel < 4.4
+SEC("kprobe/cgroup_populate_dir")
 int on_cgroup_populate_dir(struct pt_regs *ctx, struct cgroup *cgrp, unsigned long subsys_mask)
 {
   struct cgroup_subsys_state *css = NULL;
