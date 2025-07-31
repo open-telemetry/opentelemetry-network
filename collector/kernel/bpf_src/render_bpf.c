@@ -410,6 +410,7 @@ int on_cgroup_exit(struct pt_regs *ctx)
   return 0;
 }
 
+SEC("kretprobe/cgroup_exit")
 int onret_cgroup_exit(struct pt_regs *ctx)
 {
   GET_PID_TGID;
@@ -503,6 +504,7 @@ int on_wake_up_new_task(struct pt_regs *ctx)
 }
 
 // existing
+SEC("kretprobe/get_pid_task")
 int onret_get_pid_task(struct pt_regs *ctx)
 {
   int ret;
@@ -1055,6 +1057,7 @@ int on_inet_csk_accept(struct pt_regs *ctx)
   return 0;
 }
 
+SEC("kretprobe/inet_csk_accept")
 int onret_inet_csk_accept(struct pt_regs *ctx)
 {
   GET_PID_TGID;
@@ -1496,6 +1499,8 @@ int on_udp_v46_get_port(struct pt_regs *ctx)
   return udp_v46_get_port_impl(ctx, sk);
 }
 
+SEC("kretprobe/udp_v4_get_port")
+SEC("kretprobe/udp_v6_get_port")
 int onret_udp_v46_get_port(struct pt_regs *ctx)
 {
   struct sock **found = NULL;
@@ -1609,6 +1614,7 @@ int on_inet_release(struct pt_regs *ctx)
   return 0;
 }
 
+SEC("kretprobe/inet_release")
 int onret_inet_release(struct pt_regs *ctx)
 {
   GET_PID_TGID;
@@ -2349,6 +2355,8 @@ int on_skb_consume_udp(struct pt_regs *ctx, struct sock *sk, struct sk_buff *skb
 }
 
 // Compatibility layer for kernels pre skb_consume_udp (pre-4.10)
+SEC("kprobe/__skb_free_datagram_locked")
+SEC("kprobe/skb_free_datagram_locked")
 int on_skb_free_datagram_locked(struct pt_regs *ctx, struct sock *sk, struct sk_buff *skb, int len)
 {
   // Handle parameter differences between kernel versions
@@ -2716,6 +2724,7 @@ int on_nf_conntrack_alter_reply(struct pt_regs *ctx)
   return 0;
 }
 
+SEC("kprobe/ctnetlink_dump_tuples")
 int on_ctnetlink_dump_tuples(struct pt_regs *ctx, struct sk_buff *skb, const struct nf_conntrack_tuple *ct)
 {
   u64 now = get_timestamp();
