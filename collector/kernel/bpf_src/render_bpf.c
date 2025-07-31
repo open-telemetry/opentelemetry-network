@@ -2731,11 +2731,11 @@ int on_ctnetlink_dump_tuples(struct pt_regs *ctx)
 {
   struct sk_buff *skb = (struct sk_buff *)PT_REGS_PARM1(ctx);
   const struct nf_conntrack_tuple *ct = (const struct nf_conntrack_tuple *)PT_REGS_PARM2(ctx);
-  
+
   if (!ct) {
     return 0;
   }
-  
+
   u64 now = get_timestamp();
 
   // "struct nf_conn" contains two "struct nf_conntrack_tuple_hash". On the
@@ -2743,7 +2743,7 @@ int on_ctnetlink_dump_tuples(struct pt_regs *ctx)
   // see first. this is addr is sizeof(struct nf_conntrack_tuple_hash) ahead of
   // the start of our current "ct"
   u64 ct_addr = (u64)ct;
-  
+
   u8 dir = BPF_CORE_READ(ct, dst.dir);
   if (dir == 0) {
     perf_submit_agent_internal__existing_conntrack_tuple(
