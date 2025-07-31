@@ -1846,14 +1846,29 @@ int on_ip6_send_skb__2(struct pt_regs *ctx, struct sk_buff *skb)
 // may be optimized out on some kernels, if hook fails, we will use
 // on_ip_send_skb
 SEC("kprobe/udp_send_skb")
-int on_udp_send_skb(struct pt_regs *ctx, struct sk_buff *skb, struct flowi4 *fl4)
+int on_udp_send_skb(struct pt_regs *ctx)
 {
+  struct sk_buff *skb = (struct sk_buff *)PT_REGS_PARM1(ctx);
+  struct flowi4 *fl4 = (struct flowi4 *)PT_REGS_PARM2(ctx);
+  
+  if (!skb || !fl4)
+    return 0;
+  
   GET_PID_TGID;
 
-  struct in6_addr laddr = make_ipv6_address(fl4->saddr);
-  struct in6_addr raddr = make_ipv6_address(fl4->daddr);
+  __u32 saddr = BPF_CORE_READ(fl4, saddr);
+  __u32 daddr = BPF_CORE_READ(fl4, daddr);
+  __be16 sport = BPF_CORE_READ(fl4, fl4_sport);
+  __be16 dport = BPF_CORE_READ(fl4, fl4_dport);
+  
+  struct in6_addr laddr = make_ipv6_address(saddr);
+  struct in6_addr raddr = make_ipv6_address(daddr);
 
-  udp_update_stats(ctx, skb->sk, skb, &laddr, fl4->fl4_sport, &raddr, fl4->fl4_dport, 0);
+  struct sock *sk_ptr = BPF_CORE_READ(skb, sk);
+  if (!sk_ptr)
+    return 0;
+  
+  udp_update_stats(ctx, sk_ptr, skb, &laddr, sport, &raddr, dport, 0);
 
   // Call on_udp_send_skb__2
   bpf_tail_call(ctx, &tail_calls, TAIL_CALL_ON_UDP_SEND_SKB__2);
@@ -1864,19 +1879,31 @@ int on_udp_send_skb(struct pt_regs *ctx, struct sk_buff *skb, struct flowi4 *fl4
 // may be optimized out on some kernels, if hook fails, we will use
 // on_ip6_send_skb
 SEC("kprobe/udp_v6_send_skb")
-int on_udp_v6_send_skb(struct pt_regs *ctx, struct sk_buff *skb, struct flowi6 *fl6)
+int on_udp_v6_send_skb(struct pt_regs *ctx)
 {
+  struct sk_buff *skb = (struct sk_buff *)PT_REGS_PARM1(ctx);
+  struct flowi6 *fl6 = (struct flowi6 *)PT_REGS_PARM2(ctx);
+  
+  if (!skb || !fl6)
+    return 0;
+  
   GET_PID_TGID;
 
-  struct in6_addr laddr = fl6->saddr;
-  struct in6_addr raddr = fl6->daddr;
+  struct in6_addr laddr = BPF_CORE_READ(fl6, saddr);
+  struct in6_addr raddr = BPF_CORE_READ(fl6, daddr);
+  __be16 sport = BPF_CORE_READ(fl6, fl6_sport);
+  __be16 dport = BPF_CORE_READ(fl6, fl6_dport);
 
 #if DEBUG_UDP_SOCKET_ERRORS
   __check_broken_in6_addr(&laddr, __LINE__);
   __check_broken_in6_addr(&raddr, __LINE__);
 #endif
 
-  udp_update_stats(ctx, skb->sk, skb, &laddr, fl6->fl6_sport, &raddr, fl6->fl6_dport, 0);
+  struct sock *sk_ptr = BPF_CORE_READ(skb, sk);
+  if (!sk_ptr)
+    return 0;
+  
+  udp_update_stats(ctx, sk_ptr, skb, &laddr, sport, &raddr, dport, 0);
 
   // Call on_udp_v6_send_skb__2
   bpf_tail_call(ctx, &tail_calls, TAIL_CALL_ON_UDP_V6_SEND_SKB__2);
@@ -1897,22 +1924,38 @@ int on_tcp_send_active_reset(struct pt_regs *ctx)
 }
 
 SEC("kprobe/ip_send_skb")
-int on_ip_send_skb(struct pt_regs *ctx, struct net *net, struct sk_buff *skb)
+int on_ip_send_skb(struct pt_regs *ctx)
 {
-  struct sock *sk = skb->sk;
-  struct iphdr *ip_hdr = (struct iphdr *)(skb->head + skb->network_header);
+  struct net *net = (struct net *)PT_REGS_PARM1(ctx);
+  struct sk_buff *skb = (struct sk_buff *)PT_REGS_PARM2(ctx);
+  
+  if (!skb)
+    return 0;
+  
+  struct sock *sk = BPF_CORE_READ(skb, sk);
+  unsigned char *head = BPF_CORE_READ(skb, head);
+  __u16 network_header = BPF_CORE_READ(skb, network_header);
+  __u16 transport_header = BPF_CORE_READ(skb, transport_header);
+  
+  struct iphdr *ip_hdr = (struct iphdr *)(head + network_header);
+  __u8 protocol = BPF_CORE_READ(ip_hdr, protocol);
 
-  if (ip_hdr->protocol == IPPROTO_UDP) {
-    struct udphdr *udp_hdr = (struct udphdr *)(skb->head + skb->transport_header);
+  if (protocol == IPPROTO_UDP) {
+    struct udphdr *udp_hdr = (struct udphdr *)(head + transport_header);
 
-    struct in6_addr laddr = make_ipv6_address(ip_hdr->saddr);
-    struct in6_addr raddr = make_ipv6_address(ip_hdr->daddr);
+    __u32 saddr = BPF_CORE_READ(ip_hdr, saddr);
+    __u32 daddr = BPF_CORE_READ(ip_hdr, daddr);
+    __be16 source = BPF_CORE_READ(udp_hdr, source);
+    __be16 dest = BPF_CORE_READ(udp_hdr, dest);
+    
+    struct in6_addr laddr = make_ipv6_address(saddr);
+    struct in6_addr raddr = make_ipv6_address(daddr);
 
-    udp_update_stats(ctx, sk, skb, &laddr, udp_hdr->source, &raddr, udp_hdr->dest, 0);
+    udp_update_stats(ctx, sk, skb, &laddr, source, &raddr, dest, 0);
   }
 
-  if (ip_hdr->protocol == IPPROTO_TCP) {
-    struct tcphdr *tcp_hdr = (struct tcphdr *)(skb->head + skb->transport_header);
+  if (protocol == IPPROTO_TCP) {
+    struct tcphdr *tcp_hdr = (struct tcphdr *)(head + transport_header);
 
     u16 flags = 0;
     bpf_probe_read(&flags, 2, ((u8 *)tcp_hdr) + 12);
@@ -1931,29 +1974,41 @@ int on_ip_send_skb(struct pt_regs *ctx, struct net *net, struct sk_buff *skb)
 }
 
 SEC("kprobe/ip6_send_skb")
-int on_ip6_send_skb(struct pt_regs *ctx, struct sk_buff *skb)
+int on_ip6_send_skb(struct pt_regs *ctx)
 {
-  struct sock *sk = skb->sk;
-  struct ipv6hdr *ipv6_hdr = (struct ipv6hdr *)(skb->head + skb->network_header);
+  struct sk_buff *skb = (struct sk_buff *)PT_REGS_PARM1(ctx);
+  
+  if (!skb)
+    return 0;
+  
+  struct sock *sk = BPF_CORE_READ(skb, sk);
+  unsigned char *head = BPF_CORE_READ(skb, head);
+  __u16 network_header = BPF_CORE_READ(skb, network_header);
+  __u16 transport_header = BPF_CORE_READ(skb, transport_header);
+  
+  struct ipv6hdr *ipv6_hdr = (struct ipv6hdr *)(head + network_header);
+  __u8 nexthdr = BPF_CORE_READ(ipv6_hdr, nexthdr);
 
   GET_PID_TGID;
 
-  if (ipv6_hdr->nexthdr == IPPROTO_UDP) {
-    struct udphdr *udp_hdr = (struct udphdr *)(skb->head + skb->transport_header);
+  if (nexthdr == IPPROTO_UDP) {
+    struct udphdr *udp_hdr = (struct udphdr *)(head + transport_header);
 
-    struct in6_addr laddr = ipv6_hdr->saddr;
-    struct in6_addr raddr = ipv6_hdr->daddr;
+    struct in6_addr laddr = BPF_CORE_READ(ipv6_hdr, saddr);
+    struct in6_addr raddr = BPF_CORE_READ(ipv6_hdr, daddr);
+    __be16 source = BPF_CORE_READ(udp_hdr, source);
+    __be16 dest = BPF_CORE_READ(udp_hdr, dest);
 
 #if DEBUG_UDP_SOCKET_ERRORS
     __check_broken_in6_addr(&laddr, __LINE__);
     __check_broken_in6_addr(&raddr, __LINE__);
 #endif
 
-    udp_update_stats(ctx, sk, skb, &laddr, udp_hdr->source, &raddr, udp_hdr->dest, 0);
+    udp_update_stats(ctx, sk, skb, &laddr, source, &raddr, dest, 0);
   }
 
-  if (ipv6_hdr->nexthdr == IPPROTO_TCP) {
-    struct tcphdr *tcp_hdr = (struct tcphdr *)(skb->head + skb->transport_header);
+  if (nexthdr == IPPROTO_TCP) {
+    struct tcphdr *tcp_hdr = (struct tcphdr *)(head + transport_header);
 
     u16 flags = 0;
     bpf_probe_read(&flags, 2, ((u8 *)tcp_hdr) + 12);
@@ -2041,8 +2096,9 @@ static void report_rtt_estimator_if_time(struct pt_regs *ctx, struct sock *sk, s
 }
 
 SEC("kprobe/tcp_rtt_estimator")
-int on_tcp_rtt_estimator(struct pt_regs *ctx, struct sock *sk)
+int on_tcp_rtt_estimator(struct pt_regs *ctx)
 {
+  struct sock *sk = (struct sock *)PT_REGS_PARM1(ctx);
   struct tcp_open_socket_t *sk_info; /* for filtering */
 
   if (sk->sk_state != TCP_ESTABLISHED) {
@@ -2469,8 +2525,10 @@ static struct cgroup *get_cgroup_parent(struct cgroup *cgrp)
 
 // Function that handles both kernel versions for killing CSS
 SEC("kprobe/kill_css")
-int on_kill_css(struct pt_regs *ctx, struct cgroup_subsys_state *css)
+int on_kill_css(struct pt_regs *ctx)
 {
+  struct cgroup_subsys_state *css = (struct cgroup_subsys_state *)PT_REGS_PARM1(ctx);
+  
   if (LINUX_KERNEL_VERSION >= KERNEL_VERSION(3, 12, 0)) {
     // For Kernel >= 3.12
     u32 ssid = get_css_id(css);
@@ -2491,8 +2549,10 @@ int on_kill_css(struct pt_regs *ctx, struct cgroup_subsys_state *css)
 
 // For Kernel < 3.12
 SEC("kprobe/cgroup_destroy_locked")
-int on_cgroup_destroy_locked(struct pt_regs *ctx, struct cgroup *cgrp)
+int on_cgroup_destroy_locked(struct pt_regs *ctx)
 {
+  struct cgroup *cgrp = (struct cgroup *)PT_REGS_PARM1(ctx);
+  
   if (LINUX_KERNEL_VERSION < KERNEL_VERSION(3, 12, 0)) {
     struct cgroup_subsys_state *css = NULL;
     bpf_probe_read(&css, sizeof(css), &(cgrp->subsys[FLOW_CGROUP_SUBSYS]));
@@ -2510,8 +2570,10 @@ int on_cgroup_destroy_locked(struct pt_regs *ctx, struct cgroup *cgrp)
 
 // Function that handles both kernel versions for populating CSS directories
 SEC("kprobe/css_populate_dir")
-int on_css_populate_dir(struct pt_regs *ctx, struct cgroup_subsys_state *css)
+int on_css_populate_dir(struct pt_regs *ctx)
 {
+  struct cgroup_subsys_state *css = (struct cgroup_subsys_state *)PT_REGS_PARM1(ctx);
+  
   if (LINUX_KERNEL_VERSION >= KERNEL_VERSION(4, 4, 0)) {
     // For Kernel >= 4.4
     u32 ssid = get_css_id(css);
@@ -2532,8 +2594,11 @@ int on_css_populate_dir(struct pt_regs *ctx, struct cgroup_subsys_state *css)
 
 // For Kernel < 4.4
 SEC("kprobe/cgroup_populate_dir")
-int on_cgroup_populate_dir(struct pt_regs *ctx, struct cgroup *cgrp, unsigned long subsys_mask)
+int on_cgroup_populate_dir(struct pt_regs *ctx)
 {
+  struct cgroup *cgrp = (struct cgroup *)PT_REGS_PARM1(ctx);
+  unsigned long subsys_mask = (unsigned long)PT_REGS_PARM2(ctx);
+  
   struct cgroup_subsys_state *css = NULL;
   bpf_probe_read(&css, sizeof(css), &(cgrp->subsys[FLOW_CGROUP_SUBSYS]));
   if (css == NULL)
