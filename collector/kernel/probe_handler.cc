@@ -285,9 +285,9 @@ int ProbeHandler::start_probe_common(
     return -4;
   }
 
-  int prog_fd = get_prog_fd(skel, func_name);
-  if (prog_fd < 0) {
-    LOG::debug_in(AgentLogKind::BPF, "Could not get program fd. func_name:{} k_func_name:{}", func_name, k_func_name);
+  auto bpf_program = bpf_object__find_program_by_name(skel->obj, func_name.c_str());
+  if (!bpf_program) {
+    LOG::debug_in(AgentLogKind::BPF, "Could not get find program. func_name:{} k_func_name:{}", func_name, k_func_name);
     return -1;
   }
 
@@ -296,7 +296,7 @@ int ProbeHandler::start_probe_common(
 
   struct bpf_link *link;
   link = bpf_program__attach_kprobe(
-      bpf_object__find_program_by_name(skel->obj, func_name.c_str()),
+      bpf_program,
       is_kretprobe, /* retprobe */
       k_func_name.c_str());
 
