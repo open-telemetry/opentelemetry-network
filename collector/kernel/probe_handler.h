@@ -204,7 +204,6 @@ private:
     int fd_;
     int index_;
   };
-  std::vector<int> fds_;
   std::vector<struct bpf_link *> probes_;
   std::vector<TailCallTuple> tail_calls_;
   std::vector<std::string> probe_names_;

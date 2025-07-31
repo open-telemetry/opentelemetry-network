@@ -307,7 +307,6 @@ int ProbeHandler::start_probe_common(
   }
 
   // Store the link pointer instead of the old BCC attachment handle
-  fds_.push_back(prog_fd);
   probes_.push_back(link);
   probe_names_.push_back(probe_name);
   return 0;
@@ -392,8 +391,7 @@ std::string ProbeHandler::start_kretprobe(
 
 void ProbeHandler::cleanup_probes()
 {
-  while (!fds_.empty()) {
-    fds_.pop_back();
+  while (!probes_.empty()) {
     auto probe = probes_.back();
     probes_.pop_back();
     std::string probe_name = probe_names_.back();
@@ -435,7 +433,6 @@ void ProbeHandler::cleanup_probe_common(const std::string &probe_name)
       auto probe = probes_[i];
       std::string probe_name = probe_names_[i];
 
-      fds_.erase(fds_.begin() + i);
       probes_.erase(probes_.begin() + i);
       probe_names_.erase(probe_names_.begin() + i);
 
