@@ -169,13 +169,11 @@ __attribute__((noinline)) int handle_kprobe__tcp_sendmsg(struct pt_regs *ctx)
     // iov_offset is not a thing in older kernels
   } else {
     u32 type;
-    if (LINUX_KERNEL_VERSION < KERNEL_VERSION(5, 14, 0)) {
+    if (bpf_core_field_exists(((struct msghdr___5_13_19 *)msg)->msg_iter.type)) {
       struct msghdr___5_13_19 *msg = msg;
       type = BPF_CORE_READ(msg, msg_iter.type);
     } else {
-      u8 type_u8;
-      type_u8 = BPF_CORE_READ(msg, msg_iter.iter_type);
-      type = type_u8;
+      type = (u32)BPF_CORE_READ(msg, msg_iter.iter_type);
     }
     // ensure this is an IOVEC or KVEC, low bit indicates read/write
     // note: iov_iter.iov and iov_iter.kvec are union and have same layout
@@ -381,13 +379,11 @@ int handle_kprobe__tcp_recvmsg(struct pt_regs *ctx)
     iov = BPF_CORE_READ(msg, msg_iov);
   } else {
     u32 type;
-    if (LINUX_KERNEL_VERSION < KERNEL_VERSION(5, 14, 0)) {
+    if (bpf_core_field_exists(((struct msghdr___5_13_19 *)msg)->msg_iter.type)) {
       struct msghdr___5_13_19 *msg = msg;
       type = BPF_CORE_READ(msg, msg_iter.type);
     } else {
-      u8 type_u8;
-      type_u8 = BPF_CORE_READ(msg, msg_iter.iter_type);
-      type = type_u8;
+      type = (u32)BPF_CORE_READ(msg, msg_iter.iter_type);
     }
     // ensure this is an IOVEC or KVEC, low bit indicates read/write
     // note: iov_iter.iov and iov_iter.kvec are union and have same layout
