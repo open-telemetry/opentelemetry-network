@@ -2560,6 +2560,7 @@ int on_cgroup_control(struct pt_regs *ctx)
   return 0;
 }
 
+SEC("kretprobe/cgroup_control")
 int onret_cgroup_control(struct pt_regs *ctx)
 {
   // Only available for kernel >= 4.6.0
