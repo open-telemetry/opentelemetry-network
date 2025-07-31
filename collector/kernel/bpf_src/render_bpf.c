@@ -1771,7 +1771,7 @@ static inline void udp_update_stats_impl(
     /* reset statistics */
     stats->packets = 1;
     stats->drops = is_rx ? sk_drops_counter : 0;
-    stats->bytes = skb->len;
+    stats->bytes = BPF_CORE_READ(skb, len);
 
     /* schedule next update */
     stats->last_output = now;
@@ -1781,7 +1781,7 @@ static inline void udp_update_stats_impl(
 
   /* address is the same and too early to send a notification, just update */
   stats->packets++;
-  stats->bytes += skb->len;
+  stats->bytes += BPF_CORE_READ(skb, len);
 
   /** don't update 'drops' here, because it's not cumulative,
    * it's a total since last reset
