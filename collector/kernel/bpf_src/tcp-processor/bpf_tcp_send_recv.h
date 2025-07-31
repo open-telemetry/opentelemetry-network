@@ -162,7 +162,7 @@ __attribute__((noinline)) int handle_kprobe__tcp_sendmsg(struct pt_regs *ctx)
   struct iovec *iov = NULL;
   unsigned long nr_segs = 0;
   size_t iov_offset = 0;
-  if (LINUX_KERNEL_VERSION < KERNEL_VERSION(3, 19, 0)) {
+  if (bpf_core_field_exists(((struct msghdr___3_18_140 *)msg)->msg_iov)) {
     struct msghdr___3_18_140 *msg = msg;
     iov = BPF_CORE_READ(msg, msg_iov);
     nr_segs = BPF_CORE_READ(msg, msg_iovlen);
@@ -186,7 +186,11 @@ __attribute__((noinline)) int handle_kprobe__tcp_sendmsg(struct pt_regs *ctx)
       return 0;
     }
     // can access through iov since iov and kvec are union and have same layout
-    iov = (struct iovec *)BPF_CORE_READ(msg, msg_iter.__iov);
+    if (bpf_core_field_exists(msg->msg_iter.__iov)) {
+      iov = (struct iovec *)BPF_CORE_READ(msg, msg_iter.__iov);
+    } else {
+      iov = (struct iovec *)BPF_CORE_READ((struct msghdr___5_13_19 *)msg, msg_iter.iov);
+    }
     nr_segs = BPF_CORE_READ(msg, msg_iter.nr_segs);
     iov_offset = BPF_CORE_READ(msg, msg_iter.iov_offset);
   }
@@ -374,7 +378,7 @@ int handle_kprobe__tcp_recvmsg(struct pt_regs *ctx)
   // decode msg
 
   struct iovec *iov = NULL;
-  if (LINUX_KERNEL_VERSION < KERNEL_VERSION(3, 19, 0)) {
+  if (bpf_core_field_exists(((struct msghdr___3_18_140 *)msg)->msg_iov)) {
     struct msghdr___3_18_140 *msg = msg;
     iov = BPF_CORE_READ(msg, msg_iov);
   } else {
@@ -396,7 +400,11 @@ int handle_kprobe__tcp_recvmsg(struct pt_regs *ctx)
       return 0;
     }
     // can access through iov since iov and kvec are union and have same layout
-    iov = (struct iovec *)BPF_CORE_READ(msg, msg_iter.__iov);
+    if (bpf_core_field_exists(msg->msg_iter.__iov)) {
+      iov = (struct iovec *)BPF_CORE_READ(msg, msg_iter.__iov);
+    } else {
+      iov = (struct iovec *)BPF_CORE_READ((struct msghdr___5_13_19 *)msg, msg_iter.iov);
+    }
   }
 
   void *iov_base = NULL;
