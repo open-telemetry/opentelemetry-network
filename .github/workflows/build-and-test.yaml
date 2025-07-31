@@ -429,8 +429,8 @@ jobs:
           docker start $container_id &
           collector_pid=$!
           
-          # Wait for 20 seconds
-          sleep 20
+          # Wait for 30 seconds
+          sleep 30
           
           # Check if container is still running
           echo Checking if container is still running:
