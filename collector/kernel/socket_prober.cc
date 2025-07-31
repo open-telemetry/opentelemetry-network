@@ -42,14 +42,14 @@ SocketProber::SocketProber(
   // UDP START
   probe_handler.start_kretprobe(skel, "onret_udp_v4_get_port", "udp_v4_get_port");
   probe_handler.start_kretprobe(skel, "onret_udp_v6_get_port", "udp_v6_get_port");
-  probe_handler.start_probe(skel, "on_udp_v46_get_port", "udp_v4_get_port");
-  probe_handler.start_probe(skel, "on_udp_v46_get_port", "udp_v6_get_port");
+  probe_handler.start_probe(skel, "on_udp_v4_get_port", "udp_v4_get_port");
+  probe_handler.start_probe(skel, "on_udp_v6_get_port", "udp_v6_get_port");
 
   // EXISTING
-  probe_handler.start_probe(skel, "on_tcp46_seq_show", "tcp4_seq_show");
-  probe_handler.start_probe(skel, "on_tcp46_seq_show", "tcp6_seq_show");
-  probe_handler.start_probe(skel, "on_udp46_seq_show", "udp4_seq_show");
-  probe_handler.start_probe(skel, "on_udp46_seq_show", "udp6_seq_show");
+  probe_handler.start_probe(skel, "on_tcp4_seq_show", "tcp4_seq_show");
+  probe_handler.start_probe(skel, "on_tcp6_seq_show", "tcp6_seq_show");
+  probe_handler.start_probe(skel, "on_udp4_seq_show", "udp4_seq_show");
+  probe_handler.start_probe(skel, "on_udp6_seq_show", "udp6_seq_show");
 
   periodic_cb();
   check_cb("socket prober startup");
