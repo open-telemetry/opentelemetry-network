@@ -298,34 +298,7 @@ static u64 get_task_cgroup(struct pt_regs *ctx, struct task_struct *tsk)
     return 0;
   }
 
-  struct css_set *set = NULL;
-  ret = bpf_probe_read(&set, sizeof(set), &((struct task_struct___with_css_set *)tsk)->cgroups);
-  if (ret != 0) {
-    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, abs_val(ret), 0, 0);
-    return 0;
-  }
-  if (set == NULL) {
-    bpf_log(ctx, BPF_LOG_INVALID_POINTER, 0, 0, 0);
-    return 0;
-  }
-
-  struct cgroup_subsys_state *css = NULL;
-  ret = bpf_probe_read(&css, sizeof(css), &set->subsys[FLOW_CGROUP_SUBSYS]);
-  if (ret != 0) {
-    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, abs_val(ret), 0, 0);
-    return 0;
-  }
-  if (css == NULL) {
-    bpf_log(ctx, BPF_LOG_INVALID_POINTER, 0, 0, 0);
-    return 0;
-  }
-
-  struct cgroup *cgrp = NULL;
-  ret = bpf_probe_read(&cgrp, sizeof(cgrp), &css->cgroup);
-  if (ret != 0) {
-    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, abs_val(ret), 0, 0);
-    return 0;
-  }
+  struct cgroup *cgrp = (struct cgroup *)BPF_CORE_READ((struct task_struct___with_css_set *)tsk, cgroups, subsys[FLOW_CGROUP_SUBSYS], cgroup);
   if (cgrp == NULL) {
     bpf_log(ctx, BPF_LOG_INVALID_POINTER, 0, 0, 0);
     return 0;
@@ -338,15 +311,8 @@ static pid_t get_task_parent(struct pt_regs *ctx, struct task_struct *tsk)
 {
   int ret = 0;
 
-  struct task_struct *parent_tsk = NULL;
-  ret = bpf_probe_read(&parent_tsk, sizeof(parent_tsk), &tsk->parent);
-  if (ret != 0) {
-    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, abs_val(ret), 0, 0);
-    return -1;
-  }
-
-  pid_t parent_tgid = 0;
-  ret = bpf_probe_read(&parent_tgid, sizeof(parent_tgid), &parent_tsk->tgid);
+  pid_t parent_tgid = BPF_CORE_READ(tsk, parent, tgid);
+  ret = 0;
   if (ret != 0) {
     bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, abs_val(ret), 0, 0);
     return -1;
@@ -754,7 +720,7 @@ static void remove_tcp_open_socket(struct pt_regs *ctx, struct sock *sk)
   perf_submit_agent_internal__close_sock_info(ctx, now, (__u64)sk);
 }
 
-static inline void submit_set_state_ipv6(struct pt_regs *ctx, u64 now, int tx_rx, struct sock *sk)
+static __noinline void submit_set_state_ipv6(struct pt_regs *ctx, u64 now, int tx_rx, struct sock *sk)
 {
   struct sock *skp = NULL;
   bpf_probe_read(&skp, sizeof(skp), &sk);
@@ -775,7 +741,7 @@ static inline void submit_set_state_ipv6(struct pt_regs *ctx, u64 now, int tx_rx
 }
 
 // state - we want to get the 5-tuple as early as possible.
-static inline void submit_set_state_ipv4(struct pt_regs *ctx, u64 now, int tx_rx, struct sock *sk)
+static __noinline void submit_set_state_ipv4(struct pt_regs *ctx, u64 now, int tx_rx, struct sock *sk)
 {
   struct sock *skp = NULL;
   bpf_probe_read(&skp, sizeof(skp), &sk);
@@ -785,38 +751,28 @@ static inline void submit_set_state_ipv4(struct pt_regs *ctx, u64 now, int tx_rx
   }
   u16 dport = 0;
   u16 sport = 0;
+  u32 daddr = 0;
+  u32 saddr = 0;
   // These values need to be taken from bpf_probe_read
   bpf_probe_read(&dport, sizeof(dport), &(skp->sk_dport));
   bpf_probe_read(&sport, sizeof(sport), &(skp->sk_num));
+  bpf_probe_read_kernel(&daddr, sizeof(daddr), &sk->sk_daddr);
+  bpf_probe_read_kernel(&saddr, sizeof(saddr), &sk->sk_rcv_saddr);
 
   perf_submit_agent_internal__set_state_ipv4(
-      ctx, now, sk->sk_daddr, sk->sk_rcv_saddr, bpf_ntohs(dport), sport, (__u64)sk, tx_rx);
+      ctx, now, daddr, saddr, bpf_ntohs(dport), sport, (__u64)sk, tx_rx);
 }
 
-static inline void submit_reset_tcp_counters(struct pt_regs *ctx, u64 now, u64 pid, struct sock *sk)
+static __noinline void submit_reset_tcp_counters(struct pt_regs *ctx, u64 now, u64 pid, struct sock *sk)
 {
   int ret;
   u64 bytes_acked = 0;
   u32 packets_retrans = 0;
   u64 bytes_received = 0;
 
-  ret = bpf_probe_read(&bytes_acked, sizeof(bytes_acked), &(tcp_sk(sk)->bytes_acked));
-  if (ret != 0) {
-    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, abs_val(ret), 0, 0);
-    return;
-  }
-
-  ret = bpf_probe_read(&packets_retrans, sizeof(packets_retrans), &(tcp_sk(sk)->total_retrans));
-  if (ret != 0) {
-    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, abs_val(ret), 0, 0);
-    return;
-  }
-
-  ret = bpf_probe_read(&bytes_received, sizeof(bytes_received), &(tcp_sk(sk)->bytes_received));
-  if (ret != 0) {
-    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, abs_val(ret), 0, 0);
-    return;
-  }
+  bytes_acked = BPF_CORE_READ(tcp_sk(sk), bytes_acked);
+  packets_retrans = BPF_CORE_READ(tcp_sk(sk), total_retrans);
+  bytes_received = BPF_CORE_READ(tcp_sk(sk), bytes_received);
 
   perf_submit_agent_internal__reset_tcp_counters(
       ctx, now, (__u64)sk, bytes_acked, tcp_get_delivered(sk), packets_retrans, bytes_received, pid);
@@ -825,20 +781,28 @@ static inline void submit_reset_tcp_counters(struct pt_regs *ctx, u64 now, u64 p
 // common logic for handling existing sockets
 static int ensure_tcp_existing(struct pt_regs *ctx, struct sock *sk, u32 pid)
 {
-  if (sk->sk_family != AF_INET && sk->sk_family != AF_INET6) {
+  if (!sk) {
+    return -1;
+  }
+  
+  u16 family = BPF_CORE_READ(sk, sk_family);
+  
+  if (family != AF_INET && family != AF_INET6) {
     return -1;
   }
 
   u64 now = get_timestamp();
 
   int tx_rx = 0;
-  if (sk->sk_state == TCP_LISTEN)
+  u8 state = BPF_CORE_READ(sk, sk_state);
+  if (state == TCP_LISTEN) {
     tx_rx = 2;
+  }
 
   int ret = add_tcp_open_socket(ctx, sk, pid, now, NULL);
   if (ret == 1) {
     submit_reset_tcp_counters(ctx, now, pid, sk);
-    if (sk->sk_family == AF_INET6) {
+    if (family == AF_INET6) {
       submit_set_state_ipv6(ctx, now, tx_rx, sk);
     } else {
       submit_set_state_ipv4(ctx, now, tx_rx, sk);
@@ -935,7 +899,7 @@ int on_tcp_connect(struct pt_regs *ctx)
 
   u64 now = get_timestamp();
   int tx_rx = 1;
-  u16 family = sk->sk_family;
+  u16 family = BPF_CORE_READ(sk, sk_family);
   if (family == AF_INET) {
     submit_set_state_ipv4(ctx, now, tx_rx, sk);
   } else if (family == AF_INET6) {
@@ -955,7 +919,7 @@ int on_inet_csk_listen_start(struct pt_regs *ctx)
 {
   struct sock *sk = (struct sock *)PT_REGS_PARM1(ctx);
   // filter out non-tcp connections
-  u16 family = sk->sk_family;
+  u16 family = BPF_CORE_READ(sk, sk_family);
   if (family != AF_INET && family != AF_INET6)
     return 0;
 
@@ -1158,12 +1122,16 @@ int onret_inet_csk_accept(struct pt_regs *ctx)
   // Set the state
   u16 dport = 0;
   u16 sport = 0;
+  u32 daddr = 0;
+  u32 saddr = 0;
   bpf_probe_read(&dport, sizeof(dport), &newsk->sk_dport);
   bpf_probe_read(&sport, sizeof(sport), &newsk->sk_num);
 
   if (family == AF_INET) {
+    bpf_probe_read_kernel(&daddr, sizeof(daddr), &newsk->sk_daddr);
+    bpf_probe_read_kernel(&saddr, sizeof(saddr), &newsk->sk_rcv_saddr);
     perf_submit_agent_internal__set_state_ipv4(
-        ctx, now, newsk->sk_daddr, newsk->sk_rcv_saddr, bpf_ntohs(dport), sport, (__u64)newsk, 2);
+        ctx, now, daddr, saddr, bpf_ntohs(dport), sport, (__u64)newsk, 2);
   } else if (family == AF_INET6) {
     uint8_t daddr[16] = {};
     uint8_t saddr[16] = {};
@@ -1185,7 +1153,8 @@ static int tcp46_seq_show_impl(struct pt_regs *ctx, struct seq_file *seq, void *
 {
   struct sock *sk = v;
 
-  u32 ino = (u32)sk->sk_socket->file->f_inode->i_ino;
+  u32 ino = BPF_CORE_READ(sk, sk_socket, file, f_inode, i_ino);
+  
   u32 *lookup_tgid = bpf_map_lookup_elem(&seen_inodes, &ino);
   if (!lookup_tgid) {
 #if DEBUG_TCP_SOCKET_ERRORS
@@ -1284,7 +1253,9 @@ static inline int add_udp_open_socket(struct pt_regs *ctx, struct sock *sk, u32 
 
 static int ensure_udp_existing(struct pt_regs *ctx, struct sock *sk, u32 tgid)
 {
-  if (sk->sk_family != AF_INET && sk->sk_family != AF_INET6) {
+  u16 family = BPF_CORE_READ(sk, sk_family);
+  
+  if (family != AF_INET && family != AF_INET6) {
     return -1;
   }
 
@@ -1293,15 +1264,14 @@ static int ensure_udp_existing(struct pt_regs *ctx, struct sock *sk, u32 tgid)
   int ret = add_udp_open_socket(ctx, sk, tgid, now);
   if (ret == 1) {
     struct in6_addr addr;
-    u16 family = sk->sk_family;
 
     if (family == AF_INET6) {
-      addr = sk->sk_v6_rcv_saddr;
+      addr = BPF_CORE_READ(sk, sk_v6_rcv_saddr);
     } else {
       addr.s6_addr32[0] = addr.s6_addr32[1] = 0;
       addr.s6_addr16[4] = 0;
       addr.s6_addr16[5] = 0xffff;
-      addr.s6_addr32[3] = sk->sk_rcv_saddr;
+      addr.s6_addr32[3] = BPF_CORE_READ(sk, sk_rcv_saddr);
     }
 
     u16 lport = 0;
@@ -1349,7 +1319,8 @@ static struct udp_open_socket_t *udp_existing_hack(struct pt_regs *ctx, struct s
 static void udp_send_stats_if_nonempty(struct pt_regs *ctx, u64 now, struct sock *sk, struct udp_stats_t *stats, u8 is_rx)
 {
   /* is no data to send, return */
-  if (!stats->addr_changed && stats->packets == 0 && sk->sk_drops.counter == stats->drops)
+  u32 sk_drops_counter = BPF_CORE_READ(sk, sk_drops.counter);
+  if (!stats->addr_changed && stats->packets == 0 && sk_drops_counter == stats->drops)
     return;
 
   // bpf_trace_printk("is_rx: %d   sk->sk_drops.counter: %d   stats->drops:
@@ -1369,7 +1340,7 @@ static void udp_send_stats_if_nonempty(struct pt_regs *ctx, u64 now, struct sock
       is_rx,
       (uint8_t *)(stats->laddr6),
       stats->lport,
-      is_rx ? (sk->sk_drops.counter - stats->drops) : 0);
+      is_rx ? (sk_drops_counter - stats->drops) : 0);
 }
 
 static void remove_udp_open_socket(struct pt_regs *ctx, struct sock *sk)
@@ -1428,7 +1399,7 @@ static int udp46_seq_show_impl(struct pt_regs *ctx, struct seq_file *seq, void *
 {
   struct sock *sk = v;
 
-  u32 ino = (u32)sk->sk_socket->file->f_inode->i_ino;
+  u32 ino = BPF_CORE_READ(sk, sk_socket, file, f_inode, i_ino);
   u32 *lookup_tgid = bpf_map_lookup_elem(&seen_inodes, &ino);
   if (!lookup_tgid) {
 #if DEBUG_UDP_SOCKET_ERRORS
@@ -1726,7 +1697,7 @@ static inline void udp_update_stats_impl(
     u16 rport,
     u8 is_rx)
 {
-  const u16 family = sk->sk_family;
+  u16 family = BPF_CORE_READ(sk, sk_family);
   struct udp_open_socket_t *sk_info_p;
   struct udp_stats_t *stats;
 
@@ -1754,7 +1725,8 @@ static inline void udp_update_stats_impl(
                  (stats->laddr6[2] ^ laddr->s6_addr32[2]) | (stats->laddr6[3] ^ laddr->s6_addr32[3]) | (stats->lport ^ lport);
   u32 rchanged = (stats->raddr6[0] ^ raddr->s6_addr32[0]) | (stats->raddr6[1] ^ raddr->s6_addr32[1]) |
                  (stats->raddr6[2] ^ raddr->s6_addr32[2]) | (stats->raddr6[3] ^ raddr->s6_addr32[3]) | (stats->rport ^ rport);
-  u32 dchanged = is_rx ? (sk->sk_drops.counter != stats->drops) : 0;
+  u32 sk_drops_counter = BPF_CORE_READ(sk, sk_drops.counter);
+  u32 dchanged = is_rx ? (sk_drops_counter != stats->drops) : 0;
   u32 changed = lchanged | rchanged | dchanged;
 
   u64 now = get_timestamp();
@@ -1783,7 +1755,7 @@ static inline void udp_update_stats_impl(
 
     /* reset statistics */
     stats->packets = 1;
-    stats->drops = is_rx ? sk->sk_drops.counter : 0;
+    stats->drops = is_rx ? sk_drops_counter : 0;
     stats->bytes = skb->len;
 
     /* schedule next update */
@@ -2134,8 +2106,9 @@ int on_tcp_event_data_recv(struct pt_regs *ctx)
 // SYN timeouts.
 static void handle_syn_timeout(struct pt_regs *ctx, struct sock *sk)
 {
+  u8 state = BPF_CORE_READ(sk, sk_state);
   // is this a SYN timeout?
-  if (((1 << sk->sk_state) & (TCPF_SYN_SENT | TCPF_SYN_RECV)) == 0) {
+  if (((1 << state) & (TCPF_SYN_SENT | TCPF_SYN_RECV)) == 0) {
     // no, return.
     return;
   }
@@ -2169,21 +2142,18 @@ int on_tcp_retransmit_timer(struct pt_regs *ctx)
 SEC("kprobe/tcp_syn_ack_timeout")
 int on_tcp_syn_ack_timeout(struct pt_regs *ctx)
 {
-  const struct request_sock *req = NULL;
-  // Handle parameter differences between kernel versions
-  if (LINUX_KERNEL_VERSION < KERNEL_VERSION(4, 1, 0)) {
-    // In older kernels, there's an additional struct sock *sock parameter
-    req = (const struct request_sock *)PT_REGS_PARM2(ctx);
-  } else {
-    req = (const struct request_sock *)PT_REGS_PARM1(ctx);
+  // the request_sock parameter is the first parameter since 4.1 kernels
+  const struct request_sock *req = (const struct request_sock *)PT_REGS_PARM1(ctx);
+
+  if (!req) {
+    return 0;
   }
 
 #if TCP_STATS_ON_PARENT
 
-  struct sock *sk = NULL;
   if (LINUX_KERNEL_VERSION < KERNEL_VERSION(4, 4, 0)) {
     /* Linux<4.4 does not have req->rsk_listener */
-    bpf_probe_read(&sk, sizeof(sk), &(req->sk));
+    struct sock *sk = BPF_CORE_READ(req, sk);
 
     struct tcp_open_socket_t *sk_info;
     sk_info = bpf_map_lookup_elem(&tcp_open_sockets, &sk);
@@ -2194,13 +2164,13 @@ int on_tcp_syn_ack_timeout(struct pt_regs *ctx)
 
     handle_syn_timeout(ctx, sk_info->parent);
   } else {
-    handle_syn_timeout(ctx, (struct sock *)req->rsk_listener);
+    struct sock *listener = BPF_CORE_READ(req, rsk_listener);
+    handle_syn_timeout(ctx, listener);
   }
 
 #else
 
-  struct sock *sk = NULL;
-  bpf_probe_read(&sk, sizeof(sk), &(req->sk));
+  struct sock *sk = BPF_CORE_READ(rsk, sk);
   if (sk == NULL) {
     bpf_log(ctx, BPF_LOG_UNREACHABLE, 0, 0, 0);
     return 0;
@@ -2416,25 +2386,37 @@ static u32 get_css_id(struct cgroup_subsys_state *css)
 
 static struct cgroup *get_css_parent_cgroup(struct cgroup_subsys_state *css)
 {
+  if (!css) {
+    return NULL;
+  }
+  
   if (LINUX_KERNEL_VERSION < KERNEL_VERSION(3, 12, 0)) {
     struct cgroup_subsys_state___3_11 *css = css;
-    struct cgroup *parent_cgroup = css->cgroup->parent;
+    struct cgroup *parent_cgroup = BPF_CORE_READ(css, cgroup, parent);
     return parent_cgroup;
   } else {
-    if (!css->parent)
+    if (!BPF_CORE_READ(css, parent))
       return NULL;
-    struct cgroup *parent_cgroup = css->parent->cgroup;
+    struct cgroup *parent_cgroup = BPF_CORE_READ(css, parent, cgroup);
     return parent_cgroup;
   }
 }
 
 static const char *get_cgroup_name(struct cgroup *cg)
 {
+  if (!cg) {
+    return NULL;
+  }
+  
   if (LINUX_KERNEL_VERSION < KERNEL_VERSION(3, 15, 0)) {
     struct cgroup___3_11 *cg = cg;
-    return (const char *)&(cg->name->name[0]);
+    struct cgroup_name___3_11 *name = BPF_CORE_READ(cg, name);
+    if (!name) {
+      return NULL;
+    }
+    return (const char *)&(name->name[0]);
   } else {
-    return cg->kn->name;
+    return BPF_CORE_READ(cg, kn, name);
   }
 }
 
@@ -2607,7 +2589,7 @@ SEC("kprobe/cgroup_clone_children_read")
 int on_cgroup_clone_children_read(struct pt_regs *ctx)
 {
   struct cgroup *cgrp = (struct cgroup *)PT_REGS_PARM1(ctx);
-  u32 subsys_mask = (u32)cgrp->root->subsys_mask;
+  u32 subsys_mask = BPF_CORE_READ(cgrp, root, subsys_mask);
   if (subsys_mask != 1 << FLOW_CGROUP_SUBSYS)
     return 0;
 
@@ -2625,12 +2607,18 @@ int on_cgroup_attach_task(struct pt_regs *ctx)
 {
   struct cgroup *dst_cgrp = (struct cgroup *)PT_REGS_PARM1(ctx);
   struct task_struct *leader = (struct task_struct *)PT_REGS_PARM2(ctx);
-  u32 subsys_mask = (u32)dst_cgrp->root->subsys_mask;
+  u32 subsys_mask = BPF_CORE_READ(dst_cgrp, root, subsys_mask);
   if (subsys_mask != 1 << FLOW_CGROUP_SUBSYS)
     return 0;
 
+  pid_t pid = BPF_CORE_READ(leader, pid);
+  u8 comm[TASK_COMM_LEN];
+  if (bpf_probe_read_kernel_str(comm, sizeof(comm), leader->comm) <= 0) {
+    return 0;
+  }
+
   u64 now = get_timestamp();
-  perf_submit_agent_internal__cgroup_attach_task(ctx, now, (__u64)dst_cgrp, leader->pid, (u8 *)leader->comm);
+  perf_submit_agent_internal__cgroup_attach_task(ctx, now, (__u64)dst_cgrp, pid, comm);
   return 0;
 }
 
@@ -2638,8 +2626,14 @@ int on_cgroup_attach_task(struct pt_regs *ctx)
 /* NAT */
 /* end */
 SEC("kprobe/nf_nat_cleanup_conntrack")
-int on_nf_nat_cleanup_conntrack(struct pt_regs *ctx, struct nf_conn *ct)
+int on_nf_nat_cleanup_conntrack(struct pt_regs *ctx)
 {
+  struct nf_conn *ct = (struct nf_conn *)PT_REGS_PARM1(ctx);
+  
+  if (!ct) {
+    return 0;
+  }
+  
   u64 now = get_timestamp();
 
   // filter out conntracks we haven't seen before, as only a subset of all
@@ -2659,11 +2653,11 @@ int on_nf_nat_cleanup_conntrack(struct pt_regs *ctx, struct nf_conn *ct)
       ctx,
       now,
       (u64)ct,
-      (u32)ct->tuplehash[0].tuple.src.u3.ip,
-      (u16)ct->tuplehash[0].tuple.src.u.all,
-      (u32)ct->tuplehash[0].tuple.dst.u3.ip,
-      (u16)ct->tuplehash[0].tuple.dst.u.all,
-      (u8)ct->tuplehash[0].tuple.dst.protonum);
+      (u32)BPF_CORE_READ(ct, tuplehash[0].tuple.src.u3.ip),
+      (u16)BPF_CORE_READ(ct, tuplehash[0].tuple.src.u.all),
+      (u32)BPF_CORE_READ(ct, tuplehash[0].tuple.dst.u3.ip),
+      (u16)BPF_CORE_READ(ct, tuplehash[0].tuple.dst.u.all),
+      (u8)BPF_CORE_READ(ct, tuplehash[0].tuple.dst.protonum));
 
   bpf_map_delete_elem(&seen_conntracks, &ct);
 
@@ -2672,17 +2666,24 @@ int on_nf_nat_cleanup_conntrack(struct pt_regs *ctx, struct nf_conn *ct)
 
 /* start */
 SEC("kprobe/nf_conntrack_alter_reply")
-int on_nf_conntrack_alter_reply(struct pt_regs *ctx, struct nf_conn *ct, const struct nf_conntrack_tuple *newreply)
+int on_nf_conntrack_alter_reply(struct pt_regs *ctx)
 {
+  struct nf_conn *ct = (struct nf_conn *)PT_REGS_PARM1(ctx);
+  const struct nf_conntrack_tuple *newreply = (const struct nf_conntrack_tuple *)PT_REGS_PARM2(ctx);
+  
+  if (!ct || !newreply) {
+    return 0;
+  }
+  
   u64 now = get_timestamp();
 
   // filter out non ipv4
-  if ((u16)ct->tuplehash[0].tuple.src.l3num != AF_INET) {
+  if ((u16)BPF_CORE_READ(ct, tuplehash[0].tuple.src.l3num) != AF_INET) {
     return 0;
   }
 
   // filter out non-tcp and non-udp
-  u8 proto = (u8)newreply->dst.protonum;
+  u8 proto = (u8)BPF_CORE_READ(newreply, dst.protonum);
   if (proto != IPPROTO_TCP && proto != IPPROTO_UDP) {
     return 0;
   }
@@ -2703,16 +2704,16 @@ int on_nf_conntrack_alter_reply(struct pt_regs *ctx, struct nf_conn *ct, const s
       ctx,
       now,
       (u64)ct,
-      (u32)ct->tuplehash[0].tuple.src.u3.ip,
-      (u16)ct->tuplehash[0].tuple.src.u.all,
-      (u32)ct->tuplehash[0].tuple.dst.u3.ip,
-      (u16)ct->tuplehash[0].tuple.dst.u.all,
-      (u8)ct->tuplehash[0].tuple.dst.protonum,
-      (u32)newreply->dst.u3.ip,
-      (u16)newreply->dst.u.all,
-      (u32)newreply->src.u3.ip,
-      (u16)newreply->src.u.all,
-      (u8)newreply->dst.protonum);
+      (u32)BPF_CORE_READ(ct, tuplehash[0].tuple.src.u3.ip),
+      (u16)BPF_CORE_READ(ct, tuplehash[0].tuple.src.u.all),
+      (u32)BPF_CORE_READ(ct, tuplehash[0].tuple.dst.u3.ip),
+      (u16)BPF_CORE_READ(ct, tuplehash[0].tuple.dst.u.all),
+      (u8)BPF_CORE_READ(ct, tuplehash[0].tuple.dst.protonum),
+      (u32)BPF_CORE_READ(newreply, dst.u3.ip),
+      (u16)BPF_CORE_READ(newreply, dst.u.all),
+      (u32)BPF_CORE_READ(newreply, src.u3.ip),
+      (u16)BPF_CORE_READ(newreply, src.u.all),
+      (u8)BPF_CORE_READ(newreply, dst.protonum));
   return 0;
 }
 

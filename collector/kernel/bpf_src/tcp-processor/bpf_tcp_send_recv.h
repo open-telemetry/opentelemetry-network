@@ -107,25 +107,17 @@ static void tcp_recv_stream_handler(
 // Called when data is to be send to a TCP socket
 
 SEC("kprobe/tcp_sendmsg")
+__attribute__((noinline))
 int handle_kprobe__tcp_sendmsg(struct pt_regs *ctx)
 {
   struct sock *sk;
   struct msghdr *msg;
   size_t size;
 
-  // Handle parameter differences between kernel versions
-  if (LINUX_KERNEL_VERSION < KERNEL_VERSION(4, 1, 0)) {
-    // In older kernels, there's an additional struct kiocb *iocb parameter
-    // Parameters are: struct kiocb *iocb, struct sock *sk, struct msghdr *msg, size_t size
-    sk = (struct sock *)PT_REGS_PARM2(ctx);
-    msg = (struct msghdr *)PT_REGS_PARM3(ctx);
-    size = (size_t)PT_REGS_PARM4(ctx);
-  } else {
-    // In newer kernels: struct sock *sk, struct msghdr *msg, size_t size
-    sk = (struct sock *)PT_REGS_PARM1(ctx);
-    msg = (struct msghdr *)PT_REGS_PARM2(ctx);
-    size = (size_t)PT_REGS_PARM3(ctx);
-  }
+  // In post 4.1 kernels: struct sock *sk, struct msghdr *msg, size_t size
+  sk = (struct sock *)PT_REGS_PARM1(ctx);
+  msg = (struct msghdr *)PT_REGS_PARM2(ctx);
+  size = (size_t)PT_REGS_PARM3(ctx);
   GET_PID_TGID
 
   struct tcp_connection_t *pconn;
@@ -173,17 +165,17 @@ int handle_kprobe__tcp_sendmsg(struct pt_regs *ctx)
   size_t iov_offset = 0;
   if (LINUX_KERNEL_VERSION < KERNEL_VERSION(3, 19, 0)) {
     struct msghdr___3_18_140 *msg = msg;
-    bpf_probe_read(&iov, sizeof(iov), &(msg->msg_iov));
-    bpf_probe_read(&nr_segs, sizeof(nr_segs), &(msg->msg_iovlen));
+    iov = BPF_CORE_READ(msg, msg_iov);
+    nr_segs = BPF_CORE_READ(msg, msg_iovlen);
     // iov_offset is not a thing in older kernels
   } else {
     u32 type;
     if (LINUX_KERNEL_VERSION < KERNEL_VERSION(5, 14, 0)) {
       struct msghdr___5_13_19 *msg = msg;
-      bpf_probe_read(&type, sizeof(unsigned int), &(msg->msg_iter.type));
+      type = BPF_CORE_READ(msg, msg_iter.type);
     } else {
       u8 type_u8;
-      bpf_probe_read(&type_u8, sizeof(type_u8), &(msg->msg_iter.iter_type));
+      type_u8 = BPF_CORE_READ(msg, msg_iter.iter_type);
       type = type_u8;
     }
     // ensure this is an IOVEC or KVEC, low bit indicates read/write
@@ -197,9 +189,9 @@ int handle_kprobe__tcp_sendmsg(struct pt_regs *ctx)
       return 0;
     }
     // can access through iov since iov and kvec are union and have same layout
-    bpf_probe_read(&iov, sizeof(iov), &(msg->msg_iter.__iov));
-    bpf_probe_read(&nr_segs, sizeof(nr_segs), &(msg->msg_iter.nr_segs));
-    bpf_probe_read(&iov_offset, sizeof(iov_offset), &(msg->msg_iter.iov_offset));
+    iov = (struct iovec *)BPF_CORE_READ(msg, msg_iter.__iov);
+    nr_segs = BPF_CORE_READ(msg, msg_iter.nr_segs);
+    iov_offset = BPF_CORE_READ(msg, msg_iter.iov_offset);
   }
 
   void *iov_ptr = NULL;
@@ -278,8 +270,8 @@ int continue_tcp_sendmsg(struct pt_regs *ctx)
     if (args->nr_segs > 0) {
       void *iov_ptr = NULL;
       size_t iov_len = 0;
-      bpf_probe_read(&iov_ptr, sizeof(iov_ptr), &(args->iov->iov_base));
-      bpf_probe_read(&iov_len, sizeof(iov_len), &(args->iov->iov_len));
+      iov_ptr = BPF_CORE_READ(args->iov, iov_base);
+      iov_len = BPF_CORE_READ(args->iov, iov_len);
 #if TRACE_TCP_SEND
       DEBUG_PRINTK("tcp_sendmsg continue: ptr=%llx, len=%d\n", iov_ptr, iov_len);
 #endif
@@ -335,24 +327,13 @@ int handle_kprobe__tcp_recvmsg(struct pt_regs *ctx)
   int flags;
   // int *addr_len = NULL;   -- unused
 
-  // Handle parameter differences between kernel versions
-  if (LINUX_KERNEL_VERSION < KERNEL_VERSION(4, 1, 0)) {
-    // In older kernels, there's an additional struct kiocb *iocb parameter
-    // Parameters are: struct kiocb *iocb, struct sock *sk, struct msghdr *msg, size_t len, int nonblock, int flags
-    sk = (struct sock *)PT_REGS_PARM2(ctx);
-    msg = (struct msghdr *)PT_REGS_PARM3(ctx);
-    len = (size_t)PT_REGS_PARM4(ctx);
-    nonblock = (int)PT_REGS_PARM5(ctx);
-    flags = (int)PT_REGS_PARM6(ctx);
-    // addr_len parameter doesn't exist in older kernels
-  } else {
-    // In newer kernels: struct sock *sk, struct msghdr *msg, size_t len, int nonblock, int flags, int *addr_len
-    sk = (struct sock *)PT_REGS_PARM1(ctx);
-    msg = (struct msghdr *)PT_REGS_PARM2(ctx);
-    len = (size_t)PT_REGS_PARM3(ctx);
-    nonblock = (int)PT_REGS_PARM4(ctx);
-    flags = (int)PT_REGS_PARM5(ctx);
-  }
+  // In kernels 4.1 onwards: struct sock *sk, struct msghdr *msg, size_t len, int nonblock, int flags, int *addr_len
+  sk = (struct sock *)PT_REGS_PARM1(ctx);
+  msg = (struct msghdr *)PT_REGS_PARM2(ctx);
+  len = (size_t)PT_REGS_PARM3(ctx);
+  nonblock = (int)PT_REGS_PARM4(ctx);
+  flags = (int)PT_REGS_PARM5(ctx);
+
   GET_PID_TGID
 
   struct tcp_connection_t *pconn;
@@ -398,15 +379,15 @@ int handle_kprobe__tcp_recvmsg(struct pt_regs *ctx)
   struct iovec *iov = NULL;
   if (LINUX_KERNEL_VERSION < KERNEL_VERSION(3, 19, 0)) {
     struct msghdr___3_18_140 *msg = msg;
-    bpf_probe_read(&iov, sizeof(iov), &(msg->msg_iov));
+    iov = BPF_CORE_READ(msg, msg_iov);
   } else {
     u32 type;
     if (LINUX_KERNEL_VERSION < KERNEL_VERSION(5, 14, 0)) {
       struct msghdr___5_13_19 *msg = msg;
-      bpf_probe_read(&type, sizeof(unsigned int), &(msg->msg_iter.type));
+      type = BPF_CORE_READ(msg, msg_iter.type);
     } else {
       u8 type_u8;
-      bpf_probe_read(&type_u8, sizeof(type_u8), &(msg->msg_iter.iter_type));
+      type_u8 = BPF_CORE_READ(msg, msg_iter.iter_type);
       type = type_u8;
     }
     // ensure this is an IOVEC or KVEC, low bit indicates read/write
@@ -420,15 +401,15 @@ int handle_kprobe__tcp_recvmsg(struct pt_regs *ctx)
       return 0;
     }
     // can access through iov since iov and kvec are union and have same layout
-    bpf_probe_read(&iov, sizeof(iov), &(msg->msg_iter.__iov));
+    iov = (struct iovec *)BPF_CORE_READ(msg, msg_iter.__iov);
   }
 
   void *iov_base = NULL;
   size_t iov_len = 0;
   int written = 0;
   int depth = 1;
-  bpf_probe_read(&iov_base, sizeof(iov_base), &(iov->iov_base));
-  bpf_probe_read(&iov_len, sizeof(iov_len), &(iov->iov_len));
+  iov_base = BPF_CORE_READ(iov, iov_base);
+  iov_len = BPF_CORE_READ(iov, iov_len);
 
   // Add to receiver table
   BEGIN_SAVE_ARGS(tcp_recvmsg)
