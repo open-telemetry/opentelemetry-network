@@ -279,12 +279,6 @@ int ProbeHandler::start_probe_common(
     const std::string &k_func_name,
     const std::string &event_id_suffix)
 {
-  // Consult the kernel symbols list only if it was successfully loaded.
-  if (kernel_symbols_ && !kernel_symbols_->contains(k_func_name)) {
-    LOG::debug("Kernel function not found: {}", k_func_name);
-    return -4;
-  }
-
   auto bpf_program = bpf_object__find_program_by_name(skel->obj, func_name.c_str());
   if (!bpf_program) {
     LOG::debug_in(AgentLogKind::BPF, "Could not get find program. func_name:{} k_func_name:{}", func_name, k_func_name);
