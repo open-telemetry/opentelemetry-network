@@ -1850,24 +1850,24 @@ int on_udp_send_skb(struct pt_regs *ctx)
 {
   struct sk_buff *skb = (struct sk_buff *)PT_REGS_PARM1(ctx);
   struct flowi4 *fl4 = (struct flowi4 *)PT_REGS_PARM2(ctx);
-  
+
   if (!skb || !fl4)
     return 0;
-  
+
   GET_PID_TGID;
 
   __u32 saddr = BPF_CORE_READ(fl4, saddr);
   __u32 daddr = BPF_CORE_READ(fl4, daddr);
   __be16 sport = BPF_CORE_READ(fl4, fl4_sport);
   __be16 dport = BPF_CORE_READ(fl4, fl4_dport);
-  
+
   struct in6_addr laddr = make_ipv6_address(saddr);
   struct in6_addr raddr = make_ipv6_address(daddr);
 
   struct sock *sk_ptr = BPF_CORE_READ(skb, sk);
   if (!sk_ptr)
     return 0;
-  
+
   udp_update_stats(ctx, sk_ptr, skb, &laddr, sport, &raddr, dport, 0);
 
   // Call on_udp_send_skb__2
@@ -1883,10 +1883,10 @@ int on_udp_v6_send_skb(struct pt_regs *ctx)
 {
   struct sk_buff *skb = (struct sk_buff *)PT_REGS_PARM1(ctx);
   struct flowi6 *fl6 = (struct flowi6 *)PT_REGS_PARM2(ctx);
-  
+
   if (!skb || !fl6)
     return 0;
-  
+
   GET_PID_TGID;
 
   struct in6_addr laddr = BPF_CORE_READ(fl6, saddr);
@@ -1902,7 +1902,7 @@ int on_udp_v6_send_skb(struct pt_regs *ctx)
   struct sock *sk_ptr = BPF_CORE_READ(skb, sk);
   if (!sk_ptr)
     return 0;
-  
+
   udp_update_stats(ctx, sk_ptr, skb, &laddr, sport, &raddr, dport, 0);
 
   // Call on_udp_v6_send_skb__2
@@ -1928,15 +1928,15 @@ int on_ip_send_skb(struct pt_regs *ctx)
 {
   struct net *net = (struct net *)PT_REGS_PARM1(ctx);
   struct sk_buff *skb = (struct sk_buff *)PT_REGS_PARM2(ctx);
-  
+
   if (!skb)
     return 0;
-  
+
   struct sock *sk = BPF_CORE_READ(skb, sk);
   unsigned char *head = BPF_CORE_READ(skb, head);
   __u16 network_header = BPF_CORE_READ(skb, network_header);
   __u16 transport_header = BPF_CORE_READ(skb, transport_header);
-  
+
   struct iphdr *ip_hdr = (struct iphdr *)(head + network_header);
   __u8 protocol = BPF_CORE_READ(ip_hdr, protocol);
 
@@ -1947,7 +1947,7 @@ int on_ip_send_skb(struct pt_regs *ctx)
     __u32 daddr = BPF_CORE_READ(ip_hdr, daddr);
     __be16 source = BPF_CORE_READ(udp_hdr, source);
     __be16 dest = BPF_CORE_READ(udp_hdr, dest);
-    
+
     struct in6_addr laddr = make_ipv6_address(saddr);
     struct in6_addr raddr = make_ipv6_address(daddr);
 
@@ -1977,15 +1977,15 @@ SEC("kprobe/ip6_send_skb")
 int on_ip6_send_skb(struct pt_regs *ctx)
 {
   struct sk_buff *skb = (struct sk_buff *)PT_REGS_PARM1(ctx);
-  
+
   if (!skb)
     return 0;
-  
+
   struct sock *sk = BPF_CORE_READ(skb, sk);
   unsigned char *head = BPF_CORE_READ(skb, head);
   __u16 network_header = BPF_CORE_READ(skb, network_header);
   __u16 transport_header = BPF_CORE_READ(skb, transport_header);
-  
+
   struct ipv6hdr *ipv6_hdr = (struct ipv6hdr *)(head + network_header);
   __u8 nexthdr = BPF_CORE_READ(ipv6_hdr, nexthdr);
 
@@ -2528,7 +2528,7 @@ SEC("kprobe/kill_css")
 int on_kill_css(struct pt_regs *ctx)
 {
   struct cgroup_subsys_state *css = (struct cgroup_subsys_state *)PT_REGS_PARM1(ctx);
-  
+
   if (LINUX_KERNEL_VERSION >= KERNEL_VERSION(3, 12, 0)) {
     // For Kernel >= 3.12
     u32 ssid = get_css_id(css);
@@ -2552,7 +2552,7 @@ SEC("kprobe/cgroup_destroy_locked")
 int on_cgroup_destroy_locked(struct pt_regs *ctx)
 {
   struct cgroup *cgrp = (struct cgroup *)PT_REGS_PARM1(ctx);
-  
+
   if (LINUX_KERNEL_VERSION < KERNEL_VERSION(3, 12, 0)) {
     struct cgroup_subsys_state *css = NULL;
     bpf_probe_read(&css, sizeof(css), &(cgrp->subsys[FLOW_CGROUP_SUBSYS]));
@@ -2573,7 +2573,7 @@ SEC("kprobe/css_populate_dir")
 int on_css_populate_dir(struct pt_regs *ctx)
 {
   struct cgroup_subsys_state *css = (struct cgroup_subsys_state *)PT_REGS_PARM1(ctx);
-  
+
   if (LINUX_KERNEL_VERSION >= KERNEL_VERSION(4, 4, 0)) {
     // For Kernel >= 4.4
     u32 ssid = get_css_id(css);
@@ -2598,7 +2598,7 @@ int on_cgroup_populate_dir(struct pt_regs *ctx)
 {
   struct cgroup *cgrp = (struct cgroup *)PT_REGS_PARM1(ctx);
   unsigned long subsys_mask = (unsigned long)PT_REGS_PARM2(ctx);
-  
+
   struct cgroup_subsys_state *css = NULL;
   bpf_probe_read(&css, sizeof(css), &(cgrp->subsys[FLOW_CGROUP_SUBSYS]));
   if (css == NULL)
