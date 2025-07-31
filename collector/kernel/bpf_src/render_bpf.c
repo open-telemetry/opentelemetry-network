@@ -2357,13 +2357,15 @@ int on_skb_consume_udp(struct pt_regs *ctx, struct sock *sk, struct sk_buff *skb
 // Compatibility layer for kernels pre skb_consume_udp (pre-4.10)
 SEC("kprobe/__skb_free_datagram_locked")
 SEC("kprobe/skb_free_datagram_locked")
-int on_skb_free_datagram_locked(struct pt_regs *ctx, struct sock *sk, struct sk_buff *skb, int len)
+int on_skb_free_datagram_locked(struct pt_regs *ctx)
 {
+  struct sock *sk = (struct sock *)PT_REGS_PARM1(ctx);
+  struct sk_buff *skb = (struct sk_buff *)PT_REGS_PARM2(ctx);
   // Handle parameter differences between kernel versions
-  if (LINUX_KERNEL_VERSION < KERNEL_VERSION(4, 9, 0)) {
-    // In older kernels, there's no int len parameter
-    // Parameters are: struct sock *sk, struct sk_buff *skb
-    // len parameter doesn't exist, so we ignore it
+  int len = 0;
+  if (LINUX_KERNEL_VERSION >= KERNEL_VERSION(4, 9, 0)) {
+    // In newer kernels, there's an int len parameter
+    len = (int)PT_REGS_PARM3(ctx);
   }
 
   // Call handle_receive_udp_skb
@@ -2725,8 +2727,15 @@ int on_nf_conntrack_alter_reply(struct pt_regs *ctx)
 }
 
 SEC("kprobe/ctnetlink_dump_tuples")
-int on_ctnetlink_dump_tuples(struct pt_regs *ctx, struct sk_buff *skb, const struct nf_conntrack_tuple *ct)
+int on_ctnetlink_dump_tuples(struct pt_regs *ctx)
 {
+  struct sk_buff *skb = (struct sk_buff *)PT_REGS_PARM1(ctx);
+  const struct nf_conntrack_tuple *ct = (const struct nf_conntrack_tuple *)PT_REGS_PARM2(ctx);
+  
+  if (!ct) {
+    return 0;
+  }
+  
   u64 now = get_timestamp();
 
   // "struct nf_conn" contains two "struct nf_conntrack_tuple_hash". On the
@@ -2734,17 +2743,19 @@ int on_ctnetlink_dump_tuples(struct pt_regs *ctx, struct sk_buff *skb, const str
   // see first. this is addr is sizeof(struct nf_conntrack_tuple_hash) ahead of
   // the start of our current "ct"
   u64 ct_addr = (u64)ct;
-  if (ct->dst.dir == 0) {
+  
+  u8 dir = BPF_CORE_READ(ct, dst.dir);
+  if (dir == 0) {
     perf_submit_agent_internal__existing_conntrack_tuple(
         ctx,
         now,
         (u64)ct_addr,
-        (u32)ct->src.u3.ip,
-        (u16)ct->src.u.all,
-        (u32)ct->dst.u3.ip,
-        (u16)ct->dst.u.all,
-        (u8)ct->dst.protonum,
-        (u8)ct->dst.dir);
+        (u32)BPF_CORE_READ(ct, src.u3.ip),
+        (u16)BPF_CORE_READ(ct, src.u.all),
+        (u32)BPF_CORE_READ(ct, dst.u3.ip),
+        (u16)BPF_CORE_READ(ct, dst.u.all),
+        (u8)BPF_CORE_READ(ct, dst.protonum),
+        (u8)dir);
   } else {
     ct_addr = ct_addr - sizeof(struct nf_conntrack_tuple_hash);
     // NOTE: in the dir=1 case, we flip src/dst to preserve four-tuple order.
@@ -2752,12 +2763,12 @@ int on_ctnetlink_dump_tuples(struct pt_regs *ctx, struct sk_buff *skb, const str
         ctx,
         now,
         (u64)ct_addr,
-        (u32)ct->dst.u3.ip,
-        (u16)ct->dst.u.all,
-        (u32)ct->src.u3.ip,
-        (u16)ct->src.u.all,
-        (u8)ct->dst.protonum,
-        (u8)ct->dst.dir);
+        (u32)BPF_CORE_READ(ct, dst.u3.ip),
+        (u16)BPF_CORE_READ(ct, dst.u.all),
+        (u32)BPF_CORE_READ(ct, src.u3.ip),
+        (u16)BPF_CORE_READ(ct, src.u.all),
+        (u8)BPF_CORE_READ(ct, dst.protonum),
+        (u8)dir);
   }
   return 0;
 }
