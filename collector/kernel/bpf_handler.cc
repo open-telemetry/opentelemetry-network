@@ -131,7 +131,7 @@ void BPFHandler::load_probes(::ebpf_net::ingest::Writer &writer)
           {"on_skb_consume_udp", "skb_consume_udp"},
           // __skb_free_datagram_locked was introduced in 627d2d6b55009, i.e.,
           // v4.7-rc1~154^2~349^2
-          {"on_skb_free_datagram_locked", "__skb_free_datagram_locked"},
+          {"on___skb_free_datagram_locked", "__skb_free_datagram_locked"},
           // skb_free_datagram_locked exists in udp_recvmsg since 9d410c7960676, i.e.,
           // v2.6.32-rc6~9^2~3
           {"on_skb_free_datagram_locked", "skb_free_datagram_locked"},

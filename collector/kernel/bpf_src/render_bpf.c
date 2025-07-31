@@ -1499,9 +1499,7 @@ int on_udp_v46_get_port(struct pt_regs *ctx)
   return udp_v46_get_port_impl(ctx, sk);
 }
 
-SEC("kretprobe/udp_v4_get_port")
-SEC("kretprobe/udp_v6_get_port")
-int onret_udp_v46_get_port(struct pt_regs *ctx)
+static int __onret_udp_get_port_impl(struct pt_regs *ctx)
 {
   struct sock **found = NULL;
   struct sock *sk = NULL;
@@ -1544,6 +1542,18 @@ int onret_udp_v46_get_port(struct pt_regs *ctx)
   bpf_map_delete_elem(&udp_get_port_hash, &_cpu);
 
   return 0;
+}
+
+SEC("kretprobe/udp_v4_get_port")
+int onret_udp_v4_get_port(struct pt_regs *ctx)
+{
+  return __onret_udp_get_port_impl(ctx);
+}
+
+SEC("kretprobe/udp_v6_get_port")
+int onret_udp_v6_get_port(struct pt_regs *ctx)
+{
+  return __onret_udp_get_port_impl(ctx);
 }
 
 /*
@@ -2355,9 +2365,7 @@ int on_skb_consume_udp(struct pt_regs *ctx, struct sock *sk, struct sk_buff *skb
 }
 
 // Compatibility layer for kernels pre skb_consume_udp (pre-4.10)
-SEC("kprobe/__skb_free_datagram_locked")
-SEC("kprobe/skb_free_datagram_locked")
-int on_skb_free_datagram_locked(struct pt_regs *ctx)
+static int __on_skb_free_datagram_locked_impl(struct pt_regs *ctx)
 {
   struct sock *sk = (struct sock *)PT_REGS_PARM1(ctx);
   struct sk_buff *skb = (struct sk_buff *)PT_REGS_PARM2(ctx);
@@ -2372,6 +2380,18 @@ int on_skb_free_datagram_locked(struct pt_regs *ctx)
   bpf_tail_call(ctx, &tail_calls, TAIL_CALL_HANDLE_RECEIVE_UDP_SKB);
 
   return 0;
+}
+
+SEC("kprobe/__skb_free_datagram_locked")
+int on___skb_free_datagram_locked(struct pt_regs *ctx)
+{
+  return __on_skb_free_datagram_locked_impl(ctx);
+}
+
+SEC("kprobe/skb_free_datagram_locked")
+int on_skb_free_datagram_locked(struct pt_regs *ctx)
+{
+  return __on_skb_free_datagram_locked_impl(ctx);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////

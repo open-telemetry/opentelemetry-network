@@ -40,8 +40,8 @@ SocketProber::SocketProber(
   probe_handler.start_kretprobe(skel, "onret_inet_csk_accept", "inet_csk_accept");
   probe_handler.start_probe(skel, "on_inet_csk_accept", "inet_csk_accept");
   // UDP START
-  probe_handler.start_kretprobe(skel, "onret_udp_v46_get_port", "udp_v4_get_port");
-  probe_handler.start_kretprobe(skel, "onret_udp_v46_get_port", "udp_v6_get_port");
+  probe_handler.start_kretprobe(skel, "onret_udp_v4_get_port", "udp_v4_get_port");
+  probe_handler.start_kretprobe(skel, "onret_udp_v6_get_port", "udp_v6_get_port");
   probe_handler.start_probe(skel, "on_udp_v46_get_port", "udp_v4_get_port");
   probe_handler.start_probe(skel, "on_udp_v46_get_port", "udp_v6_get_port");
 
