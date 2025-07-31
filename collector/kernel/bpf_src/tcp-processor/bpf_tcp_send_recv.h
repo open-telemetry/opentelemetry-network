@@ -107,8 +107,7 @@ static void tcp_recv_stream_handler(
 // Called when data is to be send to a TCP socket
 
 SEC("kprobe/tcp_sendmsg")
-__attribute__((noinline))
-int handle_kprobe__tcp_sendmsg(struct pt_regs *ctx)
+__attribute__((noinline)) int handle_kprobe__tcp_sendmsg(struct pt_regs *ctx)
 {
   struct sock *sk;
   struct msghdr *msg;

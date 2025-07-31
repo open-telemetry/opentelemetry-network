@@ -298,7 +298,8 @@ static u64 get_task_cgroup(struct pt_regs *ctx, struct task_struct *tsk)
     return 0;
   }
 
-  struct cgroup *cgrp = (struct cgroup *)BPF_CORE_READ((struct task_struct___with_css_set *)tsk, cgroups, subsys[FLOW_CGROUP_SUBSYS], cgroup);
+  struct cgroup *cgrp =
+      (struct cgroup *)BPF_CORE_READ((struct task_struct___with_css_set *)tsk, cgroups, subsys[FLOW_CGROUP_SUBSYS], cgroup);
   if (cgrp == NULL) {
     bpf_log(ctx, BPF_LOG_INVALID_POINTER, 0, 0, 0);
     return 0;
@@ -759,8 +760,7 @@ static __noinline void submit_set_state_ipv4(struct pt_regs *ctx, u64 now, int t
   bpf_probe_read_kernel(&daddr, sizeof(daddr), &sk->sk_daddr);
   bpf_probe_read_kernel(&saddr, sizeof(saddr), &sk->sk_rcv_saddr);
 
-  perf_submit_agent_internal__set_state_ipv4(
-      ctx, now, daddr, saddr, bpf_ntohs(dport), sport, (__u64)sk, tx_rx);
+  perf_submit_agent_internal__set_state_ipv4(ctx, now, daddr, saddr, bpf_ntohs(dport), sport, (__u64)sk, tx_rx);
 }
 
 static __noinline void submit_reset_tcp_counters(struct pt_regs *ctx, u64 now, u64 pid, struct sock *sk)
@@ -784,9 +784,9 @@ static int ensure_tcp_existing(struct pt_regs *ctx, struct sock *sk, u32 pid)
   if (!sk) {
     return -1;
   }
-  
+
   u16 family = BPF_CORE_READ(sk, sk_family);
-  
+
   if (family != AF_INET && family != AF_INET6) {
     return -1;
   }
@@ -1130,8 +1130,7 @@ int onret_inet_csk_accept(struct pt_regs *ctx)
   if (family == AF_INET) {
     bpf_probe_read_kernel(&daddr, sizeof(daddr), &newsk->sk_daddr);
     bpf_probe_read_kernel(&saddr, sizeof(saddr), &newsk->sk_rcv_saddr);
-    perf_submit_agent_internal__set_state_ipv4(
-        ctx, now, daddr, saddr, bpf_ntohs(dport), sport, (__u64)newsk, 2);
+    perf_submit_agent_internal__set_state_ipv4(ctx, now, daddr, saddr, bpf_ntohs(dport), sport, (__u64)newsk, 2);
   } else if (family == AF_INET6) {
     uint8_t daddr[16] = {};
     uint8_t saddr[16] = {};
@@ -1154,7 +1153,7 @@ static int tcp46_seq_show_impl(struct pt_regs *ctx, struct seq_file *seq, void *
   struct sock *sk = v;
 
   u32 ino = BPF_CORE_READ(sk, sk_socket, file, f_inode, i_ino);
-  
+
   u32 *lookup_tgid = bpf_map_lookup_elem(&seen_inodes, &ino);
   if (!lookup_tgid) {
 #if DEBUG_TCP_SOCKET_ERRORS
@@ -1254,7 +1253,7 @@ static inline int add_udp_open_socket(struct pt_regs *ctx, struct sock *sk, u32 
 static int ensure_udp_existing(struct pt_regs *ctx, struct sock *sk, u32 tgid)
 {
   u16 family = BPF_CORE_READ(sk, sk_family);
-  
+
   if (family != AF_INET && family != AF_INET6) {
     return -1;
   }
@@ -2389,7 +2388,7 @@ static struct cgroup *get_css_parent_cgroup(struct cgroup_subsys_state *css)
   if (!css) {
     return NULL;
   }
-  
+
   if (LINUX_KERNEL_VERSION < KERNEL_VERSION(3, 12, 0)) {
     struct cgroup_subsys_state___3_11 *css = css;
     struct cgroup *parent_cgroup = BPF_CORE_READ(css, cgroup, parent);
@@ -2407,7 +2406,7 @@ static const char *get_cgroup_name(struct cgroup *cg)
   if (!cg) {
     return NULL;
   }
-  
+
   if (LINUX_KERNEL_VERSION < KERNEL_VERSION(3, 15, 0)) {
     struct cgroup___3_11 *cg = cg;
     struct cgroup_name___3_11 *name = BPF_CORE_READ(cg, name);
@@ -2629,11 +2628,11 @@ SEC("kprobe/nf_nat_cleanup_conntrack")
 int on_nf_nat_cleanup_conntrack(struct pt_regs *ctx)
 {
   struct nf_conn *ct = (struct nf_conn *)PT_REGS_PARM1(ctx);
-  
+
   if (!ct) {
     return 0;
   }
-  
+
   u64 now = get_timestamp();
 
   // filter out conntracks we haven't seen before, as only a subset of all
@@ -2670,11 +2669,11 @@ int on_nf_conntrack_alter_reply(struct pt_regs *ctx)
 {
   struct nf_conn *ct = (struct nf_conn *)PT_REGS_PARM1(ctx);
   const struct nf_conntrack_tuple *newreply = (const struct nf_conntrack_tuple *)PT_REGS_PARM2(ctx);
-  
+
   if (!ct || !newreply) {
     return 0;
   }
-  
+
   u64 now = get_timestamp();
 
   // filter out non ipv4
