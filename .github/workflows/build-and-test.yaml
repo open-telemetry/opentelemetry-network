@@ -403,7 +403,7 @@ jobs:
           docker load < container-exports/kernel-collector.tar
           
           # Start nc listener
-          apt-get update && apt-get install -y netcat
+          apt-get update && apt-get install -y netcat-traditional
           
           echo "Starting netcat listener on port 8000..."
           nc -vl 8000 &
