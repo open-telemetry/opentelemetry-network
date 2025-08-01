@@ -1245,8 +1245,8 @@ static inline int add_udp_open_socket(struct pt_regs *ctx, struct sock *sk, u32 
     } else {
 #if DEBUG_UDP_SOCKET_ERRORS
       bpf_trace_printk("add_udp_open_socket: udp_open_sockets table is full, dropping socket sk=%llx (tgid=%u)\n", sk, tgid);
-#endif
       bpf_log(ctx, BPF_LOG_TABLE_FULL, BPF_TABLE_UDP_OPEN_SOCKETS, (u64)tgid, (u64)sk);
+#endif
       return -1;
     }
   }
@@ -2056,7 +2056,7 @@ int on_tcp_rtt_estimator(struct pt_regs *ctx)
   struct sock *sk = (struct sock *)PT_REGS_PARM1(ctx);
   struct tcp_open_socket_t *sk_info; /* for filtering */
 
-  if (sk->sk_state != TCP_ESTABLISHED) {
+  if (BPF_CORE_READ(sk, sk_state) != TCP_ESTABLISHED) {
     return 0;
   }
 
@@ -2417,14 +2417,14 @@ static u32 get_css_id(struct cgroup_subsys_state *css)
 {
   if (LINUX_KERNEL_VERSION < KERNEL_VERSION(3, 12, 0)) {
     struct cgroup_subsys_state___3_11 *css = css;
-    if (!css->id)
+    if (!BPF_CORE_READ(css, id))
       return 0;
-    u32 ssid = (u32)css->id->id;
+    u32 ssid = (u32)BPF_CORE_READ(css, id, id);
     return ssid;
   } else {
-    if (!css->ss)
+    if (!BPF_CORE_READ(css, ss))
       return 0;
-    u32 ssid = (u32)css->ss->id;
+    u32 ssid = (u32)BPF_CORE_READ(css, ss, id);
     return ssid;
   }
 }
@@ -2494,7 +2494,7 @@ int on_kill_css(struct pt_regs *ctx)
 
     u64 now = get_timestamp();
     perf_submit_agent_internal__kill_css(
-        ctx, now, (__u64)css->cgroup, (__u64)parent_cgroup, (void *)get_cgroup_name(css->cgroup));
+        ctx, now, (__u64)BPF_CORE_READ(css, cgroup), (__u64)parent_cgroup, (void *)get_cgroup_name(BPF_CORE_READ(css, cgroup)));
     return 0;
   } else {
     // This should be called as on_cgroup_destroy_locked for older kernels
@@ -2539,7 +2539,7 @@ int on_css_populate_dir(struct pt_regs *ctx)
 
     u64 now = get_timestamp();
     perf_submit_agent_internal__css_populate_dir(
-        ctx, now, (__u64)css->cgroup, (__u64)parent_cgroup, (void *)get_cgroup_name(css->cgroup));
+        ctx, now, (__u64)BPF_CORE_READ(css, cgroup), (__u64)parent_cgroup, (void *)get_cgroup_name(BPF_CORE_READ(css, cgroup)));
     return 0;
   } else {
     // This should be called as on_cgroup_populate_dir for older kernels
@@ -2630,7 +2630,7 @@ int on_cgroup_clone_children_read_css(struct pt_regs *ctx, struct cgroup_subsys_
     return 0; // Should use the cgroup version instead
   }
 
-  u32 subsys_mask = (u32)css->cgroup->root->subsys_mask;
+  u32 subsys_mask = (u32)BPF_CORE_READ(css, cgroup, root, subsys_mask);
   if (subsys_mask != 1 << FLOW_CGROUP_SUBSYS)
     return 0;
 
@@ -2638,7 +2638,7 @@ int on_cgroup_clone_children_read_css(struct pt_regs *ctx, struct cgroup_subsys_
   struct cgroup *parent_cgroup = get_css_parent_cgroup(css);
 
   perf_submit_agent_internal__existing_cgroup_probe(
-      ctx, now, (__u64)css->cgroup, (__u64)parent_cgroup, (void *)get_cgroup_name(css->cgroup));
+      ctx, now, (__u64)BPF_CORE_READ(css, cgroup), (__u64)parent_cgroup, (void *)get_cgroup_name(BPF_CORE_READ(css, cgroup)));
 
   return 0;
 }
