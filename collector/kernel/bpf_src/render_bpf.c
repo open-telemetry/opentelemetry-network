@@ -1771,18 +1771,21 @@ struct {
   __uint(value_size, sizeof(__u32));
 } tail_calls SEC(".maps");
 
+SEC("kprobe")
 int on_udp_send_skb__2(struct pt_regs *ctx, struct sk_buff *skb, struct flowi4 *fl4)
 {
   perf_check_and_submit_dns(ctx, skb->sk, skb, IPPROTO_UDP, fl4->fl4_sport, fl4->fl4_dport, 0);
   return 0;
 }
 
+SEC("kprobe")
 int on_udp_v6_send_skb__2(struct pt_regs *ctx, struct sk_buff *skb, struct flowi6 *fl6)
 {
   perf_check_and_submit_dns(ctx, skb->sk, skb, IPPROTO_UDP, fl6->fl6_sport, fl6->fl6_dport, 0);
   return 0;
 }
 
+SEC("kprobe")
 int on_ip_send_skb__2(struct pt_regs *ctx, struct net *net, struct sk_buff *skb)
 {
   struct sock *sk = skb->sk;
@@ -1796,6 +1799,7 @@ int on_ip_send_skb__2(struct pt_regs *ctx, struct net *net, struct sk_buff *skb)
   return 0;
 }
 
+SEC("kprobe")
 int on_ip6_send_skb__2(struct pt_regs *ctx, struct sk_buff *skb)
 {
   struct sock *sk = skb->sk;
@@ -1983,6 +1987,7 @@ int on_ip6_send_skb(struct pt_regs *ctx)
 
 // Common handler -tail call- for receiving udp skb's
 // step one, update stats, make sure udp socket exists
+SEC("kprobe")
 int handle_receive_udp_skb(struct pt_regs *ctx, struct sock *sk, struct sk_buff *skb)
 {
   // find offsets for ip and udp headers
@@ -2030,6 +2035,7 @@ int handle_receive_udp_skb(struct pt_regs *ctx, struct sock *sk, struct sk_buff 
 
 // Common handler -tail call- for receiving udp skb's
 // step two, check for receiving dns packets
+SEC("kprobe")
 int handle_receive_udp_skb__2(struct pt_regs *ctx, struct sock *sk, struct sk_buff *skb)
 {
   GET_PID_TGID;

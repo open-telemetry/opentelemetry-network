@@ -237,6 +237,7 @@ int handle_kretprobe__tcp_sendmsg(struct pt_regs *ctx)
   return 0;
 }
 
+SEC("kprobe")
 int continue_tcp_sendmsg(struct pt_regs *ctx)
 {
   GET_PID_TGID
@@ -452,6 +453,7 @@ int handle_kretprobe__tcp_recvmsg(struct pt_regs *ctx)
   return 0;
 }
 
+SEC("kprobe")
 int continue_tcp_recvmsg(struct pt_regs *ctx)
 {
   GET_PID_TGID
