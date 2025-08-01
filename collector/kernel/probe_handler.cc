@@ -217,16 +217,6 @@ struct bpf_map *ProbeHandler::get_bpf_map(struct render_bpf_bpf *skel, const std
   return nullptr;
 }
 
-int ProbeHandler::get_prog_fd(struct render_bpf_bpf *skel, const std::string &name)
-{
-  // TCP processor programs need to be looked up by function name
-  struct bpf_program *prog = bpf_object__find_program_by_name(skel->obj, name.c_str());
-  if (!prog) {
-    return -1;
-  }
-  return bpf_program__fd(prog);
-}
-
 int ProbeHandler::register_tail_call(
     struct render_bpf_bpf *skel, const std::string &prog_array_name, int index, const std::string &func_name)
 {
@@ -237,11 +227,19 @@ int ProbeHandler::register_tail_call(
     return -1;
   }
 
-  int prog_fd = get_prog_fd(skel, func_name);
+    // TCP processor programs need to be looked up by function name
+  struct bpf_program *prog = bpf_object__find_program_by_name(skel->obj, func_name.c_str());
+  if (!prog) {
+    log_.error("Failed to register tail call for {}, could not find program", func_name);
+    ++num_failed_probes_;
+    return -2;
+  }
+
+  int prog_fd = bpf_program__fd(prog);
   if (prog_fd < 0) {
     log_.error("Failed to register tail call for {}, could not get program fd", func_name);
     ++num_failed_probes_;
-    return -2;
+    return -3;
   }
 
   int map_fd = bpf_map__fd(prog_array);
@@ -249,7 +247,7 @@ int ProbeHandler::register_tail_call(
   if (ret < 0) {
     log_.error("Failed to update prog array for tail call {}, errno {}", func_name, errno);
     ++num_failed_probes_;
-    return -3;
+    return -4;
   }
 
   tail_calls_.emplace_back(prog_array_name, func_name, prog_fd, index);

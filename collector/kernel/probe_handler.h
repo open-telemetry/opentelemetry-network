@@ -73,7 +73,6 @@ public:
    * BPF table helpers
    **/
   struct bpf_map *get_bpf_map(struct render_bpf_bpf *skel, const std::string &name);
-  int get_prog_fd(struct render_bpf_bpf *skel, const std::string &name);
 
   /**
    * Register tail call in table
