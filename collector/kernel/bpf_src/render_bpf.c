@@ -1776,12 +1776,12 @@ int on_udp_send_skb__2(struct pt_regs *ctx)
 {
   struct sk_buff *skb = (struct sk_buff *)PT_REGS_PARM1(ctx);
   struct flowi4 *fl4 = (struct flowi4 *)PT_REGS_PARM2(ctx);
-  
+
   if (!skb || !fl4)
     return 0;
-  
+
   struct sock *sk = BPF_CORE_READ(skb, sk);
-  
+
   perf_check_and_submit_dns(ctx, sk, skb, IPPROTO_UDP, BPF_CORE_READ(fl4, fl4_sport), BPF_CORE_READ(fl4, fl4_dport), 0);
   return 0;
 }
@@ -1791,14 +1791,14 @@ int on_udp_v6_send_skb__2(struct pt_regs *ctx)
 {
   struct sk_buff *skb = (struct sk_buff *)PT_REGS_PARM1(ctx);
   struct flowi6 *fl6 = (struct flowi6 *)PT_REGS_PARM2(ctx);
-  
+
   if (!skb || !fl6)
     return 0;
-  
+
   struct sock *sk = BPF_CORE_READ(skb, sk);
   u16 sport = BPF_CORE_READ(fl6, fl6_sport);
   u16 dport = BPF_CORE_READ(fl6, fl6_dport);
-  
+
   perf_check_and_submit_dns(ctx, sk, skb, IPPROTO_UDP, sport, dport, 0);
   return 0;
 }
@@ -1808,18 +1808,18 @@ int on_ip_send_skb__2(struct pt_regs *ctx)
 {
   struct net *net = (struct net *)PT_REGS_PARM1(ctx);
   struct sk_buff *skb = (struct sk_buff *)PT_REGS_PARM2(ctx);
-  
+
   if (!skb)
     return 0;
-  
+
   struct sock *sk = BPF_CORE_READ(skb, sk);
   u16 network_header = BPF_CORE_READ(skb, network_header);
   u16 transport_header = BPF_CORE_READ(skb, transport_header);
   unsigned char *skb_head = BPF_CORE_READ(skb, head);
-  
+
   struct iphdr *ip_hdr = (struct iphdr *)(skb_head + network_header);
   u8 protocol = BPF_CORE_READ(ip_hdr, protocol);
-  
+
   if (protocol == IPPROTO_UDP) {
     struct udphdr *udp_hdr = (struct udphdr *)(skb_head + transport_header);
     u16 source = BPF_CORE_READ(udp_hdr, source);
@@ -1835,15 +1835,15 @@ SEC("kprobe")
 int on_ip6_send_skb__2(struct pt_regs *ctx)
 {
   struct sk_buff *skb = (struct sk_buff *)PT_REGS_PARM1(ctx);
-  
+
   if (!skb)
     return 0;
-  
+
   struct sock *sk = BPF_CORE_READ(skb, sk);
   unsigned char *skb_head = BPF_CORE_READ(skb, head);
-  
+
   struct ipv6hdr *ipv6_hdr = (struct ipv6hdr *)(skb_head + BPF_CORE_READ(skb, network_header));
-  
+
   if (BPF_CORE_READ(ipv6_hdr, nexthdr) == IPPROTO_UDP) {
     struct udphdr *udp_hdr = (struct udphdr *)(skb_head + BPF_CORE_READ(skb, transport_header));
 
@@ -1946,11 +1946,11 @@ int on_ip_send_skb(struct pt_regs *ctx)
   if (protocol == IPPROTO_UDP) {
     struct udphdr *udp_hdr = (struct udphdr *)(head + BPF_CORE_READ(skb, transport_header));
 
-
     struct in6_addr laddr = make_ipv6_address(BPF_CORE_READ(ip_hdr, saddr));
     struct in6_addr raddr = make_ipv6_address(BPF_CORE_READ(ip_hdr, daddr));
 
-    udp_update_stats(ctx, BPF_CORE_READ(skb, sk), skb, &laddr, BPF_CORE_READ(udp_hdr, source), &raddr, BPF_CORE_READ(udp_hdr, dest), 0);
+    udp_update_stats(
+        ctx, BPF_CORE_READ(skb, sk), skb, &laddr, BPF_CORE_READ(udp_hdr, source), &raddr, BPF_CORE_READ(udp_hdr, dest), 0);
   }
 
   if (protocol == IPPROTO_TCP) {
@@ -2032,10 +2032,10 @@ int handle_receive_udp_skb(struct pt_regs *ctx)
 {
   struct sock *sk = (struct sock *)PT_REGS_PARM1(ctx);
   struct sk_buff *skb = (struct sk_buff *)PT_REGS_PARM2(ctx);
-  
+
   if (!sk || !skb)
     return 0;
-  
+
   // find offsets for ip and udp headers
   unsigned char *skb_head = BPF_CORE_READ(skb, head);
   __u16 transport_header = BPF_CORE_READ(skb, transport_header);
@@ -2091,10 +2091,10 @@ int handle_receive_udp_skb__2(struct pt_regs *ctx)
 {
   struct sock *sk = (struct sock *)PT_REGS_PARM1(ctx);
   struct sk_buff *skb = (struct sk_buff *)PT_REGS_PARM2(ctx);
-  
+
   if (!sk || !skb)
     return 0;
-    
+
   GET_PID_TGID;
   unsigned char *skb_head = BPF_CORE_READ(skb, head);
   __u16 transport_header = BPF_CORE_READ(skb, transport_header);
@@ -2284,7 +2284,7 @@ int on_tcp_syn_ack_timeout(struct pt_regs *ctx)
 
 #define BACKWARDS_COMPATIBLE_DNS_BUFFER_SIZE 280
 #define DNS_MAX_PACKET_LEN 512
-  
+
 // For newer kernels, define the structure and per-CPU array
 struct dns_message_data {
   char data[DNS_MAX_PACKET_LEN + sizeof(struct bpf_agent_internal__dns_packet) + 16];
@@ -2361,7 +2361,6 @@ perf_check_and_submit_dns(struct pt_regs *ctx, struct sock *sk, struct sk_buff *
     bpf_log(ctx, BPF_LOG_DATA_TRUNCATED, (u64)len, (u64)valid_len, 0);
   }
   */
-
 
   /* allocate buffer for event */
   char *buf;

@@ -227,7 +227,7 @@ int ProbeHandler::register_tail_call(
     return -1;
   }
 
-    // TCP processor programs need to be looked up by function name
+  // TCP processor programs need to be looked up by function name
   struct bpf_program *prog = bpf_object__find_program_by_name(skel->obj, func_name.c_str());
   if (!prog) {
     log_.error("Failed to register tail call for {}, could not find program", func_name);
