@@ -723,7 +723,7 @@ static void remove_tcp_open_socket(struct pt_regs *ctx, struct sock *sk)
   perf_submit_agent_internal__close_sock_info(ctx, now, (__u64)sk);
 }
 
-static __noinline void submit_set_state_ipv6(struct pt_regs *ctx, u64 now, int tx_rx, struct sock *sk)
+static inline void submit_set_state_ipv6(struct pt_regs *ctx, u64 now, int tx_rx, struct sock *sk)
 {
   struct sock *skp = NULL;
   bpf_probe_read(&skp, sizeof(skp), &sk);
@@ -744,7 +744,7 @@ static __noinline void submit_set_state_ipv6(struct pt_regs *ctx, u64 now, int t
 }
 
 // state - we want to get the 5-tuple as early as possible.
-static __noinline void submit_set_state_ipv4(struct pt_regs *ctx, u64 now, int tx_rx, struct sock *sk)
+static inline void submit_set_state_ipv4(struct pt_regs *ctx, u64 now, int tx_rx, struct sock *sk)
 {
   struct sock *skp = NULL;
   bpf_probe_read(&skp, sizeof(skp), &sk);
@@ -765,7 +765,7 @@ static __noinline void submit_set_state_ipv4(struct pt_regs *ctx, u64 now, int t
   perf_submit_agent_internal__set_state_ipv4(ctx, now, daddr, saddr, bpf_ntohs(dport), sport, (__u64)sk, tx_rx);
 }
 
-static __noinline void submit_reset_tcp_counters(struct pt_regs *ctx, u64 now, u64 pid, struct sock *sk)
+static inline void submit_reset_tcp_counters(struct pt_regs *ctx, u64 now, u64 pid, struct sock *sk)
 {
   int ret;
   u64 bytes_acked = 0;
