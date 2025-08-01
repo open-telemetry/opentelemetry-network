@@ -1781,10 +1781,8 @@ int on_udp_send_skb__2(struct pt_regs *ctx)
     return 0;
   
   struct sock *sk = BPF_CORE_READ(skb, sk);
-  u16 sport = BPF_CORE_READ(fl4, fl4_sport);
-  u16 dport = BPF_CORE_READ(fl4, fl4_dport);
   
-  perf_check_and_submit_dns(ctx, sk, skb, IPPROTO_UDP, sport, dport, 0);
+  perf_check_and_submit_dns(ctx, sk, skb, IPPROTO_UDP, BPF_CORE_READ(fl4, fl4_sport), BPF_CORE_READ(fl4, fl4_dport), 0);
   return 0;
 }
 
@@ -1842,19 +1840,14 @@ int on_ip6_send_skb__2(struct pt_regs *ctx)
     return 0;
   
   struct sock *sk = BPF_CORE_READ(skb, sk);
-  u16 network_header = BPF_CORE_READ(skb, network_header);
-  u16 transport_header = BPF_CORE_READ(skb, transport_header);
   unsigned char *skb_head = BPF_CORE_READ(skb, head);
   
-  struct ipv6hdr *ipv6_hdr = (struct ipv6hdr *)(skb_head + network_header);
-  u8 nexthdr = BPF_CORE_READ(ipv6_hdr, nexthdr);
+  struct ipv6hdr *ipv6_hdr = (struct ipv6hdr *)(skb_head + BPF_CORE_READ(skb, network_header));
   
-  if (nexthdr == IPPROTO_UDP) {
-    struct udphdr *udp_hdr = (struct udphdr *)(skb_head + transport_header);
-    u16 source = BPF_CORE_READ(udp_hdr, source);
-    u16 dest = BPF_CORE_READ(udp_hdr, dest);
+  if (BPF_CORE_READ(ipv6_hdr, nexthdr) == IPPROTO_UDP) {
+    struct udphdr *udp_hdr = (struct udphdr *)(skb_head + BPF_CORE_READ(skb, transport_header));
 
-    perf_check_and_submit_dns(ctx, sk, skb, IPPROTO_UDP, source, dest, 0);
+    perf_check_and_submit_dns(ctx, sk, skb, IPPROTO_UDP, BPF_CORE_READ(udp_hdr, source), BPF_CORE_READ(udp_hdr, dest), 0);
   }
 
   return 0;
@@ -2289,25 +2282,12 @@ int on_tcp_syn_ack_timeout(struct pt_regs *ctx)
 ////////////////////////////////////////////////////////////////////////////////////
 /* DNS */
 
-// Use stack-based approach on kernels below 4.15 (chosen using empirical testing).
-// This is limited by max eBPF stack size (512 bytes). On newer kernels we can
-// use per-CPU arrays for copying data which allows processing larger packets.
-
-// Define maximum DNS packet length based on kernel version
-static int get_dns_max_packet_len()
-{
-  if (LINUX_KERNEL_VERSION < KERNEL_VERSION(4, 15, 0)) {
-    return 380; // limited by the eBPF stack size
-  } else {
-    return 512; // max size of DNS UDP packet
-  }
-}
-
-#define DNS_MAX_PACKET_LEN (get_dns_max_packet_len())
-
+#define BACKWARDS_COMPATIBLE_DNS_BUFFER_SIZE 280
+#define DNS_MAX_PACKET_LEN 512
+  
 // For newer kernels, define the structure and per-CPU array
 struct dns_message_data {
-  char data[512 + sizeof(struct bpf_agent_internal__dns_packet) + 16];
+  char data[DNS_MAX_PACKET_LEN + sizeof(struct bpf_agent_internal__dns_packet) + 16];
 };
 // use per-CPU array to overcome eBPF stack size limit
 struct {
@@ -2324,8 +2304,7 @@ struct {
 static __always_inline void
 perf_check_and_submit_dns(struct pt_regs *ctx, struct sock *sk, struct sk_buff *skb, u8 proto, u16 sport, u16 dport, int is_rx)
 {
-  unsigned int len = 0;
-  bpf_probe_read(&len, sizeof(len), &skb->len);
+  unsigned int len = BPF_CORE_READ(skb, len);
 
   // Filter for DNS requests and responses
   if (!((proto == IPPROTO_UDP) && ((sport == bpf_htons(53)) || (dport == bpf_htons(53))) && (len > 0))) {
@@ -2333,42 +2312,21 @@ perf_check_and_submit_dns(struct pt_regs *ctx, struct sock *sk, struct sk_buff *
   }
 
   // Read skb fields directly to avoid bpf verifier errors caused by bcc inconsistencies
-  int ret;
+  unsigned int skb_data_len = BPF_CORE_READ(skb, data_len);
 
-  unsigned int skb_data_len = 0;
-  ret = bpf_probe_read(&skb_data_len, sizeof(skb->data_len), &skb->data_len);
-  if (ret != 0) {
-    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, abs_val(ret), 0, 0);
+  unsigned char *from = BPF_CORE_READ(skb, data);
+  if (from == NULL) {
     return;
   }
 
-  unsigned char *from = NULL;
-  ret = bpf_probe_read(&from, sizeof(skb->data), &skb->data);
-  if (ret != 0 || from == NULL) {
-    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, abs_val(ret), 0, 0);
+  unsigned char *skb_head = BPF_CORE_READ(skb, head);
+  if (skb_head == NULL) {
     return;
   }
 
-  unsigned char *skb_head = NULL;
-  ret = bpf_probe_read(&skb_head, sizeof(skb->head), &skb->head);
-  if (ret != 0 || skb_head == NULL) {
-    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, abs_val(ret), 0, 0);
-    return;
-  }
+  u16 skb_transport_header = BPF_CORE_READ(skb, transport_header);
 
-  u16 skb_transport_header = 0;
-  ret = bpf_probe_read(&skb_transport_header, sizeof(skb->transport_header), &skb->transport_header);
-  if (ret != 0) {
-    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, abs_val(ret), 0, 0);
-    return;
-  }
-
-  u16 skb_network_header = 0;
-  ret = bpf_probe_read(&skb_network_header, sizeof(skb->network_header), &skb->network_header);
-  if (ret != 0) {
-    bpf_log(ctx, BPF_LOG_BPF_CALL_FAILED, abs_val(ret), 0, 0);
-    return;
-  }
+  u16 skb_network_header = BPF_CORE_READ(skb, network_header);
 
   /* we only take the linear part of the skb, not the paged part
    * 'valid_len' here is the amount of -non paged- data in the skb,
@@ -2404,19 +2362,25 @@ perf_check_and_submit_dns(struct pt_regs *ctx, struct sock *sk, struct sk_buff *
   }
   */
 
-  // truncate dns packets at our maximum packet length right now
-  if (valid_len > DNS_MAX_PACKET_LEN) {
-    bpf_log(ctx, BPF_LOG_DATA_TRUNCATED, (u64)valid_len, (u64)DNS_MAX_PACKET_LEN, 0);
-    valid_len = DNS_MAX_PACKET_LEN;
-  }
 
   /* allocate buffer for event */
   char *buf;
-  char stack_buf[380 + sizeof(struct bpf_agent_internal__dns_packet) + 16] = {};
+  char stack_buf[BACKWARDS_COMPATIBLE_DNS_BUFFER_SIZE + sizeof(struct bpf_agent_internal__dns_packet) + 16] = {};
 
   if (LINUX_KERNEL_VERSION < KERNEL_VERSION(4, 15, 0)) {
-    // use stack based buffer on older kernels
+    // Use stack-based approach on kernels below 4.15 (chosen using empirical testing).
+    // This is limited by max eBPF stack size (512 bytes). On newer kernels we can
+    // use per-CPU arrays for copying data which allows processing larger packets.
     buf = stack_buf;
+    if (valid_len > BACKWARDS_COMPATIBLE_DNS_BUFFER_SIZE) {
+      bpf_log(ctx, BPF_LOG_DATA_TRUNCATED, (u64)valid_len, (u64)BACKWARDS_COMPATIBLE_DNS_BUFFER_SIZE, 0);
+      valid_len = BACKWARDS_COMPATIBLE_DNS_BUFFER_SIZE;
+    }
+
+    /* the actual offset into buf has to start from buf's start */
+    char *to = buf + bpf_agent_internal__dns_packet__data_size;
+    bpf_probe_read_kernel(to, valid_len, from);
+
   } else {
     // use bigger per-CPU array based buffer on newer kernels
     __u32 zero = 0;
@@ -2426,12 +2390,16 @@ perf_check_and_submit_dns(struct pt_regs *ctx, struct sock *sk, struct sk_buff *
       return;
     }
     buf = pkt->data;
+
+    // truncate dns packets at our maximum packet length right now
+    valid_len &= (DNS_MAX_PACKET_LEN - 1);
+
+    /* the actual offset into buf has to start from buf's start */
+    char *to = buf + bpf_agent_internal__dns_packet__data_size;
+    bpf_probe_read_kernel(to, valid_len, from);
   }
 
-  /* the actual offset into buf has to start from buf's start */
   char *to = buf + bpf_agent_internal__dns_packet__data_size;
-
-  bpf_probe_read(to, DNS_MAX_PACKET_LEN, from);
 
   struct bpf_agent_internal__dns_packet *const msg = (struct bpf_agent_internal__dns_packet *)&buf[0];
   struct jb_blob blob = {to, valid_len};
