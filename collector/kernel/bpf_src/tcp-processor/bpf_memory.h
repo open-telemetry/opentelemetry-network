@@ -16,15 +16,20 @@
 inline static int string_starts_with(const char *s1, const size_t s1_len, const char *s2)
 {
 
-  char localdata[16] = {};
-  size_t s2_len = bpf_probe_read_kernel_str(localdata, sizeof(localdata), s2);
+  char s2_local[16] = {};
+  size_t s2_len = bpf_probe_read_kernel_str(s2_local, sizeof(s2_local), s2);
+  if (s2_len > 16)
+    return 0; // help the verifier
 
-  if (s1_len < s2_len) {
+  char s1_local[16] = {};
+  size_t s1_local_len = bpf_probe_read_kernel_str(s1_local, sizeof(s1_local), s1);
+
+  if (s1_local_len < s2_len) {
     return 0;
   }
 
   for (int i = 0; i < s2_len; i++) {
-    if (localdata[i] != s1[i]) {
+    if (s2_local[i] != s1_local[i]) {
       return 0;
     }
   }
