@@ -59,10 +59,10 @@
 ///////// render_bpf.c debugging switches
 
 // #define TRACE_TCP_SOCKETS 1
-// #define TRACE_UDP_SOCKETS 1
+#define TRACE_UDP_SOCKETS 0
 
 // #define DEBUG_TCP_SOCKET_ERRORS 1
-// #define DEBUG_UDP_SOCKET_ERRORS 1
+#define DEBUG_UDP_SOCKET_ERRORS 0
 // #define DEBUG_OTHER_MAP_ERRORS 1
 
 // #define DEBUG_ENABLE_STACKTRACE 1
