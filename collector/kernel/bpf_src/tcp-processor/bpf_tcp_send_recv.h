@@ -119,6 +119,10 @@ __attribute__((noinline)) int handle_kprobe__tcp_sendmsg(struct pt_regs *ctx)
   size = (size_t)PT_REGS_PARM3(ctx);
   GET_PID_TGID
 
+  if (!msg || !sk) {
+    return 0;
+  }
+
   struct tcp_connection_t *pconn;
   pconn = lookup_tcp_connection(sk);
   if (!pconn) {
