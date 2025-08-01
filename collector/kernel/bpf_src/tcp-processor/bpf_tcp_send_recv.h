@@ -200,6 +200,11 @@ __attribute__((noinline)) int handle_kprobe__tcp_sendmsg(struct pt_regs *ctx)
   int written = 0;
   int depth = 1;
 
+  if (iov) {
+    iov_ptr = BPF_CORE_READ(iov, iov_base);
+    iov_len = BPF_CORE_READ(iov, iov_len);
+  }
+
   // Defer arguments to kretprobe
   BEGIN_SAVE_ARGS(tcp_sendmsg)
   SAVE_ARG(sk)
@@ -270,10 +275,8 @@ int continue_tcp_sendmsg(struct pt_regs *ctx)
   if (args->iov_len == 0) {
     // Load next iovec
     if (args->nr_segs > 0) {
-      void *iov_ptr = NULL;
-      size_t iov_len = 0;
-      iov_ptr = BPF_CORE_READ(args->iov, iov_base);
-      iov_len = BPF_CORE_READ(args->iov, iov_len);
+      void *iov_ptr = args->iov_ptr;
+      size_t iov_len = args->iov_len;
 #if TRACE_TCP_SEND
       DEBUG_PRINTK("tcp_sendmsg continue: ptr=%llx, len=%d\n", iov_ptr, iov_len);
 #endif
