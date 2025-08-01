@@ -1822,21 +1822,14 @@ int on_udp_send_skb(struct pt_regs *ctx)
   if (!skb || !fl4)
     return 0;
 
-  GET_PID_TGID;
-
-  __u32 saddr = BPF_CORE_READ(fl4, saddr);
-  __u32 daddr = BPF_CORE_READ(fl4, daddr);
-  __be16 sport = BPF_CORE_READ(fl4, fl4_sport);
-  __be16 dport = BPF_CORE_READ(fl4, fl4_dport);
-
-  struct in6_addr laddr = make_ipv6_address(saddr);
-  struct in6_addr raddr = make_ipv6_address(daddr);
+  struct in6_addr laddr = make_ipv6_address(BPF_CORE_READ(fl4, saddr));
+  struct in6_addr raddr = make_ipv6_address(BPF_CORE_READ(fl4, daddr));
 
   struct sock *sk_ptr = BPF_CORE_READ(skb, sk);
   if (!sk_ptr)
     return 0;
 
-  udp_update_stats(ctx, sk_ptr, skb, &laddr, sport, &raddr, dport, 0);
+  udp_update_stats(ctx, sk_ptr, skb, &laddr, BPF_CORE_READ(fl4, fl4_sport), &raddr, BPF_CORE_READ(fl4, fl4_dport), 0);
 
   // Call on_udp_send_skb__2
   bpf_tail_call(ctx, &tail_calls, TAIL_CALL_ON_UDP_SEND_SKB__2);
@@ -1902,28 +1895,22 @@ int on_ip_send_skb(struct pt_regs *ctx)
 
   struct sock *sk = BPF_CORE_READ(skb, sk);
   unsigned char *head = BPF_CORE_READ(skb, head);
-  __u16 network_header = BPF_CORE_READ(skb, network_header);
-  __u16 transport_header = BPF_CORE_READ(skb, transport_header);
 
-  struct iphdr *ip_hdr = (struct iphdr *)(head + network_header);
+  struct iphdr *ip_hdr = (struct iphdr *)(head + BPF_CORE_READ(skb, network_header));
   __u8 protocol = BPF_CORE_READ(ip_hdr, protocol);
 
   if (protocol == IPPROTO_UDP) {
-    struct udphdr *udp_hdr = (struct udphdr *)(head + transport_header);
+    struct udphdr *udp_hdr = (struct udphdr *)(head + BPF_CORE_READ(skb, transport_header));
 
-    __u32 saddr = BPF_CORE_READ(ip_hdr, saddr);
-    __u32 daddr = BPF_CORE_READ(ip_hdr, daddr);
-    __be16 source = BPF_CORE_READ(udp_hdr, source);
-    __be16 dest = BPF_CORE_READ(udp_hdr, dest);
 
-    struct in6_addr laddr = make_ipv6_address(saddr);
-    struct in6_addr raddr = make_ipv6_address(daddr);
+    struct in6_addr laddr = make_ipv6_address(BPF_CORE_READ(ip_hdr, saddr));
+    struct in6_addr raddr = make_ipv6_address(BPF_CORE_READ(ip_hdr, daddr));
 
-    udp_update_stats(ctx, sk, skb, &laddr, source, &raddr, dest, 0);
+    udp_update_stats(ctx, BPF_CORE_READ(skb, sk), skb, &laddr, BPF_CORE_READ(udp_hdr, source), &raddr, BPF_CORE_READ(udp_hdr, dest), 0);
   }
 
   if (protocol == IPPROTO_TCP) {
-    struct tcphdr *tcp_hdr = (struct tcphdr *)(head + transport_header);
+    struct tcphdr *tcp_hdr = (struct tcphdr *)(head + BPF_CORE_READ(skb, transport_header));
 
     u16 flags = 0;
     bpf_probe_read(&flags, 2, ((u8 *)tcp_hdr) + 12);
