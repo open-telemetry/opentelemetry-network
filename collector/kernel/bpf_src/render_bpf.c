@@ -1772,42 +1772,89 @@ struct {
 } tail_calls SEC(".maps");
 
 SEC("kprobe")
-int on_udp_send_skb__2(struct pt_regs *ctx, struct sk_buff *skb, struct flowi4 *fl4)
+int on_udp_send_skb__2(struct pt_regs *ctx)
 {
-  perf_check_and_submit_dns(ctx, skb->sk, skb, IPPROTO_UDP, fl4->fl4_sport, fl4->fl4_dport, 0);
+  struct sk_buff *skb = (struct sk_buff *)PT_REGS_PARM1(ctx);
+  struct flowi4 *fl4 = (struct flowi4 *)PT_REGS_PARM2(ctx);
+  
+  if (!skb || !fl4)
+    return 0;
+  
+  struct sock *sk = BPF_CORE_READ(skb, sk);
+  u16 sport = BPF_CORE_READ(fl4, fl4_sport);
+  u16 dport = BPF_CORE_READ(fl4, fl4_dport);
+  
+  perf_check_and_submit_dns(ctx, sk, skb, IPPROTO_UDP, sport, dport, 0);
   return 0;
 }
 
 SEC("kprobe")
-int on_udp_v6_send_skb__2(struct pt_regs *ctx, struct sk_buff *skb, struct flowi6 *fl6)
+int on_udp_v6_send_skb__2(struct pt_regs *ctx)
 {
-  perf_check_and_submit_dns(ctx, skb->sk, skb, IPPROTO_UDP, fl6->fl6_sport, fl6->fl6_dport, 0);
+  struct sk_buff *skb = (struct sk_buff *)PT_REGS_PARM1(ctx);
+  struct flowi6 *fl6 = (struct flowi6 *)PT_REGS_PARM2(ctx);
+  
+  if (!skb || !fl6)
+    return 0;
+  
+  struct sock *sk = BPF_CORE_READ(skb, sk);
+  u16 sport = BPF_CORE_READ(fl6, fl6_sport);
+  u16 dport = BPF_CORE_READ(fl6, fl6_dport);
+  
+  perf_check_and_submit_dns(ctx, sk, skb, IPPROTO_UDP, sport, dport, 0);
   return 0;
 }
 
 SEC("kprobe")
-int on_ip_send_skb__2(struct pt_regs *ctx, struct net *net, struct sk_buff *skb)
+int on_ip_send_skb__2(struct pt_regs *ctx)
 {
-  struct sock *sk = skb->sk;
-  struct iphdr *ip_hdr = (struct iphdr *)(skb->head + skb->network_header);
-  if (ip_hdr->protocol == IPPROTO_UDP) {
-    struct udphdr *udp_hdr = (struct udphdr *)(skb->head + skb->transport_header);
+  struct net *net = (struct net *)PT_REGS_PARM1(ctx);
+  struct sk_buff *skb = (struct sk_buff *)PT_REGS_PARM2(ctx);
+  
+  if (!skb)
+    return 0;
+  
+  struct sock *sk = BPF_CORE_READ(skb, sk);
+  u16 network_header = BPF_CORE_READ(skb, network_header);
+  u16 transport_header = BPF_CORE_READ(skb, transport_header);
+  unsigned char *skb_head = BPF_CORE_READ(skb, head);
+  
+  struct iphdr *ip_hdr = (struct iphdr *)(skb_head + network_header);
+  u8 protocol = BPF_CORE_READ(ip_hdr, protocol);
+  
+  if (protocol == IPPROTO_UDP) {
+    struct udphdr *udp_hdr = (struct udphdr *)(skb_head + transport_header);
+    u16 source = BPF_CORE_READ(udp_hdr, source);
+    u16 dest = BPF_CORE_READ(udp_hdr, dest);
 
-    perf_check_and_submit_dns(ctx, sk, skb, IPPROTO_UDP, udp_hdr->source, udp_hdr->dest, 0);
+    perf_check_and_submit_dns(ctx, sk, skb, IPPROTO_UDP, source, dest, 0);
   }
 
   return 0;
 }
 
 SEC("kprobe")
-int on_ip6_send_skb__2(struct pt_regs *ctx, struct sk_buff *skb)
+int on_ip6_send_skb__2(struct pt_regs *ctx)
 {
-  struct sock *sk = skb->sk;
-  struct ipv6hdr *ipv6_hdr = (struct ipv6hdr *)(skb->head + skb->network_header);
-  if (ipv6_hdr->nexthdr == IPPROTO_UDP) {
-    struct udphdr *udp_hdr = (struct udphdr *)(skb->head + skb->transport_header);
+  struct sk_buff *skb = (struct sk_buff *)PT_REGS_PARM1(ctx);
+  
+  if (!skb)
+    return 0;
+  
+  struct sock *sk = BPF_CORE_READ(skb, sk);
+  u16 network_header = BPF_CORE_READ(skb, network_header);
+  u16 transport_header = BPF_CORE_READ(skb, transport_header);
+  unsigned char *skb_head = BPF_CORE_READ(skb, head);
+  
+  struct ipv6hdr *ipv6_hdr = (struct ipv6hdr *)(skb_head + network_header);
+  u8 nexthdr = BPF_CORE_READ(ipv6_hdr, nexthdr);
+  
+  if (nexthdr == IPPROTO_UDP) {
+    struct udphdr *udp_hdr = (struct udphdr *)(skb_head + transport_header);
+    u16 source = BPF_CORE_READ(udp_hdr, source);
+    u16 dest = BPF_CORE_READ(udp_hdr, dest);
 
-    perf_check_and_submit_dns(ctx, sk, skb, IPPROTO_UDP, udp_hdr->source, udp_hdr->dest, 0);
+    perf_check_and_submit_dns(ctx, sk, skb, IPPROTO_UDP, source, dest, 0);
   }
 
   return 0;
@@ -1988,12 +2035,18 @@ int on_ip6_send_skb(struct pt_regs *ctx)
 // Common handler -tail call- for receiving udp skb's
 // step one, update stats, make sure udp socket exists
 SEC("kprobe")
-int handle_receive_udp_skb(struct pt_regs *ctx, struct sock *sk, struct sk_buff *skb)
+int handle_receive_udp_skb(struct pt_regs *ctx)
 {
+  struct sock *sk = (struct sock *)PT_REGS_PARM1(ctx);
+  struct sk_buff *skb = (struct sk_buff *)PT_REGS_PARM2(ctx);
+  
+  if (!sk || !skb)
+    return 0;
+  
   // find offsets for ip and udp headers
-  unsigned char *skb_head = skb->head;
-  __u16 transport_header = skb->transport_header;
-  __u16 network_header = skb->network_header;
+  unsigned char *skb_head = BPF_CORE_READ(skb, head);
+  __u16 transport_header = BPF_CORE_READ(skb, transport_header);
+  __u16 network_header = BPF_CORE_READ(skb, network_header);
 
   // get the ip header
   struct iphdr *ip_hdr = (struct iphdr *)(skb_head + network_header);
@@ -2008,12 +2061,14 @@ int handle_receive_udp_skb(struct pt_regs *ctx, struct sock *sk, struct sk_buff 
   struct in6_addr laddr, raddr;
   if (version == 0x40) {
     // IPv4
-    laddr = make_ipv6_address(ip_hdr->daddr);
-    raddr = make_ipv6_address(ip_hdr->saddr);
+    __be32 daddr = BPF_CORE_READ(ip_hdr, daddr);
+    __be32 saddr = BPF_CORE_READ(ip_hdr, saddr);
+    laddr = make_ipv6_address(daddr);
+    raddr = make_ipv6_address(saddr);
   } else if (version & 0x60) {
     // IPV6
-    laddr = ((struct ipv6hdr *)ip_hdr)->daddr;
-    raddr = ((struct ipv6hdr *)ip_hdr)->saddr;
+    laddr = BPF_CORE_READ((struct ipv6hdr *)ip_hdr, daddr);
+    raddr = BPF_CORE_READ((struct ipv6hdr *)ip_hdr, saddr);
   } else {
     // Unknown IP Protocol version, possibly malformed packet received?
     bpf_log(ctx, BPF_LOG_UNREACHABLE, (u64)version, 0, 0);
@@ -2022,12 +2077,15 @@ int handle_receive_udp_skb(struct pt_regs *ctx, struct sock *sk, struct sk_buff 
 
 #if DEBUG_UDP_SOCKET_ERRORS
   if (__check_broken_in6_addr(&laddr, __LINE__) || __check_broken_in6_addr(&raddr, __LINE__)) {
-    bpf_trace_printk("sk_family = %d, version = %u\n", sk->sk_family, (unsigned int)version);
+    u16 family = BPF_CORE_READ(sk, sk_family);
+    bpf_trace_printk("sk_family = %d, version = %u\n", family, (unsigned int)version);
     stack_trace(ctx);
   }
 #endif
 
-  udp_update_stats(ctx, sk, skb, &laddr, udp_hdr->dest, &raddr, udp_hdr->source, 1);
+  __be16 dest = BPF_CORE_READ(udp_hdr, dest);
+  __be16 source = BPF_CORE_READ(udp_hdr, source);
+  udp_update_stats(ctx, sk, skb, &laddr, dest, &raddr, source, 1);
 
   bpf_tail_call(ctx, &tail_calls, TAIL_CALL_HANDLE_RECEIVE_UDP_SKB__2);
   return 0;
@@ -2036,11 +2094,21 @@ int handle_receive_udp_skb(struct pt_regs *ctx, struct sock *sk, struct sk_buff 
 // Common handler -tail call- for receiving udp skb's
 // step two, check for receiving dns packets
 SEC("kprobe")
-int handle_receive_udp_skb__2(struct pt_regs *ctx, struct sock *sk, struct sk_buff *skb)
+int handle_receive_udp_skb__2(struct pt_regs *ctx)
 {
+  struct sock *sk = (struct sock *)PT_REGS_PARM1(ctx);
+  struct sk_buff *skb = (struct sk_buff *)PT_REGS_PARM2(ctx);
+  
+  if (!sk || !skb)
+    return 0;
+    
   GET_PID_TGID;
-  const struct udphdr *hdr = (const struct udphdr *)(skb->head + skb->transport_header);
-  perf_check_and_submit_dns(ctx, sk, skb, IPPROTO_UDP, hdr->source, hdr->dest, 1);
+  unsigned char *skb_head = BPF_CORE_READ(skb, head);
+  __u16 transport_header = BPF_CORE_READ(skb, transport_header);
+  const struct udphdr *hdr = (const struct udphdr *)(skb_head + transport_header);
+  __be16 source = BPF_CORE_READ(hdr, source);
+  __be16 dest = BPF_CORE_READ(hdr, dest);
+  perf_check_and_submit_dns(ctx, sk, skb, IPPROTO_UDP, source, dest, 1);
   return 0;
 }
 
