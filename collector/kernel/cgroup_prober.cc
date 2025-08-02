@@ -15,12 +15,12 @@
 #include <string>
 
 #include <dirent.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
 #include <fcntl.h>
 #include <linux/bpf.h>
+#include <sys/stat.h>
 #include <sys/syscall.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 CgroupProber::CgroupProber(
     ProbeHandler &probe_handler,
@@ -137,19 +137,19 @@ void CgroupProber::trigger_cgroup_get_from_fd_probe(std::string const &cgroup_di
     int cgroup_fd = open(dir_name.c_str(), O_RDONLY);
     if (cgroup_fd >= 0) {
       LOG::debug_in(AgentLogKind::CGROUPS, "cgroup_get_from_fd probe: path={}", dir_name);
-      
+
       // Set up BPF_PROG_QUERY attributes
       union bpf_attr attr = {};
       attr.query.target_fd = cgroup_fd;
-      attr.query.attach_type = BPF_CGROUP_INET_INGRESS;  // Any valid attach type
+      attr.query.attach_type = BPF_CGROUP_INET_INGRESS; // Any valid attach type
       attr.query.query_flags = 0;
-      attr.query.prog_cnt = 0;     // Set to 0 to just get count
-      attr.query.prog_ids = 0;     // NULL to just query count
-      
+      attr.query.prog_cnt = 0; // Set to 0 to just get count
+      attr.query.prog_ids = 0; // NULL to just query count
+
       // This triggers cgroup_get_from_fd()!
       int result = syscall(__NR_bpf, BPF_PROG_QUERY, &attr, sizeof(attr));
       (void)result; // Suppress unused variable warning
-      
+
       close(cgroup_fd);
     } else {
       LOG::debug_in(AgentLogKind::CGROUPS, "   fail to open path={}", dir_name);
