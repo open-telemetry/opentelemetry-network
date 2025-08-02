@@ -18,6 +18,9 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <fcntl.h>
+#include <linux/bpf.h>
+#include <sys/syscall.h>
 
 CgroupProber::CgroupProber(
     ProbeHandler &probe_handler,
@@ -73,25 +76,103 @@ CgroupProber::CgroupProber(
   // EXISTING cgroups v2
   static const std::string cgroup_v2_first_kernel_version("4.6");
   if (host_info_.kernel_version >= cgroup_v2_first_kernel_version) {
-    probe_handler.start_probe(skel, "on_cgroup_control", "cgroup_control");
-    probe_handler.start_kretprobe(skel, "onret_cgroup_control", "cgroup_control");
+    // Try cgroup_get_from_fd first (only needs kretprobe)
+    int ret = probe_handler.start_kretprobe(skel, "onret_cgroup_get_from_fd", "cgroup_get_from_fd");
+    bool cgroup_get_from_fd_success = (ret == 0);
+
+    if (cgroup_get_from_fd_success) {
+      check_cb("cgroup_get_from_fd probe started");
+    }
+
+    // If cgroup_get_from_fd failed, fallback to cgroup_control
+    if (!cgroup_get_from_fd_success) {
+      probe_handler.start_probe(skel, "on_cgroup_control", "cgroup_control");
+      probe_handler.start_kretprobe(skel, "onret_cgroup_control", "cgroup_control");
+      check_cb("cgroup_control probe started (fallback)");
+    }
 
     // locate the cgroup v2 mount directory
     std::string cgroup_v2_mountpoint = find_cgroup_v2_mountpoint();
 
     if (!cgroup_v2_mountpoint.empty()) {
-      // now iterate over cgroups and trigger cgroup_control
-      trigger_existing_cgroup_probe(cgroup_v2_mountpoint, "cgroup.controllers", periodic_cb);
-      check_cb("trigger_cgroup_control()");
+      // now iterate over cgroups and trigger the appropriate probe
+      if (cgroup_get_from_fd_success) {
+        trigger_cgroup_get_from_fd_probe(cgroup_v2_mountpoint, periodic_cb);
+        check_cb("trigger_cgroup_get_from_fd()");
+      } else {
+        trigger_existing_cgroup_probe(cgroup_v2_mountpoint, "cgroup.controllers", periodic_cb);
+        check_cb("trigger_cgroup_control()");
+      }
     }
 
-    /* can remove existing now */
-    probe_handler.cleanup_kretprobe("cgroup_control");
-    probe_handler.cleanup_probe("cgroup_control");
+    /* cleanup probes */
+    if (cgroup_get_from_fd_success) {
+      probe_handler.cleanup_kretprobe("cgroup_get_from_fd");
+    } else {
+      probe_handler.cleanup_kretprobe("cgroup_control");
+      probe_handler.cleanup_probe("cgroup_control");
+    }
   }
 
   periodic_cb();
   check_cb("cgroup prober cleanup()");
+}
+
+void CgroupProber::trigger_cgroup_get_from_fd_probe(std::string const &cgroup_dir_name, std::function<void(void)> periodic_cb)
+{
+  std::stack<std::string> dirs_stack;
+  dirs_stack.emplace(cgroup_dir_name);
+  while (!dirs_stack.empty()) {
+    periodic_cb();
+    // get the directory on the top of our stack
+    std::string dir_name(dirs_stack.top());
+    dirs_stack.pop();
+
+    DIR *dir;
+    dir = opendir(dir_name.c_str());
+    if (!dir)
+      continue;
+
+    // trigger cgroup_get_from_fd via BPF_PROG_QUERY for this directory
+    int cgroup_fd = open(dir_name.c_str(), O_RDONLY);
+    if (cgroup_fd >= 0) {
+      LOG::debug_in(AgentLogKind::CGROUPS, "cgroup_get_from_fd probe: path={}", dir_name);
+      
+      // Set up BPF_PROG_QUERY attributes
+      union bpf_attr attr = {};
+      attr.query.target_fd = cgroup_fd;
+      attr.query.attach_type = BPF_CGROUP_INET_INGRESS;  // Any valid attach type
+      attr.query.query_flags = 0;
+      attr.query.prog_cnt = 0;     // Set to 0 to just get count
+      attr.query.prog_ids = 0;     // NULL to just query count
+      
+      // This triggers cgroup_get_from_fd()!
+      int result = syscall(__NR_bpf, BPF_PROG_QUERY, &attr, sizeof(attr));
+      (void)result; // Suppress unused variable warning
+      
+      close(cgroup_fd);
+    } else {
+      LOG::debug_in(AgentLogKind::CGROUPS, "   fail to open path={}", dir_name);
+    }
+
+    // iterate over the elements of this directory and add any
+    // subdirectories to dirs_stack
+    struct dirent *ent;
+    while ((ent = readdir(dir)) != NULL) {
+      if (ent->d_type == DT_DIR) {
+        // skip over "." and ".." entries in the directory
+        if ((strcmp(ent->d_name, ".") == 0) || (strcmp(ent->d_name, "..") == 0))
+          continue;
+
+        dirs_stack.emplace(dir_name + "/" + ent->d_name);
+      }
+      periodic_cb();
+    }
+    int status = closedir(dir);
+    if (status != 0) {
+      close_dir_error_count_++;
+    }
+  }
 }
 
 void CgroupProber::trigger_existing_cgroup_probe(

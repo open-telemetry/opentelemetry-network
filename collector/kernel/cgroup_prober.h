@@ -62,6 +62,15 @@ private:
   void trigger_existing_cgroup_probe(
       std::string const &cgroup_dir_name, std::string const &file_name, std::function<void(void)> periodic_cb);
 
+  /**
+   * Recursively walks through directory structure and triggers the
+   * cgroup_get_from_fd probe by calling BPF_PROG_QUERY on each cgroup directory.
+   *
+   * @param cgroup_dir_name: path to directory in which to perform the search
+   * @param periodic_cb: callback to call after doing some work.
+   */
+  void trigger_cgroup_get_from_fd_probe(std::string const &cgroup_dir_name, std::function<void(void)> periodic_cb);
+
   HostInfo const host_info_;
   int close_dir_error_count_;
 };

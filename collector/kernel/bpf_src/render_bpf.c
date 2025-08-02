@@ -49,6 +49,10 @@ extern int LINUX_KERNEL_VERSION __kconfig;
 #define fl6_dport uli.ports.dport
 #define rsk_listener __req_common.skc_listener
 
+// pointer error handling
+#define MAX_ERRNO 4095
+#define IS_ERR_VALUE(x) unlikely((unsigned long)(void *)(x) >= (unsigned long)-MAX_ERRNO)
+
 #include "vmlinux_extensions.h"
 
 #include "vmlinux_compat.h"
@@ -2630,6 +2634,20 @@ int on_cgroup_control(struct pt_regs *ctx)
   return 0;
 }
 
+// Common function to handle cgroup processing
+static inline int handle_cgroup_processing(struct pt_regs *ctx, struct cgroup *cgrp, u16 subsys_mask)
+{
+  if (!(subsys_mask & 1 << FLOW_CGROUP_SUBSYS))
+    return 0;
+
+  u64 now = get_timestamp();
+  struct cgroup *parent_cgroup = get_css_parent_cgroup(&cgrp->self);
+
+  perf_submit_agent_internal__existing_cgroup_probe(ctx, now, (__u64)cgrp, (__u64)parent_cgroup, (void *)get_cgroup_name(cgrp));
+
+  return 0;
+}
+
 SEC("kretprobe/cgroup_control")
 int onret_cgroup_control(struct pt_regs *ctx)
 {
@@ -2650,15 +2668,22 @@ int onret_cgroup_control(struct pt_regs *ctx)
   DELETE_ARGS(cgroup_control);
 
   u16 subsys_mask = (u16)PT_REGS_RC(ctx);
-  if (!(subsys_mask & 1 << FLOW_CGROUP_SUBSYS))
+  return handle_cgroup_processing(ctx, cgrp, subsys_mask);
+}
+
+SEC("kretprobe/cgroup_get_from_fd")
+int onret_cgroup_get_from_fd(struct pt_regs *ctx)
+{
+  // cgroup_get_from_fd returns the cgroup pointer or an error
+  struct cgroup *cgrp = (struct cgroup *)PT_REGS_RC(ctx);
+  if (cgrp == NULL || IS_ERR_VALUE((unsigned long)cgrp)) {
     return 0;
+  }
 
-  u64 now = get_timestamp();
-  struct cgroup *parent_cgroup = get_css_parent_cgroup(&cgrp->self);
-
-  perf_submit_agent_internal__existing_cgroup_probe(ctx, now, (__u64)cgrp, (__u64)parent_cgroup, (void *)get_cgroup_name(cgrp));
-
-  return 0;
+  // For cgroup_get_from_fd, we assume all subsystems are relevant
+  // since this is called when accessing cgroup via fd
+  u16 subsys_mask = 1 << FLOW_CGROUP_SUBSYS;
+  return handle_cgroup_processing(ctx, cgrp, subsys_mask);
 }
 
 // existing cgroups v1
