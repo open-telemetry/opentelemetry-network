@@ -75,7 +75,7 @@ tcp_events_submit_http_response(struct pt_regs *ctx, struct sock *sk, u16 code, 
 #endif
 }
 
-static void tcp_events_submit_tcp_data(
+static __always_inline void tcp_events_submit_tcp_data(
     struct pt_regs *ctx,
     struct tcp_connection_t *pconn,
     enum STREAM_TYPE streamtype,

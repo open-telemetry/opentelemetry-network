@@ -83,7 +83,7 @@ static __always_inline void tcp_send_stream_handler(
   }
 }
 
-static void tcp_recv_stream_handler(
+static __always_inline void tcp_recv_stream_handler(
     struct pt_regs *ctx,
     struct tcp_connection_t *pconn,
     struct tcp_control_value_t *pctrl,

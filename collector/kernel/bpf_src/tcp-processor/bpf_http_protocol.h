@@ -14,7 +14,7 @@ struct http_protocol_state_data_t {
   u64 __unused; // Keep this to TCP_SOCKET_PROTOCOL_STATE_SIZE
 };
 
-static enum TCP_PROTOCOL_DETECT_RESULT http_detect(
+static __always_inline enum TCP_PROTOCOL_DETECT_RESULT http_detect(
     struct pt_regs *ctx,
     struct tcp_connection_t *pconn,
     struct tcp_control_value_t *pctrl,
@@ -96,7 +96,7 @@ static enum TCP_PROTOCOL_DETECT_RESULT http_detect(
   return res;
 }
 
-static void http_process_request(
+static __always_inline void http_process_request(
     struct pt_regs *ctx,
     struct tcp_connection_t *pconn,
     struct tcp_control_value_t *pctrl,
@@ -124,7 +124,7 @@ static void http_process_request(
   }
 }
 
-static void http_process_response(
+static __always_inline void http_process_response(
     struct pt_regs *ctx,
     struct tcp_connection_t *pconn,
     struct tcp_control_value_t *pctrl,
