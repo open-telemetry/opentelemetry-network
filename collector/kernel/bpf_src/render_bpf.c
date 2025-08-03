@@ -1679,7 +1679,7 @@ int on_tcp_reset(struct pt_regs *ctx)
 
 // laddr, raddr is in big endian format, lport and rport are in little endian
 // format
-static __attribute__((always_inline)) void udp_update_stats(
+static __always_inline void udp_update_stats(
     struct pt_regs *ctx,
     struct sock *sk,
     struct sk_buff *skb,

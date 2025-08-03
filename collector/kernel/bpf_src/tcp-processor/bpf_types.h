@@ -137,7 +137,7 @@ struct bpf_log_args {
     _bpf_log(__LINE__, ctx, &__log_args);                                                                                      \
   } while (0)
 
-static void _bpf_log(int filelineid, struct pt_regs *ctx, struct bpf_log_args *args)
+static void __always_inline _bpf_log(int filelineid, struct pt_regs *ctx, struct bpf_log_args *args)
 {
 
   // Get timestamp in milliseconds
@@ -184,7 +184,7 @@ static void _bpf_log(int filelineid, struct pt_regs *ctx, struct bpf_log_args *a
 }
 
 // Useful conversion from ip4 space to ip6 space for addresses
-inline static struct in6_addr make_ipv6_address(__be32 addr)
+static __always_inline struct in6_addr make_ipv6_address(__be32 addr)
 {
   struct in6_addr addr6 = {.in6_u.u6_addr32 = {0, 0, 0xffff0000, addr}};
   return addr6;
