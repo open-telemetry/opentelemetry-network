@@ -91,9 +91,6 @@ protected:
     // Create BPF configuration with test parameters
     u64 boot_time_adjustment = get_boot_time();
 
-    BpfConfiguration bpf_config{
-        .boot_time_adjustment = boot_time_adjustment, .filter_ns = 10 * 1000 * 1000ull, .enable_tcp_data_stream = false};
-
     test_intake_config_ = TestIntakeConfig("", "", INTAKE_DUMP_FILE, intake_encoder);
 
     auto const aws_metadata = AwsMetadata::fetch(1000ms);
@@ -109,6 +106,11 @@ protected:
     bool const enable_userland_tcp = false;
 
     u64 const socket_stats_interval_sec = 10;
+
+    BpfConfiguration bpf_config{
+        .boot_time_adjustment = boot_time_adjustment,
+        .filter_ns = 10 * 1000 * 1000ull,
+        .enable_tcp_data_stream = enable_userland_tcp};
 
     struct utsname unamebuf;
     if (uname(&unamebuf)) {
