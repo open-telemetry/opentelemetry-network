@@ -323,9 +323,6 @@ jobs:
       matrix:
         include:
           # renovate: datasource=docker depName=quay.io/lvh-images/complexity-test
-          - kernel: '4.19-20250721.013324'
-            description: 'Kernel 4.19'
-          # renovate: datasource=docker depName=quay.io/lvh-images/complexity-test
           - kernel: '5.4-20250721.013324'
             description: 'Kernel 5.4'
           # renovate: datasource=docker depName=quay.io/lvh-images/complexity-test
@@ -481,9 +478,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # renovate: datasource=docker depName=quay.io/lvh-images/complexity-test
-          - kernel: '4.19-20250721.013324'
-            description: 'Kernel 4.19'
           # renovate: datasource=docker depName=quay.io/lvh-images/complexity-test
           - kernel: '5.4-20250721.013324'
             description: 'Kernel 5.4'
