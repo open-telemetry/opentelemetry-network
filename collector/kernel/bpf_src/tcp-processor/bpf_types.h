@@ -124,13 +124,6 @@ struct {
   __uint(max_entries, BPF_MAX_CPUS);
 } bpf_log_globals_per_cpu SEC(".maps");
 
-struct bpf_log_args {
-  enum BPF_LOG_CODE code;
-  u64 arg0;
-  u64 arg1;
-  u64 arg2;
-};
-
 #define bpf_log(ctx, _code, _arg0, _arg1, _arg2)                                                                               \
   do {                                                                                                                         \
     _bpf_log(__LINE__, ctx, _code, _arg0, _arg1, _arg1);                                                                       \
