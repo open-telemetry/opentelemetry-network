@@ -175,6 +175,9 @@ __attribute__((noinline)) int handle_kprobe__tcp_sendmsg(struct pt_regs *ctx)
     u32 type;
     if (bpf_core_field_exists(((struct msghdr___5_13_19 *)msg)->msg_iter.type)) {
       struct msghdr___5_13_19 *msg = msg;
+      if (!msg) {
+        return 0;
+      }
       if (bpf_probe_read_kernel(&type, sizeof(type), &((struct msghdr___5_13_19 *)msg)->msg_iter.type) != 0) {
         bpf_log(ctx, BPF_LOG_INVALID_POINTER, (u64)sk, (u64)msg, (u64)size);
         return 0;
@@ -396,6 +399,9 @@ int handle_kprobe__tcp_recvmsg(struct pt_regs *ctx)
     u32 type;
     if (bpf_core_field_exists(((struct msghdr___5_13_19 *)msg)->msg_iter.type)) {
       struct msghdr___5_13_19 *msg = msg;
+      if (!msg) {
+        return 0;
+      }
       if (bpf_probe_read_kernel(&type, sizeof(type), &((struct msghdr___5_13_19 *)msg)->msg_iter.type) != 0) {
         bpf_log(ctx, BPF_LOG_INVALID_POINTER, (u64)sk, (u64)msg, (u64)len);
         return 0;
