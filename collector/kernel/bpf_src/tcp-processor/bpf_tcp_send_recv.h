@@ -172,18 +172,18 @@ __attribute__((noinline)) int handle_kprobe__tcp_sendmsg(struct pt_regs *ctx)
     nr_segs = BPF_CORE_READ(msg, msg_iovlen);
     // iov_offset is not a thing in older kernels
   } else {
-    u32 type;
-    if (bpf_core_field_exists(((struct msghdr___5_13_19 *)msg)->msg_iter.type)) {
-      struct msghdr___5_13_19 *msg = msg;
-      if (!msg) {
+    unsigned int type;
+    struct msghdr___5_13_19 *msg_compat = msg;
+    if (bpf_core_field_exists(msg_compat->msg_iter.type)) {
+      if (!msg_compat) {
         return 0;
       }
-      if (bpf_probe_read_kernel(&type, sizeof(type), &((struct msghdr___5_13_19 *)msg)->msg_iter.type) != 0) {
+      if (bpf_probe_read_kernel(&type, sizeof(type), &msg_compat->msg_iter.type) != 0) {
         bpf_log(ctx, BPF_LOG_INVALID_POINTER, (u64)sk, (u64)msg, (u64)size);
         return 0;
       }
     } else {
-      type = (u32)BPF_CORE_READ(msg, msg_iter.iter_type);
+      type = (unsigned int)BPF_CORE_READ(msg, msg_iter.iter_type);
     }
     // ensure this is an IOVEC or KVEC, low bit indicates read/write
     // note: iov_iter.iov and iov_iter.kvec are union and have same layout
