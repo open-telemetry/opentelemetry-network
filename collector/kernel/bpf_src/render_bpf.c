@@ -1322,7 +1322,8 @@ static struct udp_open_socket_t *udp_existing_hack(struct pt_regs *ctx, struct s
 }
 #endif
 
-static __always_inline void udp_send_stats_if_nonempty(struct pt_regs *ctx, u64 now, struct sock *sk, struct udp_stats_t *stats, u8 is_rx)
+static __always_inline void
+udp_send_stats_if_nonempty(struct pt_regs *ctx, u64 now, struct sock *sk, struct udp_stats_t *stats, u8 is_rx)
 {
   /* is no data to send, return */
   u32 sk_drops_counter = BPF_CORE_READ(sk, sk_drops.counter);
