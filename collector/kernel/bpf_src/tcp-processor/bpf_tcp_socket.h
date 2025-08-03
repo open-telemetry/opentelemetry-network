@@ -137,7 +137,7 @@ static struct tcp_connection_t *create_tcp_connection(struct pt_regs *ctx, struc
   return pconn;
 }
 
-static struct tcp_control_value_t *get_tcp_control(struct tcp_connection_t *pconn)
+static __always_inline struct tcp_control_value_t *get_tcp_control(struct tcp_connection_t *pconn)
 {
   struct tcp_control_key_t key = {.sk = (u64)pconn->sk};
   struct tcp_control_value_t *pvalue = bpf_map_lookup_elem(&_tcp_control, &key);
@@ -180,7 +180,7 @@ static void delete_tcp_connection(struct pt_regs *ctx, struct tcp_connection_t *
   }
 }
 
-static void write_to_tcp_stream(
+static __always_inline void write_to_tcp_stream(
     struct pt_regs *ctx,
     struct tcp_connection_t *pconn,
     enum STREAM_TYPE streamtype,
