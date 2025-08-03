@@ -102,7 +102,7 @@ typedef u64 TIMESTAMP;
 // of the agent (in python or whatever). could replace this to simulate tight
 // timing tests eventually too
 
-static TIMESTAMP get_timestamp(void)
+static __always_inline TIMESTAMP get_timestamp(void)
 {
 #ifdef STANDALONE_TCP_PROCESSOR
   return (TIMESTAMP)bpf_ktime_get_ns();

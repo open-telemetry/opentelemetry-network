@@ -1231,7 +1231,7 @@ int on_tcp46_seq_show(struct pt_regs *ctx)
 // this operation is atomic and not susceptible to race conditions, because
 // map.insert is atomic
 
-static inline int add_udp_open_socket(struct pt_regs *ctx, struct sock *sk, u32 tgid, u64 now)
+static __always_inline int add_udp_open_socket(struct pt_regs *ctx, struct sock *sk, u32 tgid, u64 now)
 {
 #if TRACE_UDP_SOCKETS
   bpf_trace_printk("add_udp_open_socket: %llx (tgid=%u, cpu=%u)\n", sk, tgid, bpf_get_smp_processor_id());
@@ -1257,7 +1257,7 @@ static inline int add_udp_open_socket(struct pt_regs *ctx, struct sock *sk, u32 
   return 1;
 }
 
-static int ensure_udp_existing(struct pt_regs *ctx, struct sock *sk, u32 tgid)
+static __always_inline int ensure_udp_existing(struct pt_regs *ctx, struct sock *sk, u32 tgid)
 {
   u16 family = BPF_CORE_READ(sk, sk_family);
 
@@ -1291,7 +1291,7 @@ static int ensure_udp_existing(struct pt_regs *ctx, struct sock *sk, u32 tgid)
 // HACK: Add tcp sockets that should exist to the table but don't
 //
 #if UDP_EXISTING_HACK
-static struct udp_open_socket_t *udp_existing_hack(struct pt_regs *ctx, struct sock *sk)
+static __always_inline struct udp_open_socket_t *udp_existing_hack(struct pt_regs *ctx, struct sock *sk)
 {
   // Can only do this hack if we are in a userland process context
   PID_TGID _pid_tgid = bpf_get_current_pid_tgid();
