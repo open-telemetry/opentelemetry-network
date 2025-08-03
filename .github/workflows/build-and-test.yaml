@@ -441,7 +441,19 @@ jobs:
           if docker ps --filter "id=$container_id" --filter "status=running" --quiet > /dev/null; then
             echo "✓ Kernel collector loaded successfully and ran for 20 seconds"
             echo "---Kernel collector logs:"
-            docker logs $container_id || true
+            collector_logs=$(docker logs $container_id 2>&1 || true)
+            echo "$collector_logs"
+            
+            # Check for error strings in the logs
+            if echo "$collector_logs" | grep -i "error" > /dev/null 2>&1; then
+              echo "✗ Found 'error' in kernel collector output - test failed"
+              docker stop $container_id || true
+              docker rm $container_id || true
+              # Stop nc listener
+              kill $nc_pid || true
+              exit 1
+            fi
+            
             docker stop $container_id || true
             docker rm $container_id || true
             # Stop nc listener
