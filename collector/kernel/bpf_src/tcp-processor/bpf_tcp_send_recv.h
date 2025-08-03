@@ -386,39 +386,35 @@ int handle_kprobe__tcp_recvmsg(struct pt_regs *ctx)
   // decode msg
 
   struct iovec *iov = NULL;
-  if (bpf_core_field_exists(((struct msghdr___3_18_140 *)msg)->msg_iov)) {
-    struct msghdr___3_18_140 *msg = msg;
-    iov = BPF_CORE_READ(msg, msg_iov);
+  unsigned int type;
+  if (bpf_core_field_exists(msg->msg_iter.iter_type)) {
+    type = (unsigned int)BPF_CORE_READ(msg, msg_iter.iter_type);
   } else {
-    u32 type;
-    if (bpf_core_field_exists(((struct msghdr___5_13_19 *)msg)->msg_iter.type)) {
-      struct msghdr___5_13_19 *msg = msg;
-      if (!msg) {
-        return 0;
-      }
-      if (bpf_probe_read_kernel(&type, sizeof(type), &((struct msghdr___5_13_19 *)msg)->msg_iter.type) != 0) {
-        bpf_log(ctx, BPF_LOG_INVALID_POINTER, (u64)sk, (u64)msg, (u64)len);
-        return 0;
-      }
-    } else {
-      type = (u32)BPF_CORE_READ(msg, msg_iter.iter_type);
-    }
-    // ensure this is an IOVEC or KVEC, low bit indicates read/write
-    // note: iov_iter.iov and iov_iter.kvec are union and have same layout
-    // first condition makes it work on pre-5 kernels where ITER_IOVEC=0
-    if (type > 1 && !(type & (ITER_IOVEC | ITER_KVEC))) {
-#if DEBUG_TCP_RECEIVE
-      DEBUG_PRINTK("unsupported iov type: %d\n", type);
-#endif
-      bpf_log(ctx, BPF_LOG_UNSUPPORTED_IO, (u64)ST_RECV, (u64)sk, (u64)type);
+    struct msghdr___5_13_19 *msg_compat = (void *)msg;
+    if (!msg_compat) {
       return 0;
     }
-    // can access through iov since iov and kvec are union and have same layout
-    if (bpf_core_field_exists(msg->msg_iter.__iov)) {
-      iov = (struct iovec *)BPF_CORE_READ(msg, msg_iter.__iov);
-    } else {
-      iov = (struct iovec *)BPF_CORE_READ((struct msghdr___5_13_19 *)msg, msg_iter.iov);
+    if (bpf_probe_read_kernel(&type, sizeof(type), &msg_compat->msg_iter.type) != 0) {
+      bpf_log(ctx, BPF_LOG_INVALID_POINTER, (u64)sk, (u64)msg, (u64)size);
+      return 0;
     }
+  }
+  
+  // ensure this is an IOVEC or KVEC, low bit indicates read/write
+  // note: iov_iter.iov and iov_iter.kvec are union and have same layout
+  // first condition makes it work on pre-5 kernels where ITER_IOVEC=0
+  if (type > 1 && !(type & (ITER_IOVEC | ITER_KVEC))) {
+#if DEBUG_TCP_RECEIVE
+    DEBUG_PRINTK("unsupported iov type: %d\n", type);
+#endif
+    bpf_log(ctx, BPF_LOG_UNSUPPORTED_IO, (u64)ST_RECV, (u64)sk, (u64)type);
+    return 0;
+  }
+  // can access through iov since iov and kvec are union and have same layout
+  if (bpf_core_field_exists(msg->msg_iter.__iov)) {
+    iov = (struct iovec *)BPF_CORE_READ(msg, msg_iter.__iov);
+  } else {
+    iov = (struct iovec *)BPF_CORE_READ((struct msghdr___5_13_19 *)msg, msg_iter.iov);
   }
 
   void *iov_base = NULL;
