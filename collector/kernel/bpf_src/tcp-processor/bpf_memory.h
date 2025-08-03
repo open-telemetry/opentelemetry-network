@@ -28,7 +28,11 @@ static __always_inline int string_starts_with(const char *s1, const size_t s1_le
     return 0;
   }
 
-  for (int i = 0; i < s2_len; i++) {
+  for (int i = 0; i < 16; i++) {
+    if (i >= s2_len) {
+      // s2 is shorter than 16 bytes, so we are done
+      return 1;
+    }
     if (s2_local[i] != s1_local[i]) {
       return 0;
     }
