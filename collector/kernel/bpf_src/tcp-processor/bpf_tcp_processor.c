@@ -70,14 +70,14 @@ static void tcp_server_handler_wrapper(struct tcp_handler_args *args);
     tcp_server_handler_wrapper(&__args);                                                                                       \
   } while (0)
 
-static inline void tcp_client_handler_impl(
+static __always_inline void tcp_client_handler_impl(
     struct pt_regs *ctx,
     struct tcp_connection_t *pconn,
     struct tcp_control_value_t *pctrl,
     enum STREAM_TYPE streamtype,
     const void *data,
     size_t data_len);
-static inline void tcp_server_handler_impl(
+static __always_inline void tcp_server_handler_impl(
     struct pt_regs *ctx,
     struct tcp_connection_t *pconn,
     struct tcp_control_value_t *pctrl,
@@ -100,7 +100,7 @@ static inline void tcp_server_handler_impl(
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static inline void tcp_client_handler_impl(
+static __always_inline void tcp_client_handler_impl(
     struct pt_regs *ctx,
     struct tcp_connection_t *pconn,
     struct tcp_control_value_t *pctrl,
@@ -159,7 +159,7 @@ static inline void tcp_client_handler_impl(
 #pragma passthrough off
 }
 
-static inline void tcp_server_handler_impl(
+static __always_inline void tcp_server_handler_impl(
     struct pt_regs *ctx,
     struct tcp_connection_t *pconn,
     struct tcp_control_value_t *pctrl,
@@ -197,12 +197,12 @@ static inline void tcp_server_handler_impl(
 #pragma passthrough off
 }
 
-static void tcp_client_handler_wrapper(struct tcp_handler_args *args)
+static __always_inline void tcp_client_handler_wrapper(struct tcp_handler_args *args)
 {
   tcp_client_handler_impl(args->ctx, args->pconn, args->pctrl, args->streamtype, args->data, args->data_len);
 }
 
-static void tcp_server_handler_wrapper(struct tcp_handler_args *args)
+static __always_inline void tcp_server_handler_wrapper(struct tcp_handler_args *args)
 {
   tcp_server_handler_impl(args->ctx, args->pconn, args->pctrl, args->streamtype, args->data, args->data_len);
 }

@@ -134,7 +134,7 @@ struct {
   }
 
 // Submit contents of TCP data stream to the perf ring to userland
-static void
+static __always_inline void
 data_channel_submit(struct pt_regs *ctx, struct tcp_connection_t *pconn, const void *data, size_t data_len, size_t *actual_len)
 {
   // Clip the length to the most we can copy

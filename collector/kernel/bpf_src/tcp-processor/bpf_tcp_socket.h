@@ -80,7 +80,7 @@ struct {
 // TCP Connection Lifecycle Management
 //
 
-static struct tcp_connection_t *lookup_tcp_connection(struct sock *sk)
+static __always_inline struct tcp_connection_t *lookup_tcp_connection(struct sock *sk)
 {
   // #if TRACE_TCP_CONNECTION
   //   DEBUG_PRINTK("tcp_connections.lookup(%llx)\n", sk);
@@ -147,7 +147,7 @@ static __always_inline struct tcp_control_value_t *get_tcp_control(struct tcp_co
 // Call this when we don't want to bother processing a tcp
 // connection any longer to minimize overhead
 // recv/send = -1 (ignore), 0 (unchanged), 1 (don't ignore)
-static void enable_tcp_connection(struct tcp_control_value_t *pctrl, int recv, int send)
+static __always_inline void enable_tcp_connection(struct tcp_control_value_t *pctrl, int recv, int send)
 {
   // DEBUG_PRINTK("enable_tcp_connection: recv=%d, send=%d\n", recv, send);
   if (send != 0) {
