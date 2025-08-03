@@ -88,17 +88,11 @@ protected:
 
     // This mostly duplicates the KernelCollector setup done in collector/kernel/main.cc.
 
-    /* Read our BPF program*/
-    /* resolve includes */
-    bpf_src_ = std::string((char *)agent_bpf_c, agent_bpf_c_len);
-
+    // Create BPF configuration with test parameters
     u64 boot_time_adjustment = get_boot_time();
-    /* insert time onto the bpf program */
-    bpf_src_ = std::regex_replace(bpf_src_, std::regex("BOOT_TIME_ADJUSTMENT"), fmt::format("{}uLL", boot_time_adjustment));
-    bpf_src_ = std::regex_replace(bpf_src_, std::regex("FILTER_NS"), fmt::format("{}", 10 * 1000 * 1000ull));
-    bpf_src_ = std::regex_replace(bpf_src_, std::regex("MAX_PID"), *read_file_as_string(MAX_PID_PROC_PATH).try_raise());
-    bpf_src_ = std::regex_replace(bpf_src_, std::regex("CPU_MEM_IO_ENABLED"), std::string("0"));
-    bpf_src_ = std::regex_replace(bpf_src_, std::regex("REPORT_DEBUG_EVENTS_PLACEHOLDER"), std::string("0"));
+
+    BpfConfiguration bpf_config{
+        .boot_time_adjustment = boot_time_adjustment, .filter_ns = 10 * 1000 * 1000ull, .enable_tcp_data_stream = false};
 
     test_intake_config_ = TestIntakeConfig("", "", INTAKE_DUMP_FILE, intake_encoder);
 
@@ -148,16 +142,14 @@ protected:
         .hostname = hostname};
 
     kernel_collector_.emplace(
-        bpf_src_,
+        bpf_config,
         *test_intake_config_,
-        boot_time_adjustment,
         aws_metadata.try_value(),
         gcp_metadata.try_value(),
         configuration_data.labels(),
         loop_,
         *curl_engine,
         enable_http_metrics,
-        enable_userland_tcp,
         socket_stats_interval_sec,
         CgroupHandler::CgroupSettings{false, std::nullopt},
         bpf_dump_file,
@@ -440,7 +432,6 @@ protected:
 
   uv_loop_t loop_;
 
-  std::string bpf_src_;
   std::optional<TestIntakeConfig> test_intake_config_;
   std::optional<KernelCollector> kernel_collector_;
 

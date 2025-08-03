@@ -45,10 +45,6 @@
 // When sockets are accepted, do we report the statistics on the child or parent socket?
 #define TCP_STATS_ON_PARENT 1
 
-// debug event codes
-#define TCP_LIFETIME_HACK_CODE 1
-#define UDP_LIFETIME_HACK_CODE 2
-
 ///////// bpf_tcp_processor.c config
 
 #define TCP_CONNECTION_HASH_SIZE TABLE_SIZE__TCP_OPEN_SOCKETS // Same for now to ensure we can always handle all http requests

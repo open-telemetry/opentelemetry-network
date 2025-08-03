@@ -49,14 +49,6 @@ static constexpr size_t AGENT_MAX_MEMORY = 300ULL * 1024 * 1024; /* 300 MiB */
 /* agent nice(2) value: -20 highest priority, 19 lowest, 0 default */
 static constexpr int AGENT_NICE_VALUE = 5;
 
-extern "C" {
-/* bpf source code */
-extern char agent_bpf_c[];
-extern unsigned int agent_bpf_c_len;
-} // extern "C"
-
-static constexpr auto EXPORT_BPF_SRC_FILE_VAR = "EBPF_NET_EXPORT_BPF_SRC_FILE";
-
 static constexpr auto DISABLE_HTTP_METRICS_VAR = "EBPF_NET_DISABLE_HTTP_METRICS";
 
 static constexpr auto NAMESPACE_OVERRIDE_VAR = "EBPF_NET_AGENT_NAMESPACE";
@@ -334,9 +326,6 @@ int main(int argc, char *argv[])
   args::ValueFlag<std::string> bpf_dump_file(
       *parser, "bpf-dump-file", "If set, dumps the stream of eBPF messages to the file given by this flag", {"bpf-dump-file"});
 
-  auto report_bpf_debug_events =
-      parser.add_flag("report-bpf-debug-events", "Whether bpf debug events should be reported to userland or not");
-
 #ifdef CONFIGURABLE_BPF
   args::ValueFlag<std::string> bpf_file(*parser, "bpf_file", "File containing bpf code", {"bpf"}, "");
 #endif // CONFIGURABLE_BPF
@@ -514,28 +503,13 @@ int main(int argc, char *argv[])
     /* mount debugfs if it is not mounted */
     mount_debugfs_if_required();
 
-    /* Read our BPF program*/
-    /* resolve includes */
-    std::string bpf_src((char *)agent_bpf_c, agent_bpf_c_len);
-#ifdef CONFIGURABLE_BPF
-    if (bpf_file.Matched()) {
-      bpf_src = *read_file_as_string(bpf_file.Get().c_str()).try_raise();
-    }
-#endif
-
+    // Create BPF configuration with all required parameters
     u64 boot_time_adjustment = get_boot_time();
-    /* insert time onto the bpf program */
-    bpf_src = std::regex_replace(bpf_src, std::regex("BOOT_TIME_ADJUSTMENT"), fmt::format("{}uLL", boot_time_adjustment));
-    bpf_src = std::regex_replace(bpf_src, std::regex("FILTER_NS"), fmt::format("{}", args::get(filter_ns)));
-    bpf_src = std::regex_replace(bpf_src, std::regex("MAX_PID"), *read_file_as_string(MAX_PID_PROC_PATH).try_raise());
-    bpf_src = std::regex_replace(
-        bpf_src, std::regex("REPORT_DEBUG_EVENTS_PLACEHOLDER"), std::string(1, "01"[*report_bpf_debug_events]));
 
-    if (std::string const out{try_get_env_var(EXPORT_BPF_SRC_FILE_VAR)}; !out.empty()) {
-      if (auto const error = write_file(out.c_str(), bpf_src)) {
-        LOG::error("ERROR: unable to write BPF source to '{}': {}", out, error);
-      }
-    }
+    BpfConfiguration bpf_config{
+        .boot_time_adjustment = boot_time_adjustment,
+        .filter_ns = args::get(filter_ns),
+        .enable_tcp_data_stream = enable_userland_tcp};
 
     uv_timer_t refill_log_rate_limit_timer;
     if (!disable_log_rate_limit) {
@@ -564,16 +538,14 @@ int main(int argc, char *argv[])
 
     // Initialize our kernel telemetry collector
     KernelCollector kernel_collector{
-        bpf_src,
+        bpf_config,
         intake_config,
-        boot_time_adjustment,
         aws_metadata.try_value(),
         gcp_metadata.try_value(),
         configuration_data.labels(),
         loop,
         *curl_engine,
         enable_http_metrics,
-        enable_userland_tcp,
         socket_stats_interval_sec.Get(),
         CgroupHandler::CgroupSettings{
             .force_docker_metadata = *force_docker_metadata,

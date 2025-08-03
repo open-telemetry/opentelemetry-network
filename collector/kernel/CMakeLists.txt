@@ -12,7 +12,6 @@ target_link_libraries(
   kernel-collector
   PUBLIC
     agentlib
-    agentxxdlib
     fastpass_util
     file_ops
     bcc-interface
@@ -128,21 +127,13 @@ target_link_libraries(
 )
 target_compile_options(agentlib PRIVATE -fPIC)
 # some agentlib sources include ${BPF_DEBUG_INFO}
-add_dependencies(agentlib preprocess_bpf generate_bpf_skeleton)
-
+add_dependencies(agentlib generate_bpf_skeleton)
 
 ################################################################################
-# Preprocess BPF Code and Convert to XXD
+# libbpf skeleton
 #
 
-set(BPF_PROCESSED_SOURCE "${CMAKE_BINARY_DIR}/generated/agent_bpf.c")
-set(BPF_DEBUG_INFO "${CMAKE_BINARY_DIR}/generated/agent_bpf_debug.inc")
-
-set_source_files_properties("${BPF_PROCESSED_SOURCE}" PROPERTIES GENERATED TRUE)
-set_source_files_properties("${BPF_DEBUG_INFO}" PROPERTIES GENERATED TRUE)
-
 set(BPF_DEPENDENCIES
-  "${CMAKE_CURRENT_SOURCE_DIR}/bpf_preprocess.py"
   "${CMAKE_CURRENT_SOURCE_DIR}/bpf_src/render_bpf.c"
   "${CMAKE_CURRENT_SOURCE_DIR}/bpf_src/render_bpf.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/bpf_src/tcp-processor/bpf_debug.h"
@@ -159,63 +150,6 @@ set(BPF_DEPENDENCIES
   "${PROJECT_SOURCE_DIR}/jitbuf/jb.h"
   render_compile_ebpf_net
 )
-
-# bpf_preprocess.py <infile> <outfile> <debugfile>
-# Note: in this command we define _PROCESSING_BPF=1 so headers shared between
-# bpf and userland can have different code when required
-add_custom_command(
-  OUTPUT
-    "${BPF_PROCESSED_SOURCE}"
-    "${BPF_DEBUG_INFO}"
-  COMMAND
-    python3
-    "${CMAKE_CURRENT_SOURCE_DIR}/bpf_preprocess.py"
-    "${CMAKE_CURRENT_SOURCE_DIR}/bpf_src/render_bpf.c"
-    "${BPF_PROCESSED_SOURCE}"
-    "${BPF_DEBUG_INFO}"
-    -D _PROCESSING_BPF=1
-    -I "${PROJECT_SOURCE_DIR}"
-    -I "${CMAKE_CURRENT_SOURCE_DIR}"
-    -I "${CMAKE_BINARY_DIR}"
-    -I "${PROJECT_BINARY_DIR}"
-    -I "${CMAKE_CURRENT_BINARY_DIR}"
-    -I "${CMAKE_BINARY_DIR}/generated"
-    -I "${CMAKE_BINARY_DIR}/generated/bpf"
-    -I "${CMAKE_BINARY_DIR}/generated/ebpf_net/agent_internal"
-    -I "${CMAKE_BINARY_DIR}/generated/bpf/bpf_src"
-    -I "${CMAKE_BINARY_DIR}/generated/bpf/bpf_src/tcp-processor"
-  DEPENDS "${BPF_DEPENDENCIES}"
-  COMMENT "Processing BPF source file"
-  VERBATIM
-)
-add_custom_target(
-  preprocess_bpf
-  DEPENDS
-    "${BPF_PROCESSED_SOURCE}"
-    "${BPF_DEBUG_INFO}"
-)
-
-# Compiled-in BPF source
-#
-add_xxd("${BPF_PROCESSED_SOURCE}" BPF_PROCESSED_XXD
-  OUTPUT "agent_bpf_xxd.c"
-  DEPENDS preprocess_bpf
-)
-add_library(
-  agentxxdlib
-  STATIC
-    ${BPF_PROCESSED_XXD}
-)
-target_include_directories(
-  agentxxdlib
-  PRIVATE
-    ${CMAKE_BINARY_DIR}
-)
-
-
-################################################################################
-# libbpf skeleton
-#
 
 set(BPF_SKEL_HEADER "${CMAKE_BINARY_DIR}/generated/render_bpf.skel.h")
 set(BPF_OBJECT_FILE "${CMAKE_BINARY_DIR}/generated/render_bpf.bpf.o")
@@ -391,4 +325,4 @@ endif()
 #
 add_unit_test(cgroup_handler LIBS agentlib test_channel)
 add_unit_test(kernel_symbols LIBS agentlib)
-add_ebpf_unit_test(kernel_collector LIBS signal_handler agentlib agentxxdlib fastpass_util file_ops bcc-interface bcc-static config_file libuv-static system_ops static-executable test_channel)
+add_ebpf_unit_test(kernel_collector LIBS signal_handler agentlib fastpass_util file_ops bcc-interface bcc-static config_file libuv-static system_ops static-executable test_channel)

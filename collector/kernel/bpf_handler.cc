@@ -13,9 +13,8 @@
 
 BPFHandler::BPFHandler(
     uv_loop_t &loop,
-    std::string full_program,
+    const BpfConfiguration &bpf_config,
     bool enable_http_metrics,
-    bool enable_userland_tcp,
     FileDescriptor &bpf_dump_file,
     logging::Logger &log,
     ::ebpf_net::ingest::Encoder *encoder,
@@ -27,7 +26,6 @@ BPFHandler::BPFHandler(
       encoder_(encoder),
       buf_poller_(nullptr),
       enable_http_metrics_(enable_http_metrics),
-      enable_userland_tcp_(enable_userland_tcp),
       bpf_dump_file_(bpf_dump_file),
       log_(log),
       last_lost_count_(0),
@@ -40,7 +38,7 @@ BPFHandler::BPFHandler(
   }
 
   // Configure global variables before loading
-  probe_handler_.configure_bpf_skeleton(bpf_skel_, enable_userland_tcp);
+  probe_handler_.configure_bpf_skeleton(bpf_skel_, bpf_config);
 
   // Now load the skeleton and set up perf rings
   int res = probe_handler_.load_and_setup_bpf_skeleton(bpf_skel_, perf_);

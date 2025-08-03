@@ -75,24 +75,21 @@ void __handle_close_cb(uv_handle_t *handle)
 }
 
 KernelCollector::KernelCollector(
-    const std::string &full_program,
+    const BpfConfiguration &bpf_config,
     config::IntakeConfig const &intake_config,
-    u64 boot_time_adjustment,
     AwsMetadata const *aws_metadata,
     GcpInstanceMetadata const *gcp_metadata,
     std::map<std::string, std::string> config_labels,
     uv_loop_t &loop,
     CurlEngine &curl_engine,
     bool enable_http_metrics,
-    bool enable_userland_tcp,
     u64 socket_stats_interval_sec,
     CgroupHandler::CgroupSettings cgroup_settings,
     std::string const &bpf_dump_file,
     HostInfo host_info,
     EntrypointError entrypoint_error)
-    : full_program_(full_program),
+    : bpf_config_(bpf_config),
       intake_config_(std::move(intake_config)),
-      boot_time_adjustment_(boot_time_adjustment),
       aws_metadata_(aws_metadata),
       gcp_metadata_(gcp_metadata),
       config_labels_(config_labels),
@@ -109,7 +106,7 @@ KernelCollector::KernelCollector(
           intake_config_.allow_compression(),
           *primary_channel_,
           secondary_channel_ ? &secondary_channel_ : nullptr),
-      writer_(upstream_connection_.buffered_writer(), monotonic, boot_time_adjustment, encoder_.get()),
+      writer_(upstream_connection_.buffered_writer(), monotonic, bpf_config_.boot_time_adjustment, encoder_.get()),
       last_probe_monotonic_time_ns_(monotonic() - inter_probe_time_ns_),
       is_connected_(false),
       curl_engine_(curl_engine),
@@ -120,7 +117,6 @@ KernelCollector::KernelCollector(
             return scheduling::JobFollowUp::ok;
           }),
       enable_http_metrics_(enable_http_metrics),
-      enable_userland_tcp_(enable_userland_tcp),
       socket_stats_interval_sec_(socket_stats_interval_sec),
       cgroup_settings_(std::move(cgroup_settings)),
       log_(writer_),
@@ -286,8 +282,7 @@ void KernelCollector::probe_holdoff_timeout(uv_timer_t *timer)
 
   auto potential_troubleshoot_item = TroubleshootItem::bpf_compilation_failed;
   try {
-    bpf_handler_.emplace(
-        loop_, full_program_, enable_http_metrics_, enable_userland_tcp_, bpf_dump_file_, log_, encoder_.get(), host_info_);
+    bpf_handler_.emplace(loop_, bpf_config_, enable_http_metrics_, bpf_dump_file_, log_, encoder_.get(), host_info_);
 
     potential_troubleshoot_item = TroubleshootItem::unexpected_exception;
     writer_.bpf_compiled();
@@ -295,7 +290,7 @@ void KernelCollector::probe_holdoff_timeout(uv_timer_t *timer)
     kernel_collector_restarter_.reset();
     bpf_handler_->load_buffered_poller(
         upstream_connection_.buffered_writer(),
-        boot_time_adjustment_,
+        bpf_config_.boot_time_adjustment,
         curl_engine_,
         socket_stats_interval_sec_,
         cgroup_settings_,

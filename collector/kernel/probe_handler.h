@@ -22,6 +22,16 @@
 struct render_bpf_bpf;
 
 /**
+ * Configuration structure for BPF global variables
+ * Used to configure the BPF program before loading
+ */
+struct BpfConfiguration {
+  u64 boot_time_adjustment = 0;
+  u64 filter_ns = 1000000000; // Default 1 second in nanoseconds
+  bool enable_tcp_data_stream = false;
+};
+
+/**
  * ProbeAlternatives encapsulates multiple alternatives to attempt when attaching a probe.  Alternatives may be needed due to
  * differences in kernel versions or builds.
  */
@@ -65,7 +75,7 @@ public:
   void clear_kernel_symbols();
 
   struct render_bpf_bpf *open_bpf_skeleton();
-  void configure_bpf_skeleton(struct render_bpf_bpf *skel, bool enable_tcp_data_stream);
+  void configure_bpf_skeleton(struct render_bpf_bpf *skel, const BpfConfiguration &config);
   int load_and_setup_bpf_skeleton(struct render_bpf_bpf *skel, PerfContainer &perf);
   void destroy_bpf_skeleton(struct render_bpf_bpf *skel);
 

@@ -7,6 +7,7 @@
 volatile const long boot_time_adjustment = 0;
 volatile const long filter_ns = 1000000000;    // Default 1 second in nanoseconds
 volatile const int enable_tcp_data_stream = 0; // Set to 1 to enable TCP data stream processing
+volatile const int report_debug_events = 0;    // Set to 1 to enable debug event reporting
 
 #ifndef KBUILD_MODNAME
 #define KBUILD_MODNAME "ebpf_net"
@@ -76,11 +77,6 @@ static u64 abs_val(int val)
 {
   return val < 0 ? -val : val;
 }
-
-// using constants for placeholders for readability after code dump
-#pragma passthrough on
-#define REPORT_DEBUG_EVENTS REPORT_DEBUG_EVENTS_PLACEHOLDER
-#pragma passthrough off
 
 /* HELPERS FOR FILLERS */
 struct pkts_if_t {
@@ -972,10 +968,6 @@ static void tcp_lifetime_hack(struct pt_regs *ctx, struct sock *sk)
     bpf_trace_printk("tcp_lifetime_hack: tcp_lifetime_hack, sk=%llx, cpu=%u\n", sk, bpf_get_smp_processor_id());
     bpf_log(ctx, BPF_LOG_LIFETIME_HACK, BPF_TABLE_TCP_OPEN_SOCKETS, (u64)sk, 0);
 #endif
-#if REPORT_DEBUG_EVENTS
-    u64 now = get_timestamp();
-    perf_submit_agent_internal__report_debug_event(ctx, now, TCP_LIFETIME_HACK_CODE, (u64)sk, 0, 0, 0);
-#endif // REPORT_DEBUG_EVENTS
     remove_tcp_open_socket(ctx, sk);
   }
 }
@@ -1392,10 +1384,6 @@ static void udp_lifetime_hack(struct pt_regs *ctx, struct sock *sk)
     bpf_trace_printk("udp_lifetime_hack: udp_lifetime_hack sk=%llx cpu=%u\n", sk, bpf_get_smp_processor_id());
     bpf_log(ctx, BPF_LOG_LIFETIME_HACK, BPF_TABLE_UDP_OPEN_SOCKETS, (u64)sk, 0);
 #endif
-#if REPORT_DEBUG_EVENTS
-    u64 now = get_timestamp();
-    perf_submit_agent_internal__report_debug_event(ctx, now, UDP_LIFETIME_HACK_CODE, (u64)sk, 0, 0, 0);
-#endif // REPORT_DEBUG_EVENTS
     remove_udp_open_socket(ctx, sk);
   }
 }

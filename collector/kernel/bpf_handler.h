@@ -33,9 +33,8 @@ public:
    */
   BPFHandler(
       uv_loop_t &loop,
-      std::string full_program,
+      const BpfConfiguration &bpf_config,
       bool enable_http_metrics,
-      bool enable_userland_tcp,
       FileDescriptor &bpf_dump_file,
       logging::Logger &log,
       ::ebpf_net::ingest::Encoder *encoder,
@@ -98,7 +97,6 @@ private:
   ::ebpf_net::ingest::Encoder *encoder_;
   std::unique_ptr<BufferedPoller> buf_poller_;
   bool enable_http_metrics_;
-  bool enable_userland_tcp_;
   FileDescriptor &bpf_dump_file_;
   logging::Logger &log_;
   u64 last_lost_count_;
