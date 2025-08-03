@@ -437,7 +437,6 @@ jobs:
           
           # Check if container is still running
           echo Checking if container is still running:
-          docker ps --filter "id=$container_id" --filter "status=running" --quiet
           if docker ps --filter "id=$container_id" --filter "status=running" --quiet > /dev/null; then
             echo "✓ Kernel collector loaded successfully and ran for 30 seconds"
             echo "---Kernel collector logs:"
