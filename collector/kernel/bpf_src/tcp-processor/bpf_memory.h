@@ -13,7 +13,7 @@
 #include "bpf_types.h"
 
 // s2 can not be longer than 16 bytes due to older bpf inlining limitations
-inline static int string_starts_with(const char *s1, const size_t s1_len, const char *s2)
+static __always_inline int string_starts_with(const char *s1, const size_t s1_len, const char *s2)
 {
 
   char s2_local[16] = {};
@@ -37,7 +37,7 @@ inline static int string_starts_with(const char *s1, const size_t s1_len, const 
   return 1;
 }
 
-inline static int char_to_number(char x)
+static __always_inline int char_to_number(char x)
 {
   if (x < '0' || x > '9')
     return -1;

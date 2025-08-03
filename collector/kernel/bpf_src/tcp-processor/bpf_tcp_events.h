@@ -53,7 +53,7 @@ struct {
 
 // Utility functions
 
-static void
+static __always_inline void
 tcp_events_submit_http_response(struct pt_regs *ctx, struct sock *sk, u16 code, u64 latency, enum CLIENT_SERVER_TYPE dir)
 {
   GET_PID_TGID
