@@ -395,7 +395,7 @@ int handle_kprobe__tcp_recvmsg(struct pt_regs *ctx)
       return 0;
     }
     if (bpf_probe_read_kernel(&type, sizeof(type), &msg_compat->msg_iter.type) != 0) {
-      bpf_log(ctx, BPF_LOG_INVALID_POINTER, (u64)sk, (u64)msg, (u64)size);
+      bpf_log(ctx, BPF_LOG_INVALID_POINTER, (u64)sk, (u64)msg, (u64)len);
       return 0;
     }
   }
