@@ -428,7 +428,7 @@ jobs:
             --volume /var/run/docker.sock:/var/run/docker.sock \
             localhost:5000/kernel-collector --log-console --debug)
           
-          echo "Starting kernel collector and running for 20 seconds..."
+          echo "Starting kernel collector and running for 30 seconds..."
           docker start $container_id &
           collector_pid=$!
           
@@ -439,7 +439,7 @@ jobs:
           echo Checking if container is still running:
           docker ps --filter "id=$container_id" --filter "status=running" --quiet
           if docker ps --filter "id=$container_id" --filter "status=running" --quiet > /dev/null; then
-            echo "✓ Kernel collector loaded successfully and ran for 20 seconds"
+            echo "✓ Kernel collector loaded successfully and ran for 30 seconds"
             echo "---Kernel collector logs:"
             collector_logs=$(docker logs $container_id 2>&1 || true)
             echo "$collector_logs"
