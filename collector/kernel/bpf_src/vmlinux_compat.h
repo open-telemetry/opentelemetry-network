@@ -10,16 +10,6 @@
 // required for btf relocations
 #pragma clang attribute push(__attribute__((preserve_access_index)), apply_to = record)
 
-struct msghdr___3_18_140 {
-  void *msg_name;                 /* ptr to socket address structure */
-  int msg_namelen;                /* size of socket address structure */
-  struct iovec *msg_iov;          /* scatter/gather array */
-  __kernel_size_t msg_iovlen;     /* # elements in msg_iov */
-  void *msg_control;              /* ancillary data */
-  __kernel_size_t msg_controllen; /* ancillary data buffer length */
-  unsigned int msg_flags;         /* flags on received message */
-};
-
 struct iov_iter___5_13_19 {
   /*
    * Bit 0 is the read/write bit, set if we're writing.
