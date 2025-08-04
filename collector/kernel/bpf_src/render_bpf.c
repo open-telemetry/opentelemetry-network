@@ -7,7 +7,6 @@
 volatile const long boot_time_adjustment = 0;
 volatile const long filter_ns = 1000000000;    // Default 1 second in nanoseconds
 volatile const int enable_tcp_data_stream = 0; // Set to 1 to enable TCP data stream processing
-volatile const int report_debug_events = 0;    // Set to 1 to enable debug event reporting
 
 #ifndef KBUILD_MODNAME
 #define KBUILD_MODNAME "ebpf_net"
