@@ -327,19 +327,13 @@ int continue_tcp_sendmsg(struct pt_regs *ctx)
 SEC("kprobe/tcp_recvmsg")
 int handle_kprobe__tcp_recvmsg(struct pt_regs *ctx)
 {
-  struct sock *sk;
-  struct msghdr *msg;
-  size_t len;
-  int nonblock;
-  int flags;
-  // int *addr_len = NULL;   -- unused
-
   // In kernels 4.1 onwards: struct sock *sk, struct msghdr *msg, size_t len, int nonblock, int flags, int *addr_len
-  sk = (struct sock *)PT_REGS_PARM1(ctx);
-  msg = (struct msghdr *)PT_REGS_PARM2(ctx);
-  len = (size_t)PT_REGS_PARM3(ctx);
-  nonblock = (int)PT_REGS_PARM4(ctx);
-  flags = (int)PT_REGS_PARM5(ctx);
+  struct sock *sk = (struct sock *)PT_REGS_PARM1(ctx);
+  struct msghdr *msg = (struct msghdr *)PT_REGS_PARM2(ctx);
+  size_t len = (size_t)PT_REGS_PARM3(ctx);
+  int nonblock = (int)PT_REGS_PARM4(ctx);
+  int flags = (int)PT_REGS_PARM5(ctx);
+  // int *addr_len = NULL;   -- unused
 
   GET_PID_TGID
 
