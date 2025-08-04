@@ -136,7 +136,7 @@ void ProbeHandler::destroy_bpf_skeleton(struct render_bpf_bpf *skel)
   }
 }
 
-int ProbeHandler::load_and_setup_bpf_skeleton(struct render_bpf_bpf *skel, PerfContainer &perf)
+int ProbeHandler::load_bpf_skeleton(struct render_bpf_bpf *skel, PerfContainer &perf)
 {
   int res = render_bpf_bpf__load(skel);
   if (res != 0) {

@@ -41,15 +41,12 @@ BPFHandler::BPFHandler(
   probe_handler_.configure_bpf_skeleton(bpf_skel_, bpf_config);
 
   // Now load the skeleton and set up perf rings
-  int res = probe_handler_.load_and_setup_bpf_skeleton(bpf_skel_, perf_);
+  int res = probe_handler_.load_bpf_skeleton(bpf_skel_, perf_);
   if (res != 0) {
     probe_handler_.destroy_bpf_skeleton(bpf_skel_);
     bpf_skel_ = nullptr;
     throw std::system_error(errno, std::generic_category(), "ProbeHandler couldn't load BPF skeleton");
   }
-
-  // Note: The full_program parameter is now unused since we use pre-compiled skeleton
-  // The enable_tcp_data_stream global variable has been configured based on enable_userland_tcp
 }
 
 BPFHandler::~BPFHandler()

@@ -76,7 +76,7 @@ public:
 
   struct render_bpf_bpf *open_bpf_skeleton();
   void configure_bpf_skeleton(struct render_bpf_bpf *skel, const BpfConfiguration &config);
-  int load_and_setup_bpf_skeleton(struct render_bpf_bpf *skel, PerfContainer &perf);
+  int load_bpf_skeleton(struct render_bpf_bpf *skel, PerfContainer &perf);
   void destroy_bpf_skeleton(struct render_bpf_bpf *skel);
 
   /**
