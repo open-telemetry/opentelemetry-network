@@ -310,7 +310,7 @@ int ProbeHandler::start_probe_common(
     return -3;
   }
 
-  // Store the link pointer instead of the old BCC attachment handle
+  // Store the link pointer for cleanup
   probes_.push_back(link);
   probe_names_.push_back(probe_name);
   return 0;

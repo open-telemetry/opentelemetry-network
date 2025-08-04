@@ -17,7 +17,7 @@
 BEGIN_DECLARE_SAVED_ARGS(inet_csk_accept)
 struct sock *sk;
 int flags;
-u32 _pad_0; // required alignment for bcc
+u32 _pad_0; // required alignment
 int *err;
 END_DECLARE_SAVED_ARGS(inet_csk_accept)
 

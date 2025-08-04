@@ -132,7 +132,7 @@ enum BPF_TABLE_ID {
 #if _PROCESSING_BPF
 // Include this until we merge the tcp-processor code into render_bpf more closely
 // Note, this is included by bpf and userland c++, so it -must- be an include with "" not <>
-// as this distinction is how we determine in bpf which includes to inline at compile time vs process at runtime
+// as this distinction determines which includes are processed during BPF compilation
 #include "tcp-processor/tcp_processor.h"
 #else
 #include <collector/kernel/bpf_src/tcp-processor/tcp_processor.h>

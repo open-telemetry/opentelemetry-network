@@ -1004,7 +1004,7 @@ int on_tcp_init_sock(struct pt_regs *ctx)
 BEGIN_DECLARE_SAVED_ARGS(on_inet_csk_accept)
 struct sock *sk;
 int flags;
-u32 _pad_0; // required alignment for bcc
+u32 _pad_0; // required alignment
 int *err;
 END_DECLARE_SAVED_ARGS(on_inet_csk_accept)
 
@@ -2295,7 +2295,7 @@ perf_check_and_submit_dns(struct pt_regs *ctx, struct sock *sk, struct sk_buff *
     return;
   }
 
-  // Read skb fields directly to avoid bpf verifier errors caused by bcc inconsistencies
+  // Read skb fields directly to avoid bpf verifier errors
   unsigned int skb_data_len = BPF_CORE_READ(skb, data_len);
 
   unsigned char *from = BPF_CORE_READ(skb, data);

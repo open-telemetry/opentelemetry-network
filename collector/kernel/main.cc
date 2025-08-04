@@ -73,7 +73,7 @@ static void refill_log_rate_limit_cb(uv_timer_t *timer)
  * be disabled when queried in the container, but if enabled on the host it will prevent certain operations even if the
  * container is running with --privileged or equivalent.
  *
- * Instead, attempt to indirectly determine privileges and permissions by running bcc_create_map() as a test operation.  Note
+ * Instead, attempt to indirectly determine privileges and permissions by running bpf_map_create() as a test operation.  Note
  * that it is intentionally called with invalid parameters so a map isn't actually created.  Typical errors from this test
  * operation are:
  * EPERM: container is not running with --privileged or equivalent
