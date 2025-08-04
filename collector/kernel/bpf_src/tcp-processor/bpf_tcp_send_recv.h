@@ -107,14 +107,11 @@ static __always_inline void tcp_recv_stream_handler(
 SEC("kprobe/tcp_sendmsg")
 __attribute__((noinline)) int handle_kprobe__tcp_sendmsg(struct pt_regs *ctx)
 {
-  struct sock *sk;
-  struct msghdr *msg;
-  size_t size;
-
   // In post 4.1 kernels: struct sock *sk, struct msghdr *msg, size_t size
-  sk = (struct sock *)PT_REGS_PARM1(ctx);
-  msg = (struct msghdr *)PT_REGS_PARM2(ctx);
-  size = (size_t)PT_REGS_PARM3(ctx);
+  struct sock *sk = (struct sock *)PT_REGS_PARM1(ctx);
+  struct msghdr *msg = (struct msghdr *)PT_REGS_PARM2(ctx);
+  size_t size = (size_t)PT_REGS_PARM3(ctx);
+
   GET_PID_TGID
 
   if (!msg || !sk) {
