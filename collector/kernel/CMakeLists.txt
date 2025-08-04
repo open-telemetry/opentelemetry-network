@@ -14,8 +14,6 @@ target_link_libraries(
     agentlib
     fastpass_util
     file_ops
-    bcc-interface
-    bcc-static
     config_file
     libuv-static
     args_parser
@@ -84,19 +82,9 @@ add_library(
     protocols/protocol_handler_unknown.cc
     protocols/protocol_handler_http.cc
 )
-# BPF needs to be newest headers despite what is in the build-env /usr/include
-# BCC provides the ones that we should use
-target_include_directories(
-  agentlib
-  SYSTEM
-  BEFORE
-  PUBLIC
-  ${CMAKE_INSTALL_PREFIX}/include/bcc/compat/
-)
 target_link_libraries(
   agentlib
   PUBLIC
-    bcc-interface
     render_ebpf_net_agent_internal_hash
     render_ebpf_net_ingest_writer
     render_ebpf_net_kernel_collector
@@ -325,4 +313,4 @@ endif()
 #
 add_unit_test(cgroup_handler LIBS agentlib test_channel)
 add_unit_test(kernel_symbols LIBS agentlib)
-add_ebpf_unit_test(kernel_collector LIBS signal_handler agentlib fastpass_util file_ops bcc-interface bcc-static config_file libuv-static system_ops static-executable test_channel)
+add_ebpf_unit_test(kernel_collector LIBS signal_handler agentlib fastpass_util file_ops config_file libuv-static system_ops static-executable test_channel)
