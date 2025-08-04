@@ -17,8 +17,6 @@
 #include "bpf_tcp_socket.h"
 #include "bpf_types.h"
 
-extern int LINUX_KERNEL_VERSION __kconfig;
-
 #ifndef TCP_CLIENT_HANDLER
 #error "Must define TCP_CLIENT_HANDLER"
 #endif

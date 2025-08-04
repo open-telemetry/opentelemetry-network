@@ -14,8 +14,6 @@
 #include "bpf_tcp_socket.h"
 #include "bpf_types.h"
 
-extern int LINUX_KERNEL_VERSION __kconfig;
-
 BEGIN_DECLARE_SAVED_ARGS(inet_csk_accept)
 struct sock *sk;
 int flags;
