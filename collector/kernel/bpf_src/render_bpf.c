@@ -8,16 +8,7 @@ volatile const long boot_time_adjustment = 0;
 volatile const long filter_ns = 1000000000;    // Default 1 second in nanoseconds
 volatile const int enable_tcp_data_stream = 0; // Set to 1 to enable TCP data stream processing
 
-#ifndef KBUILD_MODNAME
-#define KBUILD_MODNAME "ebpf_net"
-#endif
-
-/* include net/sock, ignore the enum-conversion warning */
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wenum-conversion"
-#pragma clang diagnostic ignored "-Wtautological-compare"
 #include <vmlinux.h>
-#pragma clang diagnostic pop
 
 #include <bpf/bpf_core_read.h>
 #include <bpf/bpf_endian.h>
@@ -60,6 +51,7 @@ extern int LINUX_KERNEL_VERSION __kconfig;
 // Configuration
 #include "config.h"
 #include "render_bpf.h"
+
 // Perf events - per-CPU perf ring buffer
 struct {
   __uint(type, BPF_MAP_TYPE_PERF_EVENT_ARRAY);
