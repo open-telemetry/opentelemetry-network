@@ -280,7 +280,7 @@ void KernelCollector::probe_holdoff_timeout(uv_timer_t *timer)
     print_troubleshooting_message_and_exit(host_info_, item, e, log_, upstream_connection_flush_and_close);
   };
 
-  auto potential_troubleshoot_item = TroubleshootItem::bpf_compilation_failed;
+  auto potential_troubleshoot_item = TroubleshootItem::bpf_load_probes_failed;
   try {
     bpf_handler_.emplace(loop_, bpf_config_, enable_http_metrics_, bpf_dump_file_, log_, encoder_.get(), host_info_);
 
