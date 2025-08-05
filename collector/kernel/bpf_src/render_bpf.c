@@ -1408,14 +1408,6 @@ int on_udp6_seq_show(struct pt_regs *ctx)
   return udp46_seq_show_impl(ctx, seq, v);
 }
 
-// Keep the old function name for compatibility
-int on_udp46_seq_show(struct pt_regs *ctx)
-{
-  struct seq_file *seq = (struct seq_file *)PT_REGS_PARM1(ctx);
-  void *v = (void *)PT_REGS_PARM2(ctx);
-  return udp46_seq_show_impl(ctx, seq, v);
-}
-
 // NEW
 static int udp_v46_get_port_impl(struct pt_regs *ctx, struct sock *sk)
 {
