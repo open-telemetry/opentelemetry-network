@@ -131,8 +131,7 @@ void SocketProber::fill_inode_to_pid_map(int map_fd, std::function<void(void)> p
               AgentLogKind::SOCKET, "Duplicate file descriptor for pid={}, ino={} (lookup_pid={})", pid, ino, lookup_pid);
           continue;
         }
-        u32 value = (u32)pid;
-        int update_result = bpf_map_update_elem(map_fd, &key, &value, 0);
+        int update_result = bpf_map_update_elem(map_fd, &key, &pid, 0);
         if (update_result != 0) {
           // log at most 10 times
           if (++n_update_failures < 10) {
