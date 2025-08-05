@@ -183,13 +183,9 @@ END_DECLARE_SAVED_ARGS(cgroup_exit)
  * This is used by cgroup related probes to filter out cgroups that aren't in the memory hierarchy.
  * See SUBSYS macro in /linux_kernel/kernel/cgroup/cgroup.c.
  */
-static int get_flow_cgroup_subsys()
+static __always_inline int get_flow_cgroup_subsys()
 {
-  if (LINUX_KERNEL_VERSION < KERNEL_VERSION(3, 14, 79)) {
-    return bpf_core_enum_value(enum cgroup_subsys_id, mem_cgroup_subsys_id);
-  } else {
-    return bpf_core_enum_value(enum cgroup_subsys_id, memory_cgrp_id);
-  }
+  return bpf_core_enum_value(enum cgroup_subsys_id, memory_cgrp_id);
 }
 
 #define FLOW_CGROUP_SUBSYS (get_flow_cgroup_subsys())
