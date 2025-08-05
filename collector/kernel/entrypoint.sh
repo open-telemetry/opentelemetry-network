@@ -27,20 +27,8 @@ entrypoint_error=""
 host_distro="unknown"
 kernel_headers_source="libbpf"
 
-# cleanup kprobes previously created by the kernel collector
-if ! mountpoint -q /sys/kernel/debug; then
-  mount -t debugfs none /sys/kernel/debug || echo "Warning: Could not mount debugfs"
-fi
 if ! mountpoint -q /sys; then
   mount -t sysfs none /sys || echo "Warning: Could not mount sysfs"
-fi
-if [[ -f /sys/kernel/debug/tracing/kprobe_events ]]; then
-  echo "cleaning up stale kprobes..."
-  tmpfile="${data_dir}/ebpf_net_kprobes"
-  grep "ebpf_net_" /sys/kernel/debug/tracing/kprobe_events \
-    | cut -d: -f2 | sed -e 's/^/-:/' > "$tmpfile"
-  cat "$tmpfile" >> /sys/kernel/debug/tracing/kprobe_events
-  rm -f "$tmpfile"
 fi
 
 cmd_args=( \
