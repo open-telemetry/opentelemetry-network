@@ -1098,12 +1098,12 @@ int onret_inet_csk_accept(struct pt_regs *ctx)
   // Set the state
   u16 dport = 0;
   u16 sport = 0;
-  u32 daddr = 0;
-  u32 saddr = 0;
   bpf_probe_read(&dport, sizeof(dport), &newsk->sk_dport);
   bpf_probe_read(&sport, sizeof(sport), &newsk->sk_num);
 
   if (family == AF_INET) {
+    u32 daddr = 0;
+    u32 saddr = 0;
     bpf_probe_read_kernel(&daddr, sizeof(daddr), &newsk->sk_daddr);
     bpf_probe_read_kernel(&saddr, sizeof(saddr), &newsk->sk_rcv_saddr);
     perf_submit_agent_internal__set_state_ipv4(ctx, now, daddr, saddr, bpf_ntohs(dport), sport, (__u64)newsk, 2);
