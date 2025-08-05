@@ -9,7 +9,6 @@
 #include <common/host_info.h>
 #include <util/logger.h>
 
-
 /**
  * Prints a troubleshooting message for the given item.
  *

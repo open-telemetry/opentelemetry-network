@@ -18,7 +18,6 @@
 static constexpr auto EXIT_SLEEP_GRACE_PERIOD_DEFAULT = 60s;
 static constexpr auto EXIT_SLEEP_FOREVER = std::chrono::seconds::max();
 
-
 void close_agent(int exit_code, std::function<void()> flush_and_close, std::chrono::seconds exit_sleep_sec)
 {
   if (flush_and_close) {
@@ -29,7 +28,6 @@ void close_agent(int exit_code, std::function<void()> flush_and_close, std::chro
 #endif
   exit(exit_code);
 }
-
 
 void print_troubleshooting_message_and_exit(
     HostInfo const &info,

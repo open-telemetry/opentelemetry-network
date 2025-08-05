@@ -264,7 +264,6 @@ void KernelCollector::probe_holdoff_timeout(uv_timer_t *timer)
     upstream_connection_.close();
   };
 
-
   LOG::trace("Adding probes");
 
   last_probe_monotonic_time_ns_ = monotonic();
@@ -347,7 +346,6 @@ void KernelCollector::send_connection_metadata()
   writer_.report_cpu_cores(std::thread::hardware_concurrency());
 
   writer_.kernel_headers_source(integer_value(host_info_.kernel_headers_source));
-
 
   for (auto const &label : config_labels_) {
     writer_.set_config_label(jb_blob{label.first}, jb_blob{label.second});
