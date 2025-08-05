@@ -1178,14 +1178,6 @@ int on_tcp6_seq_show(struct pt_regs *ctx)
   return tcp46_seq_show_impl(ctx, seq, v);
 }
 
-// Keep the old function name for compatibility
-int on_tcp46_seq_show(struct pt_regs *ctx)
-{
-  struct seq_file *seq = (struct seq_file *)PT_REGS_PARM1(ctx);
-  void *v = (void *)PT_REGS_PARM2(ctx);
-  return tcp46_seq_show_impl(ctx, seq, v);
-}
-
 ////////////////////////////////////////////////////////////////////////////////////
 /* UDP SOCKETS */
 
