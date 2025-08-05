@@ -33,10 +33,10 @@ TCPDataHandler::TCPDataHandler(
     ::ebpf_net::ingest::Writer &writer,
     PerfContainer &container,
     logging::Logger &log)
-    : loop_(loop), probe_handler_(probe_handler), skel_(skel), writer_(writer), container_(container), log_(log)
+    : loop_(loop), skel_(skel), writer_(writer), container_(container), log_(log)
 {
   // Get tcp control hash table map file descriptor
-  struct bpf_map *tcp_control_map = probe_handler_.get_bpf_map(skel_, "_tcp_control");
+  struct bpf_map *tcp_control_map = probe_handler.get_bpf_map(skel_, "_tcp_control");
   tcp_control_map_fd_ = bpf_map__fd(tcp_control_map);
 }
 

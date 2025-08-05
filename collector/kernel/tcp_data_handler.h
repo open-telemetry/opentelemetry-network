@@ -75,7 +75,6 @@ protected:
 
 protected:
   uv_loop_t &loop_;
-  ProbeHandler &probe_handler_;
   struct render_bpf_bpf *skel_;
   ::ebpf_net::ingest::Writer &writer_;
   PerfContainer &container_;
