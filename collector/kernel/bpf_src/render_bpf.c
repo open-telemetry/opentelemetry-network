@@ -138,18 +138,6 @@ struct {
   __uint(max_entries, TABLE_SIZE__DEAD_GROUP_TASKS);
 } dead_group_tasks SEC(".maps");
 
-/* BPF_F_NO_PREALLOC was introduced in 6c9059817432, contained in
- * v4.6-rc1~91^2~108^2~6 */
-static void setup_seen_inodes_table()
-{
-  if (LINUX_KERNEL_VERSION < KERNEL_VERSION(4, 6, 0)) {
-    // Use regular BPF_HASH for older kernels
-  } else {
-    // Use BPF_F_NO_PREALLOC for newer kernels
-  }
-}
-
-// Hash table with no preallocation
 struct {
   __uint(type, BPF_MAP_TYPE_HASH);
   __type(key, u32);
@@ -157,12 +145,14 @@ struct {
   __uint(max_entries, TABLE_SIZE__SEEN_INODES);
   __uint(map_flags, BPF_F_NO_PREALLOC);
 } seen_inodes SEC(".maps");
+
 struct {
   __uint(type, BPF_MAP_TYPE_HASH);
   __type(key, struct nf_conn *);
   __type(value, struct nf_conn *);
   __uint(max_entries, TABLE_SIZE__SEEN_CONNTRACKS);
 } seen_conntracks SEC(".maps"); // Conntracks that we've reported to userspace
+
 struct {
   __uint(type, BPF_MAP_TYPE_HASH);
   __type(key, struct sock *);
