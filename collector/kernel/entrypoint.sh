@@ -23,25 +23,12 @@ dump_dir="${data_dir}/dump"
 mkdir -p "${data_dir}" "${dump_dir}"
 
 # With libbpf, kernel headers are no longer needed
-entrypoint_error=""
-host_distro="unknown"
-kernel_headers_source="libbpf"
 
 if ! mountpoint -q /sys; then
   mount -t sysfs none /sys || echo "Warning: Could not mount sysfs"
 fi
 
-cmd_args=( \
-  --host-distro "${host_distro:-unknown}"
-  --kernel-headers-source "${kernel_headers_source:-unknown}"
-)
-
-# Errors that take place before the agent is run will be reported through the
-# command line flag `entrypoint_error`.
-# Logging and troubleshooting will be handled by the agent itself.
-if [[ -n "${entrypoint_error}" ]]; then
-  cmd_args+=(--entrypoint-error "${entrypoint_error}")
-fi
+cmd_args=()
 
 echo "launching kernel collector..."
 # on Debug (non-production) images, devs can run in local mode by setting

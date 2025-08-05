@@ -21,10 +21,7 @@ if ! mountpoint -q /sys; then
   mount -t sysfs none /sys || echo "Warning: Could not mount sysfs"
 fi
 
-cmd_args=( \
-  --host-distro "${host_distro:-unknown}"
-  --kernel-headers-source "${kernel_headers_source:-unknown}"
-)
+cmd_args=()
 
 echo "launching kernel collector test ..."
 

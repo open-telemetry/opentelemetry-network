@@ -30,39 +30,6 @@ void close_agent(int exit_code, std::function<void()> flush_and_close, std::chro
   exit(exit_code);
 }
 
-void print_troubleshooting_message_and_exit(
-    HostInfo const &info, EntrypointError error, logging::Logger &log, std::function<void()> flush_and_close)
-{
-  if (error == EntrypointError::none) {
-    return;
-  }
-
-  log.error(
-      "entrypoint error {} (os={},flavor={},headers_src={},kernel={})",
-      error,
-      info.os,
-      info.os_flavor,
-      info.kernel_headers_source,
-      info.kernel_version);
-
-  switch (error) {
-
-  default: {
-    std::cout << R"TROUBLESHOOTING(
-Unknown error happened during boot up of the Kernel Collector.
-)TROUBLESHOOTING";
-    break;
-  }
-  }
-
-  std::cout << std::endl;
-  std::cout.flush();
-
-  if (flush_and_close) {
-    flush_and_close();
-  }
-  close_agent(-1, flush_and_close, EXIT_SLEEP_GRACE_PERIOD_DEFAULT);
-}
 
 void print_troubleshooting_message_and_exit(
     HostInfo const &info,

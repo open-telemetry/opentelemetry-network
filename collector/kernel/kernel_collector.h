@@ -9,7 +9,6 @@
 #include <channel/file_channel.h>
 #include <channel/upstream_connection.h>
 #include <collector/kernel/bpf_handler.h>
-#include <collector/kernel/entrypoint_error.h>
 #include <collector/kernel/kernel_collector_restarter.h>
 #include <collector/kernel/probe_handler.h>
 #include <common/host_info.h>
@@ -46,8 +45,7 @@ public:
       u64 socket_stats_interval_sec,
       CgroupHandler::CgroupSettings cgroup_settings,
       std::string const &bpf_dump_file,
-      HostInfo host_info,
-      EntrypointError error);
+      HostInfo host_info);
 
   /**
    * d'tor
@@ -150,7 +148,6 @@ private:
   GcpInstanceMetadata const *gcp_metadata_;
   const std::map<std::string, std::string> config_labels_;
   HostInfo const host_info_;
-  EntrypointError const entrypoint_error_;
 
   // Following 2 variables handle the command received from server.
   //

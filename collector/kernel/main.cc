@@ -8,6 +8,8 @@
 #include <collector/kernel/kernel_collector.h>
 #include <collector/kernel/troubleshooting.h>
 #include <common/cloud_platform.h>
+#include <common/kernel_headers_source.h>
+#include <common/linux_distro.h>
 #include <config/config_file.h>
 #include <platform/platform.h>
 #include <util/agent_id.h>
@@ -296,11 +298,6 @@ int main(int argc, char *argv[])
       "override_kernel_blacklist",
       "Override kernel blacklist (use at your own risk, can result in kernel panic)",
       {"override-kernel-blacklist"});
-  auto host_distro = parser.add_arg<LinuxDistro>("host-distro", "Reports the linux distro that was detected on the host");
-  auto kernel_headers_source =
-      parser.add_arg<KernelHeadersSource>("kernel-headers-source", "Reports the method used to source kernel headers");
-  auto entrypoint_error = parser.add_arg<EntrypointError>(
-      "entrypoint-error", "Reports errors that took place before the agent was run", nullptr, EntrypointError::none);
 
   /* crash reporting */
   args::Flag disable_log_rate_limit(
@@ -491,9 +488,9 @@ int main(int argc, char *argv[])
 
   HostInfo host_info{
       .os = OperatingSystem::Linux,
-      .os_flavor = integer_value(*host_distro),
+      .os_flavor = integer_value(LinuxDistro::unknown),
       .os_version = gcp_metadata ? gcp_metadata->image() : "unknown",
-      .kernel_headers_source = *kernel_headers_source,
+      .kernel_headers_source = KernelHeadersSource::libbpf,
       .kernel_version = unamebuf.release,
       .hostname = hostname};
 
@@ -552,8 +549,7 @@ int main(int argc, char *argv[])
             .docker_metadata_dump_dir = docker_metadata_dump_dir ? std::optional(docker_metadata_dump_dir.Get()) : std::nullopt,
         },
         bpf_dump_file.Get(),
-        host_info,
-        *entrypoint_error};
+        host_info};
 
     signal_manager.handle_signals({SIGINT, SIGTERM}, std::bind(&KernelCollector::on_close, &kernel_collector));
 

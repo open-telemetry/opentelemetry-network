@@ -139,7 +139,7 @@ protected:
         .os = OperatingSystem::Linux,
         .os_flavor = integer_value(LinuxDistro::unknown),
         .os_version = "unknown",
-        .kernel_headers_source = KernelHeadersSource::unknown,
+        .kernel_headers_source = KernelHeadersSource::libbpf,
         .kernel_version = unamebuf.release,
         .hostname = hostname};
 
@@ -155,8 +155,7 @@ protected:
         socket_stats_interval_sec,
         CgroupHandler::CgroupSettings{false, std::nullopt},
         bpf_dump_file,
-        host_info,
-        EntrypointError::none);
+        host_info);
 
     if (ingest_msg_cb) {
       get_test_channel()->set_sent_msg_cb(ingest_msg_cb);

@@ -86,15 +86,13 @@ KernelCollector::KernelCollector(
     u64 socket_stats_interval_sec,
     CgroupHandler::CgroupSettings cgroup_settings,
     std::string const &bpf_dump_file,
-    HostInfo host_info,
-    EntrypointError entrypoint_error)
+    HostInfo host_info)
     : bpf_config_(bpf_config),
       intake_config_(std::move(intake_config)),
       aws_metadata_(aws_metadata),
       gcp_metadata_(gcp_metadata),
       config_labels_(config_labels),
       host_info_(std::move(host_info)),
-      entrypoint_error_(entrypoint_error),
       loop_(loop),
       last_lost_count_(0),
       encoder_(intake_config_.make_encoder()),
@@ -266,10 +264,6 @@ void KernelCollector::probe_holdoff_timeout(uv_timer_t *timer)
     upstream_connection_.close();
   };
 
-  if (entrypoint_error_ != EntrypointError::none) {
-    print_troubleshooting_message_and_exit(host_info_, entrypoint_error_, log_, upstream_connection_flush_and_close);
-    return;
-  }
 
   LOG::trace("Adding probes");
 
@@ -354,10 +348,6 @@ void KernelCollector::send_connection_metadata()
 
   writer_.kernel_headers_source(integer_value(host_info_.kernel_headers_source));
 
-  if (entrypoint_error_ != EntrypointError::none) {
-    writer_.entrypoint_error(integer_value(entrypoint_error_));
-    upstream_connection_.flush();
-  }
 
   for (auto const &label : config_labels_) {
     writer_.set_config_label(jb_blob{label.first}, jb_blob{label.second});
