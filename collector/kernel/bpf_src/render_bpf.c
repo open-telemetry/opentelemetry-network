@@ -2416,15 +2416,16 @@ static const char *get_cgroup_name(struct cgroup *cg)
     return NULL;
   }
 
-  if (LINUX_KERNEL_VERSION < KERNEL_VERSION(3, 15, 0)) {
+  if (bpf_core_field_exists(cg->kn->name)) {
+    return BPF_CORE_READ(cg, kn, name);
+  } else {
+    // < 3.15
     struct cgroup___3_11 *cg = cg;
     struct cgroup_name___3_11 *name = BPF_CORE_READ(cg, name);
     if (!name) {
       return NULL;
     }
     return (const char *)&(name->name[0]);
-  } else {
-    return BPF_CORE_READ(cg, kn, name);
   }
 }
 
@@ -2441,28 +2442,22 @@ static struct cgroup *get_cgroup_parent(struct cgroup *cgrp)
 
 // close
 
-// Function that handles both kernel versions for killing CSS
+// For Kernel >= 3.12
 SEC("kprobe/kill_css")
 int on_kill_css(struct pt_regs *ctx)
 {
   struct cgroup_subsys_state *css = (struct cgroup_subsys_state *)PT_REGS_PARM1(ctx);
 
-  if (LINUX_KERNEL_VERSION >= KERNEL_VERSION(3, 12, 0)) {
-    // For Kernel >= 3.12
-    u32 ssid = get_css_id(css);
-    if (ssid != FLOW_CGROUP_SUBSYS)
-      return 0;
-
-    struct cgroup *parent_cgroup = get_css_parent_cgroup(css);
-
-    u64 now = get_timestamp();
-    perf_submit_agent_internal__kill_css(
-        ctx, now, (__u64)BPF_CORE_READ(css, cgroup), (__u64)parent_cgroup, (void *)get_cgroup_name(BPF_CORE_READ(css, cgroup)));
+  u32 ssid = get_css_id(css);
+  if (ssid != FLOW_CGROUP_SUBSYS)
     return 0;
-  } else {
-    // This should be called as on_cgroup_destroy_locked for older kernels
-    return 0;
-  }
+
+  struct cgroup *parent_cgroup = get_css_parent_cgroup(css);
+
+  u64 now = get_timestamp();
+  perf_submit_agent_internal__kill_css(
+      ctx, now, (__u64)BPF_CORE_READ(css, cgroup), (__u64)parent_cgroup, (void *)get_cgroup_name(BPF_CORE_READ(css, cgroup)));
+  return 0;
 }
 
 // For Kernel < 3.12
@@ -2471,43 +2466,35 @@ int on_cgroup_destroy_locked(struct pt_regs *ctx)
 {
   struct cgroup *cgrp = (struct cgroup *)PT_REGS_PARM1(ctx);
 
-  if (LINUX_KERNEL_VERSION < KERNEL_VERSION(3, 12, 0)) {
-    struct cgroup_subsys_state *css = NULL;
-    bpf_probe_read(&css, sizeof(css), &(cgrp->subsys[FLOW_CGROUP_SUBSYS]));
-    if (css == NULL)
-      return 0;
+  struct cgroup_subsys_state *css = NULL;
+  bpf_probe_read(&css, sizeof(css), &(cgrp->subsys[FLOW_CGROUP_SUBSYS]));
+  if (css == NULL)
+    return 0;
 
-    u64 now = get_timestamp();
-    perf_submit_agent_internal__kill_css(ctx, now, (__u64)cgrp, (__u64)get_cgroup_parent(cgrp), (void *)get_cgroup_name(cgrp));
-  }
+  u64 now = get_timestamp();
+  perf_submit_agent_internal__kill_css(ctx, now, (__u64)cgrp, (__u64)get_cgroup_parent(cgrp), (void *)get_cgroup_name(cgrp));
 
   return 0;
 }
 
 // start
 
-// Function that handles both kernel versions for populating CSS directories
+// For Kernel >= 4.4
 SEC("kprobe/css_populate_dir")
 int on_css_populate_dir(struct pt_regs *ctx)
 {
   struct cgroup_subsys_state *css = (struct cgroup_subsys_state *)PT_REGS_PARM1(ctx);
 
-  if (LINUX_KERNEL_VERSION >= KERNEL_VERSION(4, 4, 0)) {
-    // For Kernel >= 4.4
-    u32 ssid = get_css_id(css);
-    if (ssid != FLOW_CGROUP_SUBSYS)
-      return 0;
-
-    struct cgroup *parent_cgroup = get_css_parent_cgroup(css);
-
-    u64 now = get_timestamp();
-    perf_submit_agent_internal__css_populate_dir(
-        ctx, now, (__u64)BPF_CORE_READ(css, cgroup), (__u64)parent_cgroup, (void *)get_cgroup_name(BPF_CORE_READ(css, cgroup)));
+  u32 ssid = get_css_id(css);
+  if (ssid != FLOW_CGROUP_SUBSYS)
     return 0;
-  } else {
-    // This should be called as on_cgroup_populate_dir for older kernels
-    return 0;
-  }
+
+  struct cgroup *parent_cgroup = get_css_parent_cgroup(css);
+
+  u64 now = get_timestamp();
+  perf_submit_agent_internal__css_populate_dir(
+      ctx, now, (__u64)BPF_CORE_READ(css, cgroup), (__u64)parent_cgroup, (void *)get_cgroup_name(BPF_CORE_READ(css, cgroup)));
+  return 0;
 }
 
 // For Kernel < 4.4
@@ -2533,14 +2520,10 @@ BEGIN_DECLARE_SAVED_ARGS(cgroup_control)
 struct cgroup *cgrp;
 END_DECLARE_SAVED_ARGS(cgroup_control)
 
+// Only available for kernel >= 4.6.0
 SEC("kprobe/cgroup_control")
 int on_cgroup_control(struct pt_regs *ctx)
 {
-  // Only available for kernel >= 4.6.0
-  if (LINUX_KERNEL_VERSION < KERNEL_VERSION(4, 6, 0)) {
-    return 0;
-  }
-
   struct cgroup *cgrp = (struct cgroup *)PT_REGS_PARM1(ctx);
 
   GET_PID_TGID;
