@@ -2525,7 +2525,7 @@ int on_cgroup_control(struct pt_regs *ctx)
 }
 
 // Common function to handle cgroup processing
-static inline int handle_cgroup_processing(struct pt_regs *ctx, struct cgroup *cgrp, u16 subsys_mask)
+static inline int handle_existing_cgroup(struct pt_regs *ctx, struct cgroup *cgrp, u16 subsys_mask)
 {
   if (!(subsys_mask & 1 << FLOW_CGROUP_SUBSYS))
     return 0;
@@ -2558,7 +2558,7 @@ int onret_cgroup_control(struct pt_regs *ctx)
   DELETE_ARGS(cgroup_control);
 
   u16 subsys_mask = (u16)PT_REGS_RC(ctx);
-  return handle_cgroup_processing(ctx, cgrp, subsys_mask);
+  return handle_existing_cgroup(ctx, cgrp, subsys_mask);
 }
 
 SEC("kretprobe/cgroup_get_from_fd")
@@ -2573,7 +2573,7 @@ int onret_cgroup_get_from_fd(struct pt_regs *ctx)
   // For cgroup_get_from_fd, we assume all subsystems are relevant
   // since this is called when accessing cgroup via fd
   u16 subsys_mask = 1 << FLOW_CGROUP_SUBSYS;
-  return handle_cgroup_processing(ctx, cgrp, subsys_mask);
+  return handle_existing_cgroup(ctx, cgrp, subsys_mask);
 }
 
 // existing cgroups v1
