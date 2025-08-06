@@ -10,8 +10,6 @@
 #include <reducer/internal_stats.h>
 #include <reducer/uid_key.h>
 
-#include <collector/kernel/entrypoint_error.h>
-
 #include <common/kernel_headers_source.h>
 #include <common/linux_distro.h>
 #include <common/operating_system.h>
