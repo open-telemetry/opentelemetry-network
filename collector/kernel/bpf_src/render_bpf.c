@@ -2368,35 +2368,18 @@ int on_skb_consume_udp(struct pt_regs *ctx, struct sock *sk, struct sk_buff *skb
   return 0;
 }
 
-// Compatibility layer for kernels pre skb_consume_udp (pre-4.10)
-static int __on_skb_free_datagram_locked_impl(struct pt_regs *ctx)
-{
-  struct sock *sk = (struct sock *)PT_REGS_PARM1(ctx);
-  struct sk_buff *skb = (struct sk_buff *)PT_REGS_PARM2(ctx);
-  // Handle parameter differences between kernel versions
-  int len = 0;
-  if (LINUX_KERNEL_VERSION >= KERNEL_VERSION(4, 9, 0)) {
-    // In newer kernels, there's an int len parameter
-    len = (int)PT_REGS_PARM3(ctx);
-  }
-
-  // Call handle_receive_udp_skb
-  bpf_tail_call(ctx, &tail_calls, TAIL_CALL_HANDLE_RECEIVE_UDP_SKB);
-
-  return 0;
-}
-
 SEC("kprobe/__skb_free_datagram_locked")
 int on___skb_free_datagram_locked(struct pt_regs *ctx)
 {
-  return __on_skb_free_datagram_locked_impl(ctx);
+  bpf_tail_call(ctx, &tail_calls, TAIL_CALL_HANDLE_RECEIVE_UDP_SKB);
+  return 0;
 }
 
 SEC("kprobe/skb_free_datagram_locked")
 int on_skb_free_datagram_locked(struct pt_regs *ctx)
 {
-  return __on_skb_free_datagram_locked_impl(ctx);
-}
+  bpf_tail_call(ctx, &tail_calls, TAIL_CALL_HANDLE_RECEIVE_UDP_SKB);
+  return 0;}
 
 ////////////////////////////////////////////////////////////////////////////////////
 /* CGROUPS */
