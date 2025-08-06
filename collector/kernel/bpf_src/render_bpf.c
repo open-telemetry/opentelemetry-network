@@ -2385,20 +2385,9 @@ int on_skb_free_datagram_locked(struct pt_regs *ctx)
 ////////////////////////////////////////////////////////////////////////////////////
 /* CGROUPS */
 
-static u32 get_css_id(struct cgroup_subsys_state *css)
+static __always_inline u32 get_css_id(struct cgroup_subsys_state *css)
 {
-  if (LINUX_KERNEL_VERSION < KERNEL_VERSION(3, 12, 0)) {
-    struct cgroup_subsys_state___3_11 *css = css;
-    if (!BPF_CORE_READ(css, id))
-      return 0;
-    u32 ssid = (u32)BPF_CORE_READ(css, id, id);
-    return ssid;
-  } else {
-    if (!BPF_CORE_READ(css, ss))
-      return 0;
-    u32 ssid = (u32)BPF_CORE_READ(css, ss, id);
-    return ssid;
-  }
+  return (u32)BPF_CORE_READ(css, ss, id);
 }
 
 static __always_inline struct cgroup *get_css_parent_cgroup(struct cgroup_subsys_state *css)
