@@ -469,12 +469,7 @@ void AgentSpan::entrypoint_error(
     ::ebpf_net::ingest::weak_refs::agent span_ref, u64 timestamp, jsrv_ingest__entrypoint_error *msg)
 {
   LOG::error(
-      "error while booting up client {} at {} running under OS {}/{}: {}",
-      type_,
-      hostname_,
-      os_,
-      os_flavor_,
-      msg->error);
+      "error while booting up client {} at {} running under OS {}/{}: {}", type_, hostname_, os_, os_flavor_, msg->error);
 }
 
 void AgentSpan::health_check(::ebpf_net::ingest::weak_refs::agent span_ref, u64 timestamp, jsrv_ingest__health_check *msg)
