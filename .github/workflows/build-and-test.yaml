@@ -449,7 +449,7 @@ jobs:
 
   run-kernel-collector-tests:
     name: run-kernel-collector-tests
-    needs: [build-reducer, build-kernel-collector, build-kernel-collector-test]
+    needs: [build-reducer, build-kernel-collector-test]
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
