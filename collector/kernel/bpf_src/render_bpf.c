@@ -2400,22 +2400,13 @@ static u32 get_css_id(struct cgroup_subsys_state *css)
   }
 }
 
-static struct cgroup *get_css_parent_cgroup(struct cgroup_subsys_state *css)
+static __always_inline struct cgroup *get_css_parent_cgroup(struct cgroup_subsys_state *css)
 {
   if (!css) {
     return NULL;
   }
 
-  if (LINUX_KERNEL_VERSION < KERNEL_VERSION(3, 12, 0)) {
-    struct cgroup_subsys_state___3_11 *css = css;
-    struct cgroup *parent_cgroup = BPF_CORE_READ(css, cgroup, parent);
-    return parent_cgroup;
-  } else {
-    if (!BPF_CORE_READ(css, parent))
-      return NULL;
-    struct cgroup *parent_cgroup = BPF_CORE_READ(css, parent, cgroup);
-    return parent_cgroup;
-  }
+  return BPF_CORE_READ(css, parent, cgroup);
 }
 
 static const char *get_cgroup_name(struct cgroup *cg)
