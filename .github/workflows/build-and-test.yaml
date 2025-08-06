@@ -348,14 +348,12 @@ jobs:
         fetch-depth: 0
 
     - name: Download kernel-collector container
-      if: steps.changes.outputs.kernel == 'true' || steps.changes.outputs.github == 'true'
       uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
       with:
         name: kernel-collector-container
         path: ./container-exports
 
     - name: Run kernel collector simple tests on ${{ matrix.description }}
-      if: steps.changes.outputs.kernel == 'true' || steps.changes.outputs.github == 'true'
       uses: yonch/little-vm-helper@main
       with:
         test-name: kernel-collector-simple-test-${{ matrix.kernel }}
@@ -481,21 +479,18 @@ jobs:
         fetch-depth: 0
 
     - name: Download reducer container
-      if: steps.changes.outputs.kernel == 'true' || steps.changes.outputs.github == 'true'
       uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
       with:
         name: reducer-container
         path: ./container-exports
 
     - name: Download kernel-collector-test container
-      if: steps.changes.outputs.kernel == 'true' || steps.changes.outputs.github == 'true'
       uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
       with:
         name: kernel-collector-test-container
         path: ./container-exports
 
     - name: Run kernel collector tests on ${{ matrix.description }}
-      if: steps.changes.outputs.kernel == 'true' || steps.changes.outputs.github == 'true'
       uses: yonch/little-vm-helper@main
       with:
         test-name: kernel-collector-test-${{ matrix.kernel }}
