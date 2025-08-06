@@ -1446,14 +1446,7 @@ int on_udp_v6_get_port(struct pt_regs *ctx)
   return udp_v46_get_port_impl(ctx, sk);
 }
 
-// Keep the old function name for compatibility
-int on_udp_v46_get_port(struct pt_regs *ctx)
-{
-  struct sock *sk = (struct sock *)PT_REGS_PARM1(ctx);
-  return udp_v46_get_port_impl(ctx, sk);
-}
-
-static int __onret_udp_get_port_impl(struct pt_regs *ctx)
+static int onret_udp_get_port_impl(struct pt_regs *ctx)
 {
   struct sock **found = NULL;
   struct sock *sk = NULL;
@@ -1501,13 +1494,13 @@ static int __onret_udp_get_port_impl(struct pt_regs *ctx)
 SEC("kretprobe/udp_v4_get_port")
 int onret_udp_v4_get_port(struct pt_regs *ctx)
 {
-  return __onret_udp_get_port_impl(ctx);
+  return onret_udp_get_port_impl(ctx);
 }
 
 SEC("kretprobe/udp_v6_get_port")
 int onret_udp_v6_get_port(struct pt_regs *ctx)
 {
-  return __onret_udp_get_port_impl(ctx);
+  return onret_udp_get_port_impl(ctx);
 }
 
 /*
