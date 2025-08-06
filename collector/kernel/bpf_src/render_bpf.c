@@ -2538,14 +2538,10 @@ static inline int handle_existing_cgroup(struct pt_regs *ctx, struct cgroup *cgr
   return 0;
 }
 
+// For kernels >= 4.6.0
 SEC("kretprobe/cgroup_control")
 int onret_cgroup_control(struct pt_regs *ctx)
 {
-  // Only available for kernel >= 4.6.0
-  if (LINUX_KERNEL_VERSION < KERNEL_VERSION(4, 6, 0)) {
-    return 0;
-  }
-
   GET_PID_TGID;
 
   GET_ARGS_MISSING_OK(cgroup_control, args)
