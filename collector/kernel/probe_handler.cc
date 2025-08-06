@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <iostream>
+#include <cstdarg>
 
 #include <config.h>
 #include <linux/bpf.h>
@@ -100,8 +101,32 @@ int ProbeHandler::get_bpf_map_fd(struct render_bpf_bpf *skel, const char *map_na
   return map_fd;
 }
 
+// Callback to suppress libbpf error messages and route them through our logging system
+static int suppress_libbpf_messages(enum libbpf_print_level level, const char *format, va_list args)
+{
+  // Only log WARN level messages, suppress INFO and DEBUG
+  if (level <= LIBBPF_WARN) {
+    char buffer[1024];
+    int len = vsnprintf(buffer, sizeof(buffer), format, args);
+    
+    // Remove trailing newline if present
+    if (len > 0 && buffer[len - 1] == '\n') {
+      buffer[len - 1] = '\0';
+      len--;
+    }
+    
+    std::string message(buffer);
+    LOG::debug_in(AgentLogKind::BPF, "libbpf: {}", message);
+    return len;
+  }
+  return 0;
+}
+
 struct render_bpf_bpf *ProbeHandler::open_bpf_skeleton()
 {
+  // Set a custom print callback to suppress unwanted libbpf messages
+  libbpf_set_print(suppress_libbpf_messages);
+  
   struct render_bpf_bpf *skel = render_bpf_bpf__open();
   if (!skel) {
     LOG::error("Cannot open BPF skeleton");
