@@ -1897,8 +1897,7 @@ int on_ip_send_skb(struct pt_regs *ctx)
     struct in6_addr laddr = make_ipv6_address(BPF_CORE_READ(ip_hdr, saddr));
     struct in6_addr raddr = make_ipv6_address(BPF_CORE_READ(ip_hdr, daddr));
 
-    udp_update_stats(
-        ctx, BPF_CORE_READ(skb, sk), skb, &laddr, BPF_CORE_READ(udp_hdr, source), &raddr, BPF_CORE_READ(udp_hdr, dest), 0);
+    udp_update_stats(ctx, sk, skb, &laddr, BPF_CORE_READ(udp_hdr, source), &raddr, BPF_CORE_READ(udp_hdr, dest), 0);
   }
 
   if (protocol == IPPROTO_TCP) {
