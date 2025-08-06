@@ -2215,7 +2215,7 @@ int on_tcp_syn_ack_timeout(struct pt_regs *ctx)
 
 #else
 
-  struct sock *sk = BPF_CORE_READ(rsk, sk);
+  struct sock *sk = BPF_CORE_READ(req, sk);
   if (sk == NULL) {
     bpf_log(ctx, BPF_LOG_UNREACHABLE, 0, 0, 0);
     return 0;
