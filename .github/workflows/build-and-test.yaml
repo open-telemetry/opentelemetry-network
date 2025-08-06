@@ -70,7 +70,7 @@ jobs:
       run: |
         echo "github.workspace = ${{ github.workspace }}"
         docker pull $BENV_IMAGE
-        git submodule update  --init --recursive
+        git submodule update  --init --recursive ext/
         
         # Start local registry for the build process
         docker run -d -p 5000:5000 --name registry docker.io/library/registry:2
@@ -118,7 +118,7 @@ jobs:
       run: |
         echo "github.workspace = ${{ github.workspace }}"
         docker pull $BENV_IMAGE
-        git submodule update  --init --recursive
+        git submodule update  --init --recursive ext/
         
         # Start local registry for the build process
         docker run -d -p 5000:5000 --name registry docker.io/library/registry:2
@@ -166,7 +166,7 @@ jobs:
       run: |
         echo "github.workspace = ${{ github.workspace }}"
         docker pull $BENV_IMAGE
-        git submodule update  --init --recursive
+        git submodule update  --init --recursive ext/
         
         # Start local registry for the build process
         docker run -d -p 5000:5000 --name registry docker.io/library/registry:2
@@ -212,7 +212,7 @@ jobs:
       run: |
         echo "github.workspace = ${{ github.workspace }}"
         docker pull $BENV_IMAGE
-        git submodule update  --init --recursive
+        git submodule update  --init --recursive ext/
         docker run -t \
         --rm \
         --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
@@ -235,7 +235,7 @@ jobs:
       run: |
         echo "github.workspace = ${{ github.workspace }}"
         docker pull $BENV_IMAGE
-        git submodule update  --init --recursive
+        git submodule update  --init --recursive ext/
         docker run -t \
         --rm \
         --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
@@ -258,7 +258,7 @@ jobs:
       run: |
         echo "github.workspace = ${{ github.workspace }}"
         docker pull $BENV_IMAGE
-        git submodule update  --init --recursive
+        git submodule update  --init --recursive ext/
         docker run -t \
         --rm \
         --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
@@ -280,7 +280,7 @@ jobs:
       run: |
         echo "github.workspace = ${{ github.workspace }}"
         docker pull $BENV_IMAGE
-        git submodule update  --init --recursive
+        git submodule update  --init --recursive ext/
         docker run -t \
         --rm \
         --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
@@ -303,7 +303,7 @@ jobs:
     - name: build unit tests with asan and debug flags on then run all tests
       run: |
         docker pull $BENV_IMAGE
-        git submodule update  --init --recursive
+        git submodule update  --init --recursive ext/
         docker run -t \
         --rm \
         --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
