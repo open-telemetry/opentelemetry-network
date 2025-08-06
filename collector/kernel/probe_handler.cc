@@ -1,8 +1,8 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-#include <iostream>
 #include <cstdarg>
+#include <iostream>
 
 #include <config.h>
 #include <linux/bpf.h>
@@ -108,13 +108,13 @@ static int suppress_libbpf_messages(enum libbpf_print_level level, const char *f
   if (level <= LIBBPF_WARN) {
     char buffer[1024];
     int len = vsnprintf(buffer, sizeof(buffer), format, args);
-    
+
     // Remove trailing newline if present
     if (len > 0 && buffer[len - 1] == '\n') {
       buffer[len - 1] = '\0';
       len--;
     }
-    
+
     std::string message(buffer);
     LOG::debug_in(AgentLogKind::BPF, "libbpf: {}", message);
     return len;
@@ -126,7 +126,7 @@ struct render_bpf_bpf *ProbeHandler::open_bpf_skeleton()
 {
   // Set a custom print callback to suppress unwanted libbpf messages
   libbpf_set_print(suppress_libbpf_messages);
-  
+
   struct render_bpf_bpf *skel = render_bpf_bpf__open();
   if (!skel) {
     LOG::error("Cannot open BPF skeleton");
