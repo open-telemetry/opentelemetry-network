@@ -1868,7 +1868,8 @@ SEC("kprobe/tcp_send_active_reset")
 int on_tcp_send_active_reset(struct pt_regs *ctx)
 {
   struct sock *sk = (struct sock *)PT_REGS_PARM1(ctx);
-  gfp_t priority = (gfp_t)PT_REGS_PARM2(ctx);
+  // gfp_t priority = (gfp_t)PT_REGS_PARM2(ctx);   -- unused
+
   // bpf_trace_printk("on_tcp_send_active_reset\n");
   // send RST (is_rx = 0)
   handle_tcp_reset(ctx, sk, 0);
@@ -1878,7 +1879,7 @@ int on_tcp_send_active_reset(struct pt_regs *ctx)
 SEC("kprobe/ip_send_skb")
 int on_ip_send_skb(struct pt_regs *ctx)
 {
-  struct net *net = (struct net *)PT_REGS_PARM1(ctx);
+  // struct net *net = (struct net *)PT_REGS_PARM1(ctx);   -- unused
   struct sk_buff *skb = (struct sk_buff *)PT_REGS_PARM2(ctx);
 
   if (!skb)
