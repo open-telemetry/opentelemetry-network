@@ -2379,7 +2379,8 @@ SEC("kprobe/skb_free_datagram_locked")
 int on_skb_free_datagram_locked(struct pt_regs *ctx)
 {
   bpf_tail_call(ctx, &tail_calls, TAIL_CALL_HANDLE_RECEIVE_UDP_SKB);
-  return 0;}
+  return 0;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////
 /* CGROUPS */
