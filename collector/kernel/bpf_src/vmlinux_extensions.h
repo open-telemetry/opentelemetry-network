@@ -32,11 +32,11 @@ union nf_inet_addr {
   __be32 ip6[4];
   struct in_addr in;
   struct in6_addr in6;
-} __attribute__((preserve_access_index));
+};
 
 union nf_conntrack_man_proto {
   __be16 all;
-} __attribute__((preserve_access_index));
+};
 
 struct nf_conntrack_man {
   union nf_inet_addr u3;
@@ -55,7 +55,7 @@ struct nf_conntrack_tuple {
     u_int8_t protonum;
     u_int8_t dir;
   } dst;
-} __attribute__((preserve_access_index));
+};
 
 struct nf_conntrack_tuple_hash {
   struct hlist_nulls_node hnnode;
@@ -64,7 +64,7 @@ struct nf_conntrack_tuple_hash {
 
 struct nf_conn {
   struct nf_conntrack_tuple_hash tuplehash[2];
-} __attribute__((preserve_access_index));
+};
 
 struct cgroup;
 struct cgroup_subsys;
@@ -157,7 +157,7 @@ struct cgroup {
   // struct cgroup_freezer_state freezer;
   struct bpf_local_storage *bpf_cgrp_storage;
   struct cgroup *ancestors[0];
-} __attribute__((preserve_access_index));
+};
 
 struct cgroup_root {
   struct kernfs_root *kf_root;
