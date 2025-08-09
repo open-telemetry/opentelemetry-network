@@ -104,18 +104,18 @@ int ProbeHandler::get_bpf_map_fd(struct render_bpf_bpf *skel, const char *map_na
 // Callback to route libbpf messages through our logging system
 static int libbpf_print_messages(enum libbpf_print_level level, const char *format, va_list args)
 {
-    char buffer[1024];
-    int len = vsnprintf(buffer, sizeof(buffer), format, args);
+  char buffer[1024];
+  int len = vsnprintf(buffer, sizeof(buffer), format, args);
 
-    // Remove trailing newline if present
-    if (len > 0 && buffer[len - 1] == '\n') {
-      buffer[len - 1] = '\0';
-      len--;
-    }
+  // Remove trailing newline if present
+  if (len > 0 && buffer[len - 1] == '\n') {
+    buffer[len - 1] = '\0';
+    len--;
+  }
 
-    std::string message(buffer);
-    LOG::debug_in(AgentLogKind::BPF, "libbpf: {}", message);
-    return len;
+  std::string message(buffer);
+  LOG::debug_in(AgentLogKind::BPF, "libbpf: {}", message);
+  return len;
 }
 
 struct render_bpf_bpf *ProbeHandler::open_bpf_skeleton()
