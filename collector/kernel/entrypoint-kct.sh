@@ -21,8 +21,6 @@ if ! mountpoint -q /sys; then
   mount -t sysfs none /sys || echo "Warning: Could not mount sysfs"
 fi
 
-cmd_args=()
-
 echo "launching kernel collector test ..."
 
 # to run the collector under gdb, set `EBPF_NET_RUN_UNDER_GDB` to the flavor of gdb
@@ -48,7 +46,7 @@ if [[ -n "${EBPF_NET_RUN_UNDER_GDB}" ]]; then
   done
 
   (set -x; exec "${EBPF_NET_RUN_UNDER_GDB}" -q "${GDB_ARGS[@]}" \
-    --args "${install_dir}/kernel_collector_test" "${cmd_args[@]}" "$@" \
+    --args "${install_dir}/kernel_collector_test" "$@" \
   )
 elif [[ -n "${EBPF_NET_RUN_UNDER_VALGRIND}" ]]; then
   # to run the collector under valgrind, set `EBPF_NET_RUN_UNDER_VALGRIND` to the options to pass to valgrind,
@@ -59,9 +57,9 @@ elif [[ -n "${EBPF_NET_RUN_UNDER_VALGRIND}" ]]; then
   # note: to get full symbols from valgrind also build the kernel-collector in debug mode
 
   # shellcheck disable=SC2086
-  (set -x; exec /usr/bin/valgrind ${EBPF_NET_RUN_UNDER_VALGRIND} "${install_dir}/kernel_collector_test" "${cmd_args[@]}" "$@")
+  (set -x; exec /usr/bin/valgrind ${EBPF_NET_RUN_UNDER_VALGRIND} "${install_dir}/kernel_collector_test" "$@")
 else
-  if ! (set -x; exec "${install_dir}/kernel_collector_test" "${cmd_args[@]}" "$@")
+  if ! (set -x; exec "${install_dir}/kernel_collector_test" "$@")
   then
     echo "kernel collector test FAILED"
     cp /srv/core-* /hostfs/data || true
