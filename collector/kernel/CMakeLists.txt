@@ -162,11 +162,7 @@ foreach(INCLUDE_PATH ${CLANG_INCLUDES})
 endforeach()
 
 # Determine architecture for vmlinux.h
-execute_process(
-  COMMAND uname -m
-  OUTPUT_VARIABLE ARCH_RAW
-  OUTPUT_STRIP_TRAILING_WHITESPACE
-)
+set(ARCH_RAW "${CMAKE_HOST_SYSTEM_PROCESSOR}")
 string(REGEX REPLACE "x86_64" "x86" ARCH "${ARCH_RAW}")
 string(REGEX REPLACE "arm.*" "arm" ARCH "${ARCH}")
 string(REGEX REPLACE "aarch64" "arm64" ARCH "${ARCH}")
