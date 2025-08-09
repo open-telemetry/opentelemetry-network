@@ -114,7 +114,7 @@ static int libbpf_print_messages(enum libbpf_print_level level, const char *form
   }
 
   std::string message(buffer);
-  LOG::debug_in(AgentLogKind::BPF, "libbpf: {}", message);
+  LOG::debug("libbpf: {}", message);
   return len;
 }
 
