@@ -2728,6 +2728,37 @@ int on_nf_conntrack_alter_reply(struct pt_regs *ctx)
   return 0;
 }
 
+static __always_inline void
+submit_conntrack_tuple(struct pt_regs *ctx, const struct nf_conntrack_tuple *tuple, u64 ct_addr, u8 dir)
+{
+  u64 now = get_timestamp();
+
+  if (dir == 0) {
+    perf_submit_agent_internal__existing_conntrack_tuple(
+        ctx,
+        now,
+        ct_addr,
+        (u32)BPF_CORE_READ(tuple, src.u3.ip),
+        (u16)BPF_CORE_READ(tuple, src.u.all),
+        (u32)BPF_CORE_READ(tuple, dst.u3.ip),
+        (u16)BPF_CORE_READ(tuple, dst.u.all),
+        (u8)BPF_CORE_READ(tuple, dst.protonum),
+        dir);
+  } else {
+    // NOTE: in the dir=1 case, we flip src/dst to preserve four-tuple order.
+    perf_submit_agent_internal__existing_conntrack_tuple(
+        ctx,
+        now,
+        ct_addr,
+        (u32)BPF_CORE_READ(tuple, dst.u3.ip),
+        (u16)BPF_CORE_READ(tuple, dst.u.all),
+        (u32)BPF_CORE_READ(tuple, src.u3.ip),
+        (u16)BPF_CORE_READ(tuple, src.u.all),
+        (u8)BPF_CORE_READ(tuple, dst.protonum),
+        dir);
+  }
+}
+
 SEC("kprobe/ctnetlink_dump_tuples")
 int on_ctnetlink_dump_tuples(struct pt_regs *ctx)
 {
@@ -2738,40 +2769,41 @@ int on_ctnetlink_dump_tuples(struct pt_regs *ctx)
     return 0;
   }
 
-  u64 now = get_timestamp();
-
   // "struct nf_conn" contains two "struct nf_conntrack_tuple_hash". On the
   // dir=1 case, we want to report the addr of the dir=0, which we expected to
   // see first. this is addr is sizeof(struct nf_conntrack_tuple_hash) ahead of
   // the start of our current "ct"
   u64 ct_addr = (u64)ct;
-
   u8 dir = BPF_CORE_READ(ct, dst.dir);
-  if (dir == 0) {
-    perf_submit_agent_internal__existing_conntrack_tuple(
-        ctx,
-        now,
-        (u64)ct_addr,
-        (u32)BPF_CORE_READ(ct, src.u3.ip),
-        (u16)BPF_CORE_READ(ct, src.u.all),
-        (u32)BPF_CORE_READ(ct, dst.u3.ip),
-        (u16)BPF_CORE_READ(ct, dst.u.all),
-        (u8)BPF_CORE_READ(ct, dst.protonum),
-        (u8)dir);
-  } else {
+
+  if (dir == 1) {
     ct_addr = ct_addr - sizeof(struct nf_conntrack_tuple_hash);
-    // NOTE: in the dir=1 case, we flip src/dst to preserve four-tuple order.
-    perf_submit_agent_internal__existing_conntrack_tuple(
-        ctx,
-        now,
-        (u64)ct_addr,
-        (u32)BPF_CORE_READ(ct, dst.u3.ip),
-        (u16)BPF_CORE_READ(ct, dst.u.all),
-        (u32)BPF_CORE_READ(ct, src.u3.ip),
-        (u16)BPF_CORE_READ(ct, src.u.all),
-        (u8)BPF_CORE_READ(ct, dst.protonum),
-        (u8)dir);
   }
+
+  submit_conntrack_tuple(ctx, ct, ct_addr, dir);
+  return 0;
+}
+
+SEC("kprobe/ctnetlink_fill_info")
+int on_ctnetlink_fill_info(struct pt_regs *ctx)
+{
+  struct sk_buff *skb = (struct sk_buff *)PT_REGS_PARM1(ctx);
+  struct nf_conn *ct = (struct nf_conn *)PT_REGS_PARM5(ctx);
+
+  if (!ct) {
+    return 0;
+  }
+
+  u64 ct_addr = (u64)ct;
+
+  // Submit for original direction (dir=0)
+  const struct nf_conntrack_tuple *orig_tuple = &ct->tuplehash[0].tuple;
+  submit_conntrack_tuple(ctx, orig_tuple, ct_addr, 0);
+
+  // Submit for reply direction (dir=1)
+  const struct nf_conntrack_tuple *reply_tuple = &ct->tuplehash[1].tuple;
+  submit_conntrack_tuple(ctx, reply_tuple, ct_addr, 1);
+
   return 0;
 }
 

@@ -27,13 +27,15 @@ NatProber::NatProber(ProbeHandler &probe_handler, struct render_bpf_bpf *skel, s
 
   // EXISTING
   ProbeAlternatives probe_alternatives{
-      "ctnetlink_dump_tuples",
+      "ctnetlink_existing_conntrack",
       {
+          // ctnetlink_fill_info is more widely available as it calls ctnetlink_dump_tuples twice
+          {"on_ctnetlink_fill_info", "ctnetlink_fill_info"},
           {"on_ctnetlink_dump_tuples", "ctnetlink_dump_tuples"},
           // Attaching probe to ctnetlink_dump_tuples fails on some distros and kernel builds, for example Ubuntu Jammy.
           {"on_ctnetlink_dump_tuples", "ctnetlink_dump_tuples_ip"},
       }};
-  std::string ctnetlink_dump_tuples_k_func_name = probe_handler.start_probe(skel, probe_alternatives);
+  std::string ctnetlink_existing_k_func_name = probe_handler.start_probe(skel, probe_alternatives);
 
   periodic_cb();
   int res = query_kernel();
@@ -50,7 +52,7 @@ NatProber::NatProber(ProbeHandler &probe_handler, struct render_bpf_bpf *skel, s
   periodic_cb();
 
   // Cleanup existing
-  probe_handler.cleanup_probe(ctnetlink_dump_tuples_k_func_name);
+  probe_handler.cleanup_probe(ctnetlink_existing_k_func_name);
   periodic_cb();
 }
 
