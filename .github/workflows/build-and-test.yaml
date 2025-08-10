@@ -415,8 +415,8 @@ jobs:
             collector_logs=$(docker logs $container_id 2>&1 || true)
             echo "$collector_logs"
             
-            # Check for error strings in the logs
-            if echo "$collector_logs" | grep -i "error" > /dev/null 2>&1; then
+            # Check for error strings in the logs (exclude GCP metadata fetch errors which are expected)
+            if echo "$collector_logs" | grep -i "error" | grep -v "Unable to fetch GCP metadata: error while fetching Google Cloud Platform instance metadata" > /dev/null 2>&1; then
               echo "✗ Found 'error' in kernel collector output - test failed"
               docker stop $container_id || true
               docker rm $container_id || true
