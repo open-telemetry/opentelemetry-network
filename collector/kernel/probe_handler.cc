@@ -104,7 +104,7 @@ int ProbeHandler::get_bpf_map_fd(struct render_bpf_bpf *skel, const char *map_na
 // Callback to route libbpf messages through our logging system
 static int libbpf_print_messages(enum libbpf_print_level level, const char *format, va_list args)
 {
-  char buffer[1024];
+  char buffer[16*1024];
   int len = vsnprintf(buffer, sizeof(buffer), format, args);
 
   // Remove trailing newline if present
