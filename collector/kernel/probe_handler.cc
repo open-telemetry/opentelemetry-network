@@ -114,7 +114,11 @@ static int libbpf_print_messages(enum libbpf_print_level level, const char *form
   }
 
   std::string message(buffer);
-  LOG::debug("libbpf: {}", message);
+  if (level <= LIBBPF_INFO)
+    LOG::debug("libbpf: {}", message);
+  else
+    LOG::trace("libbpf: {}", message);
+  
   return len;
 }
 
