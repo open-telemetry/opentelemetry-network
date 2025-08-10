@@ -134,9 +134,13 @@ class BpfGenerator {
     static const uint32_t «bpf_struct_name»__perf_size = «((jmsg.size + 8 + 7) / 8) * 8 + 4»;
 
     /* static asserts that memory layout of message «msg.name» conforms to jitbuf's assumptions */
-    #define JB_ASSERT(name, predicate)     typedef char _jitbuf_static_assert_##name[2*!!(predicate)-1];
-    JB_ASSERT(«bpf_struct_name»__has_correct_offset,offsetof(struct «bpf_struct_name»,jb) == 16)
-    JB_ASSERT(«bpf_struct_name»_has_correct_sizeof,((sizeof(struct «bpf_struct_name») + 1) & ~1) >= «jmsg.size»+16)
+    #ifdef __cplusplus
+        #define JB_ASSERT(name, predicate) static_assert(predicate, #name ": " #predicate)
+    #else
+        #define JB_ASSERT(name, predicate) _Static_assert(predicate, #name ": " #predicate)
+    #endif
+    JB_ASSERT(«bpf_struct_name»__has_correct_offset,offsetof(struct «bpf_struct_name»,jb) == 16);
+    JB_ASSERT(«bpf_struct_name»_has_correct_sizeof,((sizeof(struct «bpf_struct_name») + 1) & ~1) >= «jmsg.size»+16);
     #undef JB_ASSERT
     '''
   }
@@ -170,7 +174,7 @@ class BpfGenerator {
     {
       struct «bpf_struct_name» __msg = {};
       bpf_fill_«app.name»__«msg.name»(&__msg, __now «msg.commaCallPrototype»);
-      return events.perf_submit(ctx, &__msg.unpadded_size, «bpf_struct_name»__perf_size);
+      return bpf_perf_event_output(ctx, &events, BPF_F_CURRENT_CPU, &__msg.unpadded_size, «bpf_struct_name»__perf_size);
     }
     '''
   }

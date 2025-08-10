@@ -58,8 +58,12 @@ jobs:
         with:
           ref: ${{ inputs.ref }}
           fetch-depth: 0
-          submodules: recursive
+          submodules: false
           path: src
+      - name: Checkout ext/ submodules
+        run: |
+          cd $GITHUB_WORKSPACE/src
+          git submodule update --init --recursive ext/
       - name: Compute version numbers
         run: |
           # sets environment variables for use in later steps.

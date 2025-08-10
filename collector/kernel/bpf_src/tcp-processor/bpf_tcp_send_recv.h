@@ -63,7 +63,7 @@ END_DECLARE_SAVED_ARGS(tcp_sendmsg)
 // Processes data that ends up in the send and receive streams
 // to determine protocols and deal with them.
 
-static void tcp_send_stream_handler(
+static __always_inline void tcp_send_stream_handler(
     struct pt_regs *ctx,
     struct tcp_connection_t *pconn,
     struct tcp_control_value_t *pctrl,
@@ -81,7 +81,7 @@ static void tcp_send_stream_handler(
   }
 }
 
-static void tcp_recv_stream_handler(
+static __always_inline void tcp_recv_stream_handler(
     struct pt_regs *ctx,
     struct tcp_connection_t *pconn,
     struct tcp_control_value_t *pctrl,
@@ -104,15 +104,19 @@ static void tcp_recv_stream_handler(
 // --- tcp_sendmsg ----------------------------------------------------
 // Called when data is to be send to a TCP socket
 
-#pragma passthrough on
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 1, 0)
-int handle_kprobe__tcp_sendmsg(struct pt_regs *ctx, struct kiocb *iocb, struct sock *sk, struct msghdr *msg, size_t size)
-#else
-int handle_kprobe__tcp_sendmsg(struct pt_regs *ctx, struct sock *sk, struct msghdr *msg, size_t size)
-#endif
-#pragma passthrough off
+SEC("kprobe/tcp_sendmsg")
+__attribute__((noinline)) int handle_kprobe__tcp_sendmsg(struct pt_regs *ctx)
 {
+  // In post 4.1 kernels: struct sock *sk, struct msghdr *msg, size_t size
+  struct sock *sk = (struct sock *)PT_REGS_PARM1(ctx);
+  struct msghdr *msg = (struct msghdr *)PT_REGS_PARM2(ctx);
+  size_t size = (size_t)PT_REGS_PARM3(ctx);
+
   GET_PID_TGID
+
+  if (!msg || !sk) {
+    return 0;
+  }
 
   struct tcp_connection_t *pconn;
   pconn = lookup_tcp_connection(sk);
@@ -157,19 +161,20 @@ int handle_kprobe__tcp_sendmsg(struct pt_regs *ctx, struct sock *sk, struct msgh
   struct iovec *iov = NULL;
   unsigned long nr_segs = 0;
   size_t iov_offset = 0;
-#pragma passthrough on
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 19, 0)
-  bpf_probe_read(&iov, sizeof(iov), &(msg->msg_iov));
-  bpf_probe_read(&nr_segs, sizeof(nr_segs), &(msg->msg_iovlen));
-  // iov_offset is not a thing in older kernels
-#else
-#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 14, 0)
   unsigned int type;
-  bpf_probe_read(&type, sizeof(type), &(msg->msg_iter.type));
-#else
-  u8 type;
-  bpf_probe_read(&type, sizeof(type), &(msg->msg_iter.iter_type));
-#endif
+  if (bpf_core_field_exists(msg->msg_iter.iter_type)) {
+    type = (unsigned int)BPF_CORE_READ(msg, msg_iter.iter_type);
+  } else {
+    struct msghdr___5_13_19 *msg_compat = (void *)msg;
+    if (!msg_compat) {
+      return 0;
+    }
+    if (bpf_probe_read_kernel(&type, sizeof(type), &msg_compat->msg_iter.type) != 0) {
+      bpf_log(ctx, BPF_LOG_INVALID_POINTER, (u64)sk, (u64)msg, (u64)size);
+      return 0;
+    }
+  }
+
   // ensure this is an IOVEC or KVEC, low bit indicates read/write
   // note: iov_iter.iov and iov_iter.kvec are union and have same layout
   // first condition makes it work on pre-5 kernels where ITER_IOVEC=0
@@ -181,16 +186,23 @@ int handle_kprobe__tcp_sendmsg(struct pt_regs *ctx, struct sock *sk, struct msgh
     return 0;
   }
   // can access through iov since iov and kvec are union and have same layout
-  bpf_probe_read(&iov, sizeof(iov), &(msg->msg_iter.iov));
-  bpf_probe_read(&nr_segs, sizeof(nr_segs), &(msg->msg_iter.nr_segs));
-  bpf_probe_read(&iov_offset, sizeof(iov_offset), &(msg->msg_iter.iov_offset));
-#endif
-#pragma passthrough off
+  if (bpf_core_field_exists(msg->msg_iter.__iov)) {
+    iov = (struct iovec *)BPF_CORE_READ(msg, msg_iter.__iov);
+  } else {
+    iov = (struct iovec *)BPF_CORE_READ((struct msghdr___5_13_19 *)msg, msg_iter.iov);
+  }
+  nr_segs = BPF_CORE_READ(msg, msg_iter.nr_segs);
+  iov_offset = BPF_CORE_READ(msg, msg_iter.iov_offset);
 
   void *iov_ptr = NULL;
   size_t iov_len = 0;
   int written = 0;
   int depth = 1;
+
+  if (iov) {
+    iov_ptr = BPF_CORE_READ(iov, iov_base);
+    iov_len = BPF_CORE_READ(iov, iov_len);
+  }
 
   // Defer arguments to kretprobe
   BEGIN_SAVE_ARGS(tcp_sendmsg)
@@ -220,14 +232,16 @@ int handle_kprobe__tcp_sendmsg(struct pt_regs *ctx, struct sock *sk, struct msgh
   return 0;
 }
 
+SEC("kretprobe/tcp_sendmsg")
 int handle_kretprobe__tcp_sendmsg(struct pt_regs *ctx)
 {
   // This call recurses up to TCP_TAIL_CALL_MAX_DEPTH times,
   // writing up to DATA_CHANNEL_CHUNK_MAX each time
-  tail_calls.call(ctx, TAIL_CALL_CONTINUE_TCP_SENDMSG);
+  bpf_tail_call(ctx, &tail_calls, TAIL_CALL_CONTINUE_TCP_SENDMSG);
   return 0;
 }
 
+SEC("kprobe")
 int continue_tcp_sendmsg(struct pt_regs *ctx)
 {
   GET_PID_TGID
@@ -260,10 +274,8 @@ int continue_tcp_sendmsg(struct pt_regs *ctx)
   if (args->iov_len == 0) {
     // Load next iovec
     if (args->nr_segs > 0) {
-      void *iov_ptr = NULL;
-      size_t iov_len = 0;
-      bpf_probe_read(&iov_ptr, sizeof(iov_ptr), &(args->iov->iov_base));
-      bpf_probe_read(&iov_len, sizeof(iov_len), &(args->iov->iov_len));
+      void *iov_ptr = args->iov_ptr;
+      size_t iov_len = args->iov_len;
 #if TRACE_TCP_SEND
       DEBUG_PRINTK("tcp_sendmsg continue: ptr=%llx, len=%d\n", iov_ptr, iov_len);
 #endif
@@ -300,7 +312,7 @@ int continue_tcp_sendmsg(struct pt_regs *ctx)
     DELETE_ARGS(tcp_sendmsg);
   } else {
     args->depth++;
-    tail_calls.call(ctx, TAIL_CALL_CONTINUE_TCP_SENDMSG);
+    bpf_tail_call(ctx, &tail_calls, TAIL_CALL_CONTINUE_TCP_SENDMSG);
   }
 
   return 0;
@@ -309,22 +321,17 @@ int continue_tcp_sendmsg(struct pt_regs *ctx)
 // --- tcp_recvmsg ----------------------------------------------------
 // Called when data is to be received by a TCP socket
 
-#pragma passthrough on
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 1, 0)
-int handle_kprobe__tcp_recvmsg(
-    struct pt_regs *ctx,
-    struct kiocb *iocb,
-    struct sock *sk,
-    struct msghdr *msg,
-    size_t len,
-    int nonblock,
-    int flags /*, int *addr_len*/)
-#else
-int handle_kprobe__tcp_recvmsg(
-    struct pt_regs *ctx, struct sock *sk, struct msghdr *msg, size_t len, int nonblock, int flags, int *addr_len)
-#endif
-#pragma passthrough off
+SEC("kprobe/tcp_recvmsg")
+int handle_kprobe__tcp_recvmsg(struct pt_regs *ctx)
 {
+  // In kernels 4.1 onwards: struct sock *sk, struct msghdr *msg, size_t len, int nonblock, int flags, int *addr_len
+  struct sock *sk = (struct sock *)PT_REGS_PARM1(ctx);
+  struct msghdr *msg = (struct msghdr *)PT_REGS_PARM2(ctx);
+  size_t len = (size_t)PT_REGS_PARM3(ctx);
+  int nonblock = (int)PT_REGS_PARM4(ctx);
+  int flags = (int)PT_REGS_PARM5(ctx);
+  // int *addr_len = NULL;   -- unused
+
   GET_PID_TGID
 
   struct tcp_connection_t *pconn;
@@ -368,17 +375,20 @@ int handle_kprobe__tcp_recvmsg(
   // decode msg
 
   struct iovec *iov = NULL;
-#pragma passthrough on
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 19, 0)
-  bpf_probe_read(&iov, sizeof(iov), &(msg->msg_iov));
-#else
-#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 14, 0)
   unsigned int type;
-  bpf_probe_read(&type, sizeof(type), &(msg->msg_iter.type));
-#else
-  u8 type;
-  bpf_probe_read(&type, sizeof(type), &(msg->msg_iter.iter_type));
-#endif
+  if (bpf_core_field_exists(msg->msg_iter.iter_type)) {
+    type = (unsigned int)BPF_CORE_READ(msg, msg_iter.iter_type);
+  } else {
+    struct msghdr___5_13_19 *msg_compat = (void *)msg;
+    if (!msg_compat) {
+      return 0;
+    }
+    if (bpf_probe_read_kernel(&type, sizeof(type), &msg_compat->msg_iter.type) != 0) {
+      bpf_log(ctx, BPF_LOG_INVALID_POINTER, (u64)sk, (u64)msg, (u64)len);
+      return 0;
+    }
+  }
+
   // ensure this is an IOVEC or KVEC, low bit indicates read/write
   // note: iov_iter.iov and iov_iter.kvec are union and have same layout
   // first condition makes it work on pre-5 kernels where ITER_IOVEC=0
@@ -390,16 +400,18 @@ int handle_kprobe__tcp_recvmsg(
     return 0;
   }
   // can access through iov since iov and kvec are union and have same layout
-  bpf_probe_read(&iov, sizeof(iov), &(msg->msg_iter.iov));
-#endif
-#pragma passthrough off
+  if (bpf_core_field_exists(msg->msg_iter.__iov)) {
+    iov = (struct iovec *)BPF_CORE_READ(msg, msg_iter.__iov);
+  } else {
+    iov = (struct iovec *)BPF_CORE_READ((struct msghdr___5_13_19 *)msg, msg_iter.iov);
+  }
 
   void *iov_base = NULL;
   size_t iov_len = 0;
   int written = 0;
   int depth = 1;
-  bpf_probe_read(&iov_base, sizeof(iov_base), &(iov->iov_base));
-  bpf_probe_read(&iov_len, sizeof(iov_len), &(iov->iov_len));
+  iov_base = BPF_CORE_READ(iov, iov_base);
+  iov_len = BPF_CORE_READ(iov, iov_len);
 
   // Add to receiver table
   BEGIN_SAVE_ARGS(tcp_recvmsg)
@@ -430,14 +442,16 @@ int handle_kprobe__tcp_recvmsg(
   return 0;
 }
 
+SEC("kretprobe/tcp_recvmsg")
 int handle_kretprobe__tcp_recvmsg(struct pt_regs *ctx)
 {
   // This call recurses up to TCP_TAIL_CALL_MAX_DEPTH times,
   // writing up to DATA_CHANNEL_CHUNK_MAX each time
-  tail_calls.call(ctx, TAIL_CALL_CONTINUE_TCP_RECVMSG);
+  bpf_tail_call(ctx, &tail_calls, TAIL_CALL_CONTINUE_TCP_RECVMSG);
   return 0;
 }
 
+SEC("kprobe")
 int continue_tcp_recvmsg(struct pt_regs *ctx)
 {
   GET_PID_TGID
@@ -479,7 +493,7 @@ int continue_tcp_recvmsg(struct pt_regs *ctx)
     DELETE_ARGS(tcp_recvmsg);
   } else {
     args->depth++;
-    tail_calls.call(ctx, TAIL_CALL_CONTINUE_TCP_RECVMSG);
+    bpf_tail_call(ctx, &tail_calls, TAIL_CALL_CONTINUE_TCP_RECVMSG);
   }
 
   return 0;

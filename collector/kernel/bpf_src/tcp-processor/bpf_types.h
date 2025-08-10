@@ -9,12 +9,18 @@ typedef u64 PID_TGID;
 typedef u32 TGID;
 typedef u32 PID;
 
+// global variables for error counts
+// TODO: expose error counts to userspace
+volatile long save_args_update_existing_error = 0;
+volatile long save_args_update_full_error = 0;
+
 // tgid is upper 32 bits of pid_tgid, lower 32 bits is pid
 #define TGID_FROM_PID_TGID(X) ((TGID)((X) >> 32))
 #define PID_FROM_PID_TGID(X) ((PID)((X)))
 // common operation, use this macro to define _pid and _tgid for kprobes
 #define GET_PID_TGID                                                                                                           \
   PID_TGID _pid_tgid = bpf_get_current_pid_tgid();                                                                             \
+  _pid_tgid &= 0xFFFFFFFFFFFFFFFF;                                                                                             \
   TGID _tgid = TGID_FROM_PID_TGID(_pid_tgid);                                                                                  \
   PID _pid = PID_FROM_PID_TGID(_pid_tgid);                                                                                     \
   if (_tgid == 0 || _pid == 0) {                                                                                               \
@@ -45,7 +51,12 @@ typedef u64 TIMESTAMP;
   }                                                                                                                            \
   ;                                                                                                                            \
                                                                                                                                \
-  BPF_HASH(SAVED_ARGS_TABLE(FUNC), u64, SAVED_ARGS_TYPE(FUNC));
+  struct {                                                                                                                     \
+    __uint(type, BPF_MAP_TYPE_HASH);                                                                                           \
+    __type(key, u64);                                                                                                          \
+    __type(value, SAVED_ARGS_TYPE(FUNC));                                                                                      \
+    __uint(max_entries, 1024);                                                                                                 \
+  } SAVED_ARGS_TABLE(FUNC) SEC(".maps");
 
 #define BEGIN_SAVE_ARGS(FUNC)                                                                                                  \
   {                                                                                                                            \
@@ -63,40 +74,41 @@ typedef u64 TIMESTAMP;
 #define END_SAVE_ARGS(FUNC)                                                                                                    \
   }                                                                                                                            \
   ;                                                                                                                            \
-  int __ret = SAVED_ARGS_TABLE(FUNC).insert(&SAVED_ARGS_TABLE_KEY, &__saved_args);                                             \
-  if (__ret == -E2BIG || __ret == -ENOMEM || __ret == -EINVAL) {                                                               \
-    __DEBUG_OTHER_MAP_ERRORS_PRINTK || bpf_trace_printk(#FUNC ": args table is full, dropped insert. tgid=%u\n", _tgid);       \
-  } else if (__ret == -EEXIST) {                                                                                               \
-    __DEBUG_OTHER_MAP_ERRORS_PRINTK || bpf_trace_printk(#FUNC ": duplicate arg insert. tgid=%u\n", _tgid);                     \
-  } else if (__ret != 0) {                                                                                                     \
-    __DEBUG_OTHER_MAP_ERRORS_PRINTK ||                                                                                         \
-        bpf_trace_printk(#FUNC ": unknown return code from map insert: ret=%d (tgid=%u)\n", __ret, _tgid);                     \
+  int __ret = bpf_map_update_elem(&SAVED_ARGS_TABLE(FUNC), &SAVED_ARGS_TABLE_KEY, &__saved_args, BPF_NOEXIST);                 \
+  if (__ret != 0 && __DEBUG_OTHER_MAP_ERRORS_PRINTK) {                                                                         \
+    /* Check if key already exists to distinguish duplicate vs table full */                                                   \
+    void *existing = bpf_map_lookup_elem(&SAVED_ARGS_TABLE(FUNC), &SAVED_ARGS_TABLE_KEY);                                      \
+    if (existing) {                                                                                                            \
+      save_args_update_existing_error++;                                                                                       \
+    } else {                                                                                                                   \
+      save_args_update_full_error++;                                                                                           \
+    }                                                                                                                          \
   }                                                                                                                            \
   }
-#undef __DEBUG_OTHER_MAP_ERRORS_PRINTK
 
 #define GET_ARGS(FUNC, NAME)                                                                                                   \
-  SAVED_ARGS_TYPE(FUNC) *NAME = SAVED_ARGS_TABLE(FUNC).lookup(&SAVED_ARGS_TABLE_KEY);                                          \
+  SAVED_ARGS_TYPE(FUNC) *NAME = bpf_map_lookup_elem(&SAVED_ARGS_TABLE(FUNC), &SAVED_ARGS_TABLE_KEY);                           \
   if (NAME == NULL) {                                                                                                          \
     __DEBUG_OTHER_MAP_ERRORS_PRINTK || bpf_trace_printk(#FUNC ": args table missing key. tgid=%u\n", _tgid);                   \
   }
 
-#define GET_ARGS_MISSING_OK(FUNC, NAME) SAVED_ARGS_TYPE(FUNC) *NAME = SAVED_ARGS_TABLE(FUNC).lookup(&SAVED_ARGS_TABLE_KEY);
+#define GET_ARGS_MISSING_OK(FUNC, NAME)                                                                                        \
+  SAVED_ARGS_TYPE(FUNC) *NAME = bpf_map_lookup_elem(&SAVED_ARGS_TABLE(FUNC), &SAVED_ARGS_TABLE_KEY);
 
-#define DELETE_ARGS(FUNC) SAVED_ARGS_TABLE(FUNC).delete(&SAVED_ARGS_TABLE_KEY);
+#define DELETE_ARGS(FUNC) bpf_map_delete_elem(&SAVED_ARGS_TABLE(FUNC), &SAVED_ARGS_TABLE_KEY);
 
 // Timestamp abstraction
 // We do this so that eventually we could test the BPF outside
 // of the agent (in python or whatever). could replace this to simulate tight
 // timing tests eventually too
 
-static TIMESTAMP get_timestamp(void)
+static __always_inline TIMESTAMP get_timestamp(void)
 {
 #ifdef STANDALONE_TCP_PROCESSOR
   return (TIMESTAMP)bpf_ktime_get_ns();
 #else
   // Get time, adjust for boot
-  return bpf_ktime_get_ns() + BOOT_TIME_ADJUSTMENT;
+  return bpf_ktime_get_ns() + boot_time_adjustment;
 #endif
 }
 
@@ -105,11 +117,21 @@ struct BPF_LOG_GLOBALS {
   u32 period_start_ms;
   u32 count;
 };
-BPF_ARRAY(bpf_log_globals_per_cpu, struct BPF_LOG_GLOBALS, BPF_MAX_CPUS);
+struct {
+  __uint(type, BPF_MAP_TYPE_ARRAY);
+  __type(key, u32);
+  __type(value, struct BPF_LOG_GLOBALS);
+  __uint(max_entries, BPF_MAX_CPUS);
+} bpf_log_globals_per_cpu SEC(".maps");
 
-#define bpf_log(...) _bpf_log(__FILELINEID__, __VA_ARGS__)
-static void _bpf_log(int filelineid, struct pt_regs *ctx, enum BPF_LOG_CODE code, u64 arg0, u64 arg1, u64 arg2)
+#define bpf_log(ctx, _code, _arg0, _arg1, _arg2)                                                                               \
+  do {                                                                                                                         \
+    _bpf_log(__LINE__, ctx, _code, _arg0, _arg1, _arg1);                                                                       \
+  } while (0)
+
+static void __always_inline _bpf_log(int filelineid, struct pt_regs *ctx, enum BPF_LOG_CODE code, u64 arg0, u64 arg1, u64 arg2)
 {
+
   // Get timestamp in milliseconds
   TIMESTAMP now = get_timestamp();
   u32 now_ms = (u32)(now / 1000000ull);
@@ -120,7 +142,7 @@ static void _bpf_log(int filelineid, struct pt_regs *ctx, enum BPF_LOG_CODE code
     // what to do when 'log' itself fails?
     return;
   }
-  struct BPF_LOG_GLOBALS *globals = bpf_log_globals_per_cpu.lookup(&cpu);
+  struct BPF_LOG_GLOBALS *globals = bpf_map_lookup_elem(&bpf_log_globals_per_cpu, &cpu);
   if (globals == NULL) {
     // what to do when 'log' itself fails?
     return;
@@ -154,7 +176,7 @@ static void _bpf_log(int filelineid, struct pt_regs *ctx, enum BPF_LOG_CODE code
 }
 
 // Useful conversion from ip4 space to ip6 space for addresses
-inline static struct in6_addr make_ipv6_address(__be32 addr)
+static __always_inline struct in6_addr make_ipv6_address(__be32 addr)
 {
   struct in6_addr addr6 = {.in6_u.u6_addr32 = {0, 0, 0xffff0000, addr}};
   return addr6;

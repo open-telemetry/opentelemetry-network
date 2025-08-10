@@ -36,7 +36,7 @@ static void s_print_bpf_assert(int cond, const char *condstr)
 
 BPF_STACK_TRACE(stack_traces, TABLE_SIZE__STACK_TRACES);
 
-static void stack_trace(struct pt_regs *ctx)
+static __always_inline void stack_trace(struct pt_regs *ctx)
 {
   char comm[16];
   u64 now = get_timestamp();
@@ -50,7 +50,7 @@ static void stack_trace(struct pt_regs *ctx)
 
 #endif
 
-static int __check_broken_in6_addr(struct in6_addr *addr, int line)
+static __always_inline int __check_broken_in6_addr(struct in6_addr *addr, int line)
 {
   if (addr->in6_u.u6_addr16[0] == 0x1140 && addr->in6_u.u6_addr16[2] == 0x007f) {
     bpf_trace_printk("broken in6_addr on line %d\n", line);

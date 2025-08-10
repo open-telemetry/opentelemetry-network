@@ -11,8 +11,8 @@
 
 ///////// render_bpf.c config
 
-#define BPF_MAX_CPUS 1024             // Maximum number of CPUs to support
-#define TABLE_SIZE__TGID_INFO MAX_PID // Task (TGID) information
+#define BPF_MAX_CPUS 1024           // Maximum number of CPUs to support
+#define TABLE_SIZE__TGID_INFO 65536 // Task (TGID) information - compile-time constant needed for map definition
 #define TABLE_SIZE__SEEN_INODES                                                                                                \
   70000 // XXX: Is this even necessary? could this tracking be done in userland with non-limited tables?
 #define TABLE_SIZE__TCP_OPEN_SOCKETS (256 * 1024) // Was 4096, but should be larger to accommodate high traffic systems
@@ -45,10 +45,6 @@
 // When sockets are accepted, do we report the statistics on the child or parent socket?
 #define TCP_STATS_ON_PARENT 1
 
-// debug event codes
-#define TCP_LIFETIME_HACK_CODE 1
-#define UDP_LIFETIME_HACK_CODE 2
-
 ///////// bpf_tcp_processor.c config
 
 #define TCP_CONNECTION_HASH_SIZE TABLE_SIZE__TCP_OPEN_SOCKETS // Same for now to ensure we can always handle all http requests
@@ -59,10 +55,10 @@
 ///////// render_bpf.c debugging switches
 
 // #define TRACE_TCP_SOCKETS 1
-// #define TRACE_UDP_SOCKETS 1
+#define TRACE_UDP_SOCKETS 0
 
 // #define DEBUG_TCP_SOCKET_ERRORS 1
-// #define DEBUG_UDP_SOCKET_ERRORS 1
+#define DEBUG_UDP_SOCKET_ERRORS 0
 // #define DEBUG_OTHER_MAP_ERRORS 1
 
 // #define DEBUG_ENABLE_STACKTRACE 1
@@ -136,7 +132,7 @@ enum BPF_TABLE_ID {
 #if _PROCESSING_BPF
 // Include this until we merge the tcp-processor code into render_bpf more closely
 // Note, this is included by bpf and userland c++, so it -must- be an include with "" not <>
-// as this distinction is how we determine in bpf which includes to inline at compile time vs process at runtime
+// as this distinction determines which includes are processed during BPF compilation
 #include "tcp-processor/tcp_processor.h"
 #else
 #include <collector/kernel/bpf_src/tcp-processor/tcp_processor.h>

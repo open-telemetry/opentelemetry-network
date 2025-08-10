@@ -9,7 +9,6 @@
 #include <channel/file_channel.h>
 #include <channel/upstream_connection.h>
 #include <collector/kernel/bpf_handler.h>
-#include <collector/kernel/entrypoint_error.h>
 #include <collector/kernel/kernel_collector_restarter.h>
 #include <collector/kernel/probe_handler.h>
 #include <common/host_info.h>
@@ -35,21 +34,18 @@ public:
    * c'tor
    */
   KernelCollector(
-      const std::string &full_program,
+      const BpfConfiguration &bpf_config,
       config::IntakeConfig const &intake_config,
-      u64 boot_time_adjustment,
       AwsMetadata const *aws_metadata,
       GcpInstanceMetadata const *gcp_metadata,
       std::map<std::string, std::string> config_labels,
       uv_loop_t &loop,
       CurlEngine &curl_engine,
       bool enable_http_metrics,
-      bool enable_userland_tcp,
       u64 socket_stats_interval_sec,
       CgroupHandler::CgroupSettings cgroup_settings,
       std::string const &bpf_dump_file,
-      HostInfo host_info,
-      EntrypointError error);
+      HostInfo host_info);
 
   /**
    * d'tor
@@ -146,14 +142,12 @@ private:
 
 private:
   /* parameters for establishing connections */
-  std::string const &full_program_;
+  BpfConfiguration const bpf_config_;
   config::IntakeConfig const &intake_config_;
-  u64 const boot_time_adjustment_;
   AwsMetadata const *aws_metadata_;
   GcpInstanceMetadata const *gcp_metadata_;
   const std::map<std::string, std::string> config_labels_;
   HostInfo const host_info_;
-  EntrypointError const entrypoint_error_;
 
   // Following 2 variables handle the command received from server.
   //
@@ -194,7 +188,6 @@ private:
 
   /* enable/disable features */
   bool enable_http_metrics_;
-  bool enable_userland_tcp_;
   u64 socket_stats_interval_sec_;
   CgroupHandler::CgroupSettings const cgroup_settings_;
 

@@ -49,3 +49,6 @@
 [submodule "build-tools/cpp_misc/googletest"]
 	path = build-tools/cpp_misc/googletest
 	url = https://github.com/google/googletest.git
+[submodule "ext/vmlinux.h"]
+	path = ext/vmlinux.h
+	url = https://github.com/libbpf/vmlinux.h.git
