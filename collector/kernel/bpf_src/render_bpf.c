@@ -2784,29 +2784,6 @@ int on_ctnetlink_dump_tuples(struct pt_regs *ctx)
   return 0;
 }
 
-SEC("kprobe/ctnetlink_fill_info")
-int on_ctnetlink_fill_info(struct pt_regs *ctx)
-{
-  struct sk_buff *skb = (struct sk_buff *)PT_REGS_PARM1(ctx);
-  struct nf_conn *ct = (struct nf_conn *)PT_REGS_PARM5(ctx);
-
-  if (!ct) {
-    return 0;
-  }
-
-  u64 ct_addr = (u64)ct;
-
-  // Submit for original direction (dir=0)
-  const struct nf_conntrack_tuple *orig_tuple = &ct->tuplehash[0].tuple;
-  submit_conntrack_tuple(ctx, orig_tuple, ct_addr, 0);
-
-  // Submit for reply direction (dir=1)
-  const struct nf_conntrack_tuple *reply_tuple = &ct->tuplehash[1].tuple;
-  submit_conntrack_tuple(ctx, reply_tuple, ct_addr, 1);
-
-  return 0;
-}
-
 //
 // Include other modules
 //

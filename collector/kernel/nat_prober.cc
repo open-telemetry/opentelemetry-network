@@ -29,8 +29,8 @@ NatProber::NatProber(ProbeHandler &probe_handler, struct render_bpf_bpf *skel, s
   ProbeAlternatives probe_alternatives{
       "ctnetlink_existing_conntrack",
       {
-          // ctnetlink_fill_info is more widely available as it calls ctnetlink_dump_tuples twice
-          {"on_ctnetlink_fill_info", "ctnetlink_fill_info"},
+          // nf_ct_port_tuple_to_nlattr is more widely available and has the same parameters as ctnetlink_dump_tuples
+          {"on_ctnetlink_dump_tuples", "nf_ct_port_tuple_to_nlattr"},
           {"on_ctnetlink_dump_tuples", "ctnetlink_dump_tuples"},
           // Attaching probe to ctnetlink_dump_tuples fails on some distros and kernel builds, for example Ubuntu Jammy.
           {"on_ctnetlink_dump_tuples", "ctnetlink_dump_tuples_ip"},
