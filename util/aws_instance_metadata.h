@@ -9,6 +9,7 @@
 
 #include <chrono>
 #include <iostream>
+#include <list>
 #include <map>
 #include <set>
 #include <stdexcept>
@@ -136,9 +137,15 @@ private:
    * @assumes curl_global_init() was called!
    *
    * @param keys_to_endpoints: a map of <key> to <endpoint>
+   * @param imdsv2_token: optional IMDSv2 token for authenticated requests
    * @result: a map of <key> to <result> of a curl to the corresponding endpoint
    */
-  FetchResult fetch(std::map<std::string, std::string> keys_to_endpoints);
+  FetchResult fetch(std::map<std::string, std::string> keys_to_endpoints, const std::string &imdsv2_token = "");
+
+  /**
+   * Try to fetch an IMDSv2 token. Returns empty string on failure.
+   */
+  std::string fetch_imdsv2_token();
 
   std::chrono::microseconds timeout_;
   AwsMetadataValue id_;
