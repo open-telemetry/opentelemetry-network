@@ -10,12 +10,15 @@ on:
   pull_request:
     paths:
 
-env:
-  BENV_IMAGE: docker.io/otel/opentelemetry-network-build-tools
+permissions:
+  contents: read
 
-concurrency:
-  group: build-and-test-${{ github.event.pull_request_number || github.ref }}
-  cancel-in-progress: true
+env:
+  BENV_IMAGE: ${{ vars.BENV_IMAGE || 'docker.io/otel/opentelemetry-network-build-tools' }}
+
+# concurrency:
+#   group: build-and-test-${{ github.event.pull_request_number || github.ref }}
+#   cancel-in-progress: true
 
 jobs:
   clang-format-check:
@@ -39,8 +42,12 @@ jobs:
 
     - name: Runs format checker
       run: |
+        # disable man page updates for faster apt install
+        echo "set man-db/auto-update false" | sudo debconf-communicate || true
+        sudo dpkg-reconfigure man-db
+
         sudo apt update
-        sudo apt install -y clang-format
+        sudo apt install -y --no-install-recommends clang-format-16
         cd ${{ github.workspace }}
         ./.github/workflows/scripts/check-clang-format.sh
 
@@ -63,14 +70,37 @@ jobs:
       run: |
         echo "github.workspace = ${{ github.workspace }}"
         docker pull $BENV_IMAGE
-        git submodule update  --init --recursive
+        git submodule update  --init --recursive ext/
+        
+        # Start local registry for the build process
+        docker run -d -p 5000:5000 --name registry docker.io/library/registry:2
+        
+        # Build reducer with registry access
         docker run -t \
         --rm \
-        --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
-        --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/root/src,readonly" \
-        --env EBPF_NET_SRC_ROOT=/root/src \
+        --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/home/user/src,readonly" \
+        --env EBPF_NET_SRC_ROOT=/home/user/src \
+        --network host \
+        --privileged \
         $BENV_IMAGE \
-        ./build.sh reducer
+        ./build.sh reducer-docker-registry
+        
+        # Export reducer container
+        mkdir -p container-exports
+        docker pull localhost:5000/reducer
+        docker save localhost:5000/reducer > container-exports/reducer.tar
+        
+        # Clean up registry
+        docker stop registry
+        docker rm registry
+
+    - name: Upload reducer container
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      with:
+        name: reducer-container
+        path: container-exports/reducer.tar
+        if-no-files-found: error
+        retention-days: 1
 
   build-kernel-collector:
     name: build-kernel-collector
@@ -88,14 +118,85 @@ jobs:
       run: |
         echo "github.workspace = ${{ github.workspace }}"
         docker pull $BENV_IMAGE
-        git submodule update  --init --recursive
+        git submodule update  --init --recursive ext/
+        
+        # Start local registry for the build process
+        docker run -d -p 5000:5000 --name registry docker.io/library/registry:2
+        
+        # Build kernel-collector with registry access
         docker run -t \
         --rm \
-        --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
-        --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/root/src,readonly" \
-        --env EBPF_NET_SRC_ROOT=/root/src \
+        --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/home/user/src,readonly" \
+        --env EBPF_NET_SRC_ROOT=/home/user/src \
+        --network host \
+        --privileged \
         $BENV_IMAGE \
-        ./build.sh kernel-collector
+        ./build.sh kernel-collector-docker-registry
+        
+        # Export kernel-collector container
+        mkdir -p container-exports
+        docker pull localhost:5000/kernel-collector
+        docker save localhost:5000/kernel-collector > container-exports/kernel-collector.tar
+        
+        # Clean up registry
+        docker stop registry
+        docker rm registry
+
+    - name: Upload kernel collector container
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      with:
+        name: kernel-collector-container
+        path: container-exports/kernel-collector.tar
+        if-no-files-found: error
+        retention-days: 1
+
+  build-kernel-collector-test:
+    name: build-kernel-collector-test
+    runs-on: ubuntu-24.04
+    needs: [clang-format-check]
+    steps:
+    - name: Check out the codebase
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      with:
+        fetch-depth: 0
+
+    - name: build kernel-collector-test container
+      env:
+        PASS: ${{ secrets.DOCKER_PASSWORD }}
+      run: |
+        echo "github.workspace = ${{ github.workspace }}"
+        docker pull $BENV_IMAGE
+        git submodule update  --init --recursive ext/
+        
+        # Start local registry for the build process
+        docker run -d -p 5000:5000 --name registry docker.io/library/registry:2
+        
+        # Build kernel-collector-test with registry access
+        docker run -t \
+        --rm \
+        --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/home/user/src,readonly" \
+        --env EBPF_NET_SRC_ROOT=/home/user/src \
+        --network host \
+        --privileged \
+        $BENV_IMAGE \
+        ./build.sh kernel-collector-test-docker-registry
+        
+        # Export kernel-collector-test container
+        mkdir -p container-exports
+        docker pull localhost:5000/kernel-collector-test
+        docker save localhost:5000/kernel-collector-test > container-exports/kernel-collector-test.tar
+        
+        # Clean up registry
+        docker stop registry
+        docker rm registry
+
+    - name: Upload kernel-collector-test container
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      with:
+        name: kernel-collector-test-container
+        path: container-exports/kernel-collector-test.tar
+        if-no-files-found: error
+        retention-days: 1
 
   build-k8s-relay:
     name: build-k8s-relay
@@ -111,12 +212,12 @@ jobs:
       run: |
         echo "github.workspace = ${{ github.workspace }}"
         docker pull $BENV_IMAGE
-        git submodule update  --init --recursive
+        git submodule update  --init --recursive ext/
         docker run -t \
         --rm \
         --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
-        --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/root/src,readonly" \
-        --env EBPF_NET_SRC_ROOT=/root/src \
+        --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/home/user/src,readonly" \
+        --env EBPF_NET_SRC_ROOT=/home/user/src \
         $BENV_IMAGE \
         ./build.sh k8s-relay
 
@@ -134,12 +235,12 @@ jobs:
       run: |
         echo "github.workspace = ${{ github.workspace }}"
         docker pull $BENV_IMAGE
-        git submodule update  --init --recursive
+        git submodule update  --init --recursive ext/
         docker run -t \
         --rm \
         --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
-        --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/root/src,readonly" \
-        --env EBPF_NET_SRC_ROOT=/root/src \
+        --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/home/user/src,readonly" \
+        --env EBPF_NET_SRC_ROOT=/home/user/src \
         $BENV_IMAGE \
         ./build.sh cloud-collector
 
@@ -157,12 +258,12 @@ jobs:
       run: |
         echo "github.workspace = ${{ github.workspace }}"
         docker pull $BENV_IMAGE
-        git submodule update  --init --recursive
+        git submodule update  --init --recursive ext/
         docker run -t \
         --rm \
         --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
-        --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/root/src,readonly" \
-        --env EBPF_NET_SRC_ROOT=/root/src \
+        --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/home/user/src,readonly" \
+        --env EBPF_NET_SRC_ROOT=/home/user/src \
         $BENV_IMAGE \
         ./build.sh k8s-watcher
 
@@ -179,12 +280,12 @@ jobs:
       run: |
         echo "github.workspace = ${{ github.workspace }}"
         docker pull $BENV_IMAGE
-        git submodule update  --init --recursive
+        git submodule update  --init --recursive ext/
         docker run -t \
         --rm \
         --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
-        --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/root/src,readonly" \
-        --env EBPF_NET_SRC_ROOT=/root/src \
+        --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/home/user/src,readonly" \
+        --env EBPF_NET_SRC_ROOT=/home/user/src \
         --env ARGS="--output-on-failure --repeat until-pass:3" \
         --env SPDLOG_LEVEL="trace" \
         $BENV_IMAGE \
@@ -202,165 +303,271 @@ jobs:
     - name: build unit tests with asan and debug flags on then run all tests
       run: |
         docker pull $BENV_IMAGE
-        git submodule update  --init --recursive
+        git submodule update  --init --recursive ext/
         docker run -t \
         --rm \
         --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
-        --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/root/src,readonly" \
-        --env EBPF_NET_SRC_ROOT=/root/src \
+        --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/home/user/src,readonly" \
+        --env EBPF_NET_SRC_ROOT=/home/user/src \
         --env ARGS="--output-on-failure --repeat until-pass:3" \
         --env SPDLOG_LEVEL="trace" \
         $BENV_IMAGE \
         ./build.sh --debug --asan unit_tests test
 
-  run-kernel-header-tests:
-    name: run-kernel-header-tests
-    needs: [clang-format-check]
-    runs-on: macos-13
-    env:
-      EBPF_NET_SRC_ROOT: ${{ github.workspace }}
+  run-kernel-collector-simple-tests:
+    name: run-kernel-collector-simple-tests
+    needs: [build-kernel-collector]
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # renovate: datasource=docker depName=quay.io/lvh-images/complexity-test
+          - kernel: '5.4-20250721.013324'
+            description: 'Kernel 5.4'
+          # renovate: datasource=docker depName=quay.io/lvh-images/complexity-test
+          - kernel: '5.10-20250507.063028'
+            description: 'Kernel 5.10'
+          # renovate: datasource=docker depName=quay.io/lvh-images/complexity-test
+          - kernel: '5.15-20250507.063028'
+            description: 'Kernel 5.15'
+          # renovate: datasource=docker depName=quay.io/lvh-images/complexity-test
+          - kernel: '6.1-20250507.063028'
+            description: 'Kernel 6.1'
+          # renovate: datasource=docker depName=quay.io/lvh-images/complexity-test
+          - kernel: '6.6-20250507.063028'
+            description: 'Kernel 6.6'
+          # renovate: datasource=docker depName=quay.io/lvh-images/complexity-test
+          - kernel: '6.12-20250507.063028'
+            description: 'Kernel 6.12'
+    timeout-minutes: 10
     steps:
     - name: Check out the codebase
       uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
         fetch-depth: 0
 
-    - uses: dorny/paths-filter@7267a8516b6f92bdb098633497bad573efdbf271 # v2.12.0
-      id: changes
+    - name: Download kernel-collector container
+      uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
       with:
-        filters: |
-          kernel:
-            - 'channel/**'
-            - 'cmake/**'
-            - 'collector/kernel/**'
-            - 'common/**'
-            - 'config/**'
-            - 'ext/**'
-            - 'geoip/**'
-            - 'jitbuf/**'
-            - 'otlp/**'
-            - 'platform/**'
-            - 'render/**'
-            - 'renderc/**'
-            - 'scheduling/**'
-            - 'test/kernel/**'
-            - 'util/**'
-          github:
-            - '.github/**'
+        name: kernel-collector-container
+        path: ./container-exports
 
-    - name: Run kernel header tests on multiple linux distributions
-      id: run-kernel-header-tests
-      if: steps.changes.outputs.kernel == 'true' || steps.changes.outputs.github == 'true'
+    - name: Run kernel collector simple tests on ${{ matrix.description }}
+      uses: yonch/little-vm-helper@main
+      with:
+        test-name: kernel-collector-simple-test-${{ matrix.kernel }}
+        image: 'complexity-test'
+        image-version: ${{ matrix.kernel }}
+        host-mount: ./
+        images-folder-parent: "/tmp"
+        cpu: 2
+        mem: 2G
+        cpu-kind: 'host,pmu=on'
+        lvh-version: "v0.0.23"
+        install-dependencies: 'true'
+        verbose: 'true'
+        cmd: |
+          set -e  # Exit on any error
+          cd /host
+          
+          # Load container images
+          docker load < container-exports/kernel-collector.tar
+          
+          # Start nc listener
+          apt-get update && apt-get install -y netcat-openbsd
+          
+          echo "Starting netcat listener on port 8000..."
+          nc -vl 8000 &
+          nc_pid=$!
+          echo "NC listener started with PID: $nc_pid"
+          
+          # Wait a moment for nc to start
+          sleep 2
+          
+          # Test: Verify kernel collector loads successfully with libbpf
+          echo "=== Kernel Collector Simple Test with libbpf ==="
+          
+          # Run kernel collector and verify it starts successfully
+          container_id=$(docker create \
+            --name "test-kernel-collector-libbpf" \
+            --env EBPF_NET_INTAKE_PORT="8000" \
+            --env EBPF_NET_INTAKE_HOST="127.0.0.1" \
+            --env EBPF_NET_HOST_DIR="/hostfs" \
+            --privileged --pid host --network host \
+            --volume /sys/fs/cgroup:/hostfs/sys/fs/cgroup \
+            --volume /etc:/hostfs/etc \
+            --volume /var/run/docker.sock:/var/run/docker.sock \
+            localhost:5000/kernel-collector --log-console --debug)
+          
+          echo "Starting kernel collector and running for 30 seconds..."
+          docker start $container_id &
+          collector_pid=$!
+          
+          # Wait for 30 seconds
+          sleep 30
+          
+          # Check if container is still running
+          echo Checking if container is still running:
+          if docker ps --filter "id=$container_id" --filter "status=running" --quiet > /dev/null; then
+            echo "✓ Kernel collector loaded successfully and ran for 30 seconds"
+            echo "---Kernel collector logs:"
+            collector_logs=$(docker logs $container_id 2>&1 || true)
+            echo "$collector_logs"
+            
+            # Check for error strings in the logs (exclude GCP metadata fetch errors which are expected)
+            if echo "$collector_logs" | grep -i "error" | grep -v "Unable to fetch GCP metadata: error while fetching Google Cloud Platform instance metadata" > /dev/null 2>&1; then
+              echo "✗ Found 'error' in kernel collector output - test failed"
+              docker stop $container_id || true
+              docker rm $container_id || true
+              # Stop nc listener
+              kill $nc_pid || true
+              exit 1
+            fi
+            
+            docker stop $container_id || true
+            docker rm $container_id || true
+            # Stop nc listener
+            kill $nc_pid || true
+            exit 0
+          else
+            echo "✗ Kernel collector failed to run properly"
+            echo "---Kernel collector logs:"
+            docker logs $container_id || true
+            docker rm $container_id || true
+            # Stop nc listener
+            kill $nc_pid || true
+            exit 1
+          fi
+
+    - name: Stop qemu
+      if: always()
       run: |
-        sudo spctl --add /usr/local/bin/brew
-        # These following 4 lines are added to overcome brew link failures seen while executing brew update.
-        rm /usr/local/bin/2to3*
-        rm /usr/local/bin/idle*
-        rm /usr/local/bin/pydoc*
-        rm /usr/local/bin/python3*
-        brew update
-        brew install podman
-        sudo spctl --add /usr/local/bin/podman
-        podman machine init --rootful --cpus 3 --disk-size 14 --memory 12384
-        podman machine start
-        podman pull $BENV_IMAGE
-
-        podman machine ssh 'cat > /etc/containers/registries.conf.d/localhost.conf' <<EOF
-        [[registry]]
-        location = "localhost:5000"
-        insecure = true
-        EOF
-        podman machine ssh systemctl restart podman
-        podman container run -dt -p 5000:5000 --name registry docker.io/library/registry:2
-        podman info
-        git submodule update  --init --recursive
-
-        podman run -t --rm \
-        --mount type=bind,source=$PWD,destination=/root/src,readonly \
-        --mount type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock \
-        --env EBPF_NET_SRC_ROOT=/root/src \
-        --name benv \
-        --privileged \
-        $BENV_IMAGE \
-        ./build.sh -j 3 reducer-docker-registry kernel-collector-docker-registry
-
-        vagrant plugin install vagrant-sshfs
-        vagrant plugin install vagrant-scp
-
-        ./test/kernel/run-tests.sh --kernel-header-test
+        sudo pkill -f qemu-system-x86_64 || true
 
   run-kernel-collector-tests:
     name: run-kernel-collector-tests
-    needs: [clang-format-check]
-    runs-on: macos-13
-    env:
-      EBPF_NET_SRC_ROOT: ${{ github.workspace }}
+    needs: [build-reducer, build-kernel-collector-test]
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # renovate: datasource=docker depName=quay.io/lvh-images/complexity-test
+          - kernel: '5.4-20250721.013324'
+            description: 'Kernel 5.4'
+          # renovate: datasource=docker depName=quay.io/lvh-images/complexity-test
+          - kernel: '5.10-20250507.063028'
+            description: 'Kernel 5.10'
+          # renovate: datasource=docker depName=quay.io/lvh-images/complexity-test
+          - kernel: '5.15-20250507.063028'
+            description: 'Kernel 5.15'
+          # renovate: datasource=docker depName=quay.io/lvh-images/complexity-test
+          - kernel: '6.1-20250507.063028'
+            description: 'Kernel 6.1'
+          # renovate: datasource=docker depName=quay.io/lvh-images/complexity-test
+          - kernel: '6.6-20250507.063028'
+            description: 'Kernel 6.6'
+          # renovate: datasource=docker depName=quay.io/lvh-images/complexity-test
+          - kernel: '6.12-20250507.063028'
+            description: 'Kernel 6.12'
+    timeout-minutes: 10
     steps:
     - name: Check out the codebase
       uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
         fetch-depth: 0
 
-    - uses: dorny/paths-filter@7267a8516b6f92bdb098633497bad573efdbf271 # v2.12.0
-      id: changes
+    - name: Download reducer container
+      uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
       with:
-        filters: |
-          kernel:
-            - 'channel/**'
-            - 'cmake/**'
-            - 'collector/kernel/**'
-            - 'common/**'
-            - 'config/**'
-            - 'ext/**'
-            - 'geoip/**'
-            - 'jitbuf/**'
-            - 'otlp/**'
-            - 'platform/**'
-            - 'render/**'
-            - 'renderc/**'
-            - 'scheduling/**'
-            - 'test/kernel/**'
-            - 'util/**'
-          github:
-            - '.github/**'
+        name: reducer-container
+        path: ./container-exports
 
-    - name: Run kernel_collector_test on multiple linux distributions
-      id: run-kernel-collector-test
-      if: steps.changes.outputs.kernel == 'true' || steps.changes.outputs.github == 'true'
+    - name: Download kernel-collector-test container
+      uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
+      with:
+        name: kernel-collector-test-container
+        path: ./container-exports
+
+    - name: Run kernel collector tests on ${{ matrix.description }}
+      uses: yonch/little-vm-helper@main
+      with:
+        test-name: kernel-collector-test-${{ matrix.kernel }}
+        image: 'complexity-test'
+        image-version: ${{ matrix.kernel }}
+        host-mount: ./
+        images-folder-parent: "/tmp"
+        cpu: 2
+        mem: 2G
+        cpu-kind: 'host,pmu=on'
+        lvh-version: "v0.0.23"
+        install-dependencies: 'true'
+        verbose: 'true'
+        cmd: |
+          set -e  # Exit on any error
+          cd /host
+          
+          # Load container images
+          docker load < container-exports/reducer.tar
+          docker load < container-exports/kernel-collector-test.tar
+          
+          # Create data directory
+          mkdir -p data
+          
+          # Start reducer
+          reducer_id=$(docker run --detach --rm \
+            --network=host \
+            localhost:5000/reducer \
+            --port 8000 \
+            --prom 0.0.0.0:7000 \
+            --partitions-per-shard 1 \
+            --num-ingest-shards=1 \
+            --num-matching-shards=1 \
+            --num-aggregation-shards=1 \
+            --enable-aws-enrichment \
+            --enable-otlp-grpc-metrics \
+            --log-console \
+            --debug)
+          
+          echo "Reducer started with ID: $reducer_id"
+          
+          # Wait a moment for reducer to start
+          sleep 5
+          
+          # Run kernel collector test
+          container_id=$(docker create -t --rm \
+            --env EBPF_NET_HOST_DIR="/hostfs" \
+            --privileged \
+            --network host \
+            --volume /sys/fs/cgroup:/hostfs/sys/fs/cgroup \
+            --volume /usr/src:/hostfs/usr/src \
+            --volume /lib/modules:/hostfs/lib/modules \
+            --volume /etc:/hostfs/etc \
+            --volume /var/cache:/hostfs/cache \
+            --volume /var/run/docker.sock:/var/run/docker.sock \
+            --env EBPF_NET_KERNEL_HEADERS_AUTO_FETCH="true" \
+            --env EBPF_NET_EXPORT_BPF_SRC_FILE="/hostfs/data/bpf.src.c" \
+            --env EBPF_NET_MINIDUMP_DIR="/hostfs/data/minidump" \
+            --volume "$(pwd)/data:/hostfs/data" \
+            localhost:5000/kernel-collector-test \
+            --log-console)
+          
+          echo "Starting kernel collector test..."
+          docker start -a $container_id
+
+          set +e  # disable exit on error
+          docker wait $container_id
+          test_exit_code=$?
+          set -e  # re-enable exit on error
+          
+          # Stop reducer
+          docker stop $reducer_id || true
+          
+          echo "Test completed with exit code: $test_exit_code"
+          exit $test_exit_code
+
+    - name: Stop qemu
+      if: always()
       run: |
-        sudo spctl --add /usr/local/bin/brew
-        # These following 4 lines are added to overcome brew link failures seen while executing brew update.
-        rm /usr/local/bin/2to3*
-        rm /usr/local/bin/idle*
-        rm /usr/local/bin/pydoc*
-        rm /usr/local/bin/python3*
-        brew update
-        brew install podman
-        sudo spctl --add /usr/local/bin/podman
-        podman machine init --rootful --cpus 3 --disk-size 14 --memory 12348
-        podman machine start
-        podman pull $BENV_IMAGE
-
-        podman machine ssh 'cat > /etc/containers/registries.conf.d/localhost.conf' <<EOF
-        [[registry]]
-        location = "localhost:5000"
-        insecure = true
-        EOF
-        podman machine ssh systemctl restart podman
-        podman container run -dt -p 5000:5000 --name registry docker.io/library/registry:2
-        podman info
-        git submodule update  --init --recursive
-
-        podman run -t --rm \
-        --mount type=bind,source=$PWD,destination=/root/src,readonly \
-        --mount type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock \
-        --env EBPF_NET_SRC_ROOT=/root/src \
-        --name benv \
-        --privileged \
-        $BENV_IMAGE \
-        ./build.sh -j 3 kernel-collector-test-docker-registry
-
-        vagrant plugin install vagrant-sshfs
-        vagrant plugin install vagrant-scp
-
-        ./test/kernel/run-tests.sh --kernel-collector-test
+        sudo pkill -f qemu-system-x86_64 || true

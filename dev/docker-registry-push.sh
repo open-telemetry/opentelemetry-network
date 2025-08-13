@@ -49,8 +49,14 @@ if [[ "${do_login}" == true ]]; then
   "${EBPF_NET_SRC_ROOT}/dev/docker-registry-login.sh" "${login_args}" "${docker_registry}"
 fi
 
+# add --tls-verify=false for default registry (localhost:5000)
+push_args=""
+if [[ "${docker_registry}" == "localhost:5000" ]]; then
+  push_args="--tls-verify=false"
+fi
+
 (set -x; \
-  docker tag "${image_name}:${image_tag}" \
+  podman tag "${image_name}:${image_tag}" \
     "${docker_registry}/${image_name}:${image_tag}"; \
-  docker push "${docker_registry}/${image_name}:${image_tag}"; \
+  podman push ${push_args} "${docker_registry}/${image_name}:${image_tag}"; \
 )

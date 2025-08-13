@@ -61,7 +61,7 @@ struct Panicker {
   [[noreturn]] ~Panicker();
 
   // Custom message formatter. Uses spdlog-like formatting.
-  template <typename... Args> Panicker &else_log(std::string_view format, Args &&... args)
+  template <typename... Args> Panicker &else_log(fmt::format_string<Args...> format, Args &&... args)
   {
     fmt::memory_buffer out;
 #if FMT_VERSION >= 60000

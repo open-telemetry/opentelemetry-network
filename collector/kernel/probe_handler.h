@@ -7,10 +7,9 @@
 
 #include "kernel_symbols.h"
 
+#include <bpf/bpf.h>
+#include <bpf/libbpf.h>
 #include <linux/bpf.h>
-
-#include <bcc/BPFTable.h>
-#include <bcc/bpf_module.h>
 
 #include <collector/kernel/perf_reader.h>
 #include <util/logger.h>
@@ -18,6 +17,19 @@
 #include <optional>
 #include <string>
 #include <vector>
+
+// Forward declaration for the skeleton
+struct render_bpf_bpf;
+
+/**
+ * Configuration structure for BPF global variables
+ * Used to configure the BPF program before loading
+ */
+struct BpfConfiguration {
+  u64 boot_time_adjustment = 0;
+  u64 filter_ns = 1000000000; // Default 1 second in nanoseconds
+  bool enable_tcp_data_stream = false;
+};
 
 /**
  * ProbeAlternatives encapsulates multiple alternatives to attempt when attaching a probe.  Alternatives may be needed due to
@@ -62,20 +74,21 @@ public:
    */
   void clear_kernel_symbols();
 
-  int start_bpf_module(std::string full_program, ebpf::BPFModule &bpf_module, PerfContainer &perf);
+  struct render_bpf_bpf *open_bpf_skeleton();
+  void configure_bpf_skeleton(struct render_bpf_bpf *skel, const BpfConfiguration &config);
+  int load_bpf_skeleton(struct render_bpf_bpf *skel, PerfContainer &perf);
+  void destroy_bpf_skeleton(struct render_bpf_bpf *skel);
 
   /**
    * BPF table helpers
    **/
-  ebpf::BPFHashTable<u32, u32> get_hash_table(ebpf::BPFModule &bpf_module, const std::string &name);
-  ebpf::BPFProgTable get_prog_table(ebpf::BPFModule &bpf_module, const std::string &name);
-  ebpf::BPFStackTable get_stack_table(ebpf::BPFModule &bpf_module, const std::string &name);
+  struct bpf_map *get_bpf_map(struct render_bpf_bpf *skel, const std::string &name);
 
   /**
    * Register tail call in table
    */
   int register_tail_call(
-      ebpf::BPFModule &bpf_module, const std::string &prog_array_name, int index, const std::string &func_name);
+      struct render_bpf_bpf *skel, const std::string &prog_array_name, int index, const std::string &func_name);
 
   /**
    * Starts a kprobe
@@ -83,7 +96,7 @@ public:
    * @returns 0 on success, negative value on failure
    */
   int start_probe(
-      ebpf::BPFModule &bpf_module,
+      struct render_bpf_bpf *skel,
       const std::string &func_name,
       const std::string &k_func_name,
       const std::string &event_id_suffix = std::string());
@@ -94,7 +107,7 @@ public:
    * @returns 0 on success, negative value on failure
    */
   int start_kretprobe(
-      ebpf::BPFModule &bpf_module,
+      struct render_bpf_bpf *skel,
       const std::string &func_name,
       const std::string &k_func_name,
       const std::string &event_id_suffix = std::string());
@@ -106,7 +119,7 @@ public:
    * @returns string containing the k_func_name of the probe that was attached on success, empty string on failure
    */
   std::string start_probe(
-      ebpf::BPFModule &bpf_module,
+      struct render_bpf_bpf *skel,
       const ProbeAlternatives &probe_alternatives,
       const std::string &event_id_suffix = std::string());
 
@@ -117,7 +130,7 @@ public:
    * @returns string containing the k_func_name of the probe that was attached on success, empty string on failure
    */
   std::string start_kretprobe(
-      ebpf::BPFModule &bpf_module,
+      struct render_bpf_bpf *skel,
       const ProbeAlternatives &probe_alternatives,
       const std::string &event_id_suffix = std::string());
 
@@ -129,7 +142,7 @@ public:
   /**
    * Clean up all the registered tail calls
    */
-  void cleanup_tail_calls(ebpf::BPFModule &bpf_module);
+  void cleanup_tail_calls(struct render_bpf_bpf *skel);
 
   /**
    * Cleans up a single probe
@@ -145,7 +158,7 @@ public:
   /**
    * Gets a stack trace and removes it from the list
    */
-  std::string get_stack_trace(ebpf::BPFModule &bpf_module, s32 kernel_stack_id, s32 user_stack_id, u32 tgid);
+  std::string get_stack_trace(struct render_bpf_bpf *skel, s32 kernel_stack_id, s32 user_stack_id, u32 tgid);
 #endif
 
 protected:
@@ -154,7 +167,7 @@ protected:
    * @returns 0 on success, negative value on failure
    */
   int start_probe_common(
-      ebpf::BPFModule &bpf_module,
+      struct render_bpf_bpf *skel,
       bool is_kretprobe,
       const std::string &func_name,
       const std::string &k_func_name,
@@ -165,7 +178,7 @@ protected:
    * @returns string containing the k_func_name of the probe that was attached on success, empty string on failure
    */
   std::string start_probe_common(
-      ebpf::BPFModule &bpf_module,
+      struct render_bpf_bpf *skel,
       bool is_kretprobe,
       const ProbeAlternatives &probe_alternatives,
       const std::string &event_id_suffix = std::string());
@@ -178,7 +191,7 @@ protected:
   /**
    * Returns the file descriptor for a table declared in bpf
    */
-  int get_bpf_table_descriptor(ebpf::BPFModule &bpf_module, const char *table_name);
+  int get_bpf_map_fd(struct render_bpf_bpf *skel, const char *map_name);
 
   /**
    * Sets up memory mapping for perf rings
@@ -200,8 +213,7 @@ private:
     int fd_;
     int index_;
   };
-  std::vector<int> fds_;
-  std::vector<int> probes_;
+  std::vector<struct bpf_link *> probes_;
   std::vector<TailCallTuple> tail_calls_;
   std::vector<std::string> probe_names_;
   size_t num_failed_probes_; // number of kprobes, kretprobes, and tail_calls that failed to attach

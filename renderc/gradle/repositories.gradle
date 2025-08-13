@@ -5,6 +5,7 @@ def repos = {
     maven { url mavenUrl }
   } else {
     mavenCentral()
+    gradlePluginPortal()
   }
 }
 

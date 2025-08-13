@@ -40,8 +40,8 @@ void AwsNetworkInterfaceSpan::network_interface_info(
 
   // AWS instances always have either "Attachement.IpOwnerId" or
   // "Attachment.InstanceOwnerId" starting with "amazon-aws"
-  bool const owned_by_aws = absl::StartsWith(msg->ip_owner_id.string_view(), amazon_owner_prefix) ||
-                            absl::StartsWith(msg->instance_owner_id.string_view(), amazon_owner_prefix);
+  bool const owned_by_aws = msg->ip_owner_id.string_view().starts_with(amazon_owner_prefix) ||
+                            msg->instance_owner_id.string_view().starts_with(amazon_owner_prefix);
 
   if (!owned_by_aws) {
     LOG::trace_in(
@@ -69,7 +69,7 @@ void AwsNetworkInterfaceSpan::network_interface_info(
   auto const aws_id = msg->interface_id.string_view();
 
   // cleans up nat gateway description
-  if (absl::StartsWith(aws_role, aws_nat_gateway_prefix)) {
+  if (aws_role.starts_with(aws_nat_gateway_prefix)) {
     assert(aws_role.size() >= aws_nat_gateway_prefix.size());
     aws_role.remove_prefix(aws_nat_gateway_prefix.size());
     LOG::trace_in(

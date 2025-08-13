@@ -19,16 +19,23 @@
 #include <functional>
 #include <sstream>
 #include <stdexcept>
+#include <list>
 
-#define METADATA_PREFIX "http://169.254.169.254/2016-09-02/meta-data/"
-#define DYNAMIC_METADATA_PREFIX "http://169.254.169.254/2016-09-02/dynamic/"
+#define METADATA_PREFIX_V1 "http://169.254.169.254/2016-09-02/meta-data/"
+#define METADATA_PREFIX_V2 "http://169.254.169.254/latest/meta-data/"
+
+#define DYNAMIC_METADATA_PREFIX_V1 "http://169.254.169.254/2016-09-02/dynamic/"
+#define DYNAMIC_METADATA_PREFIX_V2 "http://169.254.169.254/latest/dynamic/"
+
+#define IMDSV2_TOKEN_URL "http://169.254.169.254/latest/api/token"
+#define IMDSV2_TOKEN_TTL "21600" /* seconds */
 #define MAX_LEN 4096
 #define PAUSE_USEC_WHEN_NOT_READY (1000)
 
 class Fetch {
 public:
   /* c'tor */
-  Fetch(const std::string &name, const char *url);
+  Fetch(const std::string &name, const char *url, const std::string &imdsv2_token = "");
 
   /* write functor callback from curlpp */
   size_t write(char *buf, size_t size, size_t nmemb);
@@ -120,11 +127,12 @@ void AwsNetworkInterface::print_interface() const
 
 AwsMetadata::AwsMetadata(std::chrono::microseconds timeout) : timeout_(timeout) {}
 
-AwsMetadata::FetchResult AwsMetadata::fetch(std::map<std::string, std::string> keys_to_endpoints)
+AwsMetadata::FetchResult AwsMetadata::fetch(std::map<std::string, std::string> keys_to_endpoints,
+                                            const std::string &imdsv2_token)
 {
   std::vector<Fetch *> fetches;
   for (auto key_to_endpoint : keys_to_endpoints) {
-    fetches.push_back(new Fetch(key_to_endpoint.first, key_to_endpoint.second.c_str()));
+    fetches.push_back(new Fetch(key_to_endpoint.first, key_to_endpoint.second.c_str(), imdsv2_token));
   }
 
   /* add fetches to curlpp::Multi for parallel fetch */
@@ -231,6 +239,52 @@ AwsMetadata::FetchResult AwsMetadata::fetch(std::map<std::string, std::string> k
   return ret;
 }
 
+std::string AwsMetadata::fetch_imdsv2_token()
+{
+  try {
+    curlpp::Easy easy;
+    std::string token;
+
+    easy.setOpt(curlpp::options::Url(IMDSV2_TOKEN_URL));
+    /* IMDSv2 token requires a PUT to /latest/api/token with TTL header */
+    easy.setOpt(curlpp::options::CustomRequest("PUT"));
+
+    std::list<std::string> headers;
+    headers.push_back(std::string("X-aws-ec2-metadata-token-ttl-seconds: ") + IMDSV2_TOKEN_TTL);
+    easy.setOpt(curlpp::options::HttpHeader(headers));
+
+    /* write the response into token string */
+    curlpp::types::WriteFunctionFunctor functor =
+        [&](char *buf, size_t size, size_t nmemb) -> size_t {
+          size_t len = size * nmemb;
+          if (len > 0) token.append(buf, len);
+          return len;
+        };
+    easy.setOpt(curlpp::options::WriteFunction(functor));
+
+    /* don't throw for small network glitches; we still want to fallback to v1 */
+    easy.setOpt(curlpp::options::FailOnError(true));
+
+    /* set a short timeout so token fetch doesn't stall whole metadata retrieval */
+    easy.setOpt(curlpp::options::Timeout(2)); // 2 seconds; tune as you wish
+
+    easy.perform();
+
+    if (!token.empty()) {
+      // strip trailing newline (if any)
+      if (!token.empty() && token.back() == '\n') token.pop_back();
+      return token;
+    }
+  } catch (const std::exception &e) {
+    // token fetch failed; we will fall back to IMDSv1
+    LOG::debug_in(CloudPlatform::aws, "IMDSv2 token fetch failed: {}", e.what());
+  } catch (...) {
+    LOG::debug_in(CloudPlatform::aws, "IMDSv2 token fetch unknown failure");
+  }
+
+  return std::string{}; // empty => fall back to IMDSv1
+}
+
 Expected<AwsMetadata, std::runtime_error> AwsMetadata::fetch(std::chrono::microseconds timeout)
 {
   AwsMetadata metadata{timeout};
@@ -248,16 +302,31 @@ Expected<AwsMetadata, std::runtime_error> AwsMetadata::fetch(std::chrono::micros
 
 bool AwsMetadata::fetch_aws_instance_metadata()
 {
+  // try IMDSv2 token first; if empty => we'll do IMDSv1 GETs (fallback)
+  std::string token = fetch_imdsv2_token();
+  bool using_imdsv2 = !token.empty();
+
+  if (using_imdsv2) {
+    LOG::debug_in(CloudPlatform::aws, "IMDSv2 token obtained, using IMDSv2 for metadata calls");
+  } else {
+    LOG::debug_in(CloudPlatform::aws, "No IMDSv2 token; falling back to IMDSv1 for metadata calls");
+  }
+
+  // Choose the appropriate metadata & dynamic prefixes based on IMDS version.
+  // Use std::string so runtime concatenation works.
+  std::string metadata_prefix = using_imdsv2 ? std::string(METADATA_PREFIX_V2) : std::string(METADATA_PREFIX_V1);
+  std::string dynamic_prefix = using_imdsv2 ? std::string(DYNAMIC_METADATA_PREFIX_V2) : std::string(DYNAMIC_METADATA_PREFIX_V1);
+
   /* add all the Fetch object we want to get */
   std::map<std::string, std::string> fetches;
-  fetches["az"] = METADATA_PREFIX "placement/availability-zone";
-  fetches["iam-role"] = METADATA_PREFIX "iam/security-credentials/";
-  fetches["id"] = METADATA_PREFIX "instance-id";
-  fetches["type"] = METADATA_PREFIX "instance-type";
-  fetches["interfaces"] = METADATA_PREFIX "network/interfaces/macs/";
-  fetches["instance-identity"] = DYNAMIC_METADATA_PREFIX "instance-identity/document";
+  fetches["az"] = metadata_prefix + "placement/availability-zone";
+  fetches["iam-role"] = metadata_prefix + "iam/security-credentials/";
+  fetches["id"] = metadata_prefix + "instance-id";
+  fetches["type"] = metadata_prefix + "instance-type";
+  fetches["interfaces"] = metadata_prefix + "network/interfaces/macs/";
+  fetches["instance-identity"] = dynamic_prefix + "instance-identity/document";
 
-  FetchResult ret = fetch(fetches);
+  FetchResult ret = fetch(fetches, token);
 
   // set general instance metadata
   id_ = ret["id"];
@@ -290,16 +359,16 @@ bool AwsMetadata::fetch_aws_instance_metadata()
   // get vpc_id, private/public ipv4, and ipv6 for each network interface
   fetches.clear();
   for (auto interface : network_interfaces_) {
-    std::string vpc_url = METADATA_PREFIX "network/interfaces/macs/" + interface.id() + "/vpc-id";
-    std::string local_ipv4_url = METADATA_PREFIX "network/interfaces/macs/" + interface.id() + "/local-ipv4s";
-    std::string public_ipv4_url = METADATA_PREFIX "network/interfaces/macs/" + interface.id() + "/public-ipv4s";
-    std::string ipv6_url = METADATA_PREFIX "network/interfaces/macs/" + interface.id() + "/ipv6s";
+    std::string vpc_url = metadata_prefix + "network/interfaces/macs/" + interface.id() + "/vpc-id";
+    std::string local_ipv4_url = metadata_prefix + "network/interfaces/macs/" + interface.id() + "/local-ipv4s";
+    std::string public_ipv4_url = metadata_prefix + "network/interfaces/macs/" + interface.id() + "/public-ipv4s";
+    std::string ipv6_url = metadata_prefix + "network/interfaces/macs/" + interface.id() + "/ipv6s";
     fetches[interface.id() + "_vpc_id"] = vpc_url;
     fetches[interface.id() + "_private_ipv4"] = local_ipv4_url;
     fetches[interface.id() + "_public_ipv4"] = public_ipv4_url;
     fetches[interface.id() + "_ipv6"] = ipv6_url;
   }
-  ret = fetch(fetches);
+  ret = fetch(fetches, token);
 
   for (auto &interface : network_interfaces_) {
     interface.set_info(ret);
@@ -309,11 +378,11 @@ bool AwsMetadata::fetch_aws_instance_metadata()
   fetches.clear();
   for (auto &interface : network_interfaces_) {
     for (auto public_ip : interface.public_ipv4s()) {
-      std::string url = METADATA_PREFIX "network/interfaces/macs/" + interface.id() + "/ipv4-associations/" + public_ip;
+      std::string url = metadata_prefix + "network/interfaces/macs/" + interface.id() + "/ipv4-associations/" + public_ip;
       fetches[interface.id() + "_" + public_ip] = url;
     }
   }
-  ret = fetch(fetches);
+  ret = fetch(fetches, token);
 
   for (auto &interface : network_interfaces_) {
     interface.set_mapped_ipv4s(ret);
@@ -338,7 +407,8 @@ void AwsMetadata::print_interfaces() const
   }
 }
 
-Fetch::Fetch(const std::string &name, const char *url) : key(name), retcode(-1)
+Fetch::Fetch(const std::string &name, const char *url, const std::string &imdsv2_token)
+    : key(name), retcode(-1)
 {
   /* set the URL */
   easy.setOpt(curlpp::options::Url(url));
@@ -350,6 +420,13 @@ Fetch::Fetch(const std::string &name, const char *url) : key(name), retcode(-1)
 
   /* We want to get a failure on failed HTTP retcode (404, etc) */
   easy.setOpt(curlpp::options::FailOnError(true));
+
+  /* If we have an IMDSv2 token, send it as header for this request */
+  if (!imdsv2_token.empty()) {
+    std::list<std::string> headers;
+    headers.push_back(std::string("X-aws-ec2-metadata-token: ") + imdsv2_token);
+    easy.setOpt(curlpp::options::HttpHeader(headers));
+  }
 }
 
 size_t Fetch::write(char *buf, size_t size, size_t nmemb)

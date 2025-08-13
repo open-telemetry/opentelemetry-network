@@ -5,35 +5,37 @@
 
 #include <linux/bpf.h>
 
-#include <bcc/BPF.h>
 #include <collector/kernel/fd_reader.h>
 #include <collector/kernel/probe_handler.h>
 #include <collector/kernel/proc_reader.h>
 
+// Forward declaration for skeleton
+struct render_bpf_bpf;
+
 ProcessProber::ProcessProber(
     ProbeHandler &probe_handler,
-    ebpf::BPFModule &bpf_module,
+    struct render_bpf_bpf *skel,
     std::function<void(void)> periodic_cb,
     std::function<void(std::string)> check_cb)
 {
   // END
-  probe_handler.start_probe(bpf_module, "on_taskstats_exit", "taskstats_exit");
-  probe_handler.start_probe(bpf_module, "on_cgroup_exit", "cgroup_exit");
-  probe_handler.start_kretprobe(bpf_module, "onret_cgroup_exit", "cgroup_exit");
+  probe_handler.start_probe(skel, "on_taskstats_exit", "taskstats_exit");
+  probe_handler.start_probe(skel, "on_cgroup_exit", "cgroup_exit");
+  probe_handler.start_kretprobe(skel, "onret_cgroup_exit", "cgroup_exit");
 
   // STATE CHANGE (pid->cgroup)
-  probe_handler.start_probe(bpf_module, "on_cgroup_attach_task", "cgroup_attach_task");
+  probe_handler.start_probe(skel, "on_cgroup_attach_task", "cgroup_attach_task");
 
   // START
   /* probe for new process info
    * Note that other functions we considered were:
    * sys_execve, sched_fork, __sched_fork, _do_fork, sched_exec
    */
-  probe_handler.start_probe(bpf_module, "on_wake_up_new_task", "wake_up_new_task");
-  probe_handler.start_probe(bpf_module, "on_set_task_comm", "__set_task_comm");
+  probe_handler.start_probe(skel, "on_wake_up_new_task", "wake_up_new_task");
+  probe_handler.start_probe(skel, "on_set_task_comm", "__set_task_comm");
 
   // EXISTING
-  probe_handler.start_kretprobe(bpf_module, "onret_get_pid_task", "get_pid_task");
+  probe_handler.start_kretprobe(skel, "onret_get_pid_task", "get_pid_task");
   periodic_cb();
   check_cb("process prober startup");
 

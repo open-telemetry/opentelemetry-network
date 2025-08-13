@@ -14,26 +14,28 @@
 
 #define RCV_BUFFSIZE 8192 // see libnfnetlink/include/libnfnetlink.h for NFNL_BUFFSIZE
 
-NatProber::NatProber(ProbeHandler &probe_handler, ebpf::BPFModule &bpf_module, std::function<void(void)> periodic_cb)
+NatProber::NatProber(ProbeHandler &probe_handler, struct render_bpf_bpf *skel, std::function<void(void)> periodic_cb)
     : periodic_cb_(periodic_cb)
 {
   // END
-  probe_handler.start_probe(bpf_module, "on_nf_nat_cleanup_conntrack", "nf_nat_cleanup_conntrack");
+  probe_handler.start_probe(skel, "on_nf_nat_cleanup_conntrack", "nf_nat_cleanup_conntrack");
   periodic_cb();
 
   // START
-  probe_handler.start_probe(bpf_module, "on_nf_conntrack_alter_reply", "nf_conntrack_alter_reply");
+  probe_handler.start_probe(skel, "on_nf_conntrack_alter_reply", "nf_conntrack_alter_reply");
   periodic_cb();
 
   // EXISTING
   ProbeAlternatives probe_alternatives{
-      "ctnetlink_dump_tuples",
+      "ctnetlink_existing_conntrack",
       {
+          // nf_ct_port_tuple_to_nlattr is more widely available and has the same parameters as ctnetlink_dump_tuples
+          {"on_ctnetlink_dump_tuples", "nf_ct_port_tuple_to_nlattr"},
           {"on_ctnetlink_dump_tuples", "ctnetlink_dump_tuples"},
           // Attaching probe to ctnetlink_dump_tuples fails on some distros and kernel builds, for example Ubuntu Jammy.
           {"on_ctnetlink_dump_tuples", "ctnetlink_dump_tuples_ip"},
       }};
-  std::string ctnetlink_dump_tuples_k_func_name = probe_handler.start_probe(bpf_module, probe_alternatives);
+  std::string ctnetlink_existing_k_func_name = probe_handler.start_probe(skel, probe_alternatives);
 
   periodic_cb();
   int res = query_kernel();
@@ -50,7 +52,7 @@ NatProber::NatProber(ProbeHandler &probe_handler, ebpf::BPFModule &bpf_module, s
   periodic_cb();
 
   // Cleanup existing
-  probe_handler.cleanup_probe(ctnetlink_dump_tuples_k_func_name);
+  probe_handler.cleanup_probe(ctnetlink_existing_k_func_name);
   periodic_cb();
 }
 

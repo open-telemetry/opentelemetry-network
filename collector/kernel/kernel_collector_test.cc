@@ -12,6 +12,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <jitbuf/jb.h>
+#include <spdlog/fmt/chrono.h>
 #include <util/aws_instance_metadata.h>
 #include <util/boot_time.h>
 #include <util/code_timing.h>
@@ -87,17 +88,8 @@ protected:
 
     // This mostly duplicates the KernelCollector setup done in collector/kernel/main.cc.
 
-    /* Read our BPF program*/
-    /* resolve includes */
-    bpf_src_ = std::string((char *)agent_bpf_c, agent_bpf_c_len);
-
+    // Create BPF configuration with test parameters
     u64 boot_time_adjustment = get_boot_time();
-    /* insert time onto the bpf program */
-    bpf_src_ = std::regex_replace(bpf_src_, std::regex("BOOT_TIME_ADJUSTMENT"), fmt::format("{}uLL", boot_time_adjustment));
-    bpf_src_ = std::regex_replace(bpf_src_, std::regex("FILTER_NS"), fmt::format("{}", 10 * 1000 * 1000ull));
-    bpf_src_ = std::regex_replace(bpf_src_, std::regex("MAX_PID"), *read_file_as_string(MAX_PID_PROC_PATH).try_raise());
-    bpf_src_ = std::regex_replace(bpf_src_, std::regex("CPU_MEM_IO_ENABLED"), std::string("0"));
-    bpf_src_ = std::regex_replace(bpf_src_, std::regex("REPORT_DEBUG_EVENTS_PLACEHOLDER"), std::string("0"));
 
     test_intake_config_ = TestIntakeConfig("", "", INTAKE_DUMP_FILE, intake_encoder);
 
@@ -114,6 +106,11 @@ protected:
     bool const enable_userland_tcp = false;
 
     u64 const socket_stats_interval_sec = 10;
+
+    BpfConfiguration bpf_config{
+        .boot_time_adjustment = boot_time_adjustment,
+        .filter_ns = 10 * 1000 * 1000ull,
+        .enable_tcp_data_stream = enable_userland_tcp};
 
     struct utsname unamebuf;
     if (uname(&unamebuf)) {
@@ -142,26 +139,23 @@ protected:
         .os = OperatingSystem::Linux,
         .os_flavor = integer_value(LinuxDistro::unknown),
         .os_version = "unknown",
-        .kernel_headers_source = KernelHeadersSource::unknown,
+        .kernel_headers_source = KernelHeadersSource::libbpf,
         .kernel_version = unamebuf.release,
         .hostname = hostname};
 
     kernel_collector_.emplace(
-        bpf_src_,
+        bpf_config,
         *test_intake_config_,
-        boot_time_adjustment,
         aws_metadata.try_value(),
         gcp_metadata.try_value(),
         configuration_data.labels(),
         loop_,
         *curl_engine,
         enable_http_metrics,
-        enable_userland_tcp,
         socket_stats_interval_sec,
         CgroupHandler::CgroupSettings{false, std::nullopt},
         bpf_dump_file,
-        host_info,
-        EntrypointError::none);
+        host_info);
 
     if (ingest_msg_cb) {
       get_test_channel()->set_sent_msg_cb(ingest_msg_cb);
@@ -185,13 +179,13 @@ protected:
     print_message_counts();
 
     // NOTE: use EXPECT_s here because ASSERT_s fail fast, returning from the current function, skipping the cleanup below
-    EXPECT_EQ(0, get_probe_handler().num_failed_probes_);
+    EXPECT_EQ(0ull, get_probe_handler().num_failed_probes_);
     EXPECT_TRUE(binary_messages_check_counts());
-    EXPECT_EQ(0u, get_test_channel()->get_num_failed_sends());
+    EXPECT_EQ(0ull, get_test_channel()->get_num_failed_sends());
     EXPECT_EQ(false, timeout_exceeded_);
 
     auto &message_counts = get_test_channel()->get_message_counts();
-    EXPECT_EQ(0, message_counts["bpf_log"]);
+    EXPECT_EQ(0ull, message_counts["bpf_log"]);
 
     kernel_collector_->on_close();
 
@@ -439,7 +433,6 @@ protected:
 
   uv_loop_t loop_;
 
-  std::string bpf_src_;
   std::optional<TestIntakeConfig> test_intake_config_;
   std::optional<KernelCollector> kernel_collector_;
 

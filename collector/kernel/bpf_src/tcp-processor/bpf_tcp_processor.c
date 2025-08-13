@@ -7,21 +7,17 @@
 
 #define KBUILD_MODNAME "bpf_http"
 #include "../render_bpf.h"
+#include <vmlinux.h>
 
 // Include this from render_bpf.c so we can use tail calls in tcp processor test code
-BPF_PROG_ARRAY(tail_calls, NUM_TAIL_CALLS);
+struct {
+  __uint(type, BPF_MAP_TYPE_PROG_ARRAY);
+  __uint(max_entries, NUM_TAIL_CALLS);
+  __uint(key_size, sizeof(__u32));
+  __uint(value_size, sizeof(__u32));
+} tail_calls SEC(".maps");
 
 #endif
-
-#include <linux/skbuff.h>
-#include <linux/tcp.h>
-#include <linux/version.h>
-#include <net/sock.h>
-
-// Verify kernel is >= 4.4
-// #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 4, 0)
-// #error "Kernel version needs to be 4.4 or newer"
-// #endif
 
 ////////////////////////////////////////////////////////////////////////////
 // Utilities
@@ -43,14 +39,14 @@ BPF_PROG_ARRAY(tail_calls, NUM_TAIL_CALLS);
 
 // TCP send/receive handling
 
-static void tcp_client_handler(
+static __always_inline void tcp_client_handler(
     struct pt_regs *ctx,
     struct tcp_connection_t *pconn,
     struct tcp_control_value_t *pctrl,
     enum STREAM_TYPE streamtype,
     const void *data,
     size_t data_len);
-static void tcp_server_handler(
+static __always_inline void tcp_server_handler(
     struct pt_regs *ctx,
     struct tcp_connection_t *pconn,
     struct tcp_control_value_t *pctrl,
@@ -75,7 +71,7 @@ static void tcp_server_handler(
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void tcp_client_handler(
+static __always_inline void tcp_client_handler(
     struct pt_regs *ctx,
     struct tcp_connection_t *pconn,
     struct tcp_control_value_t *pctrl,
@@ -134,7 +130,7 @@ static void tcp_client_handler(
 #pragma passthrough off
 }
 
-static void tcp_server_handler(
+static __always_inline void tcp_server_handler(
     struct pt_regs *ctx,
     struct tcp_connection_t *pconn,
     struct tcp_control_value_t *pctrl,

@@ -1,0 +1,6 @@
+#!/bin/bash
+
+docker_args+=(
+  --mount "type=bind,source=$HOME/.vim,destination=/root/.vim,readonly"
+  --mount "type=bind,source=$HOME/.vimrc,destination=/root/.vimrc,readonly"
+)

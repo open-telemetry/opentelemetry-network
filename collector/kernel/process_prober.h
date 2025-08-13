@@ -9,15 +9,13 @@
 #include <memory>
 
 class ProbeHandler;
-namespace ebpf {
-class BPFModule;
-}
+struct render_bpf_bpf;
 
 class ProcessProber {
 public:
   ProcessProber(
       ProbeHandler &probe_handler,
-      ebpf::BPFModule &bpf_module,
+      struct render_bpf_bpf *skel,
       std::function<void(void)> periodic_cb,
       std::function<void(std::string)> check_cb);
 

@@ -17,6 +17,9 @@
 
 #include <memory>
 
+// Forward declaration for the skeleton
+struct render_bpf_bpf;
+
 class BPFHandler {
   friend class KernelCollectorTest;
 
@@ -26,13 +29,12 @@ public:
    *
    * Will throw if:
    * 1. PerfContainer cannot be allocated
-   * 2. ProbeHandler can't load BPFModule
+   * 2. ProbeHandler can't load BPF skeleton
    */
   BPFHandler(
       uv_loop_t &loop,
-      std::string full_program,
+      const BpfConfiguration &bpf_config,
       bool enable_http_metrics,
-      bool enable_userland_tcp,
       FileDescriptor &bpf_dump_file,
       logging::Logger &log,
       ::ebpf_net::ingest::Encoder *encoder,
@@ -90,12 +92,11 @@ public:
 private:
   uv_loop_t &loop_;
   ProbeHandler probe_handler_;
-  ebpf::BPFModule bpf_module_;
+  struct render_bpf_bpf *bpf_skel_;
   PerfContainer perf_;
   ::ebpf_net::ingest::Encoder *encoder_;
   std::unique_ptr<BufferedPoller> buf_poller_;
   bool enable_http_metrics_;
-  bool enable_userland_tcp_;
   FileDescriptor &bpf_dump_file_;
   logging::Logger &log_;
   u64 last_lost_count_;

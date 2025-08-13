@@ -12,7 +12,7 @@
 #define TCPPROTO_UNKNOWN 0
 #define TCPPROTO_HTTP 1
 
-#define TCP_PROTOCOL_BIT(X) (1 << ((X) - 1))
+#define TCP_PROTOCOL_BIT(X) (1 << ((X)-1))
 #define TCP_PROTOCOL_MASK ((1 << TCP_PROTOCOL_COUNT) - 1)
 
 #define TCP_TAIL_CALL_MAX_DEPTH 8

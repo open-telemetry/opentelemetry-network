@@ -21,17 +21,17 @@ TEST(RenderTest, AutoHandle)
     auto span = index.simple_span.alloc();
     ASSERT_TRUE(span.valid());
 
-    ASSERT_EQ(index.simple_span.size(), 1);
+    ASSERT_EQ(index.simple_span.size(), 1ul);
   }
 
   // When the auto handle goes out of scope, the span should be freed
-  ASSERT_EQ(index.simple_span.size(), 0);
+  ASSERT_EQ(index.simple_span.size(), 0ul);
 
   {
     auto span = index.simple_span.alloc();
     ASSERT_TRUE(span.valid());
 
-    ASSERT_EQ(index.simple_span.size(), 1);
+    ASSERT_EQ(index.simple_span.size(), 1ul);
 
     // Manually put the reference
     span.put();
@@ -39,7 +39,7 @@ TEST(RenderTest, AutoHandle)
     ASSERT_FALSE(span.valid());
 
     // The span should be freed after put even though the auto handle is still in scope
-    ASSERT_EQ(index.simple_span.size(), 0);
+    ASSERT_EQ(index.simple_span.size(), 0ul);
   }
 }
 
@@ -65,7 +65,7 @@ TEST(RenderTest, Handle)
   ASSERT_FALSE(auto_handle.valid());
   
   // The conversion to handle should not release the span
-  ASSERT_EQ(index.simple_span.size(), 1);
+  ASSERT_EQ(index.simple_span.size(), 1ul);
 
   // Check that it's the same span.
   ASSERT_EQ(handle.access(index).number(), the_number);
@@ -73,7 +73,7 @@ TEST(RenderTest, Handle)
   // Put()ing the reference should invalidate the handle and free the span
   handle.put(index);
   ASSERT_FALSE(handle.valid());
-  ASSERT_EQ(index.simple_span.size(), 0);
+  ASSERT_EQ(index.simple_span.size(), 0ul);
 }
 
 // Test moving auto-handles to handles, which is usually done when holding handles in containers.
@@ -97,7 +97,7 @@ TEST(RenderTest, MovedToHandle)
     ASSERT_FALSE(auto_handle.valid());
 
     // Only one span is allocated.
-    ASSERT_EQ(index.simple_span.size(), 1);
+    ASSERT_EQ(index.simple_span.size(), 1ul);
   }
 
   {
@@ -112,7 +112,7 @@ TEST(RenderTest, MovedToHandle)
     ASSERT_TRUE(auto_handle.valid());
 
     // In total two spans are allocated.
-    ASSERT_EQ(index.simple_span.size(), 2);
+    ASSERT_EQ(index.simple_span.size(), 2ul);
   }
 
   // This would fail with `test::app1::handles::simple_span::~simple_span(): Assertion `!valid()' failed.`
@@ -127,7 +127,7 @@ TEST(RenderTest, MovedToHandle)
     handle.put(index);
   }
 
-  ASSERT_EQ(index.simple_span.size(), 0);
+  ASSERT_EQ(index.simple_span.size(), 0ul);
 }
 
 // Test lookup and reference counting of indexed spans
@@ -143,7 +143,7 @@ TEST(RenderTest, IndexedSpan)
     ASSERT_TRUE(ahandle.valid());
     ASSERT_EQ(ahandle.number(), key);
 
-    ASSERT_EQ(index.indexed_span.size(), 1);
+    ASSERT_EQ(index.indexed_span.size(), 1ul);
 
     {
       // Get another reference to the same span using lookup
@@ -151,28 +151,28 @@ TEST(RenderTest, IndexedSpan)
       ASSERT_TRUE(another.valid());
 
       // Still only one span is allocated.
-      ASSERT_EQ(index.indexed_span.size(), 1);
+      ASSERT_EQ(index.indexed_span.size(), 1ul);
 
       // It's the same span.
       ASSERT_EQ(ahandle.loc(), another.loc());
     }
 
     // The first reference is still in scope, 'another' should not free the span
-    ASSERT_EQ(index.indexed_span.size(), 1);
+    ASSERT_EQ(index.indexed_span.size(), 1ul);
 
     {
       auto different = index.indexed_span.by_key(key + 1);
       ASSERT_TRUE(different.valid());
 
       // Additional span has been allocated.
-      ASSERT_EQ(index.indexed_span.size(), 2);
+      ASSERT_EQ(index.indexed_span.size(), 2ul);
 
       // It's not the same span.
       ASSERT_NE(ahandle.loc(), different.loc());
     }
   }
 
-  ASSERT_EQ(index.indexed_span.size(), 0);
+  ASSERT_EQ(index.indexed_span.size(), 0ul);
 }
 
 // Test MetricStore updates and iteration, and its interaction with span reference counting
@@ -195,19 +195,19 @@ TEST(RenderTest, MetricStore)
     auto span = index.metrics_span.alloc();
     ASSERT_TRUE(span.valid());
 
-    ASSERT_EQ(index.metrics_span.size(), 1);
-    ASSERT_EQ(span.refcount(), 1);
+    ASSERT_EQ(index.metrics_span.size(), 1ul);
+    ASSERT_EQ(span.refcount(), 1ul);
 
     span.metrics_update(time_now, input_metrics);
 
-    ASSERT_EQ(index.metrics_span.size(), 1);
+    ASSERT_EQ(index.metrics_span.size(), 1ul);
 
     // Metric store is keeping a reference to this span.
-    ASSERT_EQ(span.refcount(), 2);
+    ASSERT_EQ(span.refcount(), 2ul);
   }
 
   // Metric store is keeping the span allocated.
-  ASSERT_EQ(index.metrics_span.size(), 1);
+  ASSERT_EQ(index.metrics_span.size(), 1ul);
 
   // Metric slot should not be ready yet.
   ASSERT_FALSE(index.metrics_span.metrics_ready(time_now));
@@ -238,7 +238,7 @@ TEST(RenderTest, MetricStore)
   ASSERT_TRUE(index.metrics_span.metrics.current_queue().empty());
 
   // Metric store should no longer keep a reference to the span.
-  ASSERT_EQ(index.metrics_span.size(), 0);
+  ASSERT_EQ(index.metrics_span.size(), 0ul);
 }
 
 TEST(RenderTest, ManualReference)
@@ -254,7 +254,7 @@ TEST(RenderTest, ManualReference)
   ASSERT_EQ(simple_loc, span.manual_reference().invalid);
 
   // No simple_span is allocated.
-  ASSERT_EQ(index.simple_span.size(), 0);
+  ASSERT_EQ(index.simple_span.size(), 0ul);
 
   {
     auto s = index.simple_span.alloc();
@@ -266,12 +266,12 @@ TEST(RenderTest, ManualReference)
     // Assign it as the reference.
     span.modify().manual_reference(s.get());
 
-    ASSERT_EQ(index.simple_span.size(), 1);
-    ASSERT_EQ(span.manual_reference().refcount(), 2);
+    ASSERT_EQ(index.simple_span.size(), 1ul);
+    ASSERT_EQ(span.manual_reference().refcount(), 2ul);
   }
 
   ASSERT_TRUE(span.manual_reference().valid());
-  ASSERT_EQ(span.manual_reference().refcount(), 1);
+  ASSERT_EQ(span.manual_reference().refcount(), 1ul);
 
   // It's the same simple_span.
   ASSERT_EQ(simple_loc, span.manual_reference().loc());
@@ -291,7 +291,7 @@ TEST(RenderTest, AutoReference)
   ASSERT_EQ(indexed.number(), key_one);
 
   // Only one indexed_span exists for now (namely indexed_span{key_one}).
-  ASSERT_EQ(index.indexed_span.size(), 1);
+  ASSERT_EQ(index.indexed_span.size(), 1ul);
 
   auto span = index.span_with_auto_reference.alloc();
   ASSERT_TRUE(span.valid());
@@ -301,13 +301,13 @@ TEST(RenderTest, AutoReference)
   ASSERT_FALSE(span.auto_reference().valid());
 
   // Still only one indexed_span exists (indexed_span{key_one}).
-  ASSERT_EQ(index.indexed_span.size(), 1);
+  ASSERT_EQ(index.indexed_span.size(), 1ul);
 
   // Assign the field that is used in the auto-reference key.
   span.modify().number(key_two);
 
   // This caused the reference to be computed and a new indexed_span to be allocated (indexed_span{key_two}).
-  ASSERT_EQ(index.indexed_span.size(), 2);
+  ASSERT_EQ(index.indexed_span.size(), 2ul);
 
   // Now the reference is valid.
   ASSERT_TRUE(span.auto_reference().valid());
@@ -322,7 +322,7 @@ TEST(RenderTest, AutoReference)
 
   // This caused the reference to be recomputed, and now the reference points to indexed_span{key_one}, while the
   // indexed_span{key_two} instance has been free'd.
-  ASSERT_EQ(index.indexed_span.size(), 1);
+  ASSERT_EQ(index.indexed_span.size(), 1ul);
 
   // Those two are the same indexed_span instance (indexed_span{key_one}).
   ASSERT_EQ(indexed.loc(), span.auto_reference().loc());
@@ -331,7 +331,7 @@ TEST(RenderTest, AutoReference)
   indexed.put();
 
   // The auto-reference is keeping the span allocated.
-  ASSERT_EQ(index.indexed_span.size(), 1);
+  ASSERT_EQ(index.indexed_span.size(), 1ul);
 }
 
 // Test cached references, which are references that are re-computed when they are accessed
@@ -347,25 +347,25 @@ TEST(RenderTest, CachedReference)
   ASSERT_EQ(indexed.number(), key_one);
 
   // Only one indexed_span exists for now -- indexed_span{key_one}.
-  ASSERT_EQ(index.indexed_span.size(), 1);
+  ASSERT_EQ(index.indexed_span.size(), 1ul);
 
   auto span = index.span_with_cached_reference.alloc();
   ASSERT_TRUE(span.valid());
 
   // Still only one indexed_span exists.
-  ASSERT_EQ(index.indexed_span.size(), 1);
+  ASSERT_EQ(index.indexed_span.size(), 1ul);
 
   // Assign the field that is used in the reference key (see test.render).
   span.modify().number(key_two);
 
   // And still only one indexed_span exists.
-  ASSERT_EQ(index.indexed_span.size(), 1);
+  ASSERT_EQ(index.indexed_span.size(), 1ul);
 
   // Accessing the reference.
   ASSERT_TRUE(span.cached_reference().valid());
 
   // Accessing the referencing caused the indexed_span{key_two} to be allocated.
-  ASSERT_EQ(index.indexed_span.size(), 2);
+  ASSERT_EQ(index.indexed_span.size(), 2ul);
 
   // We have two different indexed_span instances: indexed_span{key_one} and indexed_span{key_two}.
   ASSERT_NE(indexed.loc(), span.cached_reference().loc());
@@ -376,13 +376,13 @@ TEST(RenderTest, CachedReference)
   span.modify().number(key_one);
 
   // Still two are allocated -- reference will be recomputed only after it is accessed.
-  ASSERT_EQ(index.indexed_span.size(), 2);
+  ASSERT_EQ(index.indexed_span.size(), 2ul);
 
   // Access the reference, causing it to be recomputed.
   ASSERT_TRUE(span.cached_reference().valid());
 
   // We're back to there being only one indexed_span -- indexed_span{key_one}.
-  ASSERT_EQ(index.indexed_span.size(), 1);
+  ASSERT_EQ(index.indexed_span.size(), 1ul);
 
   // Those are two same indexed_span instances (indexed_span{key_one}).
   ASSERT_EQ(indexed.loc(), span.cached_reference().loc());
@@ -391,5 +391,5 @@ TEST(RenderTest, CachedReference)
   indexed.put();
 
   // The cached reference is keeping the span allocated.
-  ASSERT_EQ(index.indexed_span.size(), 1);
+  ASSERT_EQ(index.indexed_span.size(), 1ul);
 }

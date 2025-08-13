@@ -44,12 +44,12 @@ include(protobuf)
 include(llvm)
 include(clang)
 include(libelf)
-include(bcc)
 include(test)
 include(uv)
 include(breakpad)
 include(abseil)
 include(yamlcpp)
+include(libbpf)
 include(render)
 
 include_directories(

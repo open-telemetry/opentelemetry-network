@@ -10,8 +10,6 @@
 #include <reducer/internal_stats.h>
 #include <reducer/uid_key.h>
 
-#include <collector/kernel/entrypoint_error.h>
-
 #include <common/kernel_headers_source.h>
 #include <common/linux_distro.h>
 #include <common/operating_system.h>
@@ -470,18 +468,8 @@ void AgentSpan::kernel_headers_source(
 void AgentSpan::entrypoint_error(
     ::ebpf_net::ingest::weak_refs::agent span_ref, u64 timestamp, jsrv_ingest__entrypoint_error *msg)
 {
-  auto const error = sanitize_enum(static_cast<EntrypointError>(msg->error));
-  if (error != EntrypointError::none) {
-    entrypoint_error_ = to_string(error);
-
-    LOG::error(
-        "error while booting up client {} at {} running under OS {}/{}: {}",
-        type_,
-        hostname_,
-        os_,
-        os_flavor_,
-        entrypoint_error_);
-  }
+  LOG::error(
+      "error while booting up client {} at {} running under OS {}/{}: {}", type_, hostname_, os_, os_flavor_, msg->error);
 }
 
 void AgentSpan::health_check(::ebpf_net::ingest::weak_refs::agent span_ref, u64 timestamp, jsrv_ingest__health_check *msg)

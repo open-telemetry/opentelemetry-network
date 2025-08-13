@@ -17,25 +17,9 @@ data_dir=${EBPF_NET_DATA_DIR:-/var/run/ebpf_net}
 dump_dir="${data_dir}/dump"
 mkdir -p "${data_dir}" "${dump_dir}"
 
-kernel_headers_info_path="${data_dir}/kernel_headers.cfg"
-kernel_headers_log_path="${data_dir}/kernel_headers.log"
-echo "resolving kernel headers..."
-if ! "${install_dir}/kernel_headers.sh" "${kernel_headers_info_path}" \
-  > "${kernel_headers_log_path}" 2>&1
-then
-  echo "kernel_headers.sh failed"
-  echo "--- BEGIN log from kernel headers resolution -------------"
-  cat "${kernel_headers_log_path}" || true
-  echo "---  END  log from kernel headers resolution -------------"
-  exit 1
+if ! mountpoint -q /sys; then
+  mount -t sysfs none /sys || echo "Warning: Could not mount sysfs"
 fi
-
-mount -t debugfs none /sys/kernel/debug
-
-cmd_args=( \
-  --host-distro "${host_distro:-unknown}"
-  --kernel-headers-source "${kernel_headers_source:-unknown}"
-)
 
 echo "launching kernel collector test ..."
 
@@ -62,7 +46,7 @@ if [[ -n "${EBPF_NET_RUN_UNDER_GDB}" ]]; then
   done
 
   (set -x; exec "${EBPF_NET_RUN_UNDER_GDB}" -q "${GDB_ARGS[@]}" \
-    --args "${install_dir}/kernel_collector_test" "${cmd_args[@]}" "$@" \
+    --args "${install_dir}/kernel_collector_test" "$@" \
   )
 elif [[ -n "${EBPF_NET_RUN_UNDER_VALGRIND}" ]]; then
   # to run the collector under valgrind, set `EBPF_NET_RUN_UNDER_VALGRIND` to the options to pass to valgrind,
@@ -73,9 +57,9 @@ elif [[ -n "${EBPF_NET_RUN_UNDER_VALGRIND}" ]]; then
   # note: to get full symbols from valgrind also build the kernel-collector in debug mode
 
   # shellcheck disable=SC2086
-  (set -x; exec /usr/bin/valgrind ${EBPF_NET_RUN_UNDER_VALGRIND} "${install_dir}/kernel_collector_test" "${cmd_args[@]}" "$@")
+  (set -x; exec /usr/bin/valgrind ${EBPF_NET_RUN_UNDER_VALGRIND} "${install_dir}/kernel_collector_test" "$@")
 else
-  if ! (set -x; exec "${install_dir}/kernel_collector_test" "${cmd_args[@]}" "$@")
+  if ! (set -x; exec "${install_dir}/kernel_collector_test" "$@")
   then
     echo "kernel collector test FAILED"
     cp /srv/core-* /hostfs/data || true

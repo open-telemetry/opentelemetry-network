@@ -35,8 +35,11 @@ on:
         type: boolean
         default: false
 
+permissions:
+  contents: read
+
 env:
-  BENV_IMAGE: docker.io/otel/opentelemetry-network-build-tools
+  BENV_IMAGE: ${{ vars.BENV_IMAGE || 'docker.io/otel/opentelemetry-network-build-tools' }}
   DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
   DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
   DOCKER_REGISTRY: ${{ vars.DOCKER_REGISTRY }}
@@ -45,6 +48,8 @@ env:
 
 jobs:
   build-and-release:
+    permissions:
+      contents: write # required for creating releases
     name: Build and release
     runs-on: ubuntu-24.04
     steps:
@@ -53,8 +58,12 @@ jobs:
         with:
           ref: ${{ inputs.ref }}
           fetch-depth: 0
-          submodules: recursive
+          submodules: false
           path: src
+      - name: Checkout ext/ submodules
+        run: |
+          cd $GITHUB_WORKSPACE/src
+          git submodule update --init --recursive ext/
       - name: Compute version numbers
         run: |
           # sets environment variables for use in later steps.
@@ -97,29 +106,29 @@ jobs:
           mkdir -p $GITHUB_WORKSPACE/out
           docker run -t --rm \
             --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
-            --mount "type=bind,source=$GITHUB_WORKSPACE/src,destination=/root/src,readonly" \
-            --mount "type=bind,source=$GITHUB_WORKSPACE/out,destination=/root/out" \
-            --env EBPF_NET_SRC_ROOT=/root/src \
+            --mount "type=bind,source=$GITHUB_WORKSPACE/src,destination=/home/user/src,readonly" \
+            --mount "type=bind,source=$GITHUB_WORKSPACE/out,destination=/home/user/out" \
+            --env EBPF_NET_SRC_ROOT=/home/user/src \
             $BENV_IMAGE \
             ./build.sh pipeline-docker
       - name: Build packages
         run: |
           docker run -t --rm \
-            --mount "type=bind,source=$GITHUB_WORKSPACE/src,destination=/root/src,readonly" \
-            --mount "type=bind,source=$GITHUB_WORKSPACE/out,destination=/root/out" \
-            --env EBPF_NET_SRC_ROOT=/root/src \
-            --workdir /root/out \
+            --mount "type=bind,source=$GITHUB_WORKSPACE/src,destination=/home/user/src,readonly" \
+            --mount "type=bind,source=$GITHUB_WORKSPACE/out,destination=/home/user/out" \
+            --env EBPF_NET_SRC_ROOT=/home/user/src \
+            --workdir /home/user/out \
             $BENV_IMAGE \
             cpack -G 'RPM;DEB'
       - name: Upload packages to GitHub Action artifacts
-        uses: actions/upload-artifact@ff15f0306b3f739f7b6fd43fb5d26cd321bd4de5 # v3.2.1
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: packages
           path: |
             out/opentelemetry-ebpf-*.rpm
             out/opentelemetry-ebpf-*.deb
       - name: Upload packages to Release
-        uses: softprops/action-gh-release@37fd9d0351a2df198244c8ef9f56d02d1f921e20
+        uses: softprops/action-gh-release@f82d31e53e61a962573dd0c5fcd6b446ca78871f
         if: ${{ !inputs.dry_run }}
         with:
           tag_name: ${{ env.github_tag }}

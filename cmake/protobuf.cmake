@@ -3,13 +3,17 @@
 
 include_guard()
 
-find_package(Protobuf CONFIG REQUIRED)
-message(STATUS "Found Protobuf ${Protobuf_VERSION}")
 
+
+find_package(Protobuf REQUIRED)
 find_package(gRPC CONFIG REQUIRED)
-message(STATUS "Found gRPC ${gRPC_VERSION}")
 
-get_target_property(GRPC_CPP_PLUGIN_LOCATION gRPC::grpc_cpp_plugin LOCATION)
+find_program(GRPC_CPP_PLUGIN_LOCATION grpc_cpp_plugin REQUIRED)
+if(GRPC_CPP_PLUGIN_LOCATION)
+    message(STATUS "Found grpc_cpp_plugin: ${GRPC_CPP_PLUGIN_LOCATION}")
+else()
+    message(FATAL_ERROR "grpc_cpp_plugin not found")
+endif()
 
 set(GO_PROTOBUF_ANNOTATIONS_DIR /usr/local/go/src/github.com/grpc-ecosystem/grpc-gateway)
 set(GO_PROTOBUF_GOOGLEAPIS_DIR /usr/local/go/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis)
@@ -18,10 +22,11 @@ set(GO_PROTOBUF_GOOGLEAPIS_DIR /usr/local/go/src/github.com/grpc-ecosystem/grpc-
 function (build_protobuf NAME)
   cmake_parse_arguments(ARG "CPP;GRPC;GRPC_GATEWAY" "GO" "DEPENDS;DEPENDENCY_OF" ${ARGN})
 
+  set(TARGET_PREPARE "${NAME}-protobuf-prepare")
   set(TARGET "${NAME}-protobuf")
 
   add_custom_target(
-    "${TARGET}"
+    "${TARGET_PREPARE}"
     DEPENDS
       ${ARG_DEPENDS}
   )
@@ -41,7 +46,7 @@ function (build_protobuf NAME)
 
     add_custom_command(
       TARGET
-        "${TARGET}"
+        "${TARGET_PREPARE}"
       COMMAND
         ${CMAKE_COMMAND} -E make_directory
           "${CMAKE_CURRENT_BINARY_DIR}/generated"
@@ -71,6 +76,8 @@ function (build_protobuf NAME)
   endif()
 
   if (DEFINED ARG_GO)
+    get_target_property(MOD_BUILD_DIR "${ARG_GO}-go-module" MOD_BUILD_DIR)
+    
     list(
       APPEND
       PROTOBUF_ARGS
@@ -79,8 +86,14 @@ function (build_protobuf NAME)
     )
 
     add_dependencies(
-      "${TARGET}"
+      "${TARGET_PREPARE}"
         "${ARG_GO}-go-module"
+    )
+
+    set(
+      GEN_FILES_GO
+        "${MOD_BUILD_DIR}/${NAME}.pb.go"
+        "${MOD_BUILD_DIR}/${NAME}_grpc.pb.go"
     )
 
     if (ARG_GRPC)
@@ -91,6 +104,12 @@ function (build_protobuf NAME)
           -I"${GO_PROTOBUF_GOOGLEAPIS_DIR}"
           --grpc-gateway_out="logtostderr=true:${GO_PATH_SRC}"
       )
+
+      list(
+        APPEND
+        GEN_FILES_GO
+          "${MOD_BUILD_DIR}/${NAME}.pb.gw.go"
+      )
     endif()
   endif()
 
@@ -100,12 +119,26 @@ function (build_protobuf NAME)
       "${CMAKE_CURRENT_SOURCE_DIR}/${NAME}.proto"
   )
 
+  set(GEN_FILES_ALL ${GEN_FILES_CPP})
+  if (DEFINED ARG_GO)
+    list(APPEND GEN_FILES_ALL ${GEN_FILES_GO})
+  endif()
+
   add_custom_command(
-    TARGET
-      "${TARGET}"
+    OUTPUT
+      ${GEN_FILES_ALL}
     COMMAND
       protoc
         ${PROTOBUF_ARGS}
+    DEPENDS
+      "${CMAKE_CURRENT_SOURCE_DIR}/${NAME}.proto"
+      ${TARGET_PREPARE}
+  )
+
+  add_custom_target(
+    "${TARGET}"
+    DEPENDS
+      ${GEN_FILES_ALL}
   )
 
   if (ARG_CPP)
@@ -125,8 +158,8 @@ function (build_protobuf NAME)
 
     target_link_libraries(
       "${CPP_TARGET}"
-        protobuf
-        grpc++
+        protobuf::libprotobuf
+        gRPC::grpc++
     )
 
     target_include_directories(
@@ -135,23 +168,25 @@ function (build_protobuf NAME)
         "${CMAKE_CURRENT_BINARY_DIR}"
     )
 
-    add_dependencies(
-      "${CPP_TARGET}"
-        "${TARGET}"
-    )
   endif()
 
   if (DEFINED ARG_GO)
     set(GO_TARGET "${NAME}-go-protobuf")
 
+    set_source_files_properties(
+    ${GEN_FILES_GO}
+    PROPERTIES
+      GENERATED TRUE
+    )
+
     add_custom_target(
       "${GO_TARGET}"
       DEPENDS
-        "${TARGET}"
+        ${GEN_FILES_GO}
     )
   endif()
 
   foreach(DEPENDENCY ${ARG_DEPENDENCY_OF})
-    add_dependencies(${DEPENDENCY} ${TARGET})
+    add_dependencies(${DEPENDENCY} ${TARGET_PREPARE})
   endforeach()
 endfunction()

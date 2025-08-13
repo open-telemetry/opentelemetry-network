@@ -110,7 +110,7 @@ void ConnectionCaretaker::send_metadata_header()
     }
 
     auto id = aws_metadata_->id().value();
-    if (absl::StartsWith(id, std::string_view("i-"))) {
+    if (id.starts_with(std::string_view("i-"))) {
       id.remove_prefix(2);
     }
 

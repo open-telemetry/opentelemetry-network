@@ -46,7 +46,7 @@ void ProcessHandler::on_new_process(std::chrono::nanoseconds timestamp, struct j
 #endif // DEBUG_TGID
   }
 
-  auto weak_handle = collector_index_.tracked_process.by_key({.cgroup = msg.cgroup, .tgid = msg.pid});
+  auto weak_handle = collector_index_.tracked_process.by_key({msg.cgroup, msg.pid});
   assert(msg.pid == weak_handle.tgid());
   assert(msg.cgroup == weak_handle.cgroup());
 

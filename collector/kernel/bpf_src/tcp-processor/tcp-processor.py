@@ -2,6 +2,9 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
+# DEPRECATED: This BCC-based debugging tool is no longer maintained
+# since the project has migrated to libbpf. The code is kept for
+# historical reference but may not work with current BPF code.
 
 #
 # Standalone debugging code for tcp-processor subtree of bpf_src

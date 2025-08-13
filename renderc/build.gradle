@@ -1,12 +1,12 @@
 buildscript {
   apply from: "${rootDir}/gradle/repositories.gradle"
   dependencies {
-    classpath 'org.xtext:xtext-gradle-plugin:2.0.8'
+    classpath 'org.xtext:xtext-gradle-plugin:4.0.0'
   }
 }
 
 subprojects {
-  ext.xtextVersion = '2.28.0'
+  ext.xtextVersion = '2.39.0'
 
   apply plugin: 'java'
   apply plugin: 'org.xtext.xtend'

@@ -1,6 +1,6 @@
 plugins {
   id 'application'
-  id 'com.github.johnrengelman.shadow' version '5.2.0' apply false
+  id 'com.github.johnrengelman.shadow' version '8.1.1' apply false
 }
 
 application {
@@ -15,7 +15,7 @@ shadowJar {
 dependencies {
   implementation project(':io.opentelemetry.render')
   implementation "org.eclipse.xtext:org.eclipse.xtext.builder.standalone:${xtextVersion}"
-  implementation "args4j:args4j:2.33"
+  implementation "args4j:args4j:2.37"
 }
 
 clean.dependsOn(cleanGenerateXtext)

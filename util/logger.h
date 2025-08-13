@@ -46,7 +46,7 @@ private:
   template <spdlog::level::level_enum Level, typename Format, typename... Args>
   inline std::string log_message(Format &&format, Args &&... args)
   {
-    auto message = fmt::format(std::forward<Format>(format), std::forward<Args>(args)...);
+    auto message = fmt::vformat(std::forward<Format>(format), fmt::make_format_args(args...));
 
     static_assert(static_cast<std::underlying_type_t<spdlog::level::level_enum>>(Level) == static_cast<u8>(Level));
 

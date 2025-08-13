@@ -5,8 +5,12 @@
 
 #pragma once
 
-// TCP Data sent to userland
-BPF_PERF_OUTPUT(data_channel);
+// TCP Data sent to userland - perf event array map for libbpf
+struct {
+  __uint(type, BPF_MAP_TYPE_PERF_EVENT_ARRAY);
+  __uint(key_size, sizeof(__u32));
+  __uint(value_size, sizeof(__u32));
+} data_channel SEC(".maps");
 
 // Slightly more compact fore than COPY_BIT(2) + COPY_BIT(1)
 #define COPY_LAST_BITS                                                                                                         \
@@ -17,15 +21,15 @@ BPF_PERF_OUTPUT(data_channel);
     break;                                                                                                                     \
   case 1:                                                                                                                      \
     bpf_probe_read(&msg.data, 1, in);                                                                                          \
-    data_channel.perf_submit(ctx, &msg, sizeof(struct data_channel_header_t) + 1);                                             \
+    bpf_perf_event_output(ctx, &data_channel, BPF_F_CURRENT_CPU, &msg, sizeof(struct data_channel_header_t) + 1);              \
     break;                                                                                                                     \
   case 2:                                                                                                                      \
     bpf_probe_read(&msg.data, 2, in);                                                                                          \
-    data_channel.perf_submit(ctx, &msg, sizeof(struct data_channel_header_t) + 2);                                             \
+    bpf_perf_event_output(ctx, &data_channel, BPF_F_CURRENT_CPU, &msg, sizeof(struct data_channel_header_t) + 2);              \
     break;                                                                                                                     \
   case 3:                                                                                                                      \
     bpf_probe_read(&msg.data, 3, in);                                                                                          \
-    data_channel.perf_submit(ctx, &msg, sizeof(struct data_channel_header_t) + 3);                                             \
+    bpf_perf_event_output(ctx, &data_channel, BPF_F_CURRENT_CPU, &msg, sizeof(struct data_channel_header_t) + 3);              \
     break;                                                                                                                     \
   }
 
@@ -33,13 +37,13 @@ BPF_PERF_OUTPUT(data_channel);
   if (len & B) {                                                                                                               \
     msg.hdr.length = B;                                                                                                        \
     bpf_probe_read(&msg.data, B, in);                                                                                          \
-    data_channel.perf_submit(ctx, &msg, sizeof(struct data_channel_header_t) + B);                                             \
+    bpf_perf_event_output(ctx, &data_channel, BPF_F_CURRENT_CPU, &msg, sizeof(struct data_channel_header_t) + B);              \
     in += B;                                                                                                                   \
   }
 
 #define COPY_CHUNK_256                                                                                                         \
   bpf_probe_read(&msg.data, 256, in);                                                                                          \
-  data_channel.perf_submit(ctx, &msg, sizeof(struct data_channel_header_t) + 256);                                             \
+  bpf_perf_event_output(ctx, &data_channel, BPF_F_CURRENT_CPU, &msg, sizeof(struct data_channel_header_t) + 256);              \
   in += 256;
 
 #define COPY_BIT_256                                                                                                           \
@@ -130,7 +134,7 @@ BPF_PERF_OUTPUT(data_channel);
   }
 
 // Submit contents of TCP data stream to the perf ring to userland
-static void
+static __always_inline void
 data_channel_submit(struct pt_regs *ctx, struct tcp_connection_t *pconn, const void *data, size_t data_len, size_t *actual_len)
 {
   // Clip the length to the most we can copy

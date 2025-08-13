@@ -4,8 +4,14 @@
 include_guard()
 
 find_path(CURLPP_INCLUDE_DIR NAMES curlpp/cURLpp.hpp)
-find_library(CURLPP_STATIC_LIBRARY NAMES libcurlpp.a)
-message(STATUS "curlpp static library: ${CURLPP_STATIC_LIBRARY}")
+find_library(CURLPP_LIBRARY NAMES curlpp)
+
+
+if (NOT CURLPP_INCLUDE_DIR OR NOT CURLPP_LIBRARY)
+  message(FATAL_ERROR "cURLpp not found! Please install cURLpp development files.")
+endif()
+
+message(STATUS "curlpp library: ${CURLPP_LIBRARY}")
 add_library(curl-cpp INTERFACE)
 target_include_directories(
   curl-cpp
@@ -15,6 +21,6 @@ target_include_directories(
 target_link_libraries(
   curl-cpp
   INTERFACE
-    "${CURLPP_STATIC_LIBRARY}"
-    curl-static
+    "${CURLPP_LIBRARY}"
+    CURL::libcurl
 )

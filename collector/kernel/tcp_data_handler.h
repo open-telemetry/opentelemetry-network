@@ -5,23 +5,24 @@
 
 #pragma once
 
-#include <bcc/BPFTable.h>
-#include <bcc/bpf_module.h>
 #include <linux/bpf.h>
 
 #include <map>
 #include <memory>
 
-#include <uv.h>
-
 #include <generated/ebpf_net/ingest/writer.h>
 #include <platform/platform.h>
 #include <util/logger.h>
+#include <uv.h>
 
 #include "collector/agent_log.h"
 #include "collector/kernel/bpf_src/tcp-processor/tcp_processor.h"
 #include "collector/kernel/perf_reader.h"
 #include "protocols/protocol_handler_base.h"
+
+/* forward declarations */
+struct render_bpf_bpf;
+class ProbeHandler;
 
 class TCPDataHandler {
 public:
@@ -30,7 +31,8 @@ public:
    */
   TCPDataHandler(
       uv_loop_t &loop,
-      ebpf::BPFModule &bpf_module,
+      ProbeHandler &probe_handler,
+      struct render_bpf_bpf *skel,
       ::ebpf_net::ingest::Writer &writer,
       PerfContainer &container,
       logging::Logger &log);
@@ -73,11 +75,11 @@ protected:
 
 protected:
   uv_loop_t &loop_;
-  ebpf::BPFModule &bpf_module_;
+  struct render_bpf_bpf *skel_;
   ::ebpf_net::ingest::Writer &writer_;
   PerfContainer &container_;
   u64 lost_record_total_count_ = 0;
   std::map<tcp_control_key_t, std::shared_ptr<ProtocolHandlerBase>, tcp_control_key_t_comparator> protocol_handlers_;
-  ebpf::TableDesc tcp_control_desc_;
+  int tcp_control_map_fd_;
   logging::Logger &log_;
 };

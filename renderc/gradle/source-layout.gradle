@@ -5,17 +5,17 @@ if (name.endsWith(".tests")) {
       resources.srcDirs = []
     }
     test {
-      java.srcDirs = ['src', 'src-gen']
+      java.srcDirs = ['src', 'src-gen', 'xtend-gen']
       resources.srcDirs = ['src', 'src-gen']
-      xtendOutputDir = 'xtend-gen'
+      xtend.outputDir = 'xtend-gen'
     }
   }
 } else {
   sourceSets {
     main {
-      java.srcDirs = ['src', 'src-gen']
+      java.srcDirs = ['src', 'src-gen', 'xtend-gen']
       resources.srcDirs = ['src', 'src-gen']
-      xtendOutputDir = 'xtend-gen'
+      xtend.outputDir = 'xtend-gen'
     }
     test {
       java.srcDirs = []
@@ -26,6 +26,12 @@ if (name.endsWith(".tests")) {
 
 sourceSets.all {
   resources.exclude '**/*.g', '**/*.mwe2', '**/*.xtend', '**/*._trace'
+}
+
+tasks.configureEach { task ->
+  if (task.name == 'processResources' && tasks.findByName('generateXtextLanguage') != null) {
+    task.dependsOn tasks.named('generateXtextLanguage')
+  }
 }
 
 jar {

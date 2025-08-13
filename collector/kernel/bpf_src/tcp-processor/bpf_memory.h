@@ -13,23 +13,27 @@
 #include "bpf_types.h"
 
 // s2 can not be longer than 16 bytes due to older bpf inlining limitations
-inline static int string_starts_with(const char *s1, const size_t s1_len, const char *s2)
+static __always_inline int string_starts_with(const char *s1, const size_t s1_len, const char *s2)
 {
 
-  const size_t s2_len = strlen(s2);
+  char s2_local[16] = {};
+  size_t s2_len = bpf_probe_read_kernel_str(s2_local, sizeof(s2_local), s2);
+  if (s2_len > 16)
+    return 0; // help the verifier
 
-  if (s1_len < s2_len) {
+  char s1_local[16] = {};
+  size_t s1_local_len = bpf_probe_read_kernel_str(s1_local, sizeof(s1_local), s1);
+
+  if (s1_local_len < s2_len) {
     return 0;
   }
 
-  char localdata[16] = {};
-  bpf_probe_read(localdata, s2_len, s1);
-
-#pragma passthrough on
-#pragma unroll
-#pragma passthrough off
-  for (int i = 0; i < s2_len; i++) {
-    if (localdata[i] != s2[i]) {
+  for (int i = 0; i < 16; i++) {
+    if (i >= s2_len) {
+      // s2 is shorter than 16 bytes, so we are done
+      return 1;
+    }
+    if (s2_local[i] != s1_local[i]) {
       return 0;
     }
   }
@@ -37,7 +41,7 @@ inline static int string_starts_with(const char *s1, const size_t s1_len, const 
   return 1;
 }
 
-inline static int char_to_number(char x)
+static __always_inline int char_to_number(char x)
 {
   if (x < '0' || x > '9')
     return -1;

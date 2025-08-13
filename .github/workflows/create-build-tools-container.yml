@@ -1,0 +1,361 @@
+# Copyright The OpenTelemetry Authors
+# SPDX-License-Identifier: Apache-2.0
+
+name: create-build-tools-container
+run-name: Create the opentelemetry-network-build-tools container
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'build-tools/**'
+      - '.github/workflows/build_and_push_parallel.yml'
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Tag, branch or SHA to checkout"
+        required: true
+        type: string
+        default: "main"
+      image_prefix:
+        description: "Prefix to use for destination image name"
+        required: false
+        type: string
+        default: "opentelemetry-network-"
+      additional_tag:
+        description: "Additional tag to use when pushing to docker repository"
+        required: false
+        type: string
+      dry_run:
+        description: "Build everything but don't actually push to repository"
+        required: false
+        type: boolean
+        default: false
+      registry_workspace:
+        description: "Registry workspace/namespace to push final image to"
+        required: false
+        type: string
+        default: "otel"
+      force_rebuild:
+        description: "Force rebuild all containers (ignore cache)"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  CACHE_REGISTRY: ghcr.io
+  FINAL_REGISTRY: docker.io
+  IMAGE_PREFIX: ${{ inputs.image_prefix || 'opentelemetry-network-' }}
+  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+  DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+  DOCKER_NAMESPACE: ${{ inputs.registry_workspace || 'otel' }}
+  DRY_RUN: ${{ github.event_name != 'workflow_dispatch' || inputs.dry_run }}
+  REF: ${{ inputs.ref || github.ref }}
+  FORCE_REBUILD: ${{ inputs.force_rebuild || false }}
+
+jobs:
+  build-base:
+    name: Build base image
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ env.REF }}
+
+      - name: Build and push base image
+        uses: ./.github/actions/build-tools-single-stage/
+        with:
+          directory: base
+          registry: ${{ env.CACHE_REGISTRY }}
+          registry_username: ${{ github.actor }}
+          registry_password: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ env.REF }}
+          force_rebuild: ${{ env.FORCE_REBUILD }}
+
+  build-bcc:
+    name: Build bcc image
+    runs-on: ubuntu-24.04
+    needs: build-base
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ env.REF }}
+
+      - name: Build and push bcc image
+        uses: ./.github/actions/build-tools-single-stage/
+        with:
+          directory: bcc
+          registry: ${{ env.CACHE_REGISTRY }}
+          registry_username: ${{ github.actor }}
+          registry_password: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ env.REF }}
+          force_rebuild: ${{ env.FORCE_REBUILD }}
+
+  build-libuv:
+    name: Build libuv image
+    runs-on: ubuntu-24.04
+    needs: build-base
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ env.REF }}
+
+      - name: Build and push libuv image
+        uses: ./.github/actions/build-tools-single-stage/
+        with:
+          directory: libuv
+          registry: ${{ env.CACHE_REGISTRY }}
+          registry_username: ${{ github.actor }}
+          registry_password: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ env.REF }}
+          force_rebuild: ${{ env.FORCE_REBUILD }}
+
+  build-cpp-misc:
+    name: Build cpp_misc image
+    runs-on: ubuntu-24.04
+    needs: build-base
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ env.REF }}
+
+      - name: Build and push cpp_misc image
+        uses: ./.github/actions/build-tools-single-stage/
+        with:
+          directory: cpp_misc
+          registry: ${{ env.CACHE_REGISTRY }}
+          registry_username: ${{ github.actor }}
+          registry_password: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ env.REF }}
+          force_rebuild: ${{ env.FORCE_REBUILD }}
+
+  build-go:
+    name: Build go image
+    runs-on: ubuntu-24.04
+    needs: build-base
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ env.REF }}
+
+      - name: Build and push go image
+        uses: ./.github/actions/build-tools-single-stage/
+        with:
+          directory: go
+          registry: ${{ env.CACHE_REGISTRY }}
+          registry_username: ${{ github.actor }}
+          registry_password: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ env.REF }}
+          force_rebuild: ${{ env.FORCE_REBUILD }}
+
+  build-libmaxminddb:
+    name: Build libmaxminddb image
+    runs-on: ubuntu-24.04
+    needs: build-base
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ env.REF }}
+
+      - name: Build and push libmaxminddb image
+        uses: ./.github/actions/build-tools-single-stage/
+        with:
+          directory: libmaxminddb
+          registry: ${{ env.CACHE_REGISTRY }}
+          registry_username: ${{ github.actor }}
+          registry_password: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ env.REF }}
+          force_rebuild: ${{ env.FORCE_REBUILD }}
+
+  build-libbpf:
+    name: Build libbpf image
+    runs-on: ubuntu-24.04
+    needs: build-base
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ env.REF }}
+
+      - name: Build and push libbpf image
+        uses: ./.github/actions/build-tools-single-stage/
+        with:
+          directory: libbpf
+          registry: ${{ env.CACHE_REGISTRY }}
+          registry_username: ${{ github.actor }}
+          registry_password: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ env.REF }}
+          force_rebuild: ${{ env.FORCE_REBUILD }}
+
+  build-aws-sdk:
+    name: Build aws_sdk image
+    runs-on: ubuntu-24.04
+    needs: [build-base]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ env.REF }}
+
+      - name: Build and push aws_sdk image
+        uses: ./.github/actions/build-tools-single-stage/
+        with:
+          directory: aws_sdk
+          registry: ${{ env.CACHE_REGISTRY }}
+          registry_username: ${{ github.actor }}
+          registry_password: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ env.REF }}
+          force_rebuild: ${{ env.FORCE_REBUILD }}
+
+  build-gcp-cpp:
+    name: Build gcp_cpp image
+    runs-on: ubuntu-24.04
+    needs: [build-base]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ env.REF }}
+
+      - name: Build and push gcp_cpp image
+        uses: ./.github/actions/build-tools-single-stage/
+        with:
+          directory: gcp_cpp
+          registry: ${{ env.CACHE_REGISTRY }}
+          registry_username: ${{ github.actor }}
+          registry_password: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ env.REF }}
+          force_rebuild: ${{ env.FORCE_REBUILD }}
+
+  build-opentelemetry:
+    name: Build opentelemetry image
+    runs-on: ubuntu-24.04
+    needs: [build-base]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ env.REF }}
+
+      - name: Build and push opentelemetry image
+        uses: ./.github/actions/build-tools-single-stage/
+        with:
+          directory: opentelemetry
+          registry: ${{ env.CACHE_REGISTRY }}
+          registry_username: ${{ github.actor }}
+          registry_password: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ env.REF }}
+          force_rebuild: ${{ env.FORCE_REBUILD }}
+
+  build-final:
+    name: Build final image
+    runs-on: ubuntu-24.04
+    needs: [
+      build-base,
+      build-bcc,
+      build-libuv,
+      build-aws-sdk,
+      build-cpp-misc,
+      build-go,
+      build-libmaxminddb,
+      build-gcp-cpp,
+      build-opentelemetry,
+      build-libbpf
+    ]
+    outputs:
+      image-tag: ${{ steps.build.outputs.image-tag }}
+      full-image-tag: ${{ steps.build.outputs.full-image-tag }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ env.REF }}
+
+      - name: Build and push final image to cache registry
+        id: build
+        uses: ./.github/actions/build-tools-single-stage/
+        with:
+          directory: final
+          registry: ${{ env.CACHE_REGISTRY }}
+          registry_username: ${{ github.actor }}
+          registry_password: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ env.REF }}
+          force_rebuild: ${{ env.FORCE_REBUILD }}
+
+  # Push final image to docker.io with proper tags
+  push-to-dockerhub:
+    name: Push final image to Docker Hub
+    runs-on: ubuntu-24.04
+    needs: build-final
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ env.REF }}
+          fetch-depth: 0
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # v3.5.0
+        with:
+          registry: ${{ env.CACHE_REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # v3.5.0
+        with:
+          registry: ${{ env.FINAL_REGISTRY }}
+          username: ${{ env.DOCKER_USERNAME }}
+          password: ${{ env.DOCKER_PASSWORD }}
+
+      - name: Pull, tag and push final image to Docker Hub
+        run: |
+          # Use the recursive final image tag from the build job
+          CACHE_IMAGE="${{ needs.build-final.outputs.full-image-tag }}"
+          
+          echo "Pulling final image: ${CACHE_IMAGE}"
+          docker pull "${CACHE_IMAGE}"
+          
+          # Compute git hash for additional tagging
+          git_short_hash=$(git rev-parse --short=8 HEAD)
+          
+          # Set up tags
+          tags=(
+            latest
+            git-${git_short_hash}
+          )
+          
+          if [[ "${{ inputs.additional_tag }}" != "" ]]; then
+            tags=(${tags[@]} "${{ inputs.additional_tag }}")
+          fi
+          
+          # Set up image name and path for Docker Hub
+          image_name="${{ env.IMAGE_PREFIX }}build-tools"
+          docker_registry=$(sed -e 's,^https://,,' -e 's,/*$,,' <<< ${{ env.FINAL_REGISTRY }})
+          image_path="${docker_registry}/${{ env.DOCKER_NAMESPACE }}/${image_name}"
+          
+          # Tag and push to Docker Hub
+          for tag in ${tags[@]}; do
+            docker tag "${CACHE_IMAGE}" "${image_path}:${tag}"
+            if [[ "${{ env.DRY_RUN }}" == "false" ]]; then
+              docker push "${image_path}:${tag}"
+              echo "Pushed ${image_path}:${tag}"
+            else
+              echo "Dry run: would push ${image_path}:${tag}"
+            fi
+          done
+          
+          # List all images for verification
+          docker images --no-trunc

@@ -411,7 +411,7 @@ FlowSpan::NodeData FlowSpan::resolve_node(::ebpf_net::matching::weak_refs::flow 
 
     AwsEnrichmentInfo const *aws_info = nullptr;
     if (aws_enrichment_enabled_) {
-      auto aws_enrichment_span = span_ref.index().aws_enrichment.by_key({.ip = ipv6.as_int()}, false);
+      auto aws_enrichment_span = span_ref.index().aws_enrichment.by_key({ipv6.as_int()}, false);
 
       if (aws_enrichment_span.valid()) {
         aws_info = aws_enrichment_span.impl().info();
