@@ -101,9 +101,12 @@ jobs:
       - name: Fetch build environment
         run: |
           docker pull $BENV_IMAGE
-      - name: Build artifacts
+      - name: Create and fix permissions for output directory
         run: |
           mkdir -p $GITHUB_WORKSPACE/out
+          sudo chown -R 1000:1000 $GITHUB_WORKSPACE/out
+      - name: Build artifacts
+        run: |
           docker run -t --rm \
             --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
             --mount "type=bind,source=$GITHUB_WORKSPACE/src,destination=/home/user/src,readonly" \
