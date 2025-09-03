@@ -9,8 +9,8 @@ set -e
 # Major and minor versions influence customer vetting processes and level
 # of perceived trust in an implementation -- please discuss before bumping these.
 export EBPF_NET_MAJOR_VERSION='0'
-export EBPF_NET_MINOR_VERSION='10'
-export EBPF_NET_PATCH_VERSION='2'
+export EBPF_NET_MINOR_VERSION='11'
+export EBPF_NET_PATCH_VERSION='0'
 
 # -----
 # Build number is incremented automatically, so we can release directly from

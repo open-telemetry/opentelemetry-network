@@ -101,16 +101,32 @@ jobs:
       - name: Fetch build environment
         run: |
           docker pull $BENV_IMAGE
-      - name: Build artifacts
+      - name: Create and fix permissions for output directory
         run: |
           mkdir -p $GITHUB_WORKSPACE/out
+          sudo chown -R 1000:1000 $GITHUB_WORKSPACE/out
+      - name: Build artifacts
+        run: |
+          # Start local registry for the build process
+          docker run -d -p 5000:5000 --name registry docker.io/library/registry:2
+          
+          # Build all containers and push to local registry
           docker run -t --rm \
             --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
             --mount "type=bind,source=$GITHUB_WORKSPACE/src,destination=/home/user/src,readonly" \
             --mount "type=bind,source=$GITHUB_WORKSPACE/out,destination=/home/user/out" \
             --env EBPF_NET_SRC_ROOT=/home/user/src \
+            --network host \
+            --privileged \
             $BENV_IMAGE \
-            ./build.sh pipeline-docker
+            ./build.sh pipeline-docker-registry
+            
+          # Pull images from local registry to make them available for docker tag/push
+          docker pull localhost:5000/reducer
+          docker pull localhost:5000/kernel-collector  
+          docker pull localhost:5000/cloud-collector
+          docker pull localhost:5000/k8s-watcher
+          docker pull localhost:5000/k8s-relay
       - name: Build packages
         run: |
           docker run -t --rm \
@@ -173,11 +189,15 @@ jobs:
             image_path="${docker_registry}/${DOCKER_NAMESPACE}/${image_name}"
 
             for tag in ${tags[@]}; do
-              docker tag $image ${image_path}:${tag}
+              docker tag localhost:5000/$image ${image_path}:${tag}
               if [[ "${{ inputs.dry_run }}" == "false" ]]; then
                 docker push ${image_path}:${tag}
               fi
             done
           done
+
+          # Clean up local registry
+          docker stop registry || true
+          docker rm registry || true
 
           docker images --no-trunc
