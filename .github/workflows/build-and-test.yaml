@@ -34,7 +34,7 @@ jobs:
         echo "$GITHUB_CONTEXT"
 
     - name: Check out the codebase
-      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
 
     - name: Get current date
       id: date
@@ -60,7 +60,7 @@ jobs:
     needs: [clang-format-check]
     steps:
     - name: Check out the codebase
-      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
       with:
         fetch-depth: 0
 
@@ -108,7 +108,7 @@ jobs:
     needs: [clang-format-check]
     steps:
     - name: Check out the codebase
-      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
       with:
         fetch-depth: 0
 
@@ -156,7 +156,7 @@ jobs:
     needs: [clang-format-check]
     steps:
     - name: Check out the codebase
-      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
       with:
         fetch-depth: 0
 
@@ -204,7 +204,7 @@ jobs:
     needs: [clang-format-check]
     steps:
     - name: Check out the codebase
-      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
       with:
         fetch-depth: 0
 
@@ -227,7 +227,7 @@ jobs:
     needs: [clang-format-check]
     steps:
     - name: Check out the codebase
-      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
       with:
         fetch-depth: 0
 
@@ -250,7 +250,7 @@ jobs:
     needs: [clang-format-check]
     steps:
     - name: Check out the codebase
-      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
       with:
         fetch-depth: 0
 
@@ -273,7 +273,7 @@ jobs:
     needs: [clang-format-check]
     steps:
     - name: Check out the codebase
-      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
       with:
         fetch-depth: 0
     - name: run unit tests
@@ -297,7 +297,7 @@ jobs:
     needs: [clang-format-check]
     steps:
     - name: Check out the codebase
-      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
       with:
         fetch-depth: 0
     - name: build unit tests with asan and debug flags on then run all tests
@@ -343,7 +343,7 @@ jobs:
     timeout-minutes: 10
     steps:
     - name: Check out the codebase
-      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
       with:
         fetch-depth: 0
 
@@ -474,7 +474,7 @@ jobs:
     timeout-minutes: 10
     steps:
     - name: Check out the codebase
-      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
       with:
         fetch-depth: 0
 
