@@ -7,7 +7,6 @@ receivers:
       http:
 
 processors:
-  batch:
 
 exporters:
   debug:

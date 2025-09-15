@@ -25,7 +25,6 @@ receivers:
             - targets: ['localhost:7001']
 
 processors:
-  batch:
 
 exporters:
   debug:
