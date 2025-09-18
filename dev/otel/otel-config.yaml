@@ -6,8 +6,6 @@ receivers:
     protocols:
       http:
 
-processors:
-
 exporters:
   debug:
     verbosity: detailed
@@ -18,5 +16,4 @@ service:
   pipelines:
     logs:
       receivers: [otlp]
-      processors: [batch]
       exporters: [debug,file]
