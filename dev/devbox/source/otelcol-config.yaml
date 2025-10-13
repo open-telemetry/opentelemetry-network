@@ -24,9 +24,6 @@ receivers:
             - targets: ['localhost:7000']
             - targets: ['localhost:7001']
 
-processors:
-  batch:
-
 exporters:
   debug:
     verbosity: detailed
@@ -63,18 +60,18 @@ exporters:
       override_metrics_names:
         otelcol_exporter_splunkhec_heartbeats_sent: app_heartbeats_success_total
         otelcol_exporter_splunkhec_heartbeats_failed: app_heartbeats_failed_total
+    sending_queue:
+      batch:
 
 service:
   extensions: [health_check, zpages]
   pipelines:
     logs:
       receivers: [otlp]
-      processors: [batch]
       exporters: [debug,file]
       #exporters: [debug,file,splunk_hec]
     metrics:
       receivers: [otlp]
-      processors: [batch]
       exporters: [debug,file]
   telemetry:
     logs:
