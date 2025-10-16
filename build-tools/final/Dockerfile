@@ -94,14 +94,14 @@ COPY LICENSE.txt $HOME/
 COPY NOTICE.txt $HOME/
 
 # copy artifacts from individual builds
-COPY --from=build-bcc $HOME/install $HOME/install
-COPY --from=build-libuv $HOME/install $HOME/install
-COPY --from=build-aws-sdk $HOME/install $HOME/install
-COPY --from=build-cpp-misc $HOME/install $HOME/install
-COPY --from=build-libmaxminddb $HOME/install $HOME/install
-COPY --from=build-gcp_cpp $HOME/install $HOME/install
-COPY --from=build-opentelemetry $HOME/install $HOME/install
-COPY --from=build-libbpf $HOME/install $HOME/install
+COPY --from=build-bcc $HOME/install /install
+COPY --from=build-libuv $HOME/install /install
+COPY --from=build-aws-sdk $HOME/install /install
+COPY --from=build-cpp-misc $HOME/install /install
+COPY --from=build-libmaxminddb $HOME/install /install
+COPY --from=build-gcp_cpp $HOME/install /install
+COPY --from=build-opentelemetry $HOME/install /install
+COPY --from=build-libbpf $HOME/install /install
 #gen:dep-copy
 
 COPY --from=build-go $HOME/go/bin /usr/local/go/bin
