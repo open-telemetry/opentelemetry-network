@@ -2729,9 +2729,12 @@ int onret___nf_conntrack_confirm(struct pt_regs *ctx)
     return 0;
   }
 
-  // Extract ct from skb->_nfct with NFCT_PTRMASK (~1UL)
-  unsigned long nfct = BPF_CORE_READ(skb, _nfct);
-  struct nf_conn *ct = (struct nf_conn *)(nfct & ~1UL);
+  // Extract ct from skb->_nfct with NFCT_PTRMASK (~1UL). Use CO-RE flavor cast.
+  if (!bpf_core_field_exists(((struct sk_buff___with_nfct *)skb)->_nfct)) {
+    return 0;
+  }
+  unsigned long nfct = BPF_CORE_READ((struct sk_buff___with_nfct *)skb, _nfct);
+  struct nf_conn *ct = (struct nf_conn *)(nfct & ~7UL);
   if (!ct) {
     return 0;
   }
