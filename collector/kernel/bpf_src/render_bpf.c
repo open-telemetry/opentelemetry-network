@@ -153,13 +153,13 @@ struct {
   __uint(max_entries, TABLE_SIZE__SEEN_CONNTRACKS);
 } seen_conntracks SEC(".maps"); // Conntracks that we've reported to userspace
 
-// Stash skb for __nf_conntrack_confirm entry to kretprobe path
+// Stash skb per-CPU for __nf_conntrack_confirm entry to kretprobe path.
+// __nf_conntrack_confirm runs in softirq/non-sleepable context; not re-entrant per-CPU.
 struct {
-  __uint(type, BPF_MAP_TYPE_HASH);
-  __type(key, u64);
+  __uint(type, BPF_MAP_TYPE_PERCPU_ARRAY);
+  __uint(max_entries, 1);
+  __type(key, u32);
   __type(value, struct sk_buff *);
-  __uint(max_entries, 4096);
-  __uint(map_flags, BPF_F_NO_PREALLOC);
 } nfct_confirm_skb SEC(".maps");
 
 struct {
@@ -2697,8 +2697,10 @@ int on___nf_conntrack_confirm(struct pt_regs *ctx)
   if (!skb) {
     return 0;
   }
-  u64 key = bpf_get_current_pid_tgid();
-  bpf_map_update_elem(&nfct_confirm_skb, &key, &skb, BPF_ANY);
+  __u32 zero = 0;
+  struct sk_buff **slot = bpf_map_lookup_elem(&nfct_confirm_skb, &zero);
+  if (slot)
+    *slot = skb;
   return 0;
 }
 
@@ -2708,18 +2710,20 @@ int onret___nf_conntrack_confirm(struct pt_regs *ctx)
   int ret = (int)PT_REGS_RC(ctx);
   // Only proceed on successful confirm (NF_ACCEPT == 1)
   if (ret != 1) {
-    u64 key = bpf_get_current_pid_tgid();
-    bpf_map_delete_elem(&nfct_confirm_skb, &key);
+    __u32 zero = 0;
+    struct sk_buff **slot = bpf_map_lookup_elem(&nfct_confirm_skb, &zero);
+    if (slot)
+      *slot = NULL;
     return 0;
   }
 
-  u64 key = bpf_get_current_pid_tgid();
-  struct sk_buff **skb_pp = bpf_map_lookup_elem(&nfct_confirm_skb, &key);
+  __u32 zero = 0;
+  struct sk_buff **skb_pp = bpf_map_lookup_elem(&nfct_confirm_skb, &zero);
   if (!skb_pp) {
     return 0;
   }
   struct sk_buff *skb = *skb_pp;
-  bpf_map_delete_elem(&nfct_confirm_skb, &key);
+  *skb_pp = NULL;
 
   if (!skb) {
     return 0;
