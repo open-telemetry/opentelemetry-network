@@ -17,12 +17,14 @@
 NatProber::NatProber(ProbeHandler &probe_handler, struct render_bpf_bpf *skel, std::function<void(void)> periodic_cb)
     : periodic_cb_(periodic_cb)
 {
-  // END
-  probe_handler.start_probe(skel, "on_nf_nat_cleanup_conntrack", "nf_nat_cleanup_conntrack");
+  // END (cleanup): nf_ct_delete
+  probe_handler.start_probe(skel, "on_nf_ct_delete", "nf_ct_delete");
   periodic_cb();
 
-  // START
-  probe_handler.start_probe(skel, "on_nf_conntrack_alter_reply", "nf_conntrack_alter_reply");
+  // START (create): __nf_conntrack_confirm entry and return
+  probe_handler.start_probe(skel, "on___nf_conntrack_confirm", "__nf_conntrack_confirm");
+  periodic_cb();
+  probe_handler.start_kretprobe(skel, "onret___nf_conntrack_confirm", "__nf_conntrack_confirm");
   periodic_cb();
 
   // EXISTING
