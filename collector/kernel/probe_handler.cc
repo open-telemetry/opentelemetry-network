@@ -310,7 +310,7 @@ int ProbeHandler::start_probe_common(
 {
   auto bpf_program = bpf_object__find_program_by_name(skel->obj, func_name.c_str());
   if (!bpf_program) {
-    LOG::debug_in(AgentLogKind::BPF, "Could not get find program. func_name:{} k_func_name:{}", func_name, k_func_name);
+    LOG::error("Could not get find program. func_name:{} k_func_name:{}", func_name, k_func_name);
     return -1;
   }
 
