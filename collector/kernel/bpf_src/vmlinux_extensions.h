@@ -66,6 +66,11 @@ struct nf_conn {
   struct nf_conntrack_tuple_hash tuplehash[2];
 };
 
+// Optional sk_buff field flavor for kernels with NF_CONNTRACK configured.
+struct sk_buff___with_nfct {
+  unsigned long _nfct;
+};
+
 struct cgroup;
 struct cgroup_subsys;
 

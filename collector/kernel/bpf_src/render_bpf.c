@@ -153,6 +153,15 @@ struct {
   __uint(max_entries, TABLE_SIZE__SEEN_CONNTRACKS);
 } seen_conntracks SEC(".maps"); // Conntracks that we've reported to userspace
 
+// Stash skb per-CPU for __nf_conntrack_confirm entry to kretprobe path.
+// __nf_conntrack_confirm runs in softirq/non-sleepable context; not re-entrant per-CPU.
+struct {
+  __uint(type, BPF_MAP_TYPE_PERCPU_ARRAY);
+  __uint(max_entries, 1);
+  __type(key, u32);
+  __type(value, struct sk_buff *);
+} nfct_confirm_skb SEC(".maps");
+
 struct {
   __uint(type, BPF_MAP_TYPE_HASH);
   __type(key, struct sock *);
@@ -2637,8 +2646,10 @@ int on_cgroup_attach_task(struct pt_regs *ctx)
 ////////////////////////////////////////////////////////////////////////////////////
 /* NAT */
 /* end */
-SEC("kprobe/nf_nat_cleanup_conntrack")
-int on_nf_nat_cleanup_conntrack(struct pt_regs *ctx)
+
+// Cleanup: nf_ct_delete is invoked for all teardown paths
+SEC("kprobe/nf_ct_delete")
+int on_nf_ct_delete(struct pt_regs *ctx)
 {
   struct nf_conn *ct = (struct nf_conn *)PT_REGS_PARM1(ctx);
 
@@ -2646,21 +2657,22 @@ int on_nf_nat_cleanup_conntrack(struct pt_regs *ctx)
     return 0;
   }
 
-  u64 now = get_timestamp();
+  // Filter to IPv4 TCP/UDP only
+  if ((u16)BPF_CORE_READ(ct, tuplehash[0].tuple.src.l3num) != AF_INET) {
+    return 0;
+  }
+  u8 proto = (u8)BPF_CORE_READ(ct, tuplehash[0].tuple.dst.protonum);
+  if (proto != IPPROTO_TCP && proto != IPPROTO_UDP) {
+    return 0;
+  }
 
-  // filter out conntracks we haven't seen before, as only a subset of all
-  // conntracks are monitored via on_nf_conntrack_alter_reply. All conntracks
-  // will eventually be cleaned up via this function, but since only a subset
-  // of conntracks (i.e. the nat-ed connections) go through
-  // nf_conntrack_alert_reply, there will be a bunch of non-nat conntrack
-  // entries that this probe will trigger on and which we don't need to process.
-  // XXX: more testing and verification of this to be done after completion of
-  // "existing" conntrack probing.
+  // Only report for conntracks we've seen during confirm path (NAT-ed)
   struct nf_conn **seen_conntrack = bpf_map_lookup_elem(&seen_conntracks, &ct);
   if (!seen_conntrack) {
     return 0;
   }
 
+  u64 now = get_timestamp();
   perf_submit_agent_internal__nf_nat_cleanup_conntrack(
       ctx,
       now,
@@ -2671,61 +2683,116 @@ int on_nf_nat_cleanup_conntrack(struct pt_regs *ctx)
       (u16)BPF_CORE_READ(ct, tuplehash[0].tuple.dst.u.all),
       (u8)BPF_CORE_READ(ct, tuplehash[0].tuple.dst.protonum));
 
+  // Remove from seen table
   bpf_map_delete_elem(&seen_conntracks, &ct);
 
   return 0;
 }
 
 /* start */
-SEC("kprobe/nf_conntrack_alter_reply")
-int on_nf_conntrack_alter_reply(struct pt_regs *ctx)
+// Create: confirmation path via __nf_conntrack_confirm (entry + ret)
+SEC("kprobe/__nf_conntrack_confirm")
+int on___nf_conntrack_confirm(struct pt_regs *ctx)
 {
-  struct nf_conn *ct = (struct nf_conn *)PT_REGS_PARM1(ctx);
-  const struct nf_conntrack_tuple *newreply = (const struct nf_conntrack_tuple *)PT_REGS_PARM2(ctx);
+  struct sk_buff *skb = (struct sk_buff *)PT_REGS_PARM1(ctx);
+  if (!skb) {
+    return 0;
+  }
+  __u32 zero = 0;
+  struct sk_buff **slot = bpf_map_lookup_elem(&nfct_confirm_skb, &zero);
+  if (slot)
+    *slot = skb;
+  return 0;
+}
 
-  if (!ct || !newreply) {
+SEC("kretprobe/__nf_conntrack_confirm")
+int onret___nf_conntrack_confirm(struct pt_regs *ctx)
+{
+  int ret = (int)PT_REGS_RC(ctx);
+  // Only proceed on successful confirm (NF_ACCEPT == 1)
+  if (ret != 1) {
+    __u32 zero = 0;
+    struct sk_buff **slot = bpf_map_lookup_elem(&nfct_confirm_skb, &zero);
+    if (slot)
+      *slot = NULL;
     return 0;
   }
 
-  u64 now = get_timestamp();
+  __u32 zero = 0;
+  struct sk_buff **skb_pp = bpf_map_lookup_elem(&nfct_confirm_skb, &zero);
+  if (!skb_pp) {
+    return 0;
+  }
+  struct sk_buff *skb = *skb_pp;
+  *skb_pp = NULL;
 
-  // filter out non ipv4
+  if (!skb) {
+    return 0;
+  }
+
+  // Extract ct from skb->_nfct with NFCT_PTRMASK (~1UL). Use CO-RE flavor cast.
+  if (!bpf_core_field_exists(((struct sk_buff___with_nfct *)skb)->_nfct)) {
+    return 0;
+  }
+  unsigned long nfct = BPF_CORE_READ((struct sk_buff___with_nfct *)skb, _nfct);
+  struct nf_conn *ct = (struct nf_conn *)(nfct & ~7UL);
+  if (!ct) {
+    return 0;
+  }
+
+  // IPv4 only
   if ((u16)BPF_CORE_READ(ct, tuplehash[0].tuple.src.l3num) != AF_INET) {
     return 0;
   }
 
-  // filter out non-tcp and non-udp
-  u8 proto = (u8)BPF_CORE_READ(newreply, dst.protonum);
+  // TCP/UDP only
+  u8 proto = (u8)BPF_CORE_READ(ct, tuplehash[0].tuple.dst.protonum);
   if (proto != IPPROTO_TCP && proto != IPPROTO_UDP) {
     return 0;
   }
 
-  // Permit duplicates in this table, because they may represent a changed conntrack
-  int ret = bpf_map_update_elem(&seen_conntracks, &ct, &ct, BPF_ANY);
-  if (!ret) {
-#if DEBUG_OTHER_MAP_ERRORS
-    bpf_trace_printk("on_nf_conntrack_alter_reply: seen_conntracks table is full, dropping conntrack\n");
-#endif
+  // Build ORIGINAL tuple (pre-NAT, original direction)
+  u32 orig_src_ip = (u32)BPF_CORE_READ(ct, tuplehash[0].tuple.src.u3.ip);
+  u16 orig_src_port = (u16)BPF_CORE_READ(ct, tuplehash[0].tuple.src.u.all);
+  u32 orig_dst_ip = (u32)BPF_CORE_READ(ct, tuplehash[0].tuple.dst.u3.ip);
+  u16 orig_dst_port = (u16)BPF_CORE_READ(ct, tuplehash[0].tuple.dst.u.all);
+
+  // Build POST-NAT tuple in ORIGINAL direction from REPLY by flipping src/dst
+  u32 nat_src_ip = (u32)BPF_CORE_READ(ct, tuplehash[1].tuple.dst.u3.ip);
+  u16 nat_src_port = (u16)BPF_CORE_READ(ct, tuplehash[1].tuple.dst.u.all);
+  u32 nat_dst_ip = (u32)BPF_CORE_READ(ct, tuplehash[1].tuple.src.u3.ip);
+  u16 nat_dst_port = (u16)BPF_CORE_READ(ct, tuplehash[1].tuple.src.u.all);
+
+  // Filter out non-NAT flows by comparing tuples
+  if (orig_src_ip == nat_src_ip && orig_src_port == nat_src_port && orig_dst_ip == nat_dst_ip &&
+      orig_dst_port == nat_dst_port) {
     return 0;
   }
 
-  // Note that the nf_conntrack_tuple has dir=1, so we flip
-  // src and dst when reporting the connection to the agent
-  // to preserve four-tuple order.
+  // Record in seen_conntracks (permit duplicates; BPF_ANY)
+  int up_ret = bpf_map_update_elem(&seen_conntracks, &ct, &ct, BPF_ANY);
+  if (up_ret != 0) {
+#if DEBUG_OTHER_MAP_ERRORS
+    bpf_trace_printk("onret___nf_conntrack_confirm: seen_conntracks update failed ret=%d\n", up_ret);
+#endif
+  }
+
+  u64 now = get_timestamp();
   perf_submit_agent_internal__nf_conntrack_alter_reply(
       ctx,
       now,
       (u64)ct,
-      (u32)BPF_CORE_READ(ct, tuplehash[0].tuple.src.u3.ip),
-      (u16)BPF_CORE_READ(ct, tuplehash[0].tuple.src.u.all),
-      (u32)BPF_CORE_READ(ct, tuplehash[0].tuple.dst.u3.ip),
-      (u16)BPF_CORE_READ(ct, tuplehash[0].tuple.dst.u.all),
-      (u8)BPF_CORE_READ(ct, tuplehash[0].tuple.dst.protonum),
-      (u32)BPF_CORE_READ(newreply, dst.u3.ip),
-      (u16)BPF_CORE_READ(newreply, dst.u.all),
-      (u32)BPF_CORE_READ(newreply, src.u3.ip),
-      (u16)BPF_CORE_READ(newreply, src.u.all),
-      (u8)BPF_CORE_READ(newreply, dst.protonum));
+      orig_src_ip,
+      orig_src_port,
+      orig_dst_ip,
+      orig_dst_port,
+      proto,
+      nat_src_ip,
+      nat_src_port,
+      nat_dst_ip,
+      nat_dst_port,
+      proto);
+
   return 0;
 }
 
