@@ -2369,6 +2369,7 @@ perf_check_and_submit_dns(struct pt_regs *ctx, struct sock *sk, struct sk_buff *
 }
 
 // - Receive UDP packets ---------------------------------------
+SEC("kprobe/skb_consume_udp")
 int on_skb_consume_udp(struct pt_regs *ctx, struct sock *sk, struct sk_buff *skb, int len)
 {
   // Call handle_receive_udp_skb
