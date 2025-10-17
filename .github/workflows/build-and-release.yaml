@@ -144,7 +144,7 @@ jobs:
             out/opentelemetry-ebpf-*.rpm
             out/opentelemetry-ebpf-*.deb
       - name: Upload packages to Release
-        uses: softprops/action-gh-release@6da8fa9354ddfdc4aeace5fc48d7f679b5214090
+        uses: softprops/action-gh-release@5434409c2b6457c050f109d68b2547fcbf1db07b
         if: ${{ !inputs.dry_run }}
         with:
           tag_name: ${{ env.github_tag }}
