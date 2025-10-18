@@ -1,7 +1,7 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
-FROM docker.io/bitnami/minideb:bookworm@sha256:c08bf1955a4051f9d44245f049c06c24282de8ff5a6db22df63b054967e33e0c
+FROM docker.io/bitnami/minideb:bookworm@sha256:9fdb57309b6d56b7baafc12be811d9c03be342f6f0bfb2fb92e33d7470e9897c
 
 LABEL org.label-schema.name="opentelemetry-ebpf-cloud-collector"
 LABEL org.label-schema.description="OpenTelemetry eBPF cloud metadata collector"
