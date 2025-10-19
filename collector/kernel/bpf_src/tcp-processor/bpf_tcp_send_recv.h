@@ -124,6 +124,51 @@ static __always_inline struct iovec *msg_iter_get_iov(struct msghdr *msg)
   return (struct iovec *)BPF_CORE_READ((struct msghdr___5_13_19 *)msg, msg_iter.iov);
 }
 
+/*
+ * Returns true if msg->msg_iter designates ITER_UBUF on kernels that support it.
+ * Uses CO-RE field/enum relocation to avoid relying on numeric enum values.
+ *
+ * Behavior across eras:
+ * - <=5.13: no iter_type field and no UBUF; returns false.
+ * - 5.14–5.19: iter_type exists but UBUF not present; returns false.
+ * - >=6.0: iter_type exists and ITER_UBUF may exist; compare ordinal safely.
+ */
+static __always_inline bool iter_is_ubuf(const struct msghdr *msg)
+{
+  if (!bpf_core_field_exists(((struct msghdr *)0)->msg_iter.iter_type))
+    return false; // bitmask-era: no UBUF
+
+  if (!bpf_core_enum_value_exists(enum iter_type, ITER_UBUF))
+    return false; // target kernel lacks UBUF support
+
+  __u8 it = BPF_CORE_READ(msg, msg_iter.iter_type);
+  __u64 ev_ubuf = bpf_core_enum_value(enum iter_type, ITER_UBUF);
+  return it == ev_ubuf;
+}
+
+/*
+ * Resolve UBUF as an iovec-like (base,len) pair across kernel versions.
+ * - 6.4+: prefer __ubuf_iovec overlay (base/len). iov_offset is outside overlay.
+ * - 6.0–6.3: use ubuf pointer and count fields. Caller may apply iov_offset.
+ */
+static __always_inline void ubuf_as_iovec(const struct msghdr *msg, void **out_base, size_t *out_len)
+{
+  // 6.4+ overlay: exposes base/len as struct iovec
+  if (bpf_core_field_exists(((struct msghdr *)0)->msg_iter.__ubuf_iovec)) {
+    void *base = BPF_CORE_READ(msg, msg_iter.__ubuf_iovec.iov_base);
+    size_t len = BPF_CORE_READ(msg, msg_iter.__ubuf_iovec.iov_len);
+    *out_base = base;
+    *out_len = len;
+    return;
+  }
+
+  // 6.0–6.3: plain ubuf pointer + count
+  void *ubuf = BPF_CORE_READ(msg, msg_iter.ubuf);
+  size_t cnt = BPF_CORE_READ(msg, msg_iter.count);
+  *out_base = ubuf;
+  *out_len = cnt;
+}
+
 static __always_inline void tcp_send_stream_handler(
     struct pt_regs *ctx,
     struct tcp_connection_t *pconn,
@@ -222,28 +267,30 @@ __attribute__((noinline)) int handle_kprobe__tcp_sendmsg(struct pt_regs *ctx)
   unsigned long nr_segs = 0;
   size_t iov_offset = 0;
   unsigned int iter_type = 0;
-  if (!msg_iter_is_iov_or_kvec(msg, &iter_type)) {
+  void *iov_ptr = NULL;
+  size_t iov_len = 0;
+  int written = 0;
+  int depth = 1;
+
+  if (iter_is_ubuf(msg)) {
+    // ITER_UBUF: treat as a single contiguous segment
+    ubuf_as_iovec(msg, &iov_ptr, &iov_len);
+  } else if (msg_iter_is_iov_or_kvec(msg, &iter_type)) {
+    // IOVEC/KVEC: can access through iov since both share layout
+    iov = (struct iovec *)msg_iter_get_iov(msg);
+    if (iov) {
+      iov_ptr = BPF_CORE_READ(iov, iov_base);
+      iov_len = BPF_CORE_READ(iov, iov_len);
+    }
+  } else {
 #if DEBUG_TCP_SEND
     DEBUG_PRINTK("unsupported iov type: %u\n", iter_type);
 #endif
     bpf_log(ctx, BPF_LOG_UNSUPPORTED_IO, (u64)ST_SEND, (u64)sk, (u64)iter_type);
     return 0;
   }
-
-  // can access through iov since iov and kvec are union and have same layout
-  iov = (struct iovec *)msg_iter_get_iov(msg);
   nr_segs = BPF_CORE_READ(msg, msg_iter.nr_segs);
   iov_offset = BPF_CORE_READ(msg, msg_iter.iov_offset);
-
-  void *iov_ptr = NULL;
-  size_t iov_len = 0;
-  int written = 0;
-  int depth = 1;
-
-  if (iov) {
-    iov_ptr = BPF_CORE_READ(iov, iov_base);
-    iov_len = BPF_CORE_READ(iov, iov_len);
-  }
 
   // Defer arguments to kretprobe
   BEGIN_SAVE_ARGS(tcp_sendmsg)
@@ -415,23 +462,27 @@ int handle_kprobe__tcp_recvmsg(struct pt_regs *ctx)
 
   // decode msg
   struct iovec *iov = NULL;
+  void *iov_base = NULL;
+  size_t iov_len = 0;
+  int written = 0;
+  int depth = 1;
   unsigned int iter_type = 0;
-  if (!msg_iter_is_iov_or_kvec(msg, &iter_type)) {
+
+  if (iter_is_ubuf(msg)) {
+    // ITER_UBUF: read as iovec-like values
+    ubuf_as_iovec(msg, &iov_base, &iov_len);
+  } else if (msg_iter_is_iov_or_kvec(msg, &iter_type)) {
+    // IOVEC/KVEC: can access through iov since both share layout
+    iov = (struct iovec *)msg_iter_get_iov(msg);
+    iov_base = BPF_CORE_READ(iov, iov_base);
+    iov_len = BPF_CORE_READ(iov, iov_len);
+  } else {
 #if DEBUG_TCP_RECEIVE
     DEBUG_PRINTK("unsupported iov type: %u\n", iter_type);
 #endif
     bpf_log(ctx, BPF_LOG_UNSUPPORTED_IO, (u64)ST_RECV, (u64)sk, (u64)iter_type);
     return 0;
   }
-  // can access through iov since iov and kvec are union and have same layout
-  iov = (struct iovec *)msg_iter_get_iov(msg);
-
-  void *iov_base = NULL;
-  size_t iov_len = 0;
-  int written = 0;
-  int depth = 1;
-  iov_base = BPF_CORE_READ(iov, iov_base);
-  iov_len = BPF_CORE_READ(iov, iov_len);
 
   // Add to receiver table
   BEGIN_SAVE_ARGS(tcp_recvmsg)
