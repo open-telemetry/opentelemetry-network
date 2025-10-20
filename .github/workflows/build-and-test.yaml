@@ -54,6 +54,30 @@ jobs:
     outputs:
       date: ${{ steps.date.outputs.date }}
 
+  cargo-tests:
+    name: cargo-tests
+    runs-on: ubuntu-24.04
+    steps:
+    - name: Check out the codebase
+      uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      with:
+        fetch-depth: 0
+
+    - name: Run cargo tests for generated crates
+      env:
+        PASS: ${{ secrets.DOCKER_PASSWORD }}
+      run: |
+        echo "github.workspace = ${{ github.workspace }}"
+        docker pull $BENV_IMAGE
+        git submodule update  --init --recursive ext/
+
+        docker run -t \
+        --rm \
+        --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/home/user/src,readonly" \
+        --env EBPF_NET_SRC_ROOT=/home/user/src \
+        $BENV_IMAGE \
+        ./build.sh cargo-tests
+
   build-reducer:
     name: build-reducer
     runs-on: ubuntu-24.04

@@ -10,7 +10,7 @@ import io.opentelemetry.render.render.FieldTypeEnum
 import static io.opentelemetry.render.generator.AppGenerator.outputPath
 import static io.opentelemetry.render.generator.RenderGenerator.generatedCodeWarning
 import static extension io.opentelemetry.render.extensions.AppExtensions.*
-import static extension io.opentelemetry.render.extensions.FieldExtensions.*
+import static extension io.opentelemetry.render.extensions.FieldTypeExtensions.*
 import static extension io.opentelemetry.render.extensions.MessageExtensions.*
 
 class WriterGenerator {
@@ -164,80 +164,97 @@ class WriterGenerator {
     «generatedCodeWarning()»
 
     #include "encoder.h"
+    #include "wire_message.h"
+
+    #include <jitbuf/jb.h>
+    #include <platform/types.h>
+
+    #include <cassert>
+    #include <cstring>
+    #include <stdexcept>
+    #include <system_error>
 
     namespace «app.pkg.name»::«app.name» {
+
+    «FOR msg : app.messages»
+      extern "C" void «app.pkg.name»_«app.name»_encode_«msg.name»(
+          uint8_t *__dest,
+          uint32_t __dest_len,
+          uint64_t __tstamp«FOR field : msg.fields.sortBy[id] BEFORE ',' SEPARATOR ','»
+            «ffiParamC(field)»
+          «ENDFOR»
+      );
+    «ENDFOR»
 
     Encoder::Encoder() {}
     Encoder::~Encoder() {}
 
     «FOR msg : app.messages»
-      /* «msg.name» */
+      /* «msg.name» via Rust shim */
       std::error_code Encoder::«msg.name»(IBufferedWriter &__buffer, u64 __tstamp«msg.commaPrototype») {
-        /* allocate space on the stack, 64-bit aligned */
-        /* zero out buffer so we don't exfiltrate uninitialized memory*/
-        u64 __buf64[1 + (sizeof(struct «msg.wire_msg.struct_name») + 7) / 8] = {};
-        u32 __len = «msg.wire_msg.size» + sizeof(u64);
-
-        __buf64[0] = __tstamp;
-
-        auto __dst_msg = («msg.wire_msg.struct_name» *)&__buf64[1];
-
-        __dst_msg->_rpc_id = «msg.wire_msg.rpc_id»;
-
-        /* copy all non-string fields */
-        «FOR field : msg.fields.filter[type.enum_type != FieldTypeEnum.STRING || type.isShortString]»
-          «IF field.isArray || field.type.isShortString»
-            memcpy(&__dst_msg->«field.name»[0], &«field.name»[0], «field.size(true)»);
-          «ELSE»
-            __dst_msg->«field.name» = «field.name»;
-          «ENDIF»
-        «ENDFOR»
-
+        /* Compute encoded length (wire struct + dynamic payloads) */
         u32 __consumed = «msg.wire_msg.size»;
         «IF msg.wire_msg.dynamic_size»
           /* handle dynamic string lengths */
           «FOR field : msg.wire_msg.fields.filter[type.enum_type == FieldTypeEnum.STRING]»
-              /* not the last field: length is in wire message */
-              __dst_msg->«field.name» = «field.name».len;
-              __consumed += «field.name».len;
+            __consumed += «field.name».len;
           «ENDFOR»
-          /* last field: gets the rest of the message */
           __consumed += «msg.wire_msg.last_blob_field.name».len;
           if (__consumed > 0xffff) {
             throw std::runtime_error("Writer::«msg.name» tried to write dynamic message >= 1<<16");
           }
-          __dst_msg->_len = (u16)__consumed;
         «ENDIF»
 
         /* start write */
-        auto __allocated = __buffer.start_write(sizeof(u64) + __consumed);
+        const u32 __total_len = sizeof(u64) + __consumed;
+        auto __allocated = __buffer.start_write(__total_len);
         if (!__allocated) {
           return __allocated.error();
         }
 
-        /* copy fixed part of message */
-        char *__dest = (char *)*__allocated;
-        assert(__dest);
-        memcpy(__dest, __buf64, __len); __dest += __len;
+        /* Call Rust encoder */
+        «app.pkg.name»_«app.name»_encode_«msg.name»(
+            (uint8_t *)*__allocated,
+            __total_len,
+            __tstamp«FOR field : msg.fields.sortBy[id] BEFORE ',' SEPARATOR ','»
+              «ffiCallArg(field)»
+            «ENDFOR»
+        );
 
-        «IF msg.wire_msg.dynamic_size»
-          «FOR field : msg.wire_msg.fields.filter[type.enum_type == FieldTypeEnum.STRING] + #[msg.wire_msg.last_blob_field]»
-            /* dynamic string: «field.name» */
-            memcpy(__dest, «field.name».buf, «field.name».len);
-            __dest += «field.name».len;
-
-          «ENDFOR»
-        «ENDIF»
-        /* finish write */
         __buffer.finish_write();
-
         return {};
       }
-
     «ENDFOR»
 
     } // namespace «app.pkg.name»::«app.name»
     '''
+  }
+
+  private static def String ffiParamC(io.opentelemetry.render.render.Field field) {
+    if (field.type.enum_type == FieldTypeEnum.STRING) {
+      return '''struct jb_blob «field.name»'''
+    }
+
+    if (field.type.isShortString || field.isArray) {
+      val elemC =
+        if (field.type.isShortString) 'uint8_t' else field.type.cType(true)
+      return '''const «elemC» *«field.name»'''
+    }
+
+    return '''«field.type.cType(false)» «field.name»'''
+  }
+
+  private static def String ffiCallArg(io.opentelemetry.render.render.Field field) {
+    if (field.type.enum_type == FieldTypeEnum.STRING) {
+      return field.name
+    }
+    if (field.type.isShortString) {
+      return '''(const uint8_t *)&«field.name»[0]'''
+    }
+    if (field.isArray) {
+      return '''&«field.name»[0]'''
+    }
+    return field.name
   }
 
 }

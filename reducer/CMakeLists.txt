@@ -104,6 +104,7 @@ target_link_libraries(
     virtual_clock
     cgroup_parser
     versions
+    render_rust_ebpf_net
 )
 add_dependencies(
   reducerlib
