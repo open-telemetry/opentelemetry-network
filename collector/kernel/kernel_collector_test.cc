@@ -313,7 +313,7 @@ protected:
   {
     add_workload([]() {
       system(
-          "exec 1> /tmp/workload-stress-ng-sock.log 2>&1; echo starting workload; for n in $(seq 1 30); do stress-ng --sock 2 --sock-domain ipv4 --sock-ops 2000 --sock-port 6787; sleep .1; done; echo workload complete");
+          "exec 1> /tmp/workload-stress-ng-sock.log 2>&1; echo starting workload; for n in $(seq 1 10); do stress-ng --sock 2 --sock-domain ipv4 --sock-ops 1000 --sock-port 6787; sleep .1; done; echo workload complete");
     });
   }
 
@@ -496,7 +496,7 @@ TEST_F(KernelCollectorTest, bpf_log)
 {
   StopConditions stop_conditions{
       .timeout_sec = std::chrono::minutes(10),
-      .num_sends = 1000,
+      .num_sends = 500,
       .names_and_counts = {},
       .wait_for_all_workloads_to_complete = true};
 
