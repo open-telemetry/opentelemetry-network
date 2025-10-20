@@ -13,15 +13,9 @@
 [submodule "build-tools/aws_sdk/aws-sdk-cpp"]
 	path = build-tools/aws_sdk/aws-sdk-cpp
 	url = https://github.com/aws/aws-sdk-cpp
-[submodule "build-tools/gcp_cpp/google-cloud-cpp-common"]
-	path = build-tools/gcp_cpp/google-cloud-cpp-common
-	url = https://github.com/googleapis/google-cloud-cpp-common.git
 [submodule "build-tools/opentelemetry/opentelemetry-proto"]
 	path = build-tools/opentelemetry/opentelemetry-proto
 	url = https://github.com/open-telemetry/opentelemetry-proto.git
-[submodule "build-tools/bcc/bcc"]
-	path = build-tools/bcc/bcc
-	url = https://github.com/iovisor/bcc.git
 [submodule "build-tools/cpp_misc/json"]
 	path = build-tools/cpp_misc/json
 	url = https://github.com/nlohmann/json.git
@@ -40,12 +34,6 @@
 [submodule "build-tools/cpp_misc/yaml-cpp"]
 	path = build-tools/cpp_misc/yaml-cpp
 	url = https://github.com/jbeder/yaml-cpp.git
-[submodule "build-tools/gcp_cpp/google-cloud-cpp"]
-	path = build-tools/gcp_cpp/google-cloud-cpp
-	url = https://github.com/googleapis/google-cloud-cpp.git
-[submodule "build-tools/gcp_cpp/googleapis"]
-	path = build-tools/gcp_cpp/googleapis
-	url = https://github.com/googleapis/googleapis.git
 [submodule "build-tools/cpp_misc/googletest"]
 	path = build-tools/cpp_misc/googletest
 	url = https://github.com/google/googletest.git
