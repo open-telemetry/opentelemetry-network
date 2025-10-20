@@ -83,6 +83,7 @@ add_subdirectory(tools)
 add_subdirectory(dist)
 
 configure_file(config.h.cmake_in config.h)
+configure_file(util/version_config.h.cmake_in util/version_config.h)
 
 add_dependencies(pipeline collectors reducer)
 add_dependencies(pipeline-docker collectors-docker)
