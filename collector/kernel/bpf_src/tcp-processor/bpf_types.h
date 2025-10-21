@@ -126,7 +126,7 @@ struct {
 
 #define bpf_log(ctx, _code, _arg0, _arg1, _arg2)                                                                               \
   do {                                                                                                                         \
-    _bpf_log(__LINE__, ctx, _code, _arg0, _arg1, _arg1);                                                                       \
+    _bpf_log(__LINE__, ctx, _code, _arg0, _arg1, _arg2);                                                                       \
   } while (0)
 
 static void __always_inline _bpf_log(int filelineid, struct pt_regs *ctx, enum BPF_LOG_CODE code, u64 arg0, u64 arg1, u64 arg2)
