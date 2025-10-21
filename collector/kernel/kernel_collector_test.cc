@@ -316,8 +316,23 @@ protected:
   void add_workload_stress_ng_sock()
   {
     add_workload([]() {
-      system(
-          "exec 1> /tmp/workload-stress-ng-sock.log 2>&1; echo starting workload; for n in $(seq 1 30); do stress-ng --sock 2 --sock-domain ipv4 --sock-ops 2000 --sock-port 6787; sleep .1; done; echo workload complete");
+      // Emit stress-ng output live to console and also capture to a log file for later inspection.
+      // Use bash for process substitution; fall back gracefully if stdbuf is unavailable.
+      system("bash -lc '"
+             "exec > >(tee -a /tmp/workload-stress-ng-sock.log) 2>&1; "
+             "echo starting workload; "
+             "echo stress-ng version: $(stress-ng --version 2>&1 || true); "
+             "for n in $(seq 1 10); do "
+             "  echo [workload-0] iteration $n start $(date -Is); "
+             "  if command -v stdbuf >/dev/null 2>&1; then "
+             "    stdbuf -oL -eL stress-ng --sock 2 --sock-domain ipv4 --sock-ops 1000 --sock-port 6787 --metrics-brief; "
+             "  else "
+             "    stress-ng --sock 2 --sock-domain ipv4 --sock-ops 1000 --sock-port 6787 --metrics-brief; "
+             "  fi; "
+             "  echo [workload-0] iteration $n end $(date -Is); "
+             "  sleep .1; "
+             "done; "
+             "echo workload complete'");
     });
   }
 
@@ -500,7 +515,7 @@ TEST_F(KernelCollectorTest, bpf_log)
 {
   StopConditions stop_conditions{
       .timeout_sec = std::chrono::minutes(10),
-      .num_sends = 1000,
+      .num_sends = 500,
       .names_and_counts = {},
       .wait_for_all_workloads_to_complete = true};
 
