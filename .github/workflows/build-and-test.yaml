@@ -57,7 +57,6 @@ jobs:
   build-reducer:
     name: build-reducer
     runs-on: ubuntu-24.04
-    needs: [clang-format-check]
     steps:
     - name: Check out the codebase
       uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
@@ -124,7 +123,6 @@ jobs:
   build-kernel-collector:
     name: build-kernel-collector
     runs-on: ubuntu-24.04
-    needs: [clang-format-check]
     steps:
     - name: Check out the codebase
       uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
@@ -191,7 +189,6 @@ jobs:
   build-kernel-collector-test:
     name: build-kernel-collector-test
     runs-on: ubuntu-24.04
-    needs: [clang-format-check]
     steps:
     - name: Check out the codebase
       uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
@@ -258,7 +255,6 @@ jobs:
   build-k8s-relay:
     name: build-k8s-relay
     runs-on: ubuntu-24.04
-    needs: [clang-format-check]
     steps:
     - name: Check out the codebase
       uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
@@ -300,7 +296,6 @@ jobs:
   build-cloud-collector:
     name: build-cloud-collector
     runs-on: ubuntu-24.04
-    needs: [clang-format-check]
     steps:
     - name: Check out the codebase
       uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
@@ -342,7 +337,6 @@ jobs:
   build-k8s-watcher:
     name: build-k8s-watcher
     runs-on: ubuntu-24.04
-    needs: [clang-format-check]
     steps:
     - name: Check out the codebase
       uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
@@ -384,7 +378,6 @@ jobs:
   build-run-unit-tests:
     name: build-run-unit-tests
     runs-on: ubuntu-24.04
-    needs: [clang-format-check]
     steps:
     - name: Check out the codebase
       uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
@@ -427,7 +420,6 @@ jobs:
   build-run-unit-tests-with-asan-and-debug-flags:
     name: build-run-unit-tests-with-asan-and-debug-flags
     runs-on: ubuntu-24.04
-    needs: [clang-format-check]
     steps:
     - name: Check out the codebase
       uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
