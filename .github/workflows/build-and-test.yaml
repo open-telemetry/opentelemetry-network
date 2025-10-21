@@ -497,6 +497,13 @@ jobs:
         name: kernel-collector-container
         path: ./container-exports
 
+    - name: Cache and install LVH host dependencies
+      uses: awalsh128/cache-apt-pkgs-action@latest
+      with:
+        # Match LVH action.yaml dependency_list exactly
+        packages: cpu-checker qemu-system-x86 libvirt-daemon-system libvirt-clients bridge-utils virtinst virt-manager
+        version: lvh-deps-1
+
     - name: Run kernel collector simple tests on ${{ matrix.description }}
       uses: yonch/little-vm-helper@main
       with:
@@ -643,6 +650,13 @@ jobs:
       with:
         name: kernel-collector-test-container
         path: ./container-exports
+
+    - name: Cache and install LVH host dependencies
+      uses: awalsh128/cache-apt-pkgs-action@latest
+      with:
+        # Match LVH action.yaml dependency_list exactly
+        packages: cpu-checker qemu-system-x86 libvirt-daemon-system libvirt-clients bridge-utils virtinst virt-manager
+        version: lvh-deps-1
 
     - name: Run kernel collector tests on ${{ matrix.description }}
       uses: yonch/little-vm-helper@main
