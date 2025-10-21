@@ -12,32 +12,34 @@
 #include "bpf_debug.h"
 #include "bpf_types.h"
 
-// s2 can not be longer than 16 bytes due to older bpf inlining limitations
-static __always_inline int string_starts_with(const char *s1, const size_t s1_len, const char *s2)
+/*
+ * Safe prefix compare for potentially untrusted pointers (kernel or user).
+ * Copies up to 16 bytes from s1 via helper before comparing to s2 literal.
+ * Intended for 5.4-era verifier quirks and mixed user/kernel buffers.
+ */
+static __always_inline int string_starts_with(const char *s1, const size_t s1_len, const char *s2, const size_t s2_len)
 {
-
-  char s2_local[16] = {};
-  size_t s2_len = bpf_probe_read_kernel_str(s2_local, sizeof(s2_local), s2);
-  if (s2_len > 16)
-    return 0; // help the verifier
-
-  char s1_local[16] = {};
-  size_t s1_local_len = bpf_probe_read_kernel_str(s1_local, sizeof(s1_local), s1);
-
-  if (s1_local_len < s2_len) {
+  if (s2_len == 0) {
+    return 1;
+  }
+  if (s2_len > 16) {
+    return 0;
+  }
+  if (s1_len < s2_len) {
     return 0;
   }
 
-  for (int i = 0; i < 16; i++) {
-    if (i >= s2_len) {
-      // s2 is shorter than 16 bytes, so we are done
-      return 1;
-    }
-    if (s2_local[i] != s1_local[i]) {
+  char local[16] = {};
+  if (bpf_probe_read(local, (u32)s2_len, s1) != 0) {
+    return 0;
+  }
+
+  int n = (int)s2_len; // s2_len <= 16 guaranteed
+  for (int i = 0; i < n; i++) {
+    if (local[i] != s2[i]) {
       return 0;
     }
   }
-
   return 1;
 }
 
