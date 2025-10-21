@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 ARG BENV_BASE_IMAGE_DISTRO=debian
-ARG BENV_BASE_IMAGE_VERSION=bookworm@sha256:731dd1380d6a8d170a695dbeb17fe0eade0e1c29f654cf0a3a07f372191c3f4b
+ARG BENV_BASE_IMAGE_VERSION=trixie@sha256:72547dd722cd005a8c2aa2079af9ca0ee93aad8e589689135feaed60b0a8c08d
 FROM ${BENV_BASE_IMAGE_DISTRO}:${BENV_BASE_IMAGE_VERSION} AS build-main
 
 ################ DEPENDENCIES ################
@@ -19,14 +19,14 @@ ARG PKG_CORE="wget curl git gnupg bc aptitude netcat-openbsd sudo"
 ARG PKG_TEXT="xxd sed ripgrep less jq"
 ARG PKG_COMPILERS="g++"
 ARG PKG_BUILD="ninja-build"
-ARG PKG_LINTERS="clang-format-16 clang-tidy-16 shellcheck"
+ARG PKG_LINTERS="clang-format-19 clang-tidy-19 shellcheck"
 ARG PKG_MANAGERS="pkg-config rpm"
 ARG PKG_KERNEL="dkms build-essential"
 ARG PKG_DEV="gdb cgdb tmux strace"
 ARG PKG_LIBS="libc-ares-dev libelf-dev libssl-dev libzstd-dev libgrpc-dev libcurl4-openssl-dev libabsl-dev protobuf-compiler-grpc libcurlpp-dev libgrpc++-dev libprotobuf-dev"
 ARG PKG_PY_TEST="python3-pytest python3-dev python3-pip python3-setuptools python3-wheel pylint"
 ARG PKG_JAVA="default-jdk-headless"
-ARG PKG_LLVM="llvm-16-dev libclang-16-dev clang-16 libpolly-16-dev"
+ARG PKG_LLVM="llvm-19-dev libclang-19-dev clang-19 libpolly-19-dev"
 ARG PKG_MAKE="cmake ccache autoconf autoconf-archive automake libtool make"
 ARG PKG_BCC="bison flex zip"
 ARG PKG_LIBBPF="zip pkg-config libelf-dev zlib1g-dev libbfd-dev libcap-dev"
