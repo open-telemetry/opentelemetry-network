@@ -559,6 +559,16 @@ jobs:
             collector_logs=$(docker logs $container_id 2>&1 || true)
             echo "$collector_logs"
             
+            # Fail if a crash was detected in the kernel collector logs
+            if echo "$collector_logs" | grep -qi "CRASH DETECTED"; then
+              echo "✗ Crash detected in kernel collector output - test failed"
+              docker stop $container_id || true
+              docker rm $container_id || true
+              # Stop nc listener
+              kill $nc_pid || true
+              exit 1
+            fi
+            
             # Check for error strings in the logs (exclude GCP metadata fetch errors which are expected)
             if echo "$collector_logs" | grep -i "error" | grep -v "Unable to fetch GCP metadata: error while fetching Google Cloud Platform instance metadata" > /dev/null 2>&1; then
               echo "✗ Found 'error' in kernel collector output - test failed"
@@ -679,8 +689,11 @@ jobs:
           # Wait a moment for reducer to start
           sleep 5
           
-          # Run kernel collector test
-          container_id=$(docker create -t --rm \
+          # Run kernel collector test and capture real exit code
+          echo "Starting kernel collector test..."
+          set +e  # disable exit on error to capture exit status
+          docker run --name kernel-collector-test-$$ \
+            --rm \
             --env EBPF_NET_HOST_DIR="/hostfs" \
             --privileged \
             --network host \
@@ -695,13 +708,7 @@ jobs:
             --env EBPF_NET_MINIDUMP_DIR="/hostfs/data/minidump" \
             --volume "$(pwd)/data:/hostfs/data" \
             localhost:5000/kernel-collector-test \
-            --log-console)
-          
-          echo "Starting kernel collector test..."
-          docker start -a $container_id
-
-          set +e  # disable exit on error
-          docker wait $container_id
+            --log-console
           test_exit_code=$?
           set -e  # re-enable exit on error
           
