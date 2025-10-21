@@ -59,12 +59,13 @@ elif [[ -n "${EBPF_NET_RUN_UNDER_VALGRIND}" ]]; then
   # shellcheck disable=SC2086
   (set -x; exec /usr/bin/valgrind ${EBPF_NET_RUN_UNDER_VALGRIND} "${install_dir}/kernel_collector_test" "$@")
 else
-  if ! (set -x; exec "${install_dir}/kernel_collector_test" "$@")
-  then
+  # Run the test binary and capture its exit code without inverting it.
+  (set -x; "${install_dir}/kernel_collector_test" "$@")
+  test_exit_code=$?
+  if [[ ${test_exit_code} -ne 0 ]]; then
     echo "kernel collector test FAILED"
     cp /srv/core-* /hostfs/data || true
-    if [[ -n "${DELAY_EXIT_ON_FAILURE}" ]]
-    then
+    if [[ -n "${DELAY_EXIT_ON_FAILURE}" ]]; then
       echo "DELAY_EXIT_ON_FAILURE is set, doing 'sleep inf'"
       sleep inf
     fi
@@ -97,4 +98,9 @@ if [[ -n "${DELAY_EXIT}" ]]
 then
   echo "DELAY_EXIT is set, doing 'sleep inf'"
   sleep inf
+fi
+
+# Propagate the test's exit code so the container exit reflects pass/fail.
+if [[ -n "${test_exit_code:-}" ]]; then
+  exit "${test_exit_code}"
 fi
