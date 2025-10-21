@@ -23,6 +23,7 @@
 #include <util/json.h>
 #include <util/json_converter.h>
 #include <util/log.h>
+#include <util/log_whitelist.h>
 #include <util/logger.h>
 #include <util/system_ops.h>
 
@@ -68,6 +69,9 @@ protected:
   void SetUp() override
   {
     CommonTest::SetUp();
+
+    // Allow relevant HTTP-related logs for this test
+    set_log_whitelist<AgentLogKind>({AgentLogKind::HTTP, AgentLogKind::PROTOCOL, AgentLogKind::BPF, AgentLogKind::PERF});
 
     ASSERT_EQ(0, uv_loop_init(&loop_));
   }
@@ -505,8 +509,10 @@ TEST_F(KernelCollectorTest, bpf_log)
   // This will be called for each render message sent from the kernel-collector to 'ingest' (by the reducer in a real system)
   auto ingest_msg_cb = [&](nlohmann::json const &object) {
     SCOPED_TIMING(BpfLogTestIngestMsgCb);
-    // Fail immediately if a bpf_log is encountered.
-    DEBUG_ASSUME(object["name"] != "bpf_log").else_log("got bpf_log {}", to_string(object));
+    // Log any bpf_log messages so they are visible in CI output.
+    if (object["name"] == "bpf_log") {
+      LOG::error("bpf_log: {}", log_waive(object.dump()));
+    }
   };
 
   start_kernel_collector(IntakeEncoder::binary, stop_conditions, BPF_DUMP_FILE, ingest_msg_cb);

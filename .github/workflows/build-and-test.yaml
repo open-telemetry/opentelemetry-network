@@ -57,12 +57,24 @@ jobs:
   build-reducer:
     name: build-reducer
     runs-on: ubuntu-24.04
-    needs: [clang-format-check]
     steps:
     - name: Check out the codebase
       uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       with:
         fetch-depth: 0
+
+    - name: Cache and install ccache
+      uses: awalsh128/cache-apt-pkgs-action@latest
+      with:
+        packages: ccache
+        version: 1.0
+
+    - name: Setup ccache
+      uses: hendrikmuhs/ccache-action@v1.2
+      with:
+        key: ccache-build-reducer
+        max-size: 8G
+        verbose: 2
 
     - name: build-reducer
       env:
@@ -76,10 +88,16 @@ jobs:
         docker run -d -p 5000:5000 --name registry docker.io/library/registry:2
         
         # Build reducer with registry access
+        # Ensure ccache directory is writable inside container
+        mkdir -p "${{ github.workspace }}/.ccache"
+        chmod -R 777 "${{ github.workspace }}/.ccache" || true
+        
         docker run -t \
         --rm \
+        --mount "type=bind,source=${{ github.workspace }}/.ccache,destination=/ccache" \
         --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/home/user/src,readonly" \
         --env EBPF_NET_SRC_ROOT=/home/user/src \
+        --env CCACHE_DIR=/ccache \
         --network host \
         --privileged \
         $BENV_IMAGE \
@@ -105,12 +123,24 @@ jobs:
   build-kernel-collector:
     name: build-kernel-collector
     runs-on: ubuntu-24.04
-    needs: [clang-format-check]
     steps:
     - name: Check out the codebase
       uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       with:
         fetch-depth: 0
+
+    - name: Cache and install ccache
+      uses: awalsh128/cache-apt-pkgs-action@latest
+      with:
+        packages: ccache
+        version: 1.0
+
+    - name: Setup ccache
+      uses: hendrikmuhs/ccache-action@v1.2
+      with:
+        key: ccache-build-kernel-collector
+        max-size: 8G
+        verbose: 2
 
     - name: build-kernel-collector
       env:
@@ -124,10 +154,16 @@ jobs:
         docker run -d -p 5000:5000 --name registry docker.io/library/registry:2
         
         # Build kernel-collector with registry access
+        # Ensure ccache directory is writable inside container
+        mkdir -p "${{ github.workspace }}/.ccache"
+        chmod -R 777 "${{ github.workspace }}/.ccache" || true
+        
         docker run -t \
         --rm \
+        --mount "type=bind,source=${{ github.workspace }}/.ccache,destination=/ccache" \
         --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/home/user/src,readonly" \
         --env EBPF_NET_SRC_ROOT=/home/user/src \
+        --env CCACHE_DIR=/ccache \
         --network host \
         --privileged \
         $BENV_IMAGE \
@@ -153,12 +189,24 @@ jobs:
   build-kernel-collector-test:
     name: build-kernel-collector-test
     runs-on: ubuntu-24.04
-    needs: [clang-format-check]
     steps:
     - name: Check out the codebase
       uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       with:
         fetch-depth: 0
+
+    - name: Cache and install ccache
+      uses: awalsh128/cache-apt-pkgs-action@latest
+      with:
+        packages: ccache
+        version: 1.0
+
+    - name: Setup ccache
+      uses: hendrikmuhs/ccache-action@v1.2
+      with:
+        key: ccache-build-kernel-collector-test
+        max-size: 8G
+        verbose: 2
 
     - name: build kernel-collector-test container
       env:
@@ -172,10 +220,16 @@ jobs:
         docker run -d -p 5000:5000 --name registry docker.io/library/registry:2
         
         # Build kernel-collector-test with registry access
+        # Ensure ccache directory is writable inside container
+        mkdir -p "${{ github.workspace }}/.ccache"
+        chmod -R 777 "${{ github.workspace }}/.ccache" || true
+        
         docker run -t \
         --rm \
+        --mount "type=bind,source=${{ github.workspace }}/.ccache,destination=/ccache" \
         --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/home/user/src,readonly" \
         --env EBPF_NET_SRC_ROOT=/home/user/src \
+        --env CCACHE_DIR=/ccache \
         --network host \
         --privileged \
         $BENV_IMAGE \
@@ -201,91 +255,163 @@ jobs:
   build-k8s-relay:
     name: build-k8s-relay
     runs-on: ubuntu-24.04
-    needs: [clang-format-check]
     steps:
     - name: Check out the codebase
       uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       with:
         fetch-depth: 0
+
+    - name: Cache and install ccache
+      uses: awalsh128/cache-apt-pkgs-action@latest
+      with:
+        packages: ccache
+        version: 1.0
+
+    - name: Setup ccache
+      uses: hendrikmuhs/ccache-action@v1.2
+      with:
+        key: ccache-build-k8s-relay
+        max-size: 8G
+        verbose: 2
 
     - name: build k8s-relay
       run: |
         echo "github.workspace = ${{ github.workspace }}"
         docker pull $BENV_IMAGE
         git submodule update  --init --recursive ext/
+        # Ensure ccache directory is writable inside container
+        mkdir -p "${{ github.workspace }}/.ccache"
+        chmod -R 777 "${{ github.workspace }}/.ccache" || true
+
         docker run -t \
         --rm \
+        --mount "type=bind,source=${{ github.workspace }}/.ccache,destination=/ccache" \
         --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
         --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/home/user/src,readonly" \
         --env EBPF_NET_SRC_ROOT=/home/user/src \
+        --env CCACHE_DIR=/ccache \
         $BENV_IMAGE \
         ./build.sh k8s-relay
 
   build-cloud-collector:
     name: build-cloud-collector
     runs-on: ubuntu-24.04
-    needs: [clang-format-check]
     steps:
     - name: Check out the codebase
       uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       with:
         fetch-depth: 0
+
+    - name: Cache and install ccache
+      uses: awalsh128/cache-apt-pkgs-action@latest
+      with:
+        packages: ccache
+        version: 1.0
+
+    - name: Setup ccache
+      uses: hendrikmuhs/ccache-action@v1.2
+      with:
+        key: ccache-build-cloud-collector
+        max-size: 8G
+        verbose: 2
 
     - name: build cloud-collector
       run: |
         echo "github.workspace = ${{ github.workspace }}"
         docker pull $BENV_IMAGE
         git submodule update  --init --recursive ext/
+        # Ensure ccache directory is writable inside container
+        mkdir -p "${{ github.workspace }}/.ccache"
+        chmod -R 777 "${{ github.workspace }}/.ccache" || true
+
         docker run -t \
         --rm \
+        --mount "type=bind,source=${{ github.workspace }}/.ccache,destination=/ccache" \
         --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
         --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/home/user/src,readonly" \
         --env EBPF_NET_SRC_ROOT=/home/user/src \
+        --env CCACHE_DIR=/ccache \
         $BENV_IMAGE \
         ./build.sh cloud-collector
 
   build-k8s-watcher:
     name: build-k8s-watcher
     runs-on: ubuntu-24.04
-    needs: [clang-format-check]
     steps:
     - name: Check out the codebase
       uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       with:
         fetch-depth: 0
+
+    - name: Cache and install ccache
+      uses: awalsh128/cache-apt-pkgs-action@latest
+      with:
+        packages: ccache
+        version: 1.0
+
+    - name: Setup ccache
+      uses: hendrikmuhs/ccache-action@v1.2
+      with:
+        key: ccache-build-k8s-watcher
+        max-size: 8G
+        verbose: 2
 
     - name: build k8s-watcher
       run: |
         echo "github.workspace = ${{ github.workspace }}"
         docker pull $BENV_IMAGE
         git submodule update  --init --recursive ext/
+        # Ensure ccache directory is writable inside container
+        mkdir -p "${{ github.workspace }}/.ccache"
+        chmod -R 777 "${{ github.workspace }}/.ccache" || true
+
         docker run -t \
         --rm \
+        --mount "type=bind,source=${{ github.workspace }}/.ccache,destination=/ccache" \
         --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
         --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/home/user/src,readonly" \
         --env EBPF_NET_SRC_ROOT=/home/user/src \
+        --env CCACHE_DIR=/ccache \
         $BENV_IMAGE \
         ./build.sh k8s-watcher
 
   build-run-unit-tests:
     name: build-run-unit-tests
     runs-on: ubuntu-24.04
-    needs: [clang-format-check]
     steps:
     - name: Check out the codebase
       uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       with:
         fetch-depth: 0
+    
+    - name: Cache and install ccache
+      uses: awalsh128/cache-apt-pkgs-action@latest
+      with:
+        packages: ccache
+        version: 1.0
+
+    - name: Setup ccache
+      uses: hendrikmuhs/ccache-action@v1.2
+      with:
+        key: ccache-build-run-unit-tests
+        max-size: 8G
+        verbose: 2
     - name: run unit tests
       run: |
         echo "github.workspace = ${{ github.workspace }}"
         docker pull $BENV_IMAGE
         git submodule update  --init --recursive ext/
+        # Ensure ccache directory is writable inside container
+        mkdir -p "${{ github.workspace }}/.ccache"
+        chmod -R 777 "${{ github.workspace }}/.ccache" || true
+
         docker run -t \
         --rm \
+        --mount "type=bind,source=${{ github.workspace }}/.ccache,destination=/ccache" \
         --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
         --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/home/user/src,readonly" \
         --env EBPF_NET_SRC_ROOT=/home/user/src \
+        --env CCACHE_DIR=/ccache \
         --env ARGS="--output-on-failure --repeat until-pass:3" \
         --env SPDLOG_LEVEL="trace" \
         $BENV_IMAGE \
@@ -294,21 +420,39 @@ jobs:
   build-run-unit-tests-with-asan-and-debug-flags:
     name: build-run-unit-tests-with-asan-and-debug-flags
     runs-on: ubuntu-24.04
-    needs: [clang-format-check]
     steps:
     - name: Check out the codebase
       uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       with:
         fetch-depth: 0
+
+    - name: Cache and install ccache
+      uses: awalsh128/cache-apt-pkgs-action@latest
+      with:
+        packages: ccache
+        version: 1.0
+
+    - name: Setup ccache
+      uses: hendrikmuhs/ccache-action@v1.2
+      with:
+        key: ccache-build-run-unit-tests-asan-debug
+        max-size: 8G
+        verbose: 2
     - name: build unit tests with asan and debug flags on then run all tests
       run: |
         docker pull $BENV_IMAGE
         git submodule update  --init --recursive ext/
+        # Ensure ccache directory is writable inside container
+        mkdir -p "${{ github.workspace }}/.ccache"
+        chmod -R 777 "${{ github.workspace }}/.ccache" || true
+
         docker run -t \
         --rm \
+        --mount "type=bind,source=${{ github.workspace }}/.ccache,destination=/ccache" \
         --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
         --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/home/user/src,readonly" \
         --env EBPF_NET_SRC_ROOT=/home/user/src \
+        --env CCACHE_DIR=/ccache \
         --env ARGS="--output-on-failure --repeat until-pass:3" \
         --env SPDLOG_LEVEL="trace" \
         $BENV_IMAGE \
@@ -414,6 +558,16 @@ jobs:
             echo "---Kernel collector logs:"
             collector_logs=$(docker logs $container_id 2>&1 || true)
             echo "$collector_logs"
+            
+            # Fail if a crash was detected in the kernel collector logs
+            if echo "$collector_logs" | grep -qi "CRASH DETECTED"; then
+              echo "✗ Crash detected in kernel collector output - test failed"
+              docker stop $container_id || true
+              docker rm $container_id || true
+              # Stop nc listener
+              kill $nc_pid || true
+              exit 1
+            fi
             
             # Check for error strings in the logs (exclude GCP metadata fetch errors which are expected)
             if echo "$collector_logs" | grep -i "error" | grep -v "Unable to fetch GCP metadata: error while fetching Google Cloud Platform instance metadata" > /dev/null 2>&1; then
@@ -535,8 +689,11 @@ jobs:
           # Wait a moment for reducer to start
           sleep 5
           
-          # Run kernel collector test
-          container_id=$(docker create -t --rm \
+          # Run kernel collector test and capture real exit code
+          echo "Starting kernel collector test..."
+          set +e  # disable exit on error to capture exit status
+          docker run --name kernel-collector-test-$$ \
+            --rm \
             --env EBPF_NET_HOST_DIR="/hostfs" \
             --privileged \
             --network host \
@@ -551,13 +708,7 @@ jobs:
             --env EBPF_NET_MINIDUMP_DIR="/hostfs/data/minidump" \
             --volume "$(pwd)/data:/hostfs/data" \
             localhost:5000/kernel-collector-test \
-            --log-console)
-          
-          echo "Starting kernel collector test..."
-          docker start -a $container_id
-
-          set +e  # disable exit on error
-          docker wait $container_id
+            --log-console
           test_exit_code=$?
           set -e  # re-enable exit on error
           
@@ -571,3 +722,12 @@ jobs:
       if: always()
       run: |
         sudo pkill -f qemu-system-x86_64 || true
+
+    - name: Upload kernel-collector dumps
+      if: always()
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      with:
+        name: kernel-collector-dumps-${{ matrix.kernel }}
+        path: |
+          data/*.json
+        if-no-files-found: warn
