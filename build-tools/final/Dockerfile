@@ -93,6 +93,10 @@ RUN ln -s $HOME/src/dev/benv-build.sh build.sh
 COPY LICENSE.txt $HOME/
 COPY NOTICE.txt $HOME/
 
+# Create a link in $HOME/install to /install so any values in compiled
+# projects that mention $HOME/install are still valid
+RUN ln -s /install $HOME/install
+
 # copy artifacts from individual builds
 COPY --from=build-bcc $HOME/install /install
 COPY --from=build-libuv $HOME/install /install
