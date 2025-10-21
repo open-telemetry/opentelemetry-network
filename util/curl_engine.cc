@@ -351,7 +351,7 @@ void CurlEngineImpl::handle_curl_info_queue()
   CURLMsg *message = nullptr;
   while ((message = curl_multi_info_read(curl_handle_, &pending)) != nullptr) {
     if (message->msg != CURLMSG_DONE) {
-      LOG::warn("Unknown curl message {}", message->msg);
+      LOG::warn("Unknown curl message {}", static_cast<int>(message->msg));
       continue;
     }
 

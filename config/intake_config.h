@@ -12,6 +12,8 @@
 
 #include <generated/ebpf_net/ingest/encoder.h>
 
+#include <spdlog/fmt/ostr.h>
+
 #include <uv.h>
 
 #include <memory>
@@ -118,3 +120,7 @@ private:
 };
 
 } // namespace config
+
+namespace fmt {
+template <> struct formatter<config::IntakeConfig> : fmt::ostream_formatter {};
+} // namespace fmt

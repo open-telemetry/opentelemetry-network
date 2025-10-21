@@ -12,6 +12,8 @@
 
 #include <uv.h>
 
+#include <sstream>
+
 #include <functional>
 #include <system_error>
 #include <utility>
@@ -52,6 +54,19 @@ private:
 
   static constexpr std::size_t ERROR_BUFFER_SIZE = 128;
 };
+
+// Provide fmt support for uv_error_t using its ostream representation.
+namespace fmt {
+template <> struct formatter<uv_error_t> {
+  template <typename ParseContext> constexpr auto parse(ParseContext &ctx) { return ctx.begin(); }
+  template <typename FormatContext> auto format(uv_error_t const &err, FormatContext &ctx) const
+  {
+    std::ostringstream os;
+    os << err;
+    return fmt::format_to(ctx.out(), "{}", os.str());
+  }
+};
+} // namespace fmt
 
 // Runs `fn` in a thread-safe manner within the `loop`'s thread and waits for
 // its execution to finish before returning.

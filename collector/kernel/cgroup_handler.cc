@@ -11,6 +11,7 @@
 #include <util/file_ops.h>
 #include <util/k8s_metadata.h>
 #include <util/log.h>
+#include <util/log_formatters.h>
 #include <util/nomad_metadata.h>
 
 #include <generated/ebpf_net/agent_internal/wire_message.h>
@@ -299,7 +300,8 @@ void CgroupHandler::fetch_done_cb(CurlEngineStatus status, long responseCode, st
   queries_.erase(pos);
 
   if (!success) {
-    log_.error("docker fetch failed [{}:{}]: {}", status, responseCode, curlError);
+    const std::string_view status_text = to_string(status);
+    log_.error("docker fetch failed [{}:{}]: {}", status_text, responseCode, curlError);
     return;
   }
 
@@ -433,7 +435,7 @@ void CgroupHandler::handle_docker_response(u64 cgroup, std::string const &respon
   }
 
   if (docker_host_config.has_value()) {
-    LOG::debug_in(AgentLogKind::DOCKER, "container resource limits: {}", *docker_host_config);
+    LOG::debug_in(AgentLogKind::DOCKER, "container resource limits: {}", fmt::streamed(*docker_host_config));
 
     auto const cpu_period = docker_host_config->cpu_period();
     auto const cpu_quota = docker_host_config->cpu_quota();

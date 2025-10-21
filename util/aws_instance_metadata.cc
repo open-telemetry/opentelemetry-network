@@ -393,11 +393,11 @@ bool AwsMetadata::fetch_aws_instance_metadata()
 
 void AwsMetadata::print_instance_metadata() const
 {
-  LOG::info("  AZ: {}", az_);
-  LOG::info("  IAM role: {}", iam_role_);
-  LOG::info("  Instance ID: {}", id_);
-  LOG::info("  Instance type: {}", type_);
-  LOG::info("  Account ID: {}", account_id_);
+  LOG::info("  AZ: {} (valid: {})", az_.value(), az_.valid());
+  LOG::info("  IAM role: {} (valid: {})", iam_role_.value(), iam_role_.valid());
+  LOG::info("  Instance ID: {} (valid: {})", id_.value(), id_.valid());
+  LOG::info("  Instance type: {} (valid: {})", type_.value(), type_.valid());
+  LOG::info("  Account ID: {} (valid: {})", account_id_.value(), account_id_.valid());
 }
 
 void AwsMetadata::print_interfaces() const

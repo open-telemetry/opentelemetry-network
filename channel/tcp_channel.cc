@@ -117,7 +117,7 @@ void TCPChannel::conn_connect_cb(uv_connect_t *req, int status)
   auto tcp = (TCPChannel *)req->handle->data;
 
   if (status < 0) {
-    LOG::trace_in(channel::Component::tcp, "TCPChannel::{}(): error {}", __func__, static_cast<std::errc>(-status));
+    LOG::trace_in(channel::Component::tcp, "TCPChannel::{}(): error {}", __func__, uv_error_t{status});
     /* error occurred */
     tcp->connected_ = false;
     tcp->callbacks_->on_error(status);
@@ -182,7 +182,8 @@ void TCPChannel::connect(Callbacks &callbacks)
   int status = getaddrinfo(addr_.c_str(), port_.c_str(), &hints, &res);
 
   if (status != 0) {
-    LOG::critical("getaddrinfo failed: {} - calling abort", static_cast<std::errc>(status));
+    const char *error_text = gai_strerror(status);
+    LOG::critical("getaddrinfo failed: {} - calling abort", error_text ? error_text : "unknown error");
     // TODO: gracefully handle getaddrinfo errors
     std::abort();
   }

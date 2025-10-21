@@ -304,7 +304,8 @@ void SignalManager::handle_minidump()
   }
 
   parameters["host"] = get_host_name(MAX_HOSTNAME_LENGTH).recover([&](auto &error) {
-    LOG::error("Unable to retrieve host information from uname: {}", error);
+    const std::string error_message = error.message();
+    LOG::error("Unable to retrieve host information from uname: {} ({})", error_message, error.value());
     return aws_metadata ? aws_metadata->id().valid() ? std::string(aws_metadata->id().value()) : "(unknown-aws)"
                         : gcp_metadata ? gcp_metadata->hostname() : "(unknown)";
   });
