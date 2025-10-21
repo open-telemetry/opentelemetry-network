@@ -59,12 +59,13 @@ elif [[ -n "${EBPF_NET_RUN_UNDER_VALGRIND}" ]]; then
   # shellcheck disable=SC2086
   (set -x; exec /usr/bin/valgrind ${EBPF_NET_RUN_UNDER_VALGRIND} "${install_dir}/kernel_collector_test" "$@")
 else
-  if ! (set -x; exec "${install_dir}/kernel_collector_test" "$@")
-  then
+  # Run the test binary and capture its exit code without inverting it.
+  (set -x; "${install_dir}/kernel_collector_test" "$@")
+  test_exit_code=$?
+  if [[ ${test_exit_code} -ne 0 ]]; then
     echo "kernel collector test FAILED"
     cp /srv/core-* /hostfs/data || true
-    if [[ -n "${DELAY_EXIT_ON_FAILURE}" ]]
-    then
+    if [[ -n "${DELAY_EXIT_ON_FAILURE}" ]]; then
       echo "DELAY_EXIT_ON_FAILURE is set, doing 'sleep inf'"
       sleep inf
     fi
@@ -81,8 +82,25 @@ then
   "${install_dir}/intake_wire_to_json" < /tmp/intake-dump-file | jq . > /tmp/intake-dump-file.json
 fi
 
+# Copy converted dumps to host-mounted data directory for artifact collection
+if [ -d /hostfs/data ]; then
+  if [ -e /tmp/bpf-dump-file.json ]; then
+    cp -f /tmp/bpf-dump-file.json /hostfs/data/ || true
+  fi
+  if [ -e /tmp/intake-dump-file.json ]; then
+    cp -f /tmp/intake-dump-file.json /hostfs/data/ || true
+    # Optional: emit a filtered file with only bpf_log messages from intake JSON
+    jq '.[] | select(.name=="bpf_log")' /tmp/intake-dump-file.json > /hostfs/data/bpf-logs.json 2>/dev/null || true
+  fi
+fi
+
 if [[ -n "${DELAY_EXIT}" ]]
 then
   echo "DELAY_EXIT is set, doing 'sleep inf'"
   sleep inf
+fi
+
+# Propagate the test's exit code so the container exit reflects pass/fail.
+if [[ -n "${test_exit_code:-}" ]]; then
+  exit "${test_exit_code}"
 fi
