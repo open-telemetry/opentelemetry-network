@@ -9,7 +9,8 @@ LABEL org.label-schema.vcs-url="https://github.com/open-telemetry/opentelemetry-
 LABEL org.label-schema.schema-version="1.0"
 
 # ca-certificates are required by libcurl
-RUN install_packages ca-certificates libllvm16 libcurlpp0 libgrpc++1.51 libelf1
+# libllvm is not required at runtime; drop libllvm16 to avoid apt failures on bookworm
+RUN install_packages ca-certificates libcurlpp0 libgrpc++1.51 libelf1
 ENV SSL_CERT_DIR=/etc/ssl/certs
 
 ENV EBPF_NET_INSTALL_DIR=/srv
