@@ -73,7 +73,7 @@ jobs:
       uses: hendrikmuhs/ccache-action@v1.2
       with:
         key: ccache-build-reducer
-        max-size: 8G
+        max-size: 1G
         verbose: 2
 
     - name: build-reducer
@@ -139,7 +139,7 @@ jobs:
       uses: hendrikmuhs/ccache-action@v1.2
       with:
         key: ccache-build-kernel-collector
-        max-size: 8G
+        max-size: 1G
         verbose: 2
 
     - name: build-kernel-collector
@@ -205,7 +205,7 @@ jobs:
       uses: hendrikmuhs/ccache-action@v1.2
       with:
         key: ccache-build-kernel-collector-test
-        max-size: 8G
+        max-size: 1G
         verbose: 2
 
     - name: build kernel-collector-test container
@@ -271,7 +271,7 @@ jobs:
       uses: hendrikmuhs/ccache-action@v1.2
       with:
         key: ccache-build-k8s-relay
-        max-size: 8G
+        max-size: 1G
         verbose: 2
 
     - name: build k8s-relay
@@ -312,7 +312,7 @@ jobs:
       uses: hendrikmuhs/ccache-action@v1.2
       with:
         key: ccache-build-cloud-collector
-        max-size: 8G
+        max-size: 1G
         verbose: 2
 
     - name: build cloud-collector
@@ -353,7 +353,7 @@ jobs:
       uses: hendrikmuhs/ccache-action@v1.2
       with:
         key: ccache-build-k8s-watcher
-        max-size: 8G
+        max-size: 1G
         verbose: 2
 
     - name: build k8s-watcher
@@ -394,7 +394,7 @@ jobs:
       uses: hendrikmuhs/ccache-action@v1.2
       with:
         key: ccache-build-run-unit-tests
-        max-size: 8G
+        max-size: 1G
         verbose: 2
     - name: run unit tests
       run: |
@@ -436,7 +436,7 @@ jobs:
       uses: hendrikmuhs/ccache-action@v1.2
       with:
         key: ccache-build-run-unit-tests-asan-debug
-        max-size: 8G
+        max-size: 1G
         verbose: 2
     - name: build unit tests with asan and debug flags on then run all tests
       run: |
