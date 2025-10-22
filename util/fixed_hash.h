@@ -14,6 +14,7 @@
 #include <cstddef>
 #include <limits>
 #include <memory>
+#include <functional>
 #include <string.h>
 #include <type_traits>
 
@@ -31,7 +32,11 @@ public:
   using pool_type = Pool<value_type, ELEM_POOL_SZ, Allocator>;
   using index_type = typename pool_type::index_type;
   using size_type = std::size_t;
-  using map_type = absl::flat_hash_map<key_type, index_type, Hash, KeyEqual, Allocator>;
+  // Rebind the provided allocator (which is for value_type) to the map's
+  // required value_type: std::pair<const key_type, index_type>.
+  using map_value_type = std::pair<const key_type, index_type>;
+  using map_allocator_type = typename std::allocator_traits<Allocator>::template rebind_alloc<map_value_type>;
+  using map_type = absl::flat_hash_map<key_type, index_type, Hash, KeyEqual, map_allocator_type>;
   using bitmap_type = typename pool_type::bitmap_type;
   using position = typename pool_type::position;
   static constexpr index_type invalid = pool_type::invalid;
