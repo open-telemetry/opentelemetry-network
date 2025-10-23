@@ -100,6 +100,7 @@ target_link_libraries(
     logging
     tcp_channel
     absl::strings
+    versions
 )
 
 add_library(

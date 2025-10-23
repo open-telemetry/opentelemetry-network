@@ -117,10 +117,12 @@ add_custom_target(
   DEPENDS
     ${RENDER_COMPILER}
 )
-set_target_properties(
-  render_compiler
-  PROPERTIES
-    LOCATION ${RENDER_COMPILER}
+set_property(
+  TARGET
+    render_compiler
+  PROPERTY
+    RENDER_COMPILER_PATH
+      "${RENDER_COMPILER}"
 )
 
 add_subdirectory(test)

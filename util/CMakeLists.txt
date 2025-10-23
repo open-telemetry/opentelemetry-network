@@ -95,6 +95,7 @@ target_link_libraries(
     gcp_instance_metadata
     args_parser
     logging
+    versions
     breakpad_client
     file_ops
     system_ops
@@ -159,6 +160,23 @@ add_library(
     log.cc
     log_whitelist.cc
 )
+
+add_library(
+  versions
+  STATIC
+    version.cc
+)
+# include build dir for generated util/version_config.h
+# and source dir for project headers if needed
+# keep PUBLIC so dependents get the include for generated header
+# (CMAKE_BINARY_DIR is already a global include but be explicit here)
+target_include_directories(
+  versions
+  PUBLIC
+    ${CMAKE_BINARY_DIR}
+    ${PROJECT_SOURCE_DIR}
+)
+
 target_link_libraries(
   logging
     environment_variables

@@ -109,6 +109,7 @@ target_link_libraries(
     gRPC::grpc++_unsecure
     gRPC::grpc_unsecure
     dl
+    versions
 )
 
 set_target_properties(k8s-relay PROPERTIES LINK_SEARCH_START_STATIC 1)
