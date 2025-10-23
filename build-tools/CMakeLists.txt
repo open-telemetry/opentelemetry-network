@@ -116,7 +116,6 @@ endfunction(build_directory)
 build_directory(base)
 build_directory(openssl DEPENDS base)
 build_directory(curl DEPENDS base openssl)
-build_directory(bcc DEPENDS base)
 build_directory(libuv DEPENDS base)
 build_directory(aws_sdk DEPENDS base openssl curl)
 build_directory(cpp_misc DEPENDS base)
@@ -135,7 +134,6 @@ build_directory(
     base
     openssl
     curl
-    bcc
     libuv
     aws_sdk
     cpp_misc

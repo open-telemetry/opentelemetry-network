@@ -2,25 +2,21 @@
 # SPDX-License-Identifier: Apache-2.0
 
 ARG base_IMAGE_TAG
-ARG bcc_IMAGE_TAG
 ARG libuv_IMAGE_TAG
 ARG aws_sdk_IMAGE_TAG
 ARG cpp_misc_IMAGE_TAG
 ARG go_IMAGE_TAG
 ARG libmaxminddb_IMAGE_TAG
-ARG gcp_cpp_IMAGE_TAG
 ARG opentelemetry_IMAGE_TAG
 ARG libbpf_IMAGE_TAG
 #gen:dep-arg
 
 FROM $base_IMAGE_TAG as build-main
-FROM $bcc_IMAGE_TAG as build-bcc
 FROM $libuv_IMAGE_TAG as build-libuv
 FROM $aws_sdk_IMAGE_TAG as build-aws-sdk
 FROM $cpp_misc_IMAGE_TAG as build-cpp-misc
 FROM $go_IMAGE_TAG as build-go
 FROM $libmaxminddb_IMAGE_TAG as build-libmaxminddb
-FROM $gcp_cpp_IMAGE_TAG as build-gcp_cpp
 FROM $opentelemetry_IMAGE_TAG as build-opentelemetry
 FROM $libbpf_IMAGE_TAG as build-libbpf
 #gen:dep-from
@@ -106,12 +102,10 @@ COPY NOTICE.txt $HOME/
 RUN ln -s /install $HOME/install
 
 # copy artifacts from individual builds
-COPY --from=build-bcc $HOME/install /install
 COPY --from=build-libuv $HOME/install /install
 COPY --from=build-aws-sdk $HOME/install /install
 COPY --from=build-cpp-misc $HOME/install /install
 COPY --from=build-libmaxminddb $HOME/install /install
-COPY --from=build-gcp_cpp $HOME/install /install
 COPY --from=build-opentelemetry $HOME/install /install
 COPY --from=build-libbpf $HOME/install /install
 #gen:dep-copy
