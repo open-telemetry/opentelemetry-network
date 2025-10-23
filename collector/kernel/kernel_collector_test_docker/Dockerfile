@@ -1,7 +1,7 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
-FROM docker.io/bitnami/minideb:bookworm@sha256:c08bf1955a4051f9d44245f049c06c24282de8ff5a6db22df63b054967e33e0c
+FROM docker.io/bitnami/minideb:bookworm@sha256:8b9a08ffe9f3d1b89d06f57c668f97c96ccb0dab9e5aaf9a411f94f0d70d286a
 
 # ca-certificates are required by libcurl
 RUN install_packages ca-certificates libcurlpp0 libllvm16 libabsl20220623 libelf1
