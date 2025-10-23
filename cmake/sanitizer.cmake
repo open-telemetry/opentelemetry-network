@@ -22,6 +22,12 @@ if (USE_ADDRESS_SANITIZER)
       -U_FORTIFY_SOURCE
       -fno-stack-protector
       -fno-omit-frame-pointer
+      -U__SANITIZE_ADDRESS__
+  )
+  target_compile_definitions(
+    address_sanitizer-shared
+    INTERFACE
+      NDEBUG_SANITIZER
   )
 
   target_compile_options(
@@ -31,6 +37,12 @@ if (USE_ADDRESS_SANITIZER)
       -U_FORTIFY_SOURCE
       -fno-stack-protector
       -fno-omit-frame-pointer
+      -U__SANITIZE_ADDRESS__
+  )
+  target_compile_definitions(
+    address_sanitizer-static
+    INTERFACE
+      NDEBUG_SANITIZER
   )
 
   target_link_libraries(
