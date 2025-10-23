@@ -1,0 +1,21 @@
+{
+  "name": "OpenTelemetry Network Dev",
+  "image": "otel/opentelemetry-network-build-tools:latest",
+  "features": {
+    "ghcr.io/yonch/devcontainer-features/codex:1": {}
+  },
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  "mounts": [
+    "source=${localEnv:HOME}/.codex/auth.json,target=/home/user/.codex/auth.json,readonly,type=bind",
+    "source=${localEnv:HOME}/.ccache,target=/home/user/.ccache,type=bind"
+  ],
+  "customizations": {
+    "vscode": {
+      "settings": {},
+      "extensions": [
+        "eamodio.gitlens"
+      ]
+    }
+  },
+  "remoteUser": "root"
+}
