@@ -1,0 +1,103 @@
+name: build-benv-multiarch
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - 'build-tools/**'
+      - '.github/workflows/build-benv-multiarch.yaml'
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  context:
+    runs-on: ubuntu-latest
+    outputs:
+      short-sha: ${{ steps.s.outputs.s }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Get short SHA
+        id: s
+        run: echo "s=$(git rev-parse --short=7 ${{ github.sha }})" >> "$GITHUB_OUTPUT"
+
+  build-amd64:
+    needs: context
+    uses: ./.github/workflows/build-benv-single-arch.yaml
+    permissions:
+      contents: read
+      packages: write
+    with:
+      runner: ubuntu-24.04
+      arch: amd64
+      ref: ${{ github.ref }}
+      force_rebuild: false
+      cache_registry: ghcr.io
+    secrets: inherit
+
+  build-arm64:
+    needs: context
+    uses: ./.github/workflows/build-benv-single-arch.yaml
+    permissions:
+      contents: read
+      packages: write
+    with:
+      runner: ubuntu-24.04-arm
+      arch: arm64
+      ref: ${{ github.ref }}
+      force_rebuild: false
+      cache_registry: ghcr.io
+    secrets: inherit
+
+  manifest:
+    needs: [context, build-amd64, build-arm64]
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    env:
+      GHCR_CACHE_REPO: ghcr.io/${{ github.repository_owner }}/opentelemetry-network-build-tools-cache
+      DOCKER_REPO: docker.io/${{ vars.DOCKER_NAMESPACE || 'otel' }}/opentelemetry-network-build-tools
+      SHORT_SHA: ${{ needs.context.outputs.short-sha }}
+      AMD64_SRC: ${{ needs.build-amd64.outputs.final_image }}
+      ARM64_SRC: ${{ needs.build-arm64.outputs.final_image }}
+    steps:
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Create GHCR multi-arch cache manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          CACHE_TAG="$GHCR_CACHE_REPO:final-multiarch-$SHORT_SHA"
+          docker buildx imagetools create --tag "$CACHE_TAG" "$AMD64_SRC" "$ARM64_SRC"
+          docker buildx imagetools inspect "$CACHE_TAG"
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          registry: docker.io
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Create Docker Hub multi-arch manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          MAIN_TAG="$DOCKER_REPO:git-$SHORT_SHA"
+          docker buildx imagetools create --tag "$MAIN_TAG" "$AMD64_SRC" "$ARM64_SRC"
+          if [ "${GITHUB_REF##*/}" = "main" ]; then
+            docker buildx imagetools create --tag "$DOCKER_REPO:latest" "$AMD64_SRC" "$ARM64_SRC"
+          fi
+          docker buildx imagetools inspect "$MAIN_TAG"
