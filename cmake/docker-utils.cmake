@@ -95,6 +95,7 @@ function(build_custom_docker_image IMAGE_NAME)
   add_custom_command(
     TARGET
       "${IMAGE_NAME}-docker"
+    POST_BUILD
     COMMAND
       ${CMAKE_COMMAND} -E make_directory "${out_path}"
     COMMAND
@@ -104,6 +105,7 @@ function(build_custom_docker_image IMAGE_NAME)
   add_custom_command(
     TARGET
       "${IMAGE_NAME}-docker"
+    POST_BUILD
     WORKING_DIRECTORY
       "${out_path}"
     COMMAND
@@ -114,6 +116,7 @@ function(build_custom_docker_image IMAGE_NAME)
     add_custom_command(
       TARGET
         "${IMAGE_NAME}-docker"
+      POST_BUILD
       WORKING_DIRECTORY
         "${out_path}"
       COMMAND
@@ -125,6 +128,7 @@ function(build_custom_docker_image IMAGE_NAME)
     add_custom_command(
       TARGET
         "${IMAGE_NAME}-docker"
+      POST_BUILD
       WORKING_DIRECTORY
         "${out_path}"
       COMMAND
@@ -138,6 +142,7 @@ function(build_custom_docker_image IMAGE_NAME)
     add_custom_command(
       TARGET
         "${IMAGE_NAME}-docker"
+      POST_BUILD
       WORKING_DIRECTORY
         "${out_path}"
       COMMAND
@@ -151,10 +156,15 @@ function(build_custom_docker_image IMAGE_NAME)
     add_custom_command(
       TARGET
         "${IMAGE_NAME}-docker"
+      POST_BUILD
       WORKING_DIRECTORY
         "${out_path}"
+      # Intentionally build with host networking to avoid relying on
+      # rootless networking helpers (pasta/slirp4netns) inside nested CI
+      # containers. This improves reliability of podman builds in GitHub
+      # Actions and similar environments.
       COMMAND
-        podman build -t "${IMAGE_NAME}" ${DOCKER_ARGS} .
+        podman build --network host -t "${IMAGE_NAME}" ${DOCKER_ARGS} .
     )
   endif()
 
@@ -188,6 +198,7 @@ function(build_custom_docker_image IMAGE_NAME)
       add_custom_command(
         TARGET
           "${IMAGE_NAME}-docker-registry"
+        POST_BUILD
         COMMAND
           podman tag "${IMAGE_NAME}" "${IMAGE_NAME}:${IMAGE_TAG}"
         COMMAND

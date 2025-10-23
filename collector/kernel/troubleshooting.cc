@@ -40,14 +40,20 @@ void print_troubleshooting_message_and_exit(
     return;
   }
 
+  auto const item_name = to_string(item);
+  auto const os_name = to_string(info.os);
+  auto const distro_name = to_string(static_cast<LinuxDistro>(info.os_flavor));
+  auto const headers_source = to_string(info.kernel_headers_source);
+  auto const exception_message = std::string(e.what());
+
   auto const item_fmt = fmt::format(
       "troubleshoot item {} (os={},flavor={},headers_src={},kernel={}): {}",
-      item,
-      info.os,
-      static_cast<LinuxDistro>(info.os_flavor),
-      info.kernel_headers_source,
+      item_name,
+      os_name,
+      distro_name,
+      headers_source,
       info.kernel_version,
-      e);
+      exception_message);
 
   if (log) {
     log->get().error(item_fmt);
@@ -66,7 +72,7 @@ Failed to load eBPF probes for the Linux distro '{}' running kernel version {}.
 {}
 
 )TROUBLESHOOTING",
-        static_cast<LinuxDistro>(info.os_flavor),
+        distro_name,
         info.kernel_version,
         item_fmt);
     break;

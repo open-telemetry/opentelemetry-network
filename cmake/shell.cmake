@@ -46,6 +46,7 @@ function(lint_shell_script_bundle TARGET)
     add_custom_command(
       TARGET
         ${TARGET}
+      POST_BUILD
       WORKING_DIRECTORY
         "${CMAKE_CURRENT_SOURCE_DIR}"
       COMMAND

@@ -199,3 +199,9 @@ template <typename... Char> auto as_short_string(Char const... c)
   char buffer[size] = {static_cast<char>(c)...};
   return to_short_string(buffer);
 }
+
+template <std::size_t N>
+inline std::string_view format_as(short_string<N> const &s)
+{
+  return s.to_string_view();
+}

@@ -30,7 +30,8 @@ NomadMetadata::NomadMetadata()
 
 NomadMetadata::NomadMetadata(nlohmann::json const &environment)
 {
-  LOG::trace_in(AgentLogKind::NOMAD, "Container environment: {}", environment);
+  const std::string environment_dump = environment.dump();
+  LOG::trace_in(AgentLogKind::NOMAD, "Container environment: {}", environment_dump);
 
   for (auto const &variable : environment) {
     if (auto string = try_get_string(variable)) {

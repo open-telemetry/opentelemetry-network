@@ -14,6 +14,8 @@
 
 #include <map>
 #include <string>
+#include <sstream>
+#include <spdlog/fmt/fmt.h>
 
 #if ENABLE_CODE_TIMING
 
@@ -80,3 +82,18 @@ extern void print_code_timings();
 #define STOP_TIMING(name)
 
 #endif // ENABLE_CODE_TIMING
+
+// Provide fmt support for CodeTiming using its ostream representation when enabled.
+#if ENABLE_CODE_TIMING
+namespace fmt {
+template <> struct formatter<CodeTiming> {
+  template <typename ParseContext> constexpr auto parse(ParseContext &ctx) { return ctx.begin(); }
+  template <typename FormatContext> auto format(CodeTiming const &ct, FormatContext &ctx) const
+  {
+    std::ostringstream os;
+    os << ct;
+    return fmt::format_to(ctx.out(), "{}", os.str());
+  }
+};
+} // namespace fmt
+#endif

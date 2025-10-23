@@ -19,7 +19,6 @@
 #define ARES__H
 
 #include "ares_build.h"   /* c-ares build definitions */
-#include "ares_rules.h"   /* c-ares rules enforcement */
 #include "ares_version.h" /* c-ares version defines   */
 
 /*
@@ -68,6 +67,9 @@
 #if defined(ANDROID) || defined(__ANDROID__)
 #include <jni.h>
 #endif
+
+typedef CARES_TYPEOF_ARES_SOCKLEN_T ares_socklen_t;
+typedef CARES_TYPEOF_ARES_SSIZE_T ares_ssize_t;
 
 #ifdef __cplusplus
 extern "C" {

@@ -50,7 +50,9 @@ void GcpNetworkInterface::print() const
 {
   LOG::debug_in(CloudPlatform::gcp, "    vpc id: {}", vpc_id_);
   LOG::debug_in(CloudPlatform::gcp, "    mac: {}", mac_);
-  LOG::debug_in(CloudPlatform::gcp, "    ip: {}", ip_);
+  std::visit(
+      [&](auto const &address) { LOG::debug_in(CloudPlatform::gcp, "    ip: {}", address); },
+      ip_);
   LOG::debug_in(CloudPlatform::gcp, "    public ips: {}", public_ips_.size());
   for (std::size_t i = 0; i < public_ips_.size(); ++i) {
     LOG::debug_in(CloudPlatform::gcp, "    - {}", public_ips_[i]);
