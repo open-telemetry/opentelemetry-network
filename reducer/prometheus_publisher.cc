@@ -163,7 +163,7 @@ void PrometheusPublisher::Writer::write(std::stringstream &stream)
     LOG::error(
         "dropping stringstream since it is above the upper limit"
         " - {} bytes won't be written to the TSDB",
-        stream.tellp());
+        static_cast<std::streamoff>(stream.tellp()));
     return;
   }
 
@@ -174,7 +174,7 @@ void PrometheusPublisher::Writer::write(std::stringstream &stream)
   auto n = write_to_queue(write_queue_, stream);
 
   if (n < 0) {
-    bytes_failed_to_write_ += stream.tellp();
+    bytes_failed_to_write_ += static_cast<u64>(static_cast<std::streamoff>(stream.tellp()));
   } else {
     bytes_written_ += n;
   }

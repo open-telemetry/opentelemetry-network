@@ -19,6 +19,7 @@
 #include <util/debug.h>
 #include <util/log_modifiers.h>
 #include <util/log_whitelist.h>
+#include <util/fmt_extensions.h>
 
 class LOG {
 public:

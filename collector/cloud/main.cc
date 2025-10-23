@@ -80,7 +80,7 @@ int main(int argc, char *argv[])
 
   // resolve hostname
   std::string const hostname = get_host_name(MAX_HOSTNAME_LENGTH).recover([](auto &error) {
-    LOG::error("Unable to retrieve host information from uname: {}", error);
+    LOG::error("Unable to retrieve host information from uname: {}", log_waive(error.message()));
     return "(unknown)";
   });
 

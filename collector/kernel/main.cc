@@ -368,7 +368,7 @@ int main(int argc, char *argv[])
   {
     int res = control_stdout_stderr(no_stdout, no_stderr);
     if (res != 0) {
-      LOG::critical("Could not squelch stdout={} stderr={}: error={}", no_stdout, no_stderr, res);
+      LOG::critical("Could not squelch stdout={} stderr={}: error={}", no_stdout.Get(), no_stderr.Get(), res);
       sleep(5); // make sure we don't spam too much
       exit(-1);
     }
@@ -377,7 +377,12 @@ int main(int argc, char *argv[])
   auto agent_id = gen_agent_id();
 
   /* log agent version */
-  LOG::info("Starting Kernel Collector version {} ({})", versions::release, release_mode_string);
+  std::string version_text =
+      fmt::format("{}.{}.{}", versions::release.major(), versions::release.minor(), versions::release.patch());
+  if (auto signature = versions::release.signature(); !signature.empty()) {
+    version_text += fmt::format("-{}", signature);
+  }
+  LOG::info("Starting Kernel Collector version {} ({})", version_text, release_mode_string);
   LOG::info("Kernel Collector agent ID is {}", agent_id);
 
   /* get kernel version */
@@ -412,7 +417,7 @@ int main(int argc, char *argv[])
     aws_metadata->print_instance_metadata();
     aws_metadata->print_interfaces();
   } else {
-    LOG::debug("Unable to fetch AWS metadata: {}", aws_metadata.error());
+    LOG::debug("Unable to fetch AWS metadata: {}", aws_metadata.error().what());
   }
 
   /* GCP metadata */
@@ -421,7 +426,7 @@ int main(int argc, char *argv[])
   if (gcp_metadata) {
     gcp_metadata->print();
   } else {
-    LOG::debug("Unable to fetch GCP metadata: {}", gcp_metadata.error());
+    LOG::debug("Unable to fetch GCP metadata: {}", gcp_metadata.error().what());
   }
 
   /* read label overrides from environment if present */
@@ -460,7 +465,7 @@ int main(int argc, char *argv[])
     LOG::error("Unable to retrieve host information from uname: {}", error);
     return aws_metadata->id().valid() ? std::string(aws_metadata->id().value()) : "(unknown)";
   });
-  LOG::info("Kernel Collector version {} ({}) started on host {}", versions::release, release_mode_string, hostname);
+  LOG::info("Kernel Collector version {} ({}) started on host {}", version_text, release_mode_string, hostname);
 
   config::ConfigFile configuration_data(config::ConfigFile::YamlFormat(), conf_file.Get());
 

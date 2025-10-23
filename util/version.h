@@ -7,6 +7,7 @@
 
 #include <platform/types.h>
 
+#include <string>
 #include <string_view>
 #include <tuple>
 #include <utility>
@@ -53,3 +54,19 @@ public:
 private:
   std::tuple<u32, u32, u32, std::string_view> version_;
 };
+
+// Provide an fmt-friendly customization without requiring fmt headers here.
+// fmt v10+ will detect this via ADL and format VersionInfo as the returned type.
+inline std::string format_as(VersionInfo const &value)
+{
+  std::string s = std::to_string(value.major());
+  s.push_back('.');
+  s += std::to_string(value.minor());
+  s.push_back('.');
+  s += std::to_string(value.patch());
+  if (auto sig = value.signature(); !sig.empty()) {
+    s.push_back('-');
+    s.append(sig.begin(), sig.end());
+  }
+  return s;
+}
