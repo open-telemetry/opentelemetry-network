@@ -56,6 +56,7 @@ install-sh
 missing
 py-compile
 release/
+out/
 
 stamp-h1
 src/Makefile
