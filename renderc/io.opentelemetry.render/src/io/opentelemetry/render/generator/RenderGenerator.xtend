@@ -25,6 +25,7 @@ class RenderGenerator extends AbstractGenerator {
 
   AppGenerator appGenerator = new AppGenerator()
   MetricsGenerator metricsGenerator = new MetricsGenerator()
+  RustCargoGenerator rustCargoGenerator = new RustCargoGenerator()
 
   override void doGenerate(Resource resource, IFileSystemAccess2 fsa, IGeneratorContext context) {
     val apps = resource.allContents.filter(App).toList()
@@ -44,6 +45,9 @@ class RenderGenerator extends AbstractGenerator {
     for (app : apps) {
       appGenerator.doGenerate(app, fsa)
     }
+
+    // Generate per-package Rust aggregator crate (bundles all app crates)
+    rustCargoGenerator.doGeneratePackage(apps, fsa)
 
     metricsGenerator.doGenerate(resource, fsa)
   }
