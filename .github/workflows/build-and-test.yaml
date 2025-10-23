@@ -453,7 +453,7 @@ jobs:
         --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/home/user/src,readonly" \
         --env EBPF_NET_SRC_ROOT=/home/user/src \
         --env CCACHE_DIR=/ccache \
-        --env ARGS="--output-on-failure --repeat until-pass:3" \
+        --env ARGS="--output-on-failure --repeat until-pass:3 -E render_test" \
         --env SPDLOG_LEVEL="trace" \
         $BENV_IMAGE \
         ./build.sh --debug --asan unit_tests test

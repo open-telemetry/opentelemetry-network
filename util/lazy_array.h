@@ -30,11 +30,8 @@ public:
   LazyArray &operator=(LazyArray &&) = delete;
 
 private:
-  /* POD type suitable for use as uninitialized storage */
-  using storage_type = typename std::aligned_storage<sizeof(value_type), alignof(value_type)>::type;
-
-  /* allocator traits rebound to the storage type */
-  using allocator_traits = typename std::allocator_traits<Allocator>::template rebind_traits<storage_type>;
+  /* use allocator for T directly; allocate returns uninitialized storage */
+  using allocator_traits = std::allocator_traits<Allocator>;
 
 public:
   LazyArray() { array_ = allocator_traits::allocate(allocator_, size); }
@@ -42,7 +39,7 @@ public:
   ~LazyArray()
   {
     for (auto i : constructed_) {
-      allocator_traits::destroy(allocator_, (value_type *)&array_[i]);
+      allocator_traits::destroy(allocator_, &array_[i]);
     }
 
     allocator_traits::deallocate(allocator_, array_, size);
@@ -51,21 +48,21 @@ public:
   value_type &operator[](size_type i)
   {
     if (!constructed_.get(i)) {
-      allocator_traits::construct(allocator_, (value_type *)&array_[i]);
+      allocator_traits::construct(allocator_, &array_[i]);
       constructed_.set(i);
     }
 
-    return *(value_type *)&array_[i];
+    return array_[i];
   }
 
   value_type const &operator[](size_type i) const
   {
     if (!constructed_.get(i)) {
-      allocator_traits::construct(allocator_, (value_type *)&array_[i]);
+      allocator_traits::construct(allocator_, &array_[i]);
       constructed_.set(i);
     }
 
-    return *(value_type const *)&array_[i];
+    return array_[i];
   }
 
 private:
@@ -76,5 +73,5 @@ private:
 
   mutable bitmap_type constructed_;
 
-  storage_type *array_;
+  value_type *array_;
 };

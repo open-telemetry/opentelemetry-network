@@ -9,11 +9,16 @@
 #include <util/iterable_bitmap.h>
 #include <util/pool.h>
 
+#ifndef NDEBUG_SANITIZER
 #include <absl/container/flat_hash_map.h>
+#else
+#include <unordered_map>
+#endif
 
 #include <cstddef>
 #include <limits>
 #include <memory>
+#include <functional>
 #include <string.h>
 #include <type_traits>
 
@@ -31,7 +36,12 @@ public:
   using pool_type = Pool<value_type, ELEM_POOL_SZ, Allocator>;
   using index_type = typename pool_type::index_type;
   using size_type = std::size_t;
-  using map_type = absl::flat_hash_map<key_type, index_type, Hash, KeyEqual, Allocator>;
+  // Use default allocator for the map to avoid allocator rebind issues with Abseil.
+#ifndef NDEBUG_SANITIZER
+  using map_type = absl::flat_hash_map<key_type, index_type, Hash, KeyEqual>;
+#else
+  using map_type = std::unordered_map<key_type, index_type, Hash, KeyEqual>;
+#endif
   using bitmap_type = typename pool_type::bitmap_type;
   using position = typename pool_type::position;
   static constexpr index_type invalid = pool_type::invalid;
