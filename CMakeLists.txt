@@ -3,6 +3,9 @@
 
 cmake_minimum_required(VERSION 3.12)
 
+# Load container-friendly defaults (paths, build type, version vars)
+include(${CMAKE_CURRENT_LIST_DIR}/cmake/defaults.cmake)
+
 project(
   opentelemetry-ebpf
   VERSION ${EBPF_NET_MAJOR_VERSION}.${EBPF_NET_MINOR_VERSION}.${EBPF_NET_PATCH_VERSION}
@@ -83,6 +86,7 @@ add_subdirectory(tools)
 add_subdirectory(dist)
 
 configure_file(config.h.cmake_in config.h)
+configure_file(util/version_config.h.cmake_in util/version_config.h)
 
 add_dependencies(pipeline collectors reducer)
 add_dependencies(pipeline-docker collectors-docker)

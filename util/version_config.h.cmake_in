@@ -1,0 +1,4 @@
+// Generated at configure time with project version numbers
+#define EBPF_NET_MAJOR_VERSION ${EBPF_NET_MAJOR_VERSION}
+#define EBPF_NET_MINOR_VERSION ${EBPF_NET_MINOR_VERSION}
+#define EBPF_NET_PATCH_VERSION ${EBPF_NET_PATCH_VERSION}
