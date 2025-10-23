@@ -26,6 +26,7 @@ function(setup_go_module NAME DOMAIN)
   add_custom_command(
     TARGET
       "${TARGET}"
+    POST_BUILD
     COMMAND
       ${CMAKE_COMMAND} -E make_directory
         "${MOD_BUILD_DIR}"
@@ -39,6 +40,7 @@ function(setup_go_module NAME DOMAIN)
     add_custom_command(
       TARGET
         "${TARGET}"
+      POST_BUILD
       WORKING_DIRECTORY
         "${MOD_BUILD_DIR}"
       COMMAND
@@ -50,6 +52,7 @@ function(setup_go_module NAME DOMAIN)
     add_custom_command(
       TARGET
         "${TARGET}"
+      POST_BUILD
       WORKING_DIRECTORY
         "${MOD_BUILD_DIR}"
       COMMAND
@@ -101,6 +104,7 @@ function(build_go_package NAME MODULE)
     add_custom_command(
       TARGET
         "${TARGET}"
+      POST_BUILD
       COMMAND
         ${CMAKE_COMMAND} -E copy_directory
           "${CMAKE_CURRENT_SOURCE_DIR}"
@@ -121,6 +125,7 @@ function(build_go_package NAME MODULE)
     add_custom_command(
       TARGET
         "${TARGET}"
+      POST_BUILD
       WORKING_DIRECTORY
         "${BUILD_DIR}"
       BYPRODUCTS

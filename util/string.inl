@@ -4,7 +4,7 @@
 #include <type_traits>
 
 #include <cerrno>
-#include <cstdlib>
+#include <cstdint>
 
 template <typename T> bool integer_from_string(char const *in, T &out)
 {
