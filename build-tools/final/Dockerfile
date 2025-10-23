@@ -2,31 +2,29 @@
 # SPDX-License-Identifier: Apache-2.0
 
 ARG base_IMAGE_TAG
-ARG bcc_IMAGE_TAG
 ARG libuv_IMAGE_TAG
 ARG aws_sdk_IMAGE_TAG
 ARG cpp_misc_IMAGE_TAG
 ARG go_IMAGE_TAG
 ARG libmaxminddb_IMAGE_TAG
-ARG gcp_cpp_IMAGE_TAG
 ARG opentelemetry_IMAGE_TAG
 ARG libbpf_IMAGE_TAG
 #gen:dep-arg
 
 FROM $base_IMAGE_TAG as build-main
-FROM $bcc_IMAGE_TAG as build-bcc
 FROM $libuv_IMAGE_TAG as build-libuv
 FROM $aws_sdk_IMAGE_TAG as build-aws-sdk
 FROM $cpp_misc_IMAGE_TAG as build-cpp-misc
 FROM $go_IMAGE_TAG as build-go
 FROM $libmaxminddb_IMAGE_TAG as build-libmaxminddb
-FROM $gcp_cpp_IMAGE_TAG as build-gcp_cpp
 FROM $opentelemetry_IMAGE_TAG as build-opentelemetry
 FROM $libbpf_IMAGE_TAG as build-libbpf
 #gen:dep-from
 
 # Bring everything together
 FROM build-main AS build-result
+
+ARG RUST_TOOLCHAIN=stable
 
 # Package definitions
 # Include fuse-overlayfs so rootless podman can run on overlayfs (e.g., in containers)
@@ -89,6 +87,12 @@ RUN sudo wget \
   https://repo1.maven.org/maven2/io/swagger/swagger-codegen-cli/2.4.12/swagger-codegen-cli-2.4.12.jar \
   -O /usr/local/lib/swagger-codegen-cli.jar
 
+# Rust toolchain for building Rust components
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --profile minimal --default-toolchain ${RUST_TOOLCHAIN} && \
+    . "$HOME/.cargo/env" && \
+    rustup component add rustfmt clippy
+ENV PATH="${HOME}/.cargo/bin:${PATH}"
+
 # Preprocessor for BPF used by cmake
 RUN pip3 install --break-system-packages pcpp
 
@@ -106,12 +110,10 @@ COPY NOTICE.txt $HOME/
 RUN ln -s /install $HOME/install
 
 # copy artifacts from individual builds
-COPY --from=build-bcc $HOME/install /install
 COPY --from=build-libuv $HOME/install /install
 COPY --from=build-aws-sdk $HOME/install /install
 COPY --from=build-cpp-misc $HOME/install /install
 COPY --from=build-libmaxminddb $HOME/install /install
-COPY --from=build-gcp_cpp $HOME/install /install
 COPY --from=build-opentelemetry $HOME/install /install
 COPY --from=build-libbpf $HOME/install /install
 #gen:dep-copy

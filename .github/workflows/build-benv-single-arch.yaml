@@ -61,26 +61,6 @@ jobs:
           ref: ${{ env.REF }}
           force_rebuild: ${{ env.FORCE_REBUILD }}
 
-  build-bcc:
-    name: Build bcc image
-    runs-on: ${{ inputs.runner }}
-    needs: build-base
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-        with:
-          ref: ${{ env.REF }}
-
-      - name: Build and push bcc image
-        uses: ./.github/actions/build-tools-single-stage/
-        with:
-          directory: bcc
-          arch: ${{ inputs.arch }}
-          registry: ${{ env.CACHE_REGISTRY }}
-          registry_username: ${{ github.actor }}
-          registry_password: ${{ secrets.GITHUB_TOKEN }}
-          ref: ${{ env.REF }}
-          force_rebuild: ${{ env.FORCE_REBUILD }}
 
   build-libuv:
     name: Build libuv image
@@ -208,27 +188,6 @@ jobs:
           ref: ${{ env.REF }}
           force_rebuild: ${{ env.FORCE_REBUILD }}
 
-  build-gcp-cpp:
-    name: Build gcp_cpp image
-    runs-on: ${{ inputs.runner }}
-    needs: [build-base]
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-        with:
-          ref: ${{ env.REF }}
-
-      - name: Build and push gcp_cpp image
-        uses: ./.github/actions/build-tools-single-stage/
-        with:
-          directory: gcp_cpp
-          arch: ${{ inputs.arch }}
-          registry: ${{ env.CACHE_REGISTRY }}
-          registry_username: ${{ github.actor }}
-          registry_password: ${{ secrets.GITHUB_TOKEN }}
-          ref: ${{ env.REF }}
-          force_rebuild: ${{ env.FORCE_REBUILD }}
-
   build-opentelemetry:
     name: Build opentelemetry image
     runs-on: ${{ inputs.runner }}
@@ -255,13 +214,11 @@ jobs:
     runs-on: ${{ inputs.runner }}
     needs: [
       build-base,
-      build-bcc,
       build-libuv,
       build-aws-sdk,
       build-cpp-misc,
       build-go,
       build-libmaxminddb,
-      build-gcp-cpp,
       build-opentelemetry,
       build-libbpf
     ]

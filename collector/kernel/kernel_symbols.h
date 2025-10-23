@@ -3,13 +3,13 @@
 
 #pragma once
 
-#include <absl/container/flat_hash_set.h>
+#include <unordered_set>
 
 #include <istream>
 #include <string>
 #include <string_view>
 
-using KernelSymbols = absl::flat_hash_set<std::string>;
+using KernelSymbols = std::unordered_set<std::string>;
 
 // Reads and parses kernel symbol names.
 // Throws an exception on parsing error.
