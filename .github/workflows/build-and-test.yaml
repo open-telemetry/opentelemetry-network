@@ -47,7 +47,7 @@ jobs:
         sudo dpkg-reconfigure man-db
 
         sudo apt update
-        sudo apt install -y --no-install-recommends clang-format-16
+        sudo apt install -y --no-install-recommends clang-format-19
         cd ${{ github.workspace }}
         ./.github/workflows/scripts/check-clang-format.sh
 

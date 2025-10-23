@@ -60,7 +60,7 @@ protected:
   // Subclasses implement to use concrete render-generated classes.
   //
   struct IRpcHandler {
-    virtual ~IRpcHandler(){};
+    virtual ~IRpcHandler() {};
 
     // Handle a received RPC message.
     virtual void handle(u64 current_timestamp, char *buf, size_t len) = 0;
