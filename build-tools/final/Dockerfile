@@ -24,6 +24,8 @@ FROM $libbpf_IMAGE_TAG as build-libbpf
 # Bring everything together
 FROM build-main AS build-result
 
+ARG RUST_TOOLCHAIN=stable
+
 # Package definitions
 # Include fuse-overlayfs so rootless podman can run on overlayfs (e.g., in containers)
 ARG PKG_DOCKER="podman uidmap fuse-overlayfs"
@@ -84,6 +86,12 @@ RUN sudo wget https://services.gradle.org/distributions/gradle-8.14.3-bin.zip -O
 RUN sudo wget \
   https://repo1.maven.org/maven2/io/swagger/swagger-codegen-cli/2.4.12/swagger-codegen-cli-2.4.12.jar \
   -O /usr/local/lib/swagger-codegen-cli.jar
+
+# Rust toolchain for building Rust components
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --profile minimal --default-toolchain ${RUST_TOOLCHAIN} && \
+    . "$HOME/.cargo/env" && \
+    rustup component add rustfmt clippy
+ENV PATH="${HOME}/.cargo/bin:${PATH}"
 
 # Preprocessor for BPF used by cmake
 RUN pip3 install --break-system-packages pcpp
