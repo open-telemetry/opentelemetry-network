@@ -53,7 +53,7 @@ ConnectionCaretaker::ConnectionCaretaker(
     aws_metadata_->print_instance_metadata();
     aws_metadata_->print_interfaces();
   } else {
-    LOG::warn("Unable to fetch AWS metadata: {}", aws_metadata.error());
+    LOG::warn("Unable to fetch AWS metadata: {}", aws_metadata.error().what());
   }
 
   LOG::trace_in(CloudPlatform::gcp, "--- resolving GCP metadata ---");
@@ -61,7 +61,7 @@ ConnectionCaretaker::ConnectionCaretaker(
     gcp_metadata_.emplace(std::move(gcp_metadata.value()));
     gcp_metadata_->print();
   } else {
-    LOG::warn("Unable to fetch GCP metadata: {}", gcp_metadata.error());
+    LOG::warn("Unable to fetch GCP metadata: {}", gcp_metadata.error().what());
   }
 
   int res = uv_timer_init(loop_, &heartbeat_timer_);

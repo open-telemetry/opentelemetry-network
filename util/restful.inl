@@ -83,7 +83,7 @@ Expected<T, std::runtime_error> RestfulFetcher::sync_fetch(
 
       auto decoded = decoder(body.str());
       if (!decoded) {
-        auto error = fmt::format("error while decoding {}: {}", description, decoded.error());
+        auto error = fmt::format("error while decoding {}: {}", description, decoded.error().what());
         if (!backoff(error)) {
           return {unexpected, std::move(error)};
         }

@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-CLANG_FORMAT="clang-format-16"
+CLANG_FORMAT="clang-format-19"
 if ! command -v ${CLANG_FORMAT}
 then
   echo "ERROR: requires ${CLANG_FORMAT}"

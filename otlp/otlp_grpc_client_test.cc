@@ -142,7 +142,7 @@ TEST_F(OtlpGrpcClientTest, SyncLogs)
 {
   ExportLogsServiceRequest request = create_logs_request();
   auto status = logs_client_.Export(request);
-  EXPECT_TRUE(status.ok()) << "RPC failed: " << status.error_code() << ": " << log_waive(status.error_message());
+  EXPECT_TRUE(status.ok()) << "RPC failed: " << status.error_code() << ": " << status.error_message();
   EXPECT_EQ(1ul, server_.get_num_log_requests_received());
 }
 
@@ -174,7 +174,7 @@ TEST_F(OtlpGrpcClientTest, SyncMetrics)
 {
   ExportMetricsServiceRequest request = create_metrics_request();
   auto status = metrics_client_.Export(request);
-  EXPECT_TRUE(status.ok()) << "RPC failed: " << status.error_code() << ": " << log_waive(status.error_message());
+  EXPECT_TRUE(status.ok()) << "RPC failed: " << status.error_code() << ": " << status.error_message();
   EXPECT_EQ(1ul, server_.get_num_metric_requests_received());
 }
 

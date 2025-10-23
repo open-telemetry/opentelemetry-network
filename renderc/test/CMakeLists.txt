@@ -1,9 +1,12 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
-get_target_property(
+get_property(
   RENDER_COMPILER
-   render_compiler LOCATION
+  TARGET
+    render_compiler
+  PROPERTY
+    RENDER_COMPILER_PATH
 )
 render_compile(
   ${CMAKE_CURRENT_SOURCE_DIR}

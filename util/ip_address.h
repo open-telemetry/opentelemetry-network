@@ -114,7 +114,7 @@ namespace fmt {
 template <> struct formatter<IPv6Address> {
   template <typename ParseContext> constexpr auto parse(ParseContext &ctx) { return ctx.begin(); }
 
-  template <typename FormatContext> auto format(const IPv6Address &p, FormatContext &ctx)
+  template <typename FormatContext> auto format(const IPv6Address &p, FormatContext &ctx) const
   {
     return format_to(ctx.out(), "{}", p.str());
   }
@@ -195,3 +195,14 @@ template <typename H> H AbslHashValue(H hash_state, const IPv4Address &addr)
 }
 
 std::ostream &operator<<(std::ostream &os, const IPv4Address &ipv4);
+
+namespace fmt {
+template <> struct formatter<IPv4Address> {
+  template <typename ParseContext> constexpr auto parse(ParseContext &ctx) { return ctx.begin(); }
+
+  template <typename FormatContext> auto format(const IPv4Address &address, FormatContext &ctx) const
+  {
+    return format_to(ctx.out(), "{}", address.str());
+  }
+};
+} // namespace fmt

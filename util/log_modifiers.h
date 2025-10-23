@@ -9,6 +9,7 @@
 #include <type_traits>
 #include <utility>
 #include <optional>
+#include <sstream>
 
 #include <cassert>
 
@@ -427,3 +428,50 @@ Out&& operator<<(Out&& out, const std::optional<T>& opt) {
     return std::forward<Out>(out);
 }
 }
+
+// fmt v10+ ADL customization points for logging wrappers
+// These provide formatting when util/fmt_extensions.h isn't included.
+// When it is included, its formatter specializations take precedence.
+namespace logger::impl {
+
+template <typename T>
+inline std::string format_as(waived_t<T> const &w)
+{
+  std::ostringstream os;
+  os << w;
+  return os.str();
+}
+
+template <typename WhenTrue, typename WhenFalse>
+inline std::string format_as(either_t<WhenTrue, WhenFalse> const &v)
+{
+  std::ostringstream os;
+  os << v;
+  return os.str();
+}
+
+template <typename T, char Open, char Close>
+inline std::string format_as(surrounded_t<T, Open, Close> const &v)
+{
+  std::ostringstream os;
+  os << v;
+  return os.str();
+}
+
+template <typename Key, typename Value, char Separator, char Open, char Close>
+inline std::string format_as(kv_pair_t<Key, Value, Separator, Open, Close> const &v)
+{
+  std::ostringstream os;
+  os << v;
+  return os.str();
+}
+
+template <typename Fn>
+inline std::string format_as(callable_t<Fn> const &v)
+{
+  std::ostringstream os;
+  os << v;
+  return os.str();
+}
+
+} // namespace logger::impl

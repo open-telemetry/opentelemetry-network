@@ -132,6 +132,7 @@ class MessageGenerator {
     «generatedCodeWarning()»
 
     #include "descriptor.h"
+    #include <cstdint>
 
     /***********************
      * DESCRIPTORS

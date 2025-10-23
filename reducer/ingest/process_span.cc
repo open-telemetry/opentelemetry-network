@@ -41,7 +41,8 @@ void ProcessSpan::pid_info_create_deprecated(
 {
   std::string comm{(char const *)msg->comm, strnlen((char const *)msg->comm, sizeof(msg->comm))};
 
-  LOG::trace_in(Component::process, "ProcessSpan::{} msg={}", __func__, *msg);
+  LOG::trace_in(
+      Component::process, "ProcessSpan::pid_info_create_deprecated pid:{} cgroup:{} comm:{}", msg->pid, msg->cgroup, comm);
 
   create_refs(span_ref, msg->pid, msg->cgroup, std::move(comm), std::nullopt);
 }
@@ -51,7 +52,13 @@ void ProcessSpan::pid_info_create(
 {
   std::string comm{(char const *)msg->comm, strnlen((char const *)msg->comm, sizeof(msg->comm))};
 
-  LOG::trace_in(Component::process, "ProcessSpan::{} msg={}", __func__, *msg);
+  LOG::trace_in(
+      Component::process,
+      "ProcessSpan::pid_info_create pid:{} cgroup:{} comm:{} cmdline:{}",
+      msg->pid,
+      msg->cgroup,
+      comm,
+      msg->cmdline);
 
   create_refs(span_ref, msg->pid, msg->cgroup, std::move(comm), msg->parent_pid);
 
@@ -147,7 +154,7 @@ void ProcessSpan::pid_set_comm(::ebpf_net::ingest::weak_refs::process span_ref, 
 void ProcessSpan::pid_set_cmdline(
     ::ebpf_net::ingest::weak_refs::process span_ref, u64 timestamp, jsrv_ingest__pid_set_cmdline *msg)
 {
-  LOG::trace_in(Component::process, "ProcessSpan::{} msg={}", __func__, *msg);
+  LOG::trace_in(Component::process, "ProcessSpan::pid_set_cmdline pid:{}", msg->pid);
 
   parse_cmdline(span_ref, msg->cmdline.string_view());
 }
