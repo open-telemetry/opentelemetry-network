@@ -103,6 +103,7 @@ target_link_libraries(
     environment_variables
     virtual_clock
     cgroup_parser
+    versions
 )
 add_dependencies(
   reducerlib
