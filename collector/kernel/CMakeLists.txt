@@ -112,6 +112,7 @@ target_link_libraries(
     absl::flat_hash_set
     stdc++fs
     libbpf::libbpf
+    versions
 )
 target_compile_options(agentlib PRIVATE -fPIC)
 # some agentlib sources include ${BPF_DEBUG_INFO}

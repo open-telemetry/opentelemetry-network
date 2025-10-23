@@ -17,7 +17,7 @@
 
 // Include the generated skeleton
 extern "C" {
-#include "/home/user/out/generated/render_bpf.skel.h"
+#include "generated/render_bpf.skel.h"
 }
 
 #include <memory>
