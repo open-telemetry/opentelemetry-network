@@ -29,17 +29,18 @@ FROM $libbpf_IMAGE_TAG as build-libbpf
 FROM build-main AS build-result
 
 # Package definitions
-ARG PKG_DOCKER="podman uidmap slirp4netns"
+# Include fuse-overlayfs so rootless podman can run on overlayfs (e.g., in containers)
+ARG PKG_DOCKER="podman uidmap fuse-overlayfs"
 ARG PKG_KERNEL_TOOLS="kmod selinux-utils"
 ARG PKG_CORE_TOOLS="pass"
 ARG PKG_DEV_TOOLS="vim-nox lsof silversearcher-ag ssh"
 ARG PKG_AWS_TOOLS="awscli"
-ARG BENV_JAVA_VERSION=17
+ARG BENV_JAVA_VERSION=21
 ARG PKG_EXTRA_PACKAGES="openjdk-${BENV_JAVA_VERSION}-jdk-headless google-cloud-sdk google-cloud-sdk-skaffold"
 ARG PKG_PYTHON_LIBS="python3-ijson python3-docker"
 
 RUN sudo sh -c 'echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list' && \
-    curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add - && \
+    curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo tee /usr/share/keyrings/cloud.google.gpg && \
     sudo apt-get -y update && \
     sudo apt-get install --no-install-recommends -y \
         $PKG_DOCKER \
@@ -58,6 +59,13 @@ RUN sudo sh -c 'echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http:
     # END fix podman permissions \
     sudo apt-get clean && \
     sudo rm -rf /var/lib/apt/lists/*
+
+# Ensure podman uses fuse-overlayfs in rootless environments where kernel overlay is unavailable
+RUN mkdir -p $HOME/.config/containers && \
+    printf "[storage]\n" > $HOME/.config/containers/storage.conf && \
+    printf "driver = \"overlay\"\n" >> $HOME/.config/containers/storage.conf && \
+    printf "[storage.options]\n" >> $HOME/.config/containers/storage.conf && \
+    printf "mount_program = \"/usr/bin/fuse-overlayfs\"\n" >> $HOME/.config/containers/storage.conf
 
 # For info on the fix to podman in container, see https://samuel.forestier.app/blog/security/podman-rootless-in-podman-rootless-the-debian-way
 # Replace setuid bits by proper file capabilities for uidmap binaries.

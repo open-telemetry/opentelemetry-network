@@ -5,6 +5,7 @@
 #include <channel/reconnecting_channel.h>
 
 #include <util/log.h>
+#include <util/log_formatters.h>
 
 #include <stdexcept>
 

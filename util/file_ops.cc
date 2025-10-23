@@ -234,7 +234,8 @@ void cleanup_directory_subdirs(
     if (std::filesystem::remove_all(subdir->path, ec)) {
       LOG::info("Deleted directory {}", subdir->path);
     } else {
-      LOG::warn("Failed to delete directory {} : {}", subdir->path, ec);
+      const std::string error_message = ec.message();
+      LOG::warn("Failed to delete directory {} : {} ({})", subdir->path, error_message, ec.value());
     }
   }
 }

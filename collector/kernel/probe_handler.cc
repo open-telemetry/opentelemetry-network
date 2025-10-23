@@ -17,7 +17,7 @@
 
 // Include the generated skeleton
 extern "C" {
-#include "/home/user/out/generated/render_bpf.skel.h"
+#include "generated/render_bpf.skel.h"
 }
 
 #include <memory>
@@ -39,7 +39,7 @@ std::vector<int> get_online_cpus()
   return cpus;
 }
 
-ProbeHandler::ProbeHandler(logging::Logger &log) : log_(log), num_failed_probes_(0), stack_trace_count_(0){};
+ProbeHandler::ProbeHandler(logging::Logger &log) : log_(log), num_failed_probes_(0), stack_trace_count_(0) {};
 
 void ProbeHandler::load_kernel_symbols()
 {

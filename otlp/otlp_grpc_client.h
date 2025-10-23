@@ -113,7 +113,7 @@ public:
                 "{}: RPC failed for tag={}: {}: {}",
                 client_type_,
                 reinterpret_cast<u64>(tag),
-                async_response->status_.error_code(),
+                static_cast<int>(async_response->status_.error_code()),
                 log_waive(async_response->status_.error_message()));
             bytes_failed_ += async_response->num_bytes;
             data_points_failed_ += async_response->num_data_points;

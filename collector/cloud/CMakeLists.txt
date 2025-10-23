@@ -40,6 +40,7 @@ target_link_libraries(
     "-Wl,--no-as-needed"
     protobuf::libprotobuf
     ZLIB::ZLIB
+    versions
     "-Wl,--as-needed"
 )
 

@@ -132,13 +132,13 @@ void NetworkInterfacesEnumerator::handle_ec2_error(
     CollectorStatus status, Aws::Client::AWSError<Aws::EC2::EC2Errors> const &error)
 {
   if (error.GetErrorType() == Aws::EC2::EC2Errors::THROTTLING) {
-    log_.error("{} - AWS API call throttled: {}", status, error.GetMessage());
+    log_.error("{} - AWS API call throttled: {}", to_string(status), error.GetMessage());
     return;
   }
 
   auto const http_status = static_cast<std::underlying_type_t<Aws::Http::HttpResponseCode>>(error.GetResponseCode());
 
-  LOG::trace("reporting cloud collector as unhealthy (status={} detail={})", status, http_status);
+  LOG::trace("reporting cloud collector as unhealthy (status={} detail={})", to_string(status), http_status);
   writer_.collector_health(integer_value(status), http_status);
 
   if (http_status >= 400 && http_status < 500) {
@@ -146,12 +146,15 @@ void NetworkInterfacesEnumerator::handle_ec2_error(
         "{} -  API call failed with http status {}. Double check that AWS credentials are"
         " properly set up for this pod. Check setup instructions for more information."
         " Error message from AWS: {}",
-        status,
+        to_string(status),
         http_status,
         error.GetMessage());
   } else {
     log_.error(
-        "{} -  API call failed with http status {}. Error message from AWS: {}", status, http_status, error.GetMessage());
+        "{} -  API call failed with http status {}. Error message from AWS: {}",
+        to_string(status),
+        http_status,
+        error.GetMessage());
   }
 }
 

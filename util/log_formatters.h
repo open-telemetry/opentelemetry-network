@@ -6,6 +6,7 @@
 #pragma once
 
 #include <chrono>
+#include <spdlog/fmt/fmt.h>
 #include <exception>
 #include <system_error>
 #include <variant>
@@ -31,6 +32,26 @@ template <typename Out> Out &operator<<(Out &&out, std::error_code error)
 }
 
 } // namespace std
+
+namespace fmt {
+
+template <> struct formatter<std::error_code> {
+  template <typename ParseContext> constexpr auto parse(ParseContext &ctx) { return ctx.begin(); }
+  template <typename FormatContext> auto format(std::error_code const &error, FormatContext &ctx) const
+  {
+    return fmt::format_to(ctx.out(), "[{}: {}]", error.value(), error.message());
+  }
+};
+
+template <> struct formatter<std::errc> {
+  template <typename ParseContext> constexpr auto parse(ParseContext &ctx) { return ctx.begin(); }
+  template <typename FormatContext> auto format(std::errc error, FormatContext &ctx) const
+  {
+    return fmt::format_to(ctx.out(), "[{}: {}]", static_cast<int>(error), std::strerror(static_cast<int>(error)));
+  }
+};
+
+} // namespace fmt
 
 ////////////////
 // exceptions //

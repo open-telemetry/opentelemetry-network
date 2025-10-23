@@ -1,67 +1,49 @@
-# Copyright The OpenTelemetry Authors
-# SPDX-License-Identifier: Apache-2.0
-
-name: create-build-tools-container
-run-name: Create the opentelemetry-network-build-tools container
+name: build-benv-single-arch
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'build-tools/**'
-      - '.github/workflows/build_and_push_parallel.yml'
-  workflow_dispatch:
+  workflow_call:
     inputs:
-      ref:
-        description: "Tag, branch or SHA to checkout"
+      runner:
+        description: Runner label (ubuntu-24.04 or ubuntu-24.04-arm)
         required: true
         type: string
-        default: "main"
-      image_prefix:
-        description: "Prefix to use for destination image name"
+      arch:
+        description: Target architecture (amd64 or arm64)
+        required: true
+        type: string
+      ref:
+        description: Tag, branch or SHA to checkout
         required: false
         type: string
-        default: "opentelemetry-network-"
-      additional_tag:
-        description: "Additional tag to use when pushing to docker repository"
+        default: main
+      cache_registry:
+        description: Cache registry to use (GHCR)
         required: false
         type: string
-      dry_run:
-        description: "Build everything but don't actually push to repository"
-        required: false
-        type: boolean
-        default: false
-      registry_workspace:
-        description: "Registry workspace/namespace to push final image to"
-        required: false
-        type: string
-        default: "otel"
+        default: ghcr.io
       force_rebuild:
-        description: "Force rebuild all containers (ignore cache)"
+        description: Force rebuild all containers (ignore cache)
         required: false
         type: boolean
         default: false
+    outputs:
+      final_image:
+        description: Full image tag for the final stage in the cache registry
+        value: ${{ jobs.build-final.outputs['full-image-tag'] }}
 
 permissions:
   contents: read
   packages: write
 
 env:
-  CACHE_REGISTRY: ghcr.io
-  FINAL_REGISTRY: docker.io
-  IMAGE_PREFIX: ${{ inputs.image_prefix || 'opentelemetry-network-' }}
-  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-  DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-  DOCKER_NAMESPACE: ${{ inputs.registry_workspace || 'otel' }}
-  DRY_RUN: ${{ github.event_name != 'workflow_dispatch' || inputs.dry_run }}
+  CACHE_REGISTRY: ${{ inputs.cache_registry || 'ghcr.io' }}
   REF: ${{ inputs.ref || github.ref }}
   FORCE_REBUILD: ${{ inputs.force_rebuild || false }}
 
 jobs:
   build-base:
     name: Build base image
-    runs-on: ubuntu-24.04
+    runs-on: ${{ inputs.runner }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
@@ -72,6 +54,7 @@ jobs:
         uses: ./.github/actions/build-tools-single-stage/
         with:
           directory: base
+          arch: ${{ inputs.arch }}
           registry: ${{ env.CACHE_REGISTRY }}
           registry_username: ${{ github.actor }}
           registry_password: ${{ secrets.GITHUB_TOKEN }}
@@ -80,7 +63,7 @@ jobs:
 
   build-bcc:
     name: Build bcc image
-    runs-on: ubuntu-24.04
+    runs-on: ${{ inputs.runner }}
     needs: build-base
     steps:
       - name: Checkout repository
@@ -92,6 +75,7 @@ jobs:
         uses: ./.github/actions/build-tools-single-stage/
         with:
           directory: bcc
+          arch: ${{ inputs.arch }}
           registry: ${{ env.CACHE_REGISTRY }}
           registry_username: ${{ github.actor }}
           registry_password: ${{ secrets.GITHUB_TOKEN }}
@@ -100,7 +84,7 @@ jobs:
 
   build-libuv:
     name: Build libuv image
-    runs-on: ubuntu-24.04
+    runs-on: ${{ inputs.runner }}
     needs: build-base
     steps:
       - name: Checkout repository
@@ -112,6 +96,7 @@ jobs:
         uses: ./.github/actions/build-tools-single-stage/
         with:
           directory: libuv
+          arch: ${{ inputs.arch }}
           registry: ${{ env.CACHE_REGISTRY }}
           registry_username: ${{ github.actor }}
           registry_password: ${{ secrets.GITHUB_TOKEN }}
@@ -120,7 +105,7 @@ jobs:
 
   build-cpp-misc:
     name: Build cpp_misc image
-    runs-on: ubuntu-24.04
+    runs-on: ${{ inputs.runner }}
     needs: build-base
     steps:
       - name: Checkout repository
@@ -132,6 +117,7 @@ jobs:
         uses: ./.github/actions/build-tools-single-stage/
         with:
           directory: cpp_misc
+          arch: ${{ inputs.arch }}
           registry: ${{ env.CACHE_REGISTRY }}
           registry_username: ${{ github.actor }}
           registry_password: ${{ secrets.GITHUB_TOKEN }}
@@ -140,7 +126,7 @@ jobs:
 
   build-go:
     name: Build go image
-    runs-on: ubuntu-24.04
+    runs-on: ${{ inputs.runner }}
     needs: build-base
     steps:
       - name: Checkout repository
@@ -152,6 +138,7 @@ jobs:
         uses: ./.github/actions/build-tools-single-stage/
         with:
           directory: go
+          arch: ${{ inputs.arch }}
           registry: ${{ env.CACHE_REGISTRY }}
           registry_username: ${{ github.actor }}
           registry_password: ${{ secrets.GITHUB_TOKEN }}
@@ -160,7 +147,7 @@ jobs:
 
   build-libmaxminddb:
     name: Build libmaxminddb image
-    runs-on: ubuntu-24.04
+    runs-on: ${{ inputs.runner }}
     needs: build-base
     steps:
       - name: Checkout repository
@@ -172,6 +159,7 @@ jobs:
         uses: ./.github/actions/build-tools-single-stage/
         with:
           directory: libmaxminddb
+          arch: ${{ inputs.arch }}
           registry: ${{ env.CACHE_REGISTRY }}
           registry_username: ${{ github.actor }}
           registry_password: ${{ secrets.GITHUB_TOKEN }}
@@ -180,7 +168,7 @@ jobs:
 
   build-libbpf:
     name: Build libbpf image
-    runs-on: ubuntu-24.04
+    runs-on: ${{ inputs.runner }}
     needs: build-base
     steps:
       - name: Checkout repository
@@ -192,6 +180,7 @@ jobs:
         uses: ./.github/actions/build-tools-single-stage/
         with:
           directory: libbpf
+          arch: ${{ inputs.arch }}
           registry: ${{ env.CACHE_REGISTRY }}
           registry_username: ${{ github.actor }}
           registry_password: ${{ secrets.GITHUB_TOKEN }}
@@ -200,7 +189,7 @@ jobs:
 
   build-aws-sdk:
     name: Build aws_sdk image
-    runs-on: ubuntu-24.04
+    runs-on: ${{ inputs.runner }}
     needs: [build-base]
     steps:
       - name: Checkout repository
@@ -212,6 +201,7 @@ jobs:
         uses: ./.github/actions/build-tools-single-stage/
         with:
           directory: aws_sdk
+          arch: ${{ inputs.arch }}
           registry: ${{ env.CACHE_REGISTRY }}
           registry_username: ${{ github.actor }}
           registry_password: ${{ secrets.GITHUB_TOKEN }}
@@ -220,7 +210,7 @@ jobs:
 
   build-gcp-cpp:
     name: Build gcp_cpp image
-    runs-on: ubuntu-24.04
+    runs-on: ${{ inputs.runner }}
     needs: [build-base]
     steps:
       - name: Checkout repository
@@ -232,6 +222,7 @@ jobs:
         uses: ./.github/actions/build-tools-single-stage/
         with:
           directory: gcp_cpp
+          arch: ${{ inputs.arch }}
           registry: ${{ env.CACHE_REGISTRY }}
           registry_username: ${{ github.actor }}
           registry_password: ${{ secrets.GITHUB_TOKEN }}
@@ -240,7 +231,7 @@ jobs:
 
   build-opentelemetry:
     name: Build opentelemetry image
-    runs-on: ubuntu-24.04
+    runs-on: ${{ inputs.runner }}
     needs: [build-base]
     steps:
       - name: Checkout repository
@@ -252,6 +243,7 @@ jobs:
         uses: ./.github/actions/build-tools-single-stage/
         with:
           directory: opentelemetry
+          arch: ${{ inputs.arch }}
           registry: ${{ env.CACHE_REGISTRY }}
           registry_username: ${{ github.actor }}
           registry_password: ${{ secrets.GITHUB_TOKEN }}
@@ -260,7 +252,7 @@ jobs:
 
   build-final:
     name: Build final image
-    runs-on: ubuntu-24.04
+    runs-on: ${{ inputs.runner }}
     needs: [
       build-base,
       build-bcc,
@@ -287,75 +279,9 @@ jobs:
         uses: ./.github/actions/build-tools-single-stage/
         with:
           directory: final
+          arch: ${{ inputs.arch }}
           registry: ${{ env.CACHE_REGISTRY }}
           registry_username: ${{ github.actor }}
           registry_password: ${{ secrets.GITHUB_TOKEN }}
           ref: ${{ env.REF }}
           force_rebuild: ${{ env.FORCE_REBUILD }}
-
-  # Push final image to docker.io with proper tags
-  push-to-dockerhub:
-    name: Push final image to Docker Hub
-    runs-on: ubuntu-24.04
-    needs: build-final
-    if: github.event_name == 'workflow_dispatch'
-    steps:
-      - name: Checkout sources
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-        with:
-          ref: ${{ env.REF }}
-          fetch-depth: 0
-
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # v3.5.0
-        with:
-          registry: ${{ env.CACHE_REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Log in to Docker Hub
-        uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # v3.5.0
-        with:
-          registry: ${{ env.FINAL_REGISTRY }}
-          username: ${{ env.DOCKER_USERNAME }}
-          password: ${{ env.DOCKER_PASSWORD }}
-
-      - name: Pull, tag and push final image to Docker Hub
-        run: |
-          # Use the recursive final image tag from the build job
-          CACHE_IMAGE="${{ needs.build-final.outputs.full-image-tag }}"
-          
-          echo "Pulling final image: ${CACHE_IMAGE}"
-          docker pull "${CACHE_IMAGE}"
-          
-          # Compute git hash for additional tagging
-          git_short_hash=$(git rev-parse --short=8 HEAD)
-          
-          # Set up tags
-          tags=(
-            latest
-            git-${git_short_hash}
-          )
-          
-          if [[ "${{ inputs.additional_tag }}" != "" ]]; then
-            tags=(${tags[@]} "${{ inputs.additional_tag }}")
-          fi
-          
-          # Set up image name and path for Docker Hub
-          image_name="${{ env.IMAGE_PREFIX }}build-tools"
-          docker_registry=$(sed -e 's,^https://,,' -e 's,/*$,,' <<< ${{ env.FINAL_REGISTRY }})
-          image_path="${docker_registry}/${{ env.DOCKER_NAMESPACE }}/${image_name}"
-          
-          # Tag and push to Docker Hub
-          for tag in ${tags[@]}; do
-            docker tag "${CACHE_IMAGE}" "${image_path}:${tag}"
-            if [[ "${{ env.DRY_RUN }}" == "false" ]]; then
-              docker push "${image_path}:${tag}"
-              echo "Pushed ${image_path}:${tag}"
-            else
-              echo "Dry run: would push ${image_path}:${tag}"
-            fi
-          done
-          
-          # List all images for verification
-          docker images --no-trunc

@@ -21,7 +21,13 @@ function(render_compile INPUT_DIR)
   if(DEFINED ARG_COMPILER)
     set(RENDER_COMPILER ${ARG_COMPILER})
   else()
-    get_target_property(RENDER_COMPILER render_compiler LOCATION)
+    get_property(
+      RENDER_COMPILER
+      TARGET
+        render_compiler
+      PROPERTY
+        RENDER_COMPILER_PATH
+    )
   endif()
 
   set(RENDER_${PACKAGE}_OUTPUTS "")

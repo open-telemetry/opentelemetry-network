@@ -92,6 +92,15 @@ struct jb_blob {
 };
 
 #ifdef __cplusplus
+// fmt v10+ customization point: allow formatting jb_blob without a formatter
+// by exposing it as a std::string_view via ADL.
+inline std::string_view format_as(jb_blob const &blob)
+{
+  return std::string_view(blob.buf, blob.len);
+}
+#endif
+
+#ifdef __cplusplus
 }
 
 template <std::size_t Size> constexpr jb_blob to_jb_blob(std::uint8_t const (&data)[Size])

@@ -23,8 +23,10 @@
 #include <spdlog/fmt/bin_to_hex.h>
 
 #include <chrono>
+#include <cstring>
 #include <iostream>
 #include <stdexcept>
+#include <string_view>
 
 constexpr u16 DNS_MAX_PACKET_LEN = 512;
 
@@ -33,6 +35,16 @@ static BufferedPoller *singleton_ = nullptr;
 #endif // DEBUG_PID
 
 static constexpr u64 DNS_TIMEOUT_TIME_NS = 10'000'000'000ull;
+
+namespace {
+
+std::string_view comm_to_string(std::uint8_t const (&comm)[16])
+{
+  auto const length = strnlen(reinterpret_cast<char const *>(comm), sizeof(comm));
+  return std::string_view(reinterpret_cast<char const *>(comm), length);
+}
+
+} // namespace
 
 BufferedPoller::BufferedPoller(
     uv_loop_t &loop,
@@ -1034,7 +1046,16 @@ void BufferedPoller::handle_pid_info(message_metadata const &metadata, jb_agent_
 {
   pid_count_++;
 
-  LOG::debug_in(AgentLogKind::PID, "{}: msg={} pid_count_={}", __func__, msg, pid_count_);
+  const std::string_view comm = comm_to_string(msg.comm);
+  LOG::debug_in(
+      AgentLogKind::PID,
+      "{}: pid={} parent={} cgroup=0x{:x} comm='{}' pid_count_={}",
+      __func__,
+      msg.pid,
+      msg.parent_pid,
+      msg.cgroup,
+      comm,
+      pid_count_);
 
   cgroup_handler_.handle_pid_info(msg.pid, msg.cgroup, msg.comm);
   process_handler_.on_new_process(std::chrono::nanoseconds{metadata.timestamp}, msg);
@@ -1057,7 +1078,8 @@ void BufferedPoller::handle_pid_close(message_metadata const &metadata, jb_agent
 {
   pid_count_--;
 
-  LOG::debug_in(AgentLogKind::PID, "{}: msg={} pid_count_={}", __func__, msg, pid_count_);
+  const std::string_view comm = comm_to_string(msg.comm);
+  LOG::debug_in(AgentLogKind::PID, "{}: pid={} comm='{}' pid_count_={}", __func__, msg.pid, comm, pid_count_);
 
   process_handler_.on_process_end(std::chrono::nanoseconds{metadata.timestamp}, msg);
   writer_.pid_close_info_tstamp(metadata.timestamp, msg.pid, msg.comm);
@@ -1065,7 +1087,8 @@ void BufferedPoller::handle_pid_close(message_metadata const &metadata, jb_agent
 
 void BufferedPoller::handle_pid_set_comm(message_metadata const &metadata, jb_agent_internal__pid_set_comm &msg)
 {
-  LOG::debug_in(AgentLogKind::PID, "{}: msg={}", __func__, msg);
+  const std::string_view comm = comm_to_string(msg.comm);
+  LOG::debug_in(AgentLogKind::PID, "{}: pid={} comm='{}'", __func__, msg.pid, comm);
 
   process_handler_.set_process_command(std::chrono::nanoseconds{metadata.timestamp}, msg);
   writer_.pid_set_comm_tstamp(metadata.timestamp, msg.pid, msg.comm);
@@ -1073,7 +1096,7 @@ void BufferedPoller::handle_pid_set_comm(message_metadata const &metadata, jb_ag
 
 void BufferedPoller::handle_pid_exit(message_metadata const &metadata, jb_agent_internal__pid_exit &msg)
 {
-  LOG::debug_in(AgentLogKind::PID, "{}: msg={}", __func__, msg);
+  LOG::debug_in(AgentLogKind::PID, "{}: tgid={} pid={} exit_code={}", __func__, msg.tgid, msg.pid, msg.exit_code);
 
   process_handler_.pid_exit(std::chrono::nanoseconds{metadata.timestamp}, msg);
 }
