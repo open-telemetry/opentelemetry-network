@@ -21,7 +21,7 @@ import static extension io.opentelemetry.render.extensions.AppExtensions.*
 class RustWireMessageGenerator {
 
   def void doGenerate(App app, IFileSystemAccess2 fsa) {
-    fsa.generateFile(outputPath(app, "wire_messages.rs"), generateWireMessages(app))
+    fsa.generateFile(outputPath(app, "src/wire_messages.rs"), generateWireMessages(app))
   }
 
   private static def generateWireMessages(App app) {

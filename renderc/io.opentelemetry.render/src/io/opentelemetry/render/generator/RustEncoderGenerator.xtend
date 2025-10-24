@@ -23,7 +23,7 @@ import static extension io.opentelemetry.render.extensions.FieldExtensions.*
 class RustEncoderGenerator {
 
   def void doGenerate(App app, IFileSystemAccess2 fsa) {
-    fsa.generateFile(outputPath(app, "encoder.rs"), generateRustEncoder(app))
+    fsa.generateFile(outputPath(app, "src/encoder.rs"), generateRustEncoder(app))
   }
 
   private static def generateRustEncoder(App app) {
