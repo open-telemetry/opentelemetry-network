@@ -1,0 +1,6 @@
+[workspace]
+members = [
+  "crates/kernel-collector-sys",
+  "crates/kernel-collector-bin",
+]
+
