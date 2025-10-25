@@ -33,6 +33,18 @@ if(EXISTS "/install")
   endif()
 endif()
 
+# Provide explicit package locations commonly installed in this image.
+# These hints short-circuit expensive probing inside find_package.
+if(NOT DEFINED LLVM_DIR AND EXISTS "/usr/lib/llvm-19/cmake")
+  set(LLVM_DIR "/usr/lib/llvm-19/cmake" CACHE PATH "LLVM config dir" FORCE)
+endif()
+if(NOT DEFINED gRPC_DIR AND EXISTS "/usr/lib/x86_64-linux-gnu/cmake/grpc")
+  set(gRPC_DIR "/usr/lib/x86_64-linux-gnu/cmake/grpc" CACHE PATH "gRPC config dir" FORCE)
+endif()
+if(NOT DEFINED absl_DIR AND EXISTS "/usr/lib/x86_64-linux-gnu/cmake/absl")
+  set(absl_DIR "/usr/lib/x86_64-linux-gnu/cmake/absl" CACHE PATH "abseil config dir" FORCE)
+endif()
+
 # Make git tolerant to container bind-mount ownership (mirrors build script behavior)
 execute_process(
   COMMAND git config --global --add safe.directory ${CMAKE_SOURCE_DIR}
@@ -96,4 +108,3 @@ endif()
 if(NOT DEFINED EBPF_NET_COLLECTOR_BUILD_NUMBER OR EBPF_NET_COLLECTOR_BUILD_NUMBER STREQUAL "")
   set(EBPF_NET_COLLECTOR_BUILD_NUMBER "0" CACHE STRING "Collector build number" FORCE)
 endif()
-

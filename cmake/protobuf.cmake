@@ -6,6 +6,19 @@ include_guard()
 
 
 find_package(Protobuf REQUIRED)
+# Avoid the very slow pkg-config-based RE2 lookup inside gRPC's Findre2.cmake
+# by predefining the imported target when possible. This short-circuits the
+# module and prevents multiple costly pkg-config invocations.
+if(NOT TARGET re2::re2)
+  find_library(_RE2_LIB NAMES re2)
+  find_path(_RE2_INCLUDE_DIR NAMES re2/re2.h)
+  if(_RE2_LIB AND _RE2_INCLUDE_DIR)
+    add_library(re2::re2 INTERFACE IMPORTED)
+    set_property(TARGET re2::re2 PROPERTY INTERFACE_LINK_LIBRARIES "${_RE2_LIB}")
+    set_property(TARGET re2::re2 PROPERTY INTERFACE_INCLUDE_DIRECTORIES "${_RE2_INCLUDE_DIR}")
+    message(STATUS "Using preconfigured RE2 (no pkg-config): ${_RE2_LIB}")
+  endif()
+endif()
 find_package(gRPC CONFIG REQUIRED)
 
 find_program(GRPC_CPP_PLUGIN_LOCATION grpc_cpp_plugin REQUIRED)
