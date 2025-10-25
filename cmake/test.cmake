@@ -114,3 +114,9 @@ function(add_ebpf_unit_test NAME)
   add_dependencies(unit_tests "${NAME}_test")
   set_property(TEST ${TEST_NAME} PROPERTY LABELS eBPFContainer)
 endfunction(add_ebpf_unit_test)
+
+# Ensure running `test` builds all unit test binaries first.
+# The `test` target is available when testing is enabled.
+if (TARGET test)
+  add_dependencies(test unit_tests)
+endif ()
