@@ -79,28 +79,34 @@ target_link_libraries(
     render_ebpf_net_artifacts
 )
 
-add_executable(
-  k8s-relay
-    main.cc
+add_library(
+  k8s_entrylib
+  STATIC
+    entrypoint.cc
 )
-harden_executable(k8s-relay)
-
-add_dependencies(collectors k8s-relay)
-
 target_link_libraries(
-  k8s-relay
+  k8s_entrylib
   PUBLIC
     signal_handler
+    kubernetes_rpc_server
+)
+target_include_directories(
+  k8s_entrylib
+  PRIVATE
+    ${PROJECT_SOURCE_DIR}
+    ${CMAKE_CURRENT_BINARY_DIR}
+)
+
+set(K8S_RELAY_LINK_LIBRARIES
+    k8s_entrylib
     resync_processor
     resync_queue
     resync_channel
-    kubernetes_rpc_server
     kubernetes_owner_kind
     connection_caretaker
     resource_usage_reporter
     render_ebpf_net_artifacts
     render_ebpf_net_ingest_writer
-    render_rust_ebpf_net
     config_file
     libuv-static
     args_parser
@@ -109,14 +115,8 @@ target_link_libraries(
     static-executable
     gRPC::grpc++_unsecure
     gRPC::grpc_unsecure
-    dl
     versions
 )
-
-set_target_properties(k8s-relay PROPERTIES LINK_SEARCH_START_STATIC 1)
-set_target_properties(k8s-relay PROPERTIES LINK_SEARCH_END_STATIC 1)
-
-strip_binary(k8s-relay)
 
 lint_shell_script_bundle(
   k8s-relay-scripts
@@ -124,12 +124,21 @@ lint_shell_script_bundle(
     entrypoint.sh
 )
 
+include(rust_main)
+add_rust_main(
+  TARGET           k8s-relay
+  STRIPPED_TARGET  k8s-relay-stripped
+  PACKAGE          k8s-relay-bin
+  BIN_NAME         k8s-relay
+  LINK_LIBS        ${K8S_RELAY_LINK_LIBRARIES}
+)
+
+add_dependencies(collectors k8s-relay)
+
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
   build_custom_docker_image(
     k8s-relay
     OUT_DIR srv
-    ARTIFACTS_OF
-      k8s-relay
     OUTPUT_OF
       k8s-relay-scripts
       k8s-relay-stripped

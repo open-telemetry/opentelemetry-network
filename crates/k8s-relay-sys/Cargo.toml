@@ -1,0 +1,12 @@
+[package]
+name = "k8s-relay-sys"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "k8s_relay_sys"
+path = "src/lib.rs"
+
+[dependencies]
+encoder_ebpf_net_ingest = { path = "../render/ebpf_net/ingest" }
+

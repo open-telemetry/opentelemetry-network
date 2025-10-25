@@ -82,7 +82,10 @@ function(build_go_package NAME MODULE)
   get_target_property(MOD_BUILD_DIR "${MODULE}" MOD_BUILD_DIR)
   get_target_property(GO_MOD_FILE "${MODULE}" GO_MOD_FILE)
   set(BUILD_DIR "${MOD_BUILD_DIR}/${NAME}")
-  set(OUT_BINARY "${CMAKE_CURRENT_BINARY_DIR}/${NAME}")
+  # Place Go binaries under a dedicated bin/ directory to avoid
+  # colliding with CMake's phony target paths when the target name
+  # matches the binary name (required by Ninja generator).
+  set(OUT_BINARY "${CMAKE_CURRENT_BINARY_DIR}/bin/${NAME}")
 
   set(TARGET_OPTIONS)
   if(ARG_ALL)
@@ -126,6 +129,9 @@ function(build_go_package NAME MODULE)
       TARGET
         "${TARGET}"
       POST_BUILD
+      COMMAND
+        ${CMAKE_COMMAND} -E make_directory
+          "${CMAKE_CURRENT_BINARY_DIR}/bin"
       WORKING_DIRECTORY
         "${BUILD_DIR}"
       BYPRODUCTS

@@ -1,30 +1,30 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
-add_executable(
-  cloud-collector
-    main.cc
+add_library(
+  cloud_agentlib
+  STATIC
+    entrypoint.cc
     collector.cc
     enumerator.cc
     ingest_connection.cc
 )
-harden_executable(cloud-collector)
-
-add_dependencies(collectors cloud-collector)
-
-target_compile_options(
-  cloud-collector
+target_include_directories(
+  cloud_agentlib
   PRIVATE
-    ${CXX_ERROR_LIMIT_FLAG}=1
+    ${PROJECT_SOURCE_DIR}
+    ${CMAKE_CURRENT_BINARY_DIR}
+)
+target_link_libraries(
+  cloud_agentlib
+  PUBLIC
+    signal_handler 
 )
 
-target_link_libraries(
-  cloud-collector
-  PUBLIC
+set(CLOUD_COLLECTOR_LINK_LIBRARIES
+    cloud_agentlib
     render_ebpf_net_cloud_collector
     render_ebpf_net_ingest_writer
-    render_rust_ebpf_net
-    signal_handler
     aws-sdk-cpp
     reconnecting_channel
     connection_caretaker
@@ -38,27 +38,11 @@ target_link_libraries(
     aws_instance_metadata
     spdlog
     static-executable
-    "-Wl,--no-as-needed"
     protobuf::libprotobuf
     ZLIB::ZLIB
     versions
-    "-Wl,--as-needed"
 )
 
-set_target_properties(
-  cloud-collector
-  PROPERTIES LINK_FLAGS "-pthread"
-)
-
-strip_binary(cloud-collector)
-
-install(
-  TARGETS
-    cloud-collector
-  RUNTIME
-  DESTINATION ${CMAKE_INSTALL_BINOIR}
-  COMPONENT cloud-collector
-)
 
 lint_shell_script_bundle(
   cloud-collector-scripts
@@ -66,12 +50,21 @@ lint_shell_script_bundle(
     entrypoint.sh
 )
 
+include(rust_main)
+add_rust_main(
+  TARGET           cloud-collector
+  STRIPPED_TARGET  cloud-collector-stripped
+  PACKAGE          cloud-collector-bin
+  BIN_NAME         cloud-collector
+  LINK_LIBS        ${CLOUD_COLLECTOR_LINK_LIBRARIES}
+)
+
+add_dependencies(collectors cloud-collector)
+
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
   build_custom_docker_image(
     cloud-collector
     OUT_DIR srv
-    ARTIFACTS_OF
-      cloud-collector
     OUTPUT_OF
       cloud-collector-scripts
       cloud-collector-stripped

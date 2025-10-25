@@ -36,7 +36,7 @@
  * environment variables `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`.
  */
 
-int main(int argc, char *argv[])
+static int cloud_collector_run(int argc, char **argv)
 {
   ::uv_loop_t loop;
   if (auto const error = ::uv_loop_init(&loop)) {
@@ -120,3 +120,9 @@ int main(int argc, char *argv[])
 
   return EXIT_SUCCESS;
 }
+
+extern "C" int otn_cloud_collector_main(int argc, const char **argv)
+{
+  return cloud_collector_run(argc, const_cast<char **>(argv));
+}
+
