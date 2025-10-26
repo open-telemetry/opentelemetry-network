@@ -2,5 +2,6 @@
 members = [
   "crates/kernel-collector-sys",
   "crates/kernel-collector-bin",
+  "crates/perfect_hash_map",
 ]
 
