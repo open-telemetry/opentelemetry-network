@@ -53,6 +53,17 @@ class RustWireMessageGenerator {
         «ENDFOR»
       }
 
+      impl «xmsg.struct_name» {
+        #[inline]
+        pub fn metadata() -> render_parser::MessageMetadata {
+          «IF xmsg.dynamic_size»
+            render_parser::MessageMetadata::new_dynamic(«xmsg.rpc_id»u16, «!msg.noAuthorizationNeeded»)
+          «ELSE»
+            render_parser::MessageMetadata::new_fixed(«xmsg.rpc_id»u16, «xmsg.size», «!msg.noAuthorizationNeeded»)
+          «ENDIF»
+        }
+      }
+
       impl Default for «xmsg.struct_name» {
         #[inline]
         fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -83,6 +94,15 @@ class RustWireMessageGenerator {
         }
       }
     «ENDFOR»
+
+    #[inline]
+    pub fn all_message_metadata() -> ::std::vec::Vec<render_parser::MessageMetadata> {
+      ::std::vec![
+        «FOR msg : app.messages»
+          «msg.wire_msg.struct_name»::metadata(),
+        «ENDFOR»
+      ]
+    }
 
     '''
   }
