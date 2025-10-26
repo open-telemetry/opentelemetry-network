@@ -89,6 +89,7 @@ function(render_compile INPUT_DIR)
         # Rust per-app crate files live under src/
         "${OUTPUT_DIR}/${PACKAGE}/${APP}/src/wire_messages.rs"
         "${OUTPUT_DIR}/${PACKAGE}/${APP}/src/encoder.rs"
+        "${OUTPUT_DIR}/${PACKAGE}/${APP}/src/hash.rs"
         "${OUTPUT_DIR}/${PACKAGE}/${APP}/Cargo.toml"
         "${OUTPUT_DIR}/${PACKAGE}/${APP}/src/lib.rs"
         # Headers that are also generated alongside sources
@@ -296,6 +297,7 @@ function(render_compile INPUT_DIR)
       COMMAND ${CMAKE_COMMAND} -E copy_if_different "${_src_dir}/src/lib.rs" "${_dest_dir}/src/lib.rs"
       COMMAND ${CMAKE_COMMAND} -E copy_if_different "${_src_dir}/src/encoder.rs" "${_dest_dir}/src/encoder.rs"
       COMMAND ${CMAKE_COMMAND} -E copy_if_different "${_src_dir}/src/wire_messages.rs" "${_dest_dir}/src/wire_messages.rs"
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different "${_src_dir}/src/hash.rs" "${_dest_dir}/src/hash.rs"
       DEPENDS render_compile_${PACKAGE}
       VERBATIM
     )
