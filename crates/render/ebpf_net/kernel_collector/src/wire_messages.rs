@@ -12,6 +12,13 @@
     pub _rpc_id: u16,
   }
 
+  impl jb_kernel_collector__pulse {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(65535u16, 2, true)
+    }
+  }
+
   impl Default for jb_kernel_collector__pulse {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -35,4 +42,11 @@
       assert_eq!(offset_of!(jb_kernel_collector__pulse, _rpc_id), 0);
     }
   }
+
+#[inline]
+pub fn all_message_metadata() -> ::std::vec::Vec<render_parser::MessageMetadata> {
+  ::std::vec![
+    jb_kernel_collector__pulse::metadata(),
+  ]
+}
 

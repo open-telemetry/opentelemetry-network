@@ -16,6 +16,13 @@
     pub sk: u64,
   }
 
+  impl jb_agent_internal__dns_packet {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_dynamic(331u16, true)
+    }
+  }
+
   impl Default for jb_agent_internal__dns_packet {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -55,6 +62,13 @@
     pub pid: u32,
   }
 
+  impl jb_agent_internal__reset_tcp_counters {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(332u16, 40, true)
+    }
+  }
+
   impl Default for jb_agent_internal__reset_tcp_counters {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -92,6 +106,13 @@
     pub sk: u64,
   }
 
+  impl jb_agent_internal__new_sock_created {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(333u16, 16, true)
+    }
+  }
+
   impl Default for jb_agent_internal__new_sock_created {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -127,6 +148,13 @@
     pub laddr: [u8; 16],
   }
 
+  impl jb_agent_internal__udp_new_socket {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(334u16, 32, true)
+    }
+  }
+
   impl Default for jb_agent_internal__udp_new_socket {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -159,6 +187,13 @@
   pub struct jb_agent_internal__udp_destroy_socket {
     pub _rpc_id: u16,
     pub sk: u64,
+  }
+
+  impl jb_agent_internal__udp_destroy_socket {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(335u16, 16, true)
+    }
   }
 
   impl Default for jb_agent_internal__udp_destroy_socket {
@@ -199,6 +234,13 @@
     pub changed_af: u8,
     pub is_rx: u8,
     pub laddr: [u8; 16],
+  }
+
+  impl jb_agent_internal__udp_stats {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(336u16, 60, true)
+    }
   }
 
   impl Default for jb_agent_internal__udp_stats {
@@ -244,6 +286,13 @@
     pub parent_pid: i32,
   }
 
+  impl jb_agent_internal__pid_info {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(337u16, 36, true)
+    }
+  }
+
   impl Default for jb_agent_internal__pid_info {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -279,6 +328,13 @@
     pub pid: u32,
   }
 
+  impl jb_agent_internal__pid_close {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(338u16, 24, true)
+    }
+  }
+
   impl Default for jb_agent_internal__pid_close {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -310,6 +366,13 @@
     pub _rpc_id: u16,
     pub comm: [u8; 16],
     pub pid: u32,
+  }
+
+  impl jb_agent_internal__pid_set_comm {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(371u16, 24, true)
+    }
   }
 
   impl Default for jb_agent_internal__pid_set_comm {
@@ -347,6 +410,13 @@
     pub src: u32,
     pub tx_rx: u32,
     pub sport: u16,
+  }
+
+  impl jb_agent_internal__set_state_ipv4 {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(339u16, 26, true)
+    }
   }
 
   impl Default for jb_agent_internal__set_state_ipv4 {
@@ -388,6 +458,13 @@
     pub sport: u16,
     pub dest: [u8; 16],
     pub src: [u8; 16],
+  }
+
+  impl jb_agent_internal__set_state_ipv6 {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(340u16, 50, true)
+    }
   }
 
   impl Default for jb_agent_internal__set_state_ipv6 {
@@ -437,6 +514,13 @@
     pub rcv_rtt: u32,
   }
 
+  impl jb_agent_internal__rtt_estimator {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(361u16, 60, true)
+    }
+  }
+
   impl Default for jb_agent_internal__rtt_estimator {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -479,6 +563,13 @@
     pub sk: u64,
   }
 
+  impl jb_agent_internal__close_sock_info {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(362u16, 16, true)
+    }
+  }
+
   impl Default for jb_agent_internal__close_sock_info {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -510,6 +601,13 @@
     pub name: [u8; 256],
     pub cgroup: u64,
     pub cgroup_parent: u64,
+  }
+
+  impl jb_agent_internal__kill_css {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(363u16, 280, true)
+    }
   }
 
   impl Default for jb_agent_internal__kill_css {
@@ -547,6 +645,13 @@
     pub cgroup_parent: u64,
   }
 
+  impl jb_agent_internal__css_populate_dir {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(364u16, 280, true)
+    }
+  }
+
   impl Default for jb_agent_internal__css_populate_dir {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -582,6 +687,13 @@
     pub cgroup_parent: u64,
   }
 
+  impl jb_agent_internal__existing_cgroup_probe {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(365u16, 280, true)
+    }
+  }
+
   impl Default for jb_agent_internal__existing_cgroup_probe {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -615,6 +727,13 @@
     pub comm: [u8; 16],
     pub pid: u32,
     pub cgroup: u64,
+  }
+
+  impl jb_agent_internal__cgroup_attach_task {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(366u16, 32, true)
+    }
   }
 
   impl Default for jb_agent_internal__cgroup_attach_task {
@@ -658,6 +777,13 @@
     pub nat_dst_port: u16,
     pub proto: u8,
     pub nat_proto: u8,
+  }
+
+  impl jb_agent_internal__nf_conntrack_alter_reply {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(367u16, 36, true)
+    }
   }
 
   impl Default for jb_agent_internal__nf_conntrack_alter_reply {
@@ -706,6 +832,13 @@
     pub proto: u8,
   }
 
+  impl jb_agent_internal__nf_nat_cleanup_conntrack {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(368u16, 23, true)
+    }
+  }
+
   impl Default for jb_agent_internal__nf_nat_cleanup_conntrack {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -748,6 +881,13 @@
     pub dir: u8,
   }
 
+  impl jb_agent_internal__existing_conntrack_tuple {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(369u16, 24, true)
+    }
+  }
+
   impl Default for jb_agent_internal__existing_conntrack_tuple {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -785,6 +925,13 @@
     pub sk: u64,
   }
 
+  impl jb_agent_internal__tcp_syn_timeout {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(370u16, 16, true)
+    }
+  }
+
   impl Default for jb_agent_internal__tcp_syn_timeout {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -818,6 +965,13 @@
     pub sk: u64,
     pub latency_ns: u64,
     pub client_server: u8,
+  }
+
+  impl jb_agent_internal__http_response {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(372u16, 25, true)
+    }
   }
 
   impl Default for jb_agent_internal__http_response {
@@ -859,6 +1013,13 @@
     pub arg2: u64,
   }
 
+  impl jb_agent_internal__bpf_log {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(373u16, 48, true)
+    }
+  }
+
   impl Default for jb_agent_internal__bpf_log {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -895,6 +1056,13 @@
     pub kernel_stack_id: i32,
     pub user_stack_id: i32,
     pub tgid: u32,
+  }
+
+  impl jb_agent_internal__stack_trace {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(374u16, 32, true)
+    }
   }
 
   impl Default for jb_agent_internal__stack_trace {
@@ -936,6 +1104,13 @@
     pub length: u32,
   }
 
+  impl jb_agent_internal__tcp_data {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(375u16, 28, true)
+    }
+  }
+
   impl Default for jb_agent_internal__tcp_data {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -972,6 +1147,13 @@
     pub pid: u32,
     pub tgid: u64,
     pub exit_code: i32,
+  }
+
+  impl jb_agent_internal__pid_exit {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(377u16, 20, true)
+    }
   }
 
   impl Default for jb_agent_internal__pid_exit {
@@ -1011,6 +1193,13 @@
     pub arg4: u64,
   }
 
+  impl jb_agent_internal__report_debug_event {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(378u16, 40, true)
+    }
+  }
+
   impl Default for jb_agent_internal__report_debug_event {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -1047,6 +1236,13 @@
     pub sk: u64,
   }
 
+  impl jb_agent_internal__tcp_reset {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(379u16, 16, true)
+    }
+  }
+
   impl Default for jb_agent_internal__tcp_reset {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -1078,6 +1274,13 @@
     pub _rpc_id: u16,
   }
 
+  impl jb_agent_internal__pulse {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(65535u16, 2, true)
+    }
+  }
+
   impl Default for jb_agent_internal__pulse {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -1101,4 +1304,39 @@
       assert_eq!(offset_of!(jb_agent_internal__pulse, _rpc_id), 0);
     }
   }
+
+#[inline]
+pub fn all_message_metadata() -> ::std::vec::Vec<render_parser::MessageMetadata> {
+  ::std::vec![
+    jb_agent_internal__dns_packet::metadata(),
+    jb_agent_internal__reset_tcp_counters::metadata(),
+    jb_agent_internal__new_sock_created::metadata(),
+    jb_agent_internal__udp_new_socket::metadata(),
+    jb_agent_internal__udp_destroy_socket::metadata(),
+    jb_agent_internal__udp_stats::metadata(),
+    jb_agent_internal__pid_info::metadata(),
+    jb_agent_internal__pid_close::metadata(),
+    jb_agent_internal__pid_set_comm::metadata(),
+    jb_agent_internal__set_state_ipv4::metadata(),
+    jb_agent_internal__set_state_ipv6::metadata(),
+    jb_agent_internal__rtt_estimator::metadata(),
+    jb_agent_internal__close_sock_info::metadata(),
+    jb_agent_internal__kill_css::metadata(),
+    jb_agent_internal__css_populate_dir::metadata(),
+    jb_agent_internal__existing_cgroup_probe::metadata(),
+    jb_agent_internal__cgroup_attach_task::metadata(),
+    jb_agent_internal__nf_conntrack_alter_reply::metadata(),
+    jb_agent_internal__nf_nat_cleanup_conntrack::metadata(),
+    jb_agent_internal__existing_conntrack_tuple::metadata(),
+    jb_agent_internal__tcp_syn_timeout::metadata(),
+    jb_agent_internal__http_response::metadata(),
+    jb_agent_internal__bpf_log::metadata(),
+    jb_agent_internal__stack_trace::metadata(),
+    jb_agent_internal__tcp_data::metadata(),
+    jb_agent_internal__pid_exit::metadata(),
+    jb_agent_internal__report_debug_event::metadata(),
+    jb_agent_internal__tcp_reset::metadata(),
+    jb_agent_internal__pulse::metadata(),
+  ]
+}
 

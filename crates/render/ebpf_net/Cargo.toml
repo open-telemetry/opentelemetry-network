@@ -1,0 +1,23 @@
+[package]
+name = "encoder_ebpf_net_all"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+# Aggregator remains a staticlib for C++ consumers; Rust binaries
+# link per-app crates directly via rlib dependencies.
+crate-type = ["staticlib"]
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+
+[dependencies]
+encoder_ebpf_net_agent_internal = { path = "agent_internal" }
+encoder_ebpf_net_ingest = { path = "ingest" }
+encoder_ebpf_net_matching = { path = "matching" }
+encoder_ebpf_net_aggregation = { path = "aggregation" }
+encoder_ebpf_net_kernel_collector = { path = "kernel_collector" }
+encoder_ebpf_net_cloud_collector = { path = "cloud_collector" }
+encoder_ebpf_net_logging = { path = "logging" }

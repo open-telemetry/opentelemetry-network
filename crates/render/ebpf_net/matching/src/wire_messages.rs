@@ -17,6 +17,13 @@
     pub addr2: u128,
   }
 
+  impl jb_matching__flow_start {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(421u16, 48, true)
+    }
+  }
+
   impl Default for jb_matching__flow_start {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -50,6 +57,13 @@
   pub struct jb_matching__flow_end {
     pub _rpc_id: u16,
     pub _ref: u64,
+  }
+
+  impl jb_matching__flow_end {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(422u16, 16, true)
+    }
   }
 
   impl Default for jb_matching__flow_end {
@@ -87,6 +101,13 @@
     pub env: u16,
     pub role: u16,
     pub side: u8,
+  }
+
+  impl jb_matching__agent_info {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_dynamic(423u16, true)
+    }
   }
 
   impl Default for jb_matching__agent_info {
@@ -127,6 +148,13 @@
     pub comm: u16,
     pub side: u8,
     pub _ref: u64,
+  }
+
+  impl jb_matching__task_info {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_dynamic(424u16, true)
+    }
   }
 
   impl Default for jb_matching__task_info {
@@ -170,6 +198,13 @@
     pub is_connector: u8,
   }
 
+  impl jb_matching__socket_info {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_dynamic(425u16, true)
+    }
+  }
+
   impl Default for jb_matching__socket_info {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -209,6 +244,13 @@
     pub pod_uid_suffix: [u8; 64],
     pub pod_uid_hash: u64,
     pub _ref: u64,
+  }
+
+  impl jb_matching__k8s_info {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(426u16, 88, true)
+    }
   }
 
   impl Default for jb_matching__k8s_info {
@@ -254,6 +296,13 @@
     pub syn_timeouts: u32,
     pub new_sockets: u32,
     pub tcp_resets: u32,
+  }
+
+  impl jb_matching__tcp_update {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(427u16, 60, true)
+    }
   }
 
   impl Default for jb_matching__tcp_update {
@@ -305,6 +354,13 @@
     pub drops: u32,
   }
 
+  impl jb_matching__udp_update {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(428u16, 36, true)
+    }
+  }
+
   impl Default for jb_matching__udp_update {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -350,6 +406,13 @@
     pub sum_code_400: u32,
     pub sum_code_500: u32,
     pub sum_code_other: u32,
+  }
+
+  impl jb_matching__http_update {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(429u16, 48, true)
+    }
   }
 
   impl Default for jb_matching__http_update {
@@ -401,6 +464,13 @@
     pub timeouts: u32,
   }
 
+  impl jb_matching__dns_update {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(430u16, 48, true)
+    }
+  }
+
   impl Default for jb_matching__dns_update {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -448,6 +518,13 @@
     pub node_type: u8,
   }
 
+  impl jb_matching__container_info {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_dynamic(434u16, true)
+    }
+  }
+
   impl Default for jb_matching__container_info {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -488,6 +565,13 @@
     pub _ref: u64,
   }
 
+  impl jb_matching__service_info {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_dynamic(435u16, true)
+    }
+  }
+
   impl Default for jb_matching__service_info {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -522,6 +606,13 @@
     pub ip: u128,
   }
 
+  impl jb_matching__aws_enrichment_start {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(431u16, 32, true)
+    }
+  }
+
   impl Default for jb_matching__aws_enrichment_start {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -552,6 +643,13 @@
   pub struct jb_matching__aws_enrichment_end {
     pub _rpc_id: u16,
     pub _ref: u64,
+  }
+
+  impl jb_matching__aws_enrichment_end {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(432u16, 16, true)
+    }
   }
 
   impl Default for jb_matching__aws_enrichment_end {
@@ -586,6 +684,13 @@
     pub role: u16,
     pub az: u16,
     pub _ref: u64,
+  }
+
+  impl jb_matching__aws_enrichment {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_dynamic(433u16, true)
+    }
   }
 
   impl Default for jb_matching__aws_enrichment {
@@ -624,6 +729,13 @@
     pub _ref: u64,
   }
 
+  impl jb_matching__k8s_pod_start {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(436u16, 88, true)
+    }
+  }
+
   impl Default for jb_matching__k8s_pod_start {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -655,6 +767,13 @@
   pub struct jb_matching__k8s_pod_end {
     pub _rpc_id: u16,
     pub _ref: u64,
+  }
+
+  impl jb_matching__k8s_pod_end {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(437u16, 16, true)
+    }
   }
 
   impl Default for jb_matching__k8s_pod_end {
@@ -691,6 +810,13 @@
     pub _ref: u64,
     pub ns: u16,
     pub version: u16,
+  }
+
+  impl jb_matching__set_pod_detail {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_dynamic(438u16, true)
+    }
   }
 
   impl Default for jb_matching__set_pod_detail {
@@ -731,6 +857,13 @@
     pub _ref: u64,
   }
 
+  impl jb_matching__k8s_container_start {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(439u16, 88, true)
+    }
+  }
+
   impl Default for jb_matching__k8s_container_start {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -762,6 +895,13 @@
   pub struct jb_matching__k8s_container_end {
     pub _rpc_id: u16,
     pub _ref: u64,
+  }
+
+  impl jb_matching__k8s_container_end {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(440u16, 16, true)
+    }
   }
 
   impl Default for jb_matching__k8s_container_end {
@@ -799,6 +939,13 @@
     pub _ref: u64,
   }
 
+  impl jb_matching__set_container_pod {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_dynamic(471u16, true)
+    }
+  }
+
   impl Default for jb_matching__set_container_pod {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -833,6 +980,13 @@
     pub _rpc_id: u16,
   }
 
+  impl jb_matching__pulse {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(65535u16, 2, true)
+    }
+  }
+
   impl Default for jb_matching__pulse {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -856,4 +1010,32 @@
       assert_eq!(offset_of!(jb_matching__pulse, _rpc_id), 0);
     }
   }
+
+#[inline]
+pub fn all_message_metadata() -> ::std::vec::Vec<render_parser::MessageMetadata> {
+  ::std::vec![
+    jb_matching__flow_start::metadata(),
+    jb_matching__flow_end::metadata(),
+    jb_matching__agent_info::metadata(),
+    jb_matching__task_info::metadata(),
+    jb_matching__socket_info::metadata(),
+    jb_matching__k8s_info::metadata(),
+    jb_matching__tcp_update::metadata(),
+    jb_matching__udp_update::metadata(),
+    jb_matching__http_update::metadata(),
+    jb_matching__dns_update::metadata(),
+    jb_matching__container_info::metadata(),
+    jb_matching__service_info::metadata(),
+    jb_matching__aws_enrichment_start::metadata(),
+    jb_matching__aws_enrichment_end::metadata(),
+    jb_matching__aws_enrichment::metadata(),
+    jb_matching__k8s_pod_start::metadata(),
+    jb_matching__k8s_pod_end::metadata(),
+    jb_matching__set_pod_detail::metadata(),
+    jb_matching__k8s_container_start::metadata(),
+    jb_matching__k8s_container_end::metadata(),
+    jb_matching__set_container_pod::metadata(),
+    jb_matching__pulse::metadata(),
+  ]
+}
 
