@@ -36,7 +36,7 @@ class RustCargoGenerator {
   def void doGeneratePackage(Iterable<App> apps, IFileSystemAccess2 fsa) {
     if (apps === null || apps.empty) return
     val pkg = apps.head.pkg.name
-    val pathPrefix = pkg + "/rust-agg/"
+    val pathPrefix = pkg + "/"
     fsa.generateFile(pathPrefix + "Cargo.toml", packageCargoToml(pkg, apps))
     fsa.generateFile(pathPrefix + "src/lib.rs", packageLibRs(pkg, apps))
   }
@@ -102,8 +102,6 @@ class RustCargoGenerator {
     version = "0.1.0"
     edition = "2021"
 
-    [workspace]
-
     [lib]
     # Aggregator remains a staticlib for C++ consumers; Rust binaries
     # link per-app crates directly via rlib dependencies.
@@ -115,7 +113,7 @@ class RustCargoGenerator {
     codegen-units = 1
 
     [dependencies]
-    «FOR a : apps»encoder_«pkg»_«a.name» = { path = "../«a.name»" }
+    «FOR a : apps»encoder_«pkg»_«a.name» = { path = "«a.name»" }
     «ENDFOR»
     '''
   }

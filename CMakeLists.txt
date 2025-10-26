@@ -54,6 +54,7 @@ include(abseil)
 include(yamlcpp)
 include(libbpf)
 include(render)
+include(cargo-test)
 
 include_directories(
   ${PROJECT_SOURCE_DIR}
