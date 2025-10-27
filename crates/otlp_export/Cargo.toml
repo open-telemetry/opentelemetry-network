@@ -1,0 +1,17 @@
+[package]
+name = "otlp_export"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "otlp_export"
+crate-type = ["rlib", "staticlib"]
+
+[dependencies]
+cxx = { version = "1.0" }
+tokio = { version = "1", features = ["rt-multi-thread"] }
+opentelemetry-proto = { version = "0.31", default-features = false, features = ["gen-tonic", "metrics"] }
+tonic = { version = "0.14", features = ["transport"] }
+
+[build-dependencies]
+cxx-build = { version = "1.0" }
