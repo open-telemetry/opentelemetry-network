@@ -482,6 +482,173 @@ jobs:
         $BENV_IMAGE \
         ./build.sh --debug --asan unit_tests test
 
+  e2e-otel-jsonl:
+    name: e2e-otel-jsonl
+    needs: [build-reducer, build-kernel-collector]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+    - name: Check out the codebase
+      uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      with:
+        fetch-depth: 0
+
+    - name: Download reducer container
+      uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
+      with:
+        name: reducer-container
+        path: ./container-exports
+
+    - name: Download kernel-collector container
+      uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
+      with:
+        name: kernel-collector-container
+        path: ./container-exports
+
+    - name: Load images and prepare config/output
+      run: |
+        set -euxo pipefail
+        docker load < container-exports/reducer.tar
+        docker load < container-exports/kernel-collector.tar
+
+        mkdir -p e2e-out
+        # ensure otelcol (which runs non-root) can write here regardless of uid mapping
+        chmod 0777 e2e-out
+        cat > otel-e2e-config.yaml <<'EOF'
+        receivers:
+          otlp:
+            protocols:
+              grpc:
+                endpoint: 0.0.0.0:4317
+
+        processors:
+          batch: {}
+
+        exporters:
+          file:
+            path: /out/otel.jsonl
+            # keep default json lines, rotate small just in case
+            rotation:
+              max_megabytes: 5
+              max_days: 1
+            format: json
+
+        service:
+          pipelines:
+            metrics:
+              receivers: [otlp]
+              processors: [batch]
+              exporters: [file]
+            logs:
+              receivers: [otlp]
+              processors: [batch]
+              exporters: [file]
+        EOF
+
+    - name: Start OpenTelemetry Collector
+      run: |
+        set -euxo pipefail
+        # Use contrib distribution to ensure file exporter availability
+        docker pull otel/opentelemetry-collector-contrib:0.102.0
+        docker run -d --rm \
+          --name otelcol-e2e \
+          --network host \
+          -v "$(pwd)/otel-e2e-config.yaml:/etc/otelcol/config.yaml:ro" \
+          -v "$(pwd)/e2e-out:/out" \
+          otel/opentelemetry-collector-contrib:0.102.0 \
+          --config=/etc/otelcol/config.yaml
+        # Give the collector a moment to start
+        sleep 3
+        docker logs --tail 50 otelcol-e2e || true
+
+    - name: Start reducer
+      run: |
+        set -euxo pipefail
+        REDUCER_ID=$(docker run -d --rm \
+          --name reducer-e2e \
+          --network host \
+          localhost:5000/reducer \
+          --port 8000 \
+          --prom 0.0.0.0:7000 \
+          --partitions-per-shard 1 \
+          --num-ingest-shards=1 \
+          --num-matching-shards=1 \
+          --num-aggregation-shards=1 \
+          --enable-aws-enrichment \
+          --enable-id-id \
+          --enable-flow-logs \
+          --enable-otlp-grpc-metrics \
+          --otlp-grpc-metrics-host 127.0.0.1 \
+          --otlp-grpc-metrics-port 4317 \
+          --log-console \
+          --debug \
+          --log-whitelist-all)
+        echo "Reducer started: ${REDUCER_ID}"
+        # brief wait to ensure listener is up
+        sleep 5
+        docker logs --tail 100 reducer-e2e || true
+
+    - name: Start kernel collector
+      run: |
+        set -euxo pipefail
+        KERNEL_ID=$(docker run -d --rm \
+          --name kernel-collector-e2e \
+          --env EBPF_NET_INTAKE_HOST="127.0.0.1" \
+          --env EBPF_NET_INTAKE_PORT="8000" \
+          --env EBPF_NET_HOST_DIR="/hostfs" \
+          --privileged \
+          --network host \
+          --pid host \
+          --volume /var/run/docker.sock:/var/run/docker.sock \
+          --volume /sys/fs/cgroup:/hostfs/sys/fs/cgroup \
+          --volume /usr/src:/hostfs/usr/src \
+          --volume /lib/modules:/hostfs/lib/modules \
+          --volume /etc:/hostfs/etc \
+          --volume /var/cache:/hostfs/cache \
+          localhost:5000/kernel-collector \
+          --log-console)
+        echo "Kernel collector started: ${KERNEL_ID}"
+        # give it a moment to initialize BPF
+        sleep 15
+        docker logs --tail 50 kernel-collector-e2e || true
+
+    - name: Generate traffic and wait for collection
+      run: |
+        set -euxo pipefail
+        # Generate some egress HTTP traffic on the host
+        for i in $(seq 1 10); do
+          wget -qO- https://opentelemetry.io >/dev/null || true
+          sleep 1
+        done
+        # Allow time for metrics to propagate and be exported
+        sleep 60
+
+    - name: Stop services and collect logs
+      if: always()
+      run: |
+        set -euxo pipefail
+        docker ps || true
+        docker logs --tail 200 kernel-collector-e2e || true
+        docker logs --tail 200 reducer-e2e || true
+        docker logs --tail 200 otelcol-e2e || true
+        docker stop kernel-collector-e2e || true
+        docker stop reducer-e2e || true
+        docker stop otelcol-e2e || true
+        ls -la e2e-out || true
+        sudo chmod -R a+r e2e-out || true
+        # Show a small preview for debugging convenience
+        if [ -f e2e-out/otel.jsonl ]; then head -n 50 e2e-out/otel.jsonl || true; fi
+
+    - name: Upload OpenTelemetry JSONL
+      if: always()
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      with:
+        name: e2e-otel-jsonl
+        path: |
+          e2e-out/*
+        if-no-files-found: warn
+        retention-days: 7
+
   run-kernel-collector-simple-tests:
     name: run-kernel-collector-simple-tests
     needs: [build-kernel-collector]
