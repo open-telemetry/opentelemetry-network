@@ -265,6 +265,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "reducer-bin"
+version = "0.1.0"
+dependencies = [
+ "reducer-sys",
+]
+
+[[package]]
+name = "reducer-sys"
+version = "0.1.0"
+dependencies = [
+ "encoder_ebpf_net_aggregation",
+ "encoder_ebpf_net_ingest",
+ "encoder_ebpf_net_logging",
+ "encoder_ebpf_net_matching",
+ "otlp_export",
+]
+
+[[package]]
 name = "regex-syntax"
 version = "0.8.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"

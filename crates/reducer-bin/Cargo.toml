@@ -1,0 +1,12 @@
+[package]
+name = "reducer-bin"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+reducer-sys = { path = "../reducer-sys" }
+
+[[bin]]
+name = "reducer"
+path = "src/main.rs"
+

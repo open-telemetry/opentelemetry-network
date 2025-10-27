@@ -1,0 +1,15 @@
+[package]
+name = "reducer-sys"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "reducer_sys"
+path = "src/lib.rs"
+
+[dependencies]
+encoder_ebpf_net_ingest = { path = "../render/ebpf_net/ingest" }
+encoder_ebpf_net_matching = { path = "../render/ebpf_net/matching" }
+encoder_ebpf_net_aggregation = { path = "../render/ebpf_net/aggregation" }
+encoder_ebpf_net_logging = { path = "../render/ebpf_net/logging" }
+otlp_export = { workspace = true }

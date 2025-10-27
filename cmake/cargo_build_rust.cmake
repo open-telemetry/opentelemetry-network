@@ -37,6 +37,7 @@ set(SEARCH_DIRS
   "${BIN_DIR}/otlp"
   "${BIN_DIR}/geoip"
   "${BIN_DIR}/reducer"
+  "${BIN_DIR}/reducer/util"
   "/install/lib"
   "/install/usr/lib64"
   "/usr/lib/x86_64-linux-gnu"
