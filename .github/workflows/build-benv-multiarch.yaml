@@ -19,7 +19,7 @@ jobs:
       short-sha: ${{ steps.s.outputs.s }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
       - name: Get short SHA
         id: s
         run: echo "s=$(git rev-parse --short=7 ${{ github.sha }})" >> "$GITHUB_OUTPUT"
