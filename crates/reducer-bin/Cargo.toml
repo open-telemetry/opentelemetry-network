@@ -5,8 +5,8 @@ edition = "2021"
 
 [dependencies]
 reducer-sys = { path = "../reducer-sys" }
+reducer = { workspace = true }
 
 [[bin]]
 name = "reducer"
 path = "src/main.rs"
-

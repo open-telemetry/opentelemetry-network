@@ -8,6 +8,7 @@ members = [
   "crates/cloud-collector-bin",
   "crates/k8s-relay-sys",
   "crates/k8s-relay-bin",
+  "crates/reducer",
   "crates/perfect_hash_map",
   "crates/render_parser",
   "crates/otlp_export",
@@ -16,3 +17,5 @@ members = [
 [workspace.dependencies]
 render_parser = { path = "crates/render_parser" }
 otlp_export = { path = "crates/otlp_export" }
+reducer = { path = "crates/reducer" }
+reducer-sys = { path = "crates/reducer-sys" }

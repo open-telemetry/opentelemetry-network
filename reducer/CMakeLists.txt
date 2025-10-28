@@ -3,6 +3,12 @@
 
 add_subdirectory(util)
 
+# CXX bridge for Rust reducer crate (exposes config + run entrypoint)
+add_rust_cxxbridge(
+  reducer_entrypoint_cxxbridge
+  ${CMAKE_SOURCE_DIR}/crates/reducer-sys/src/lib.rs
+)
+
 # Reducer library
 #
 add_library(
@@ -44,6 +50,7 @@ add_library(
 )
 target_link_libraries(
   reducerlib
+    reducer_entrypoint_cxxbridge
     signal_handler
     metrics_output
     render_pipeline
