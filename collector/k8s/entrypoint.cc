@@ -75,11 +75,14 @@ static int k8s_relay_run(int argc, char **argv)
 
   auto &intake_config_handler = parser.new_handler<config::IntakeConfig::ArgsHandler>();
 
-  SignalManager &signal_manager = parser.new_handler<SignalManager>(loop, "k8s-collector");
+  SignalManager signal_manager(loop, "k8s-collector");
 
   if (auto result = parser.process(argc, argv); !result.has_value()) {
     return result.error();
   }
+
+  // Initialize minimal signal handler behavior (ignore SIGPIPE, disable core dumps)
+  signal_manager.handle();
 
   auto agent_id = gen_agent_id();
 
@@ -134,4 +137,3 @@ extern "C" int otn_k8s_relay_main(int argc, const char **argv)
 {
   return k8s_relay_run(argc, const_cast<char **>(argv));
 }
-

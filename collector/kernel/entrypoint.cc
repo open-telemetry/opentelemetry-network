@@ -340,11 +340,14 @@ static int kernel_collector_run(int argc, char **argv)
 
   auto &intake_config_handler = parser.new_handler<config::IntakeConfig::ArgsHandler>();
 
-  SignalManager &signal_manager = parser.new_handler<SignalManager>(loop, "kernel-collector");
+  SignalManager signal_manager(loop, "kernel-collector");
 
   if (auto result = parser.process(argc, argv); !result.has_value()) {
     return result.error();
   }
+
+  // Initialize minimal signal handler behavior (ignore SIGPIPE, disable core dumps)
+  signal_manager.handle();
 
   /*
    * Set docker nameservice label from commandline flags if provided;

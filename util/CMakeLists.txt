@@ -91,7 +91,6 @@ add_library(
 )
 target_link_libraries(
   signal_handler
-    args_parser
     logging
     libuv-interface
 )

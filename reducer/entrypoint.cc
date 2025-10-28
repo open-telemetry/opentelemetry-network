@@ -139,12 +139,15 @@ static int reducer_run(int argc, char **argv)
   parser.new_handler<LogWhitelistHandler<reducer::ingest::Component>>("ingest");
   parser.new_handler<LogWhitelistHandler<reducer::matching::Component>>("matching");
 
-  SignalManager &signal_manager = parser.new_handler<SignalManager>(loop, "reducer");
+  SignalManager signal_manager(loop, "reducer");
 
   // Parse the command-line, bomb out on error.
   if (auto result = parser.process(argc, argv); !result) {
     return result.error();
   }
+
+  // Initialize minimal signal handler behavior (ignore SIGPIPE, disable core dumps)
+  signal_manager.handle();
 
   reducer::ReducerConfig config = reducer::DEFAULT_REDUCER_CONFIG;
 

@@ -5,19 +5,18 @@
 
 #pragma once
 
-#include <util/args_parser.h>
-
 #include <uv.h>
 
 #include <functional>
 #include <memory>
 #include <string_view>
 #include <vector>
+#include <list>
 
-struct SignalManager : cli::ArgsParser::Handler {
-  explicit SignalManager(cli::ArgsParser &parser, ::uv_loop_t &loop, std::string_view product);
+struct SignalManager {
+  explicit SignalManager(::uv_loop_t &loop, std::string_view product);
 
-  void handle() override;
+  void handle();
 
   void handle_signals(std::initializer_list<int> signal_numbers, std::function<void()> on_signal = {});
 
