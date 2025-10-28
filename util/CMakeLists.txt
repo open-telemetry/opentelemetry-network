@@ -91,18 +91,9 @@ add_library(
 )
 target_link_libraries(
   signal_handler
-    aws_instance_metadata
-    gcp_instance_metadata
     args_parser
     logging
-    versions
-    breakpad_client
-    file_ops
-    system_ops
-    environment_variables
     libuv-interface
-    stdc++fs
-    otlp_grpc_metrics_emitter
 )
 
 add_library(

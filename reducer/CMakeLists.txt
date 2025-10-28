@@ -59,7 +59,6 @@ target_link_libraries(
     time_tracker
     json
     lz4_decompressor
-    breakpad_client
     geoip_wrapper
     absl::flat_hash_map
     absl::flat_hash_set
