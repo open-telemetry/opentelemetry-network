@@ -1,0 +1,16 @@
+[package]
+name = "encoder_ebpf_net_aggregation"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+# Build as both rlib and staticlib
+# - rlib: lets Rust binaries depend on this crate via Cargo and expose
+#         the #[no_mangle] extern "C" encoder symbols during Rust linking.
+# - staticlib: keeps support for direct C/C++ linking where needed.
+crate-type = ["rlib", "staticlib"]
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
