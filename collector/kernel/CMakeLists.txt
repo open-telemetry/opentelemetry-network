@@ -12,6 +12,8 @@ target_link_libraries(
   kernel-collector
   PUBLIC
     agentlib
+    render_ebpf_net_ingest_writer
+    render_rust_ebpf_net
     fastpass_util
     file_ops
     config_file
@@ -309,6 +311,6 @@ endif()
 
 # Unit Tests
 #
-add_unit_test(cgroup_handler LIBS agentlib test_channel)
+add_unit_test(cgroup_handler LIBS agentlib test_channel render_ebpf_net_ingest_writer render_rust_ebpf_net)
 add_unit_test(kernel_symbols LIBS agentlib)
-add_ebpf_unit_test(kernel_collector LIBS signal_handler agentlib fastpass_util file_ops config_file libuv-static system_ops static-executable test_channel)
+add_ebpf_unit_test(kernel_collector LIBS signal_handler agentlib fastpass_util file_ops config_file libuv-static system_ops static-executable test_channel render_ebpf_net_ingest_writer render_rust_ebpf_net)

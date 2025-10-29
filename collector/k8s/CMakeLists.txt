@@ -100,6 +100,7 @@ target_link_libraries(
     resource_usage_reporter
     render_ebpf_net_artifacts
     render_ebpf_net_ingest_writer
+    render_rust_ebpf_net
     config_file
     libuv-static
     args_parser
