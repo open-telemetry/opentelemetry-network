@@ -1,0 +1,10 @@
+[package]
+name = "element-queue"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+
+[lib]
+name = "element_queue"
+path = "src/lib.rs"
+
