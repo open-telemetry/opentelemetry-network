@@ -1,0 +1,12 @@
+[package]
+name = "kernel-collector-sys"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "kernel_collector_sys"
+path = "src/lib.rs"
+
+[dependencies]
+encoder_ebpf_net_ingest = { path = "../render/ebpf_net/ingest" }
+encoder_ebpf_net_kernel_collector = { path = "../render/ebpf_net/kernel_collector" }

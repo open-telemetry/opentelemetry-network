@@ -1,0 +1,11 @@
+[package]
+name = "kernel-collector-bin"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+kernel-collector-sys = { path = "../kernel-collector-sys" }
+
+[[bin]]
+name = "kernel-collector"
+path = "src/main.rs"
