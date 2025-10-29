@@ -50,10 +50,11 @@ class RustCargoGenerator {
     edition = "2021"
 
     [lib]
-    # Build as an rlib so it can be used as a dependency by the
-    # per-package aggregator crate. The aggregator produces the staticlib
-    # that C++ links against.
-    crate-type = ["rlib"]
+    # Build as both rlib and staticlib
+    # - rlib: lets Rust binaries depend on this crate via Cargo and expose
+    #         the #[no_mangle] extern "C" encoder symbols during Rust linking.
+    # - staticlib: keeps support for direct C/C++ linking where needed.
+    crate-type = ["rlib", "staticlib"]
 
     [profile.release]
     opt-level = 3
@@ -101,7 +102,11 @@ class RustCargoGenerator {
     version = "0.1.0"
     edition = "2021"
 
+    [workspace]
+
     [lib]
+    # Aggregator remains a staticlib for C++ consumers; Rust binaries
+    # link per-app crates directly via rlib dependencies.
     crate-type = ["staticlib"]
 
     [profile.release]
