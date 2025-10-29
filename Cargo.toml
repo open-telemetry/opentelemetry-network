@@ -13,6 +13,7 @@ members = [
   "crates/render_parser",
   "crates/otlp_export",
   "crates/element-queue",
+  "crates/timeslot",
 ]
 
 [workspace.dependencies]
