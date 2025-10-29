@@ -90,7 +90,8 @@ RUN sudo wget \
 # Rust toolchain for building Rust components
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --profile minimal --default-toolchain ${RUST_TOOLCHAIN} && \
     . "$HOME/.cargo/env" && \
-    rustup component add rustfmt clippy
+    rustup component add rustfmt clippy && \
+    cargo install cxxbridge-cmd
 ENV PATH="${HOME}/.cargo/bin:${PATH}"
 
 # Preprocessor for BPF used by cmake
