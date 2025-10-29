@@ -23,6 +23,7 @@ target_link_libraries(
   PUBLIC
     render_ebpf_net_cloud_collector
     render_ebpf_net_ingest_writer
+    render_rust_ebpf_net
     signal_handler
     aws-sdk-cpp
     reconnecting_channel

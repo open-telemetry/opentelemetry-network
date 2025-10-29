@@ -12,6 +12,8 @@ target_link_libraries(
   kernel-collector
   PUBLIC
     agentlib
+    render_ebpf_net_ingest_writer
+    render_rust_ebpf_net
     fastpass_util
     file_ops
     config_file
@@ -19,7 +21,6 @@ target_link_libraries(
     args_parser
     system_ops
     spdlog
-    signal_handler
     static-executable
 )
 target_include_directories(
@@ -81,6 +82,7 @@ add_library(
     protocols/protocol_handler_base.cc
     protocols/protocol_handler_unknown.cc
     protocols/protocol_handler_http.cc
+    entrypoint.cc
 )
 target_link_libraries(
   agentlib
@@ -113,6 +115,7 @@ target_link_libraries(
     stdc++fs
     libbpf::libbpf
     versions
+    signal_handler
 )
 target_compile_options(agentlib PRIVATE -fPIC)
 # some agentlib sources include ${BPF_DEBUG_INFO}
@@ -308,6 +311,6 @@ endif()
 
 # Unit Tests
 #
-add_unit_test(cgroup_handler LIBS agentlib test_channel)
+add_unit_test(cgroup_handler LIBS agentlib test_channel render_ebpf_net_ingest_writer render_rust_ebpf_net)
 add_unit_test(kernel_symbols LIBS agentlib)
-add_ebpf_unit_test(kernel_collector LIBS signal_handler agentlib fastpass_util file_ops config_file libuv-static system_ops static-executable test_channel)
+add_ebpf_unit_test(kernel_collector LIBS signal_handler agentlib fastpass_util file_ops config_file libuv-static system_ops static-executable test_channel render_ebpf_net_ingest_writer render_rust_ebpf_net)

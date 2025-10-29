@@ -262,10 +262,9 @@ function(render_compile INPUT_DIR)
   set_target_properties(render_rust_${PACKAGE} PROPERTIES IMPORTED_LOCATION "${RUST_AGG_STATICLIB}")
   add_dependencies(render_rust_${PACKAGE} render_rust_${PACKAGE}_build)
   
-  # linking against render_${PACKAGE}_${APP}_writer will also link the Rust staticlib
-  foreach(APP ${ARG_APPS})
-    target_link_libraries(render_${PACKAGE}_${APP}_writer PUBLIC render_rust_${PACKAGE})
-  endforeach()
+  # Note: do not implicitly link the Rust staticlib into writer libs.
+  # Consumers that need the Rust aggregator (e.g., reducer) should link
+  # target `render_rust_${PACKAGE}` explicitly.
 
   # Add per-app and aggregator cargo test targets and aggregate into cargo-tests
   foreach(APP ${ARG_APPS})
