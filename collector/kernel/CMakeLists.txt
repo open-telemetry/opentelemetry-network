@@ -21,7 +21,6 @@ target_link_libraries(
     args_parser
     system_ops
     spdlog
-    signal_handler
     static-executable
 )
 target_include_directories(
@@ -83,6 +82,7 @@ add_library(
     protocols/protocol_handler_base.cc
     protocols/protocol_handler_unknown.cc
     protocols/protocol_handler_http.cc
+    entrypoint.cc
 )
 target_link_libraries(
   agentlib
@@ -115,6 +115,7 @@ target_link_libraries(
     stdc++fs
     libbpf::libbpf
     versions
+    signal_handler
 )
 target_compile_options(agentlib PRIVATE -fPIC)
 # some agentlib sources include ${BPF_DEBUG_INFO}
