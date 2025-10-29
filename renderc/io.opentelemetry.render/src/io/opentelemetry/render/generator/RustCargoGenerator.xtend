@@ -76,14 +76,14 @@ class RustCargoGenerator {
         pub len: u16,
     }
 
-    // Include generated modules from the crate directory
+    // Include generated modules from src/
     #[allow(dead_code)]
     pub mod wire_messages {
-        include!(concat!(env!("CARGO_MANIFEST_DIR"), "/wire_messages.rs"));
+        include!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/wire_messages.rs"));
     }
 
     pub mod encoder {
-        include!(concat!(env!("CARGO_MANIFEST_DIR"), "/encoder.rs"));
+        include!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/encoder.rs"));
     }
     '''
   }

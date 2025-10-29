@@ -86,10 +86,14 @@ function(render_compile INPUT_DIR)
         "${OUTPUT_DIR}/${PACKAGE}/${APP}/wire_message.h"
         "${OUTPUT_DIR}/${PACKAGE}/${APP}/meta.h"
         "${OUTPUT_DIR}/${PACKAGE}/${APP}/bpf.h"
-        "${OUTPUT_DIR}/${PACKAGE}/${APP}/wire_messages.rs"
-        "${OUTPUT_DIR}/${PACKAGE}/${APP}/encoder.rs"
+        # Rust per-app crate files live under src/
+        "${OUTPUT_DIR}/${PACKAGE}/${APP}/src/wire_messages.rs"
+        "${OUTPUT_DIR}/${PACKAGE}/${APP}/src/encoder.rs"
         "${OUTPUT_DIR}/${PACKAGE}/${APP}/Cargo.toml"
         "${OUTPUT_DIR}/${PACKAGE}/${APP}/src/lib.rs"
+        # Headers that are also generated alongside sources
+        "${OUTPUT_DIR}/${PACKAGE}/${APP}/descriptor.h"
+        "${OUTPUT_DIR}/${PACKAGE}/${APP}/hash.h"
     )
     list(
       APPEND
@@ -258,10 +262,9 @@ function(render_compile INPUT_DIR)
   set_target_properties(render_rust_${PACKAGE} PROPERTIES IMPORTED_LOCATION "${RUST_AGG_STATICLIB}")
   add_dependencies(render_rust_${PACKAGE} render_rust_${PACKAGE}_build)
   
-  # linking against render_${PACKAGE}_${APP}_writer will also link the Rust staticlib
-  foreach(APP ${ARG_APPS})
-    target_link_libraries(render_${PACKAGE}_${APP}_writer PUBLIC render_rust_${PACKAGE})
-  endforeach()
+  # Note: do not implicitly link the Rust staticlib into writer libs.
+  # Consumers that need the Rust aggregator (e.g., reducer) should link
+  # target `render_rust_${PACKAGE}` explicitly.
 
   # Add per-app and aggregator cargo test targets and aggregate into cargo-tests
   foreach(APP ${ARG_APPS})
@@ -277,4 +280,28 @@ function(render_compile INPUT_DIR)
     )
     add_dependencies(cargo-tests cargo_test_${PACKAGE}_${APP})
   endforeach()
+
+  # Developer-only: copy generated Rust crates into the source tree for review/commit
+  # This target is safe in CI because it is not part of the default build.
+  # Destination will be: ${PROJECT_SOURCE_DIR}/crates/render/${PACKAGE}/${APP}
+  set(_render_copy_targets)
+  foreach(APP ${ARG_APPS})
+    set(_src_dir  "${OUTPUT_DIR}/${PACKAGE}/${APP}")
+    set(_dest_dir "${PROJECT_SOURCE_DIR}/crates/render/${PACKAGE}/${APP}")
+    add_custom_target(
+      copy_render_crate_${PACKAGE}_${APP}
+      COMMAND ${CMAKE_COMMAND} -E remove_directory "${_dest_dir}"
+      COMMAND ${CMAKE_COMMAND} -E make_directory "${_dest_dir}/src"
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different "${_src_dir}/Cargo.toml" "${_dest_dir}/Cargo.toml"
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different "${_src_dir}/src/lib.rs" "${_dest_dir}/src/lib.rs"
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different "${_src_dir}/src/encoder.rs" "${_dest_dir}/src/encoder.rs"
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different "${_src_dir}/src/wire_messages.rs" "${_dest_dir}/src/wire_messages.rs"
+      DEPENDS render_compile_${PACKAGE}
+      VERBATIM
+    )
+    list(APPEND _render_copy_targets copy_render_crate_${PACKAGE}_${APP})
+  endforeach()
+  # Developer entrypoint per package to avoid name collisions with other projects
+  add_custom_target(render_source_dir_${PACKAGE})
+  add_dependencies(render_source_dir_${PACKAGE} ${_render_copy_targets})
 endfunction()
