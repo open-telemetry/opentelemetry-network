@@ -26,6 +26,9 @@
 #include <memory>
 #include <vector>
 
+// cxx::bridge header for Rust AggregationCore
+#include <reducer_aggregation_cxxbridge.h>
+
 namespace reducer {
 class RpcQueueMatrix;
 }
@@ -129,6 +132,16 @@ private:
 
   // Outputs internal stats.
   void write_internal_stats() override;
+
+public:
+  // Run the aggregation core using the Rust implementation.
+  void run();
+  // Stop the Rust core.
+  void stop_async();
+
+private:
+  // Opaque Rust AggregationCore owned via cxx rust::Box
+  rust::Box<reducer_agg::AggregationCore> rust_core_;
 };
 
 } // namespace reducer::aggregation

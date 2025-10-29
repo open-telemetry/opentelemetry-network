@@ -9,6 +9,12 @@ add_rust_cxxbridge(
   ${CMAKE_SOURCE_DIR}/crates/reducer-sys/src/lib.rs
 )
 
+# CXX bridge for Rust AggregationCore (reducer crate side)
+add_rust_cxxbridge(
+  reducer_aggregation_cxxbridge
+  ${CMAKE_SOURCE_DIR}/crates/reducer/src/ffi.rs
+)
+
 # Reducer library
 #
 add_library(
@@ -51,6 +57,7 @@ add_library(
 target_link_libraries(
   reducerlib
     reducer_entrypoint_cxxbridge
+    reducer_aggregation_cxxbridge
     signal_handler
     metrics_output
     render_pipeline

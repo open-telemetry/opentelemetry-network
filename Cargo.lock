@@ -971,7 +971,12 @@ name = "reducer"
 version = "0.1.0"
 dependencies = [
  "clap",
+ "cxx",
+ "element-queue",
+ "encoder_ebpf_net_aggregation",
  "reducer-sys",
+ "render_parser",
+ "timeslot",
 ]
 
 [[package]]
