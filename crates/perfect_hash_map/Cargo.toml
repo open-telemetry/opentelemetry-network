@@ -1,0 +1,16 @@
+[package]
+name = "perfect_hash_map"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+description = "HashMap-like fixed-capacity map using a generator-provided perfect hash function"
+repository = "https://github.com/open-telemetry/opentelemetry-ebpf"
+
+[lib]
+path = "src/lib.rs"
+
+[features]
+default = []
+
+[dev-dependencies]
+proptest = "1.4"
