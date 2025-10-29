@@ -35,6 +35,7 @@ generated/
 .DS_Store
 *.sw?
 *.orig
+target/
 
 MANIFEST
 .sconsign.dblite
