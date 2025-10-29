@@ -2,15 +2,13 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-# Kernel collector executable
+# Kernel collector legacy executable
 #
 add_executable(
-  kernel-collector
+  kernel-collector-legacy
     main.cc
 )
-target_link_libraries(
-  kernel-collector
-  PUBLIC
+set(KERNEL_COLLECTOR_LINK_LIBRARIES
     agentlib
     render_ebpf_net_ingest_writer
     render_rust_ebpf_net
@@ -21,24 +19,20 @@ target_link_libraries(
     args_parser
     system_ops
     spdlog
+)
+target_link_libraries(
+  kernel-collector-legacy
+  PUBLIC
+    ${KERNEL_COLLECTOR_LINK_LIBRARIES}
     static-executable
 )
 target_include_directories(
-  kernel-collector
+    kernel-collector-legacy
+
   PRIVATE
     ${PROJECT_SOURCE_DIR}
     ${CMAKE_BINARY_DIR}
 )
-install(
-  TARGETS
-    kernel-collector
-  RUNTIME
-  DESTINATION ${CMAKE_INSTALL_BINOIR}
-  COMPONENT kernel-collector
-)
-harden_executable(kernel-collector)
-strip_binary(kernel-collector)
-add_dependencies(collectors kernel-collector)
 
 # DNS library
 #
@@ -120,6 +114,57 @@ target_link_libraries(
 target_compile_options(agentlib PRIVATE -fPIC)
 # some agentlib sources include ${BPF_DEBUG_INFO}
 add_dependencies(agentlib generate_bpf_skeleton)
+
+################################################################################
+# Rust binary integration (optional developer target)
+#
+# Build the Rust kernel-collector binary via Cargo with link hints passed
+# through environment variables. This target does not install anything and
+# does not write into the source tree.
+
+set(RUST_BIN_TARGET_DIR "${CMAKE_BINARY_DIR}/target")
+set(RUST_BIN_PATH        "${RUST_BIN_TARGET_DIR}/release/kernel-collector")
+
+# Build the Rust binary by invoking a CMake script that computes link hints
+# from the C++ target's link line and forwards them to Cargo via env vars.
+set(LINK_FILE "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/kernel-collector-legacy.dir/link.txt")
+
+add_custom_command(
+  OUTPUT "${RUST_BIN_PATH}"
+  COMMAND ${CMAKE_COMMAND}
+    -DLINK_FILE=${LINK_FILE}
+    -DBIN_DIR=${CMAKE_BINARY_DIR}
+    -DPROJ_DIR=${PROJECT_SOURCE_DIR}
+    -DRUST_BIN_TARGET_DIR=${RUST_BIN_TARGET_DIR}
+    -P ${CMAKE_CURRENT_LIST_DIR}/cargo_build_rust.cmake
+  DEPENDS 
+    ${KERNEL_COLLECTOR_LINK_LIBRARIES}
+  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+  VERBATIM
+)
+
+add_custom_target(
+  kernel-collector
+  DEPENDS "${RUST_BIN_PATH}"
+)
+
+add_custom_command(
+  OUTPUT ${RUST_BIN_PATH}-stripped
+  COMMAND ${CMAKE_SOURCE_DIR}/dev/strip-symbols.sh ${RUST_BIN_PATH}
+  DEPENDS ${RUST_BIN_PATH}
+  VERBATIM
+)
+add_custom_target(
+  kernel-collector-stripped
+  DEPENDS "${RUST_BIN_PATH}-stripped"
+)
+set_property(
+  TARGET kernel-collector-stripped
+  PROPERTY
+    "OUTPUT" "${RUST_BIN_PATH}-stripped"
+)
+
+add_dependencies(collectors kernel-collector)
 
 ################################################################################
 # libbpf skeleton
@@ -243,8 +288,6 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
   build_custom_docker_image(
     kernel-collector
     OUT_DIR srv
-    ARTIFACTS_OF
-      kernel-collector
     OUTPUT_OF
       kernel-collector-scripts
       kernel-collector-stripped
