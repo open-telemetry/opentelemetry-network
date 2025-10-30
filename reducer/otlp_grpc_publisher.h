@@ -61,6 +61,8 @@ public:
   ::Publisher &rust_publisher() { return *publisher_; }
   const ::Publisher &rust_publisher() const { return *publisher_; }
 
+  const std::string &endpoint() const { return endpoint_; }
+
 private:
   size_t thread_num_;
   std::string endpoint_;

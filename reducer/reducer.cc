@@ -222,6 +222,11 @@ void Reducer::init_cores()
       otlp_metric_writer = otlp_metrics_publisher_->make_writer(otlp_metric_writer_num++);
     }
 
+    std::string otlp_endpoint;
+    if (config_.enable_otlp_grpc_metrics) {
+      otlp_endpoint = std::string(config_.otlp_grpc_metrics_address + ":" + std::to_string(config_.otlp_grpc_metrics_port));
+    }
+
     auto agg_core = std::make_unique<reducer::aggregation::AggCore>(
         matching_to_aggregation_queues_,
         aggregation_to_logging_queues_,
@@ -233,7 +238,9 @@ void Reducer::init_cores()
         config_.scrape_metrics_tsdb_format,
         disabled_metrics,
         shard,
-        initial_timestamp);
+        initial_timestamp,
+        otlp_endpoint,
+        config_.disable_node_ip_field);
 
     agg_core->set_connection_authenticated();
     agg_cores_.push_back(std::move(agg_core));
