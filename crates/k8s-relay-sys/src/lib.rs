@@ -26,4 +26,3 @@ where
     let ptrs: Vec<*const c_char> = c_strings.iter().map(|s| s.as_ptr()).collect();
     unsafe { otn_k8s_relay_main(ptrs.len() as c_int, ptrs.as_ptr()) }
 }
-

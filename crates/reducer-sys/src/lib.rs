@@ -1,11 +1,11 @@
 #[allow(unused_extern_crates)]
-extern crate encoder_ebpf_net_ingest;
-#[allow(unused_extern_crates)]
-extern crate encoder_ebpf_net_matching;
-#[allow(unused_extern_crates)]
 extern crate encoder_ebpf_net_aggregation;
 #[allow(unused_extern_crates)]
+extern crate encoder_ebpf_net_ingest;
+#[allow(unused_extern_crates)]
 extern crate encoder_ebpf_net_logging;
+#[allow(unused_extern_crates)]
+extern crate encoder_ebpf_net_matching;
 #[allow(unused_extern_crates)]
 extern crate otlp_export;
 

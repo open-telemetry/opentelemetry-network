@@ -3,9 +3,9 @@ use std::os::raw::{c_char, c_int};
 // Ensure encoder crates are linked so C++ static libs can resolve their
 // extern "C" symbols via our dependency graph.
 #[allow(unused_extern_crates)]
-extern crate encoder_ebpf_net_ingest;
-#[allow(unused_extern_crates)]
 extern crate encoder_ebpf_net_cloud_collector;
+#[allow(unused_extern_crates)]
+extern crate encoder_ebpf_net_ingest;
 
 extern "C" {
     pub fn otn_cloud_collector_main(argc: c_int, argv: *const *const c_char) -> c_int;
@@ -28,4 +28,3 @@ where
     let ptrs: Vec<*const c_char> = c_strings.iter().map(|s| s.as_ptr()).collect();
     unsafe { otn_cloud_collector_main(ptrs.len() as c_int, ptrs.as_ptr()) }
 }
-

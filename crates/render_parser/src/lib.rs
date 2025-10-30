@@ -98,7 +98,9 @@ where
     /// - If subsequent calls into the underlying map use a hash function that
     ///   returns an out-of-range slot (>= `hash_size`).
     pub fn new(hash_size: usize, hash: F) -> Self {
-        Self { map: PerfectHashMap::new(hash_size, hash) }
+        Self {
+            map: PerfectHashMap::new(hash_size, hash),
+        }
     }
 
     /// Adds or replaces a message entry for the given metadata and value.
@@ -110,9 +112,15 @@ where
     ///
     /// Panics
     /// - If the hash function returns an out-of-range slot (>= capacity()).
-    pub fn add_message(&mut self, metadata: MessageMetadata, value: V) -> Result<Option<V>, perfect_hash_map::CollisionError> {
+    pub fn add_message(
+        &mut self,
+        metadata: MessageMetadata,
+        value: V,
+    ) -> Result<Option<V>, perfect_hash_map::CollisionError> {
         let key = metadata.rpc_id as u32;
-        self.map.insert(key, Entry { metadata, value }).map(|opt| opt.map(|e| e.value))
+        self.map
+            .insert(key, Entry { metadata, value })
+            .map(|opt| opt.map(|e| e.value))
     }
 
     /// Handles a single message from `data`.
@@ -156,24 +164,39 @@ where
             Size::Fixed(n) => {
                 // Require full fixed-size body
                 let need = 8usize + n;
-                if data.len() < need { return Err(Error::BufferTooSmall); }
+                if data.len() < need {
+                    return Err(Error::BufferTooSmall);
+                }
                 &data[8..need]
             }
             Size::Dynamic => {
                 // Need timestamp + rpc_id + _len
-                if data.len() < 8 + 4 { return Err(Error::BufferTooSmall); }
+                if data.len() < 8 + 4 {
+                    return Err(Error::BufferTooSmall);
+                }
                 let mut b = [0u8; 2];
                 b.copy_from_slice(&data[10..12]);
                 let len_field = u16::from_ne_bytes(b);
-                if len_field < 4 { return Err(Error::InvalidLength { rpc_id, len: len_field }); }
+                if len_field < 4 {
+                    return Err(Error::InvalidLength {
+                        rpc_id,
+                        len: len_field,
+                    });
+                }
                 let total_len_after_ts = len_field as usize;
                 let need = 8usize + total_len_after_ts;
-                if data.len() < need { return Err(Error::BufferTooSmall); }
+                if data.len() < need {
+                    return Err(Error::BufferTooSmall);
+                }
                 &data[8..need]
             }
         };
 
-        Ok(HandleOk { message: msg_slice, value: &entry.value, timestamp })
+        Ok(HandleOk {
+            message: msg_slice,
+            value: &entry.value,
+            timestamp,
+        })
     }
 }
 
@@ -181,7 +204,9 @@ where
 mod tests {
     use super::*;
 
-    fn hash_mod8(k: Key) -> u32 { (k % 8) as u32 }
+    fn hash_mod8(k: Key) -> u32 {
+        (k % 8) as u32
+    }
 
     /// Fixed-size happy path: exact-size buffer, zero-copy slice, fields.
     #[test]
@@ -285,7 +310,7 @@ mod tests {
         buf.extend_from_slice(&12_u16.to_ne_bytes());
         buf.extend_from_slice(&6u16.to_ne_bytes());
         buf.extend_from_slice(&vec![0u8; 6]);
-        buf.extend_from_slice(&[1,2,3,4,5,6]);
+        buf.extend_from_slice(&[1, 2, 3, 4, 5, 6]);
 
         let out = p.handle(&buf).unwrap();
         assert_eq!(out.message.len(), 6);
@@ -317,14 +342,19 @@ mod tests {
     /// Replacing an existing rpc_id updates metadata and returns the old value.
     #[test]
     fn replace_same_rpc_returns_old_and_updates_metadata() {
-        fn hash_mod2(k: Key) -> u32 { (k % 2) as u32 }
+        fn hash_mod2(k: Key) -> u32 {
+            (k % 2) as u32
+        }
         let mut p: Parser<&'static str, _> = Parser::new(2, hash_mod2);
 
         // Insert fixed with rpc_id=5
-        p.add_message(MessageMetadata::new_fixed(5, 6, false), "old").unwrap();
+        p.add_message(MessageMetadata::new_fixed(5, 6, false), "old")
+            .unwrap();
 
         // Replace with dynamic metadata and new value
-        let prev = p.add_message(MessageMetadata::new_dynamic(5, false), "new").unwrap();
+        let prev = p
+            .add_message(MessageMetadata::new_dynamic(5, false), "new")
+            .unwrap();
         assert_eq!(prev, Some("old"));
 
         // Build a dynamic buffer for rpc_id=5 with len=4 (header only)
@@ -341,11 +371,16 @@ mod tests {
     /// Collisions on different keys return an error and preserve existing data.
     #[test]
     fn collision_different_rpc_yields_error_and_preserves_existing() {
-        fn hash_mod2(k: Key) -> u32 { (k % 2) as u32 }
+        fn hash_mod2(k: Key) -> u32 {
+            (k % 2) as u32
+        }
         let mut p: Parser<&'static str, _> = Parser::new(2, hash_mod2);
 
-        p.add_message(MessageMetadata::new_fixed(1, 2, false), "one").unwrap();
-        let err = p.add_message(MessageMetadata::new_fixed(3, 2, false), "three").unwrap_err();
+        p.add_message(MessageMetadata::new_fixed(1, 2, false), "one")
+            .unwrap();
+        let err = p
+            .add_message(MessageMetadata::new_fixed(3, 2, false), "three")
+            .unwrap_err();
         assert_eq!(err.existing_key, 1);
 
         // Ensure original is still usable
@@ -361,7 +396,9 @@ mod tests {
     #[test]
     #[should_panic]
     fn broken_hash_panics_on_insert() {
-        fn bad_hash(_: Key) -> u32 { 9999 }
+        fn bad_hash(_: Key) -> u32 {
+            9999
+        }
         let mut p: Parser<&'static str, _> = Parser::new(2, bad_hash);
         let _ = p.add_message(MessageMetadata::new_fixed(1, 2, false), "x");
     }

@@ -44,7 +44,13 @@ impl AggregationCore {
         let mut clock = VirtualClock::default();
         clock.add_inputs(queues.len());
 
-        Self { queues, clock, parser, shard, stop: Arc::new(AtomicBool::new(false)) }
+        Self {
+            queues,
+            clock,
+            parser,
+            shard,
+            stop: Arc::new(AtomicBool::new(false)),
+        }
     }
 
     pub fn stop(&self) {
@@ -121,7 +127,10 @@ impl AggregationCore {
                                         } else {
                                             println!(
                                                 "agg[shard={}] eq={} ts={} rpc_id=? size={}",
-                                                self.shard, i, ts, msg.len()
+                                                self.shard,
+                                                i,
+                                                ts,
+                                                msg.len()
                                             );
                                         }
                                     }
