@@ -8,11 +8,6 @@ edition = "2021"
 # link per-app crates directly via rlib dependencies.
 crate-type = ["staticlib"]
 
-[profile.release]
-opt-level = 3
-lto = true
-codegen-units = 1
-
 [dependencies]
 encoder_ebpf_net_agent_internal = { path = "agent_internal" }
 encoder_ebpf_net_ingest = { path = "ingest" }
