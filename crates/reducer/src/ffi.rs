@@ -12,7 +12,15 @@ mod ffi {
         type AggregationCore;
 
         /// Create a new AggregationCore from element-queue descriptors.
-        fn aggregation_core_new(queues: &CxxVector<EqView>, shard: u32) -> Box<AggregationCore>;
+        fn aggregation_core_new(
+            queues: &CxxVector<EqView>,
+            shard: u32,
+            enable_id_id: bool,
+            enable_az_id: bool,
+            endpoint: &str,
+            disable_node_ip_field: bool,
+            enable_metric_descriptions: bool,
+        ) -> Box<AggregationCore>;
         /// Run the core loop until stopped.
         fn aggregation_core_run(self: Pin<&mut AggregationCore>);
         /// Request cooperative stop.
@@ -23,17 +31,49 @@ mod ffi {
 use crate::aggregation_core::AggregationCore;
 
 impl AggregationCore {
-    fn from_views(views: &cxx::CxxVector<ffi::EqView>, shard: u32) -> Self {
+    fn from_views(
+        views: &cxx::CxxVector<ffi::EqView>,
+        shard: u32,
+        enable_id_id: bool,
+        enable_az_id: bool,
+        endpoint: &str,
+        disable_node_ip_field: bool,
+        enable_metric_descriptions: bool,
+    ) -> Self {
         let mut v = Vec::with_capacity(views.len());
         for ev in views {
             v.push((ev.data as usize, ev.n_elems, ev.buf_len));
         }
-        AggregationCore::new(&v[..], shard)
+        AggregationCore::new(
+            &v[..],
+            shard,
+            enable_id_id,
+            enable_az_id,
+            endpoint,
+            disable_node_ip_field,
+            enable_metric_descriptions,
+        )
     }
 }
 
-fn aggregation_core_new(queues: &cxx::CxxVector<ffi::EqView>, shard: u32) -> Box<AggregationCore> {
-    Box::new(AggregationCore::from_views(queues, shard))
+fn aggregation_core_new(
+    queues: &cxx::CxxVector<ffi::EqView>,
+    shard: u32,
+    enable_id_id: bool,
+    enable_az_id: bool,
+    endpoint: &str,
+    disable_node_ip_field: bool,
+    enable_metric_descriptions: bool,
+) -> Box<AggregationCore> {
+    Box::new(AggregationCore::from_views(
+        queues,
+        shard,
+        enable_id_id,
+        enable_az_id,
+        endpoint,
+        disable_node_ip_field,
+        enable_metric_descriptions,
+    ))
 }
 
 impl AggregationCore {

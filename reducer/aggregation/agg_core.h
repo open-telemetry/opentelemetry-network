@@ -78,7 +78,9 @@ public:
       TsdbFormat metrics_tsdb_format,
       reducer::DisabledMetrics disabled_metrics,
       size_t shard_num,
-      u64 initial_timestamp);
+      u64 initial_timestamp,
+      std::string otlp_endpoint,
+      bool disable_node_ip_field);
 
 private:
   // Stores TDigests to compute p90, p95, p99 latencies
