@@ -17,9 +17,7 @@
 pub const MATCHING_HASH_SIZE: u32 = 32u32;
 
 #[allow(dead_code)]
-pub static G_ARRAY: [u8; 8] = [
-    1,2,0,0,2,0,0,1
-];
+pub static G_ARRAY: [u8; 8] = [1, 2, 0, 0, 2, 0, 0, 1];
 
 #[inline]
 #[allow(dead_code)]

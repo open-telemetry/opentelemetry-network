@@ -2,7 +2,6 @@
 #[allow(non_camel_case_types)]
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-
 #[allow(unused_imports)]
 use crate::JbBlob;
 
@@ -12,33 +11,35 @@ use core::slice;
 
 #[no_mangle]
 pub extern "C" fn ebpf_net_kernel_collector_encode_pulse(
-  __dest: *mut u8,
-  __dest_len: u32,
-  __tstamp: u64) {
-  assert!(!__dest.is_null(), "dest must not be null");
+    __dest: *mut u8,
+    __dest_len: u32,
+    __tstamp: u64,
+) {
+    assert!(!__dest.is_null(), "dest must not be null");
 
-  // Compute encoded length: fixed struct size + dynamic payload
-  let __consumed: u32 = 2 as u32;
+    // Compute encoded length: fixed struct size + dynamic payload
+    let __consumed: u32 = 2 as u32;
 
-  let __total_len = (8_u32).saturating_add(__consumed) as usize;
-  assert!(
-    __total_len == __dest_len as usize,
-    "dest len must exactly match computed encoded len"
-  );
+    let __total_len = (8_u32).saturating_add(__consumed) as usize;
+    assert!(
+        __total_len == __dest_len as usize,
+        "dest len must exactly match computed encoded len"
+    );
 
-  // Prepare destination and input slices up front
-  let __dst: &mut [u8] = unsafe { slice::from_raw_parts_mut(__dest, __dest_len as usize) };
+    // Prepare destination and input slices up front
+    let __dst: &mut [u8] = unsafe { slice::from_raw_parts_mut(__dest, __dest_len as usize) };
 
-  // Build fixed header as a stack struct using an initializer expression
-  let __wire: jb_kernel_collector__pulse = jb_kernel_collector__pulse {
-    _rpc_id: 65535 as u16,
-  };
+    // Build fixed header as a stack struct using an initializer expression
+    let __wire: jb_kernel_collector__pulse = jb_kernel_collector__pulse {
+        _rpc_id: 65535 as u16,
+    };
 
-  // Copy timestamp and packed header (without struct tail padding)
-  let __fixed_len = 8usize + 2 as usize;
-  __dst[..8].copy_from_slice(&__tstamp.to_ne_bytes());
-  let __src_struct: &[u8] = unsafe { slice::from_raw_parts(&__wire as *const _ as *const u8, 2 as usize) };
-  __dst[8..__fixed_len].copy_from_slice(__src_struct);
+    // Copy timestamp and packed header (without struct tail padding)
+    let __fixed_len = 8usize + 2 as usize;
+    __dst[..8].copy_from_slice(&__tstamp.to_ne_bytes());
+    let __src_struct: &[u8] =
+        unsafe { slice::from_raw_parts(&__wire as *const _ as *const u8, 2 as usize) };
+    __dst[8..__fixed_len].copy_from_slice(__src_struct);
 
-  // Append dynamic payloads sequentially
+    // Append dynamic payloads sequentially
 }

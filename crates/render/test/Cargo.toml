@@ -8,10 +8,5 @@ edition = "2021"
 # link per-app crates directly via rlib dependencies.
 crate-type = ["staticlib"]
 
-[profile.release]
-opt-level = 3
-lto = true
-codegen-units = 1
-
 [dependencies]
 encoder_test_app1 = { path = "app1" }
