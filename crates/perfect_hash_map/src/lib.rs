@@ -67,10 +67,14 @@ pub struct OccupiedEntry<'a, V> {
 
 impl<'a, V> OccupiedEntry<'a, V> {
     /// Returns an immutable reference to the existing value.
-    pub fn get(&self) -> &V { self.value }
+    pub fn get(&self) -> &V {
+        self.value
+    }
 
     /// Returns a mutable reference to the existing value.
-    pub fn get_mut(&mut self) -> &mut V { self.value }
+    pub fn get_mut(&mut self) -> &mut V {
+        self.value
+    }
 
     /// Replaces the existing value with `new_value`, returning the old value.
     pub fn replace(&mut self, new_value: V) -> V {
@@ -135,17 +139,27 @@ where
     pub fn new(hash_size: usize, hash: F) -> Self {
         let mut slots = Vec::with_capacity(hash_size);
         slots.resize_with(hash_size, || None);
-        Self { hash, slots, len: 0 }
+        Self {
+            hash,
+            slots,
+            len: 0,
+        }
     }
 
     /// Number of key-value pairs in the map.
-    pub fn len(&self) -> usize { self.len }
+    pub fn len(&self) -> usize {
+        self.len
+    }
 
     /// Returns true if the map contains no elements.
-    pub fn is_empty(&self) -> bool { self.len == 0 }
+    pub fn is_empty(&self) -> bool {
+        self.len == 0
+    }
 
     /// Fixed capacity (equals the provided hash size).
-    pub fn capacity(&self) -> usize { self.slots.len() }
+    pub fn capacity(&self) -> usize {
+        self.slots.len()
+    }
 
     /// Returns true if the given key is present.
     pub fn contains_key(&self, key: &Key) -> bool {
@@ -177,7 +191,9 @@ where
     /// Removes a key from the map, returning the value if present.
     pub fn remove(&mut self, key: &Key) -> Option<V> {
         let i = (self.hash)(*key) as usize;
-        if i >= self.slots.len() { return None; }
+        if i >= self.slots.len() {
+            return None;
+        }
         let match_key = matches!(self.slots[i].as_ref(), Some(e) if e.key == *key);
         if match_key {
             let entry = self.slots[i].take().expect("was Some above");
@@ -215,10 +231,10 @@ where
                     self.len += 1;
                     Ok(None)
                 }
-                Some(e) if e.key == key => {
-                    Ok(Some(core::mem::replace(&mut e.value, value)))
-                }
-                Some(e) => Err(CollisionError { existing_key: e.key }),
+                Some(e) if e.key == key => Ok(Some(core::mem::replace(&mut e.value, value))),
+                Some(e) => Err(CollisionError {
+                    existing_key: e.key,
+                }),
             },
             None => panic!("hash function returned out-of-range slot"),
         }
@@ -245,9 +261,17 @@ where
                 }
                 let e = slot.as_mut().unwrap();
                 if e.key == key {
-                    Err(TryInsertError::Occupied { value, entry: OccupiedEntry { value: &mut e.value } })
+                    Err(TryInsertError::Occupied {
+                        value,
+                        entry: OccupiedEntry {
+                            value: &mut e.value,
+                        },
+                    })
                 } else {
-                    Err(TryInsertError::Collision { value, existing_key: e.key })
+                    Err(TryInsertError::Collision {
+                        value,
+                        existing_key: e.key,
+                    })
                 }
             }
             None => panic!("hash function returned out-of-range slot"),
@@ -258,14 +282,22 @@ where
     ///
     /// Items are produced in slot order (increasing slot index).
     pub fn iter(&self) -> Iter<'_, V> {
-        Iter { slots: &self.slots, pos: 0 }
+        Iter {
+            slots: &self.slots,
+            pos: 0,
+        }
     }
 
     /// Returns a mutable iterator over `(Key, &mut V)` pairs.
     ///
     /// The key is yielded by value to avoid `(&Key, &mut V)` aliasing.
     pub fn iter_mut(&mut self) -> IterMut<'_, V> {
-        IterMut { slots: self.slots.as_mut_ptr(), len: self.slots.len(), pos: 0, _marker: core::marker::PhantomData }
+        IterMut {
+            slots: self.slots.as_mut_ptr(),
+            len: self.slots.len(),
+            pos: 0,
+            _marker: core::marker::PhantomData,
+        }
     }
 
     /// Returns an iterator over keys.
@@ -280,7 +312,9 @@ where
 
     /// Returns a mutable iterator over values.
     pub fn values_mut(&mut self) -> ValuesMut<'_, V> {
-        ValuesMut { inner: self.iter_mut() }
+        ValuesMut {
+            inner: self.iter_mut(),
+        }
     }
 }
 
@@ -352,7 +386,9 @@ impl<'a, V> Iterator for Keys<'a, V> {
     fn next(&mut self) -> Option<Self::Item> {
         self.inner.next().map(|(k, _)| k)
     }
-    fn size_hint(&self) -> (usize, Option<usize>) { self.inner.size_hint() }
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.inner.size_hint()
+    }
 }
 
 /// Iterator over values.
@@ -365,7 +401,9 @@ impl<'a, V> Iterator for Values<'a, V> {
     fn next(&mut self) -> Option<Self::Item> {
         self.inner.next().map(|(_, v)| v)
     }
-    fn size_hint(&self) -> (usize, Option<usize>) { self.inner.size_hint() }
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.inner.size_hint()
+    }
 }
 
 /// Mutable iterator over values.
@@ -378,7 +416,9 @@ impl<'a, V> Iterator for ValuesMut<'a, V> {
     fn next(&mut self) -> Option<Self::Item> {
         self.inner.next().map(|(_, v)| v)
     }
-    fn size_hint(&self) -> (usize, Option<usize>) { self.inner.size_hint() }
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.inner.size_hint()
+    }
 }
 
 // unit tests live in `tests/` to avoid duplication and improve discoverability

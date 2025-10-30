@@ -92,8 +92,8 @@ use opentelemetry_proto::tonic::collector::metrics::v1::metrics_service_client::
 use opentelemetry_proto::tonic::common::v1 as otlp_common;
 use opentelemetry_proto::tonic::metrics::v1 as otlp_metrics;
 use opentelemetry_proto::tonic::resource::v1 as otlp_resource;
-use tonic::Request;
 use tokio::runtime::Runtime;
+use tonic::Request;
 
 /// Minimal placeholder publisher. This crate defines the FFI surface and basic accounting.
 /// Internals can be extended to perform real async OTLP export.
@@ -261,9 +261,7 @@ impl Publisher {
 
             // For sums, set start_time to slot start (30s window) to match reducer semantics.
             let time_unix_nano = pm.timestamp_unix_nano as u64;
-            let start_time_unix_nano = pm
-                .timestamp_unix_nano
-                .saturating_sub(30_000_000_000) as u64;
+            let start_time_unix_nano = pm.timestamp_unix_nano.saturating_sub(30_000_000_000) as u64;
 
             let metric = match pm.kind {
                 MetricKind::Sum => {
@@ -323,7 +321,9 @@ impl Publisher {
                             value: Some(otlp_metrics::number_data_point::Value::AsDouble(v)),
                         },
                     };
-                    let gauge = otlp_metrics::Gauge { data_points: vec![ndp] };
+                    let gauge = otlp_metrics::Gauge {
+                        data_points: vec![ndp],
+                    };
                     otlp_metrics::Metric {
                         name: pm.name.clone(),
                         description: pm.description.clone(),
@@ -353,7 +353,9 @@ impl Publisher {
                             value: Some(otlp_metrics::number_data_point::Value::AsDouble(v)),
                         },
                     };
-                    let gauge = otlp_metrics::Gauge { data_points: vec![ndp] };
+                    let gauge = otlp_metrics::Gauge {
+                        data_points: vec![ndp],
+                    };
                     otlp_metrics::Metric {
                         name: pm.name.clone(),
                         description: pm.description.clone(),
@@ -410,10 +412,7 @@ impl Publisher {
         let export_res = self.runtime.block_on(async move {
             match MetricsServiceClient::connect(endpoint).await {
                 Ok(mut client) => client.export(Request::new(req)).await,
-                Err(e) => Err(tonic::Status::unknown(format!(
-                    "connect error: {}",
-                    e
-                ))),
+                Err(e) => Err(tonic::Status::unknown(format!("connect error: {}", e))),
             }
         });
 
@@ -476,9 +475,7 @@ fn labels_to_otlp_kv(labels: &Vec<Label>) -> Vec<otlp_common::KeyValue> {
         .map(|l| otlp_common::KeyValue {
             key: l.key.clone(),
             value: Some(otlp_common::AnyValue {
-                value: Some(otlp_common::any_value::Value::StringValue(
-                    l.value.clone(),
-                )),
+                value: Some(otlp_common::any_value::Value::StringValue(l.value.clone())),
             }),
         })
         .collect()

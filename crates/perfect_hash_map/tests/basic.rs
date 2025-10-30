@@ -2,9 +2,11 @@
 //! These cover construction, basic operations, collisions, clear, queries,
 //! iterators, out-of-range panics, and generic hash closure usage.
 
-use perfect_hash_map::{PerfectHashMap, HashFn, TryInsertError};
+use perfect_hash_map::{HashFn, PerfectHashMap, TryInsertError};
 
-fn phash(k: u32) -> u32 { k % 8 }
+fn phash(k: u32) -> u32 {
+    k % 8
+}
 
 /// Validates new map state, capacity and emptiness.
 #[test]
@@ -56,11 +58,15 @@ fn collision_handling() {
 #[test]
 fn clear_empties_map() {
     let mut m = PerfectHashMap::new(8, phash as HashFn);
-    for k in [0u32, 2, 4] { let _ = m.insert(k, k * 10); }
+    for k in [0u32, 2, 4] {
+        let _ = m.insert(k, k * 10);
+    }
     assert_eq!(m.len(), 3);
     m.clear();
     assert!(m.is_empty());
-    for k in [0u32, 2, 4] { assert!(!m.contains_key(&k)); }
+    for k in [0u32, 2, 4] {
+        assert!(!m.contains_key(&k));
+    }
     assert_eq!(m.insert(2, 42), Ok(None));
     assert_eq!(m.get(&2), Some(&42));
 }
@@ -72,7 +78,9 @@ fn queries_and_get_mut() {
     assert_eq!(m.get(&3), None);
     assert_eq!(m.insert(3, 7), Ok(None));
     assert!(m.contains_key(&3));
-    if let Some(v) = m.get_mut(&3) { *v += 1; }
+    if let Some(v) = m.get_mut(&3) {
+        *v += 1;
+    }
     assert_eq!(m.get(&3), Some(&8));
     // a different key hashing to the same slot should not be visible
     assert_eq!(m.get(&11), None); // 11 % 8 == 3
@@ -82,13 +90,19 @@ fn queries_and_get_mut() {
 #[test]
 fn iterators() {
     let mut m = PerfectHashMap::new(8, phash as HashFn);
-    for k in [0u32, 2, 4] { let _ = m.insert(k, k * 10); }
+    for k in [0u32, 2, 4] {
+        let _ = m.insert(k, k * 10);
+    }
     // iter yields all pairs
     let mut kv: Vec<(u32, u32)> = m.iter().map(|(k, v)| (*k, *v)).collect();
     kv.sort_by_key(|x| x.0);
     assert_eq!(kv, vec![(0, 0), (2, 20), (4, 40)]);
     // iter_mut allows mutation
-    for (k, v) in m.iter_mut() { if k == 2 { *v = 99; } }
+    for (k, v) in m.iter_mut() {
+        if k == 2 {
+            *v = 99;
+        }
+    }
     assert_eq!(m.get(&2), Some(&99));
     // keys() and values() projections
     let keys: Vec<u32> = m.keys().copied().collect();

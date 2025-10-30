@@ -20,22 +20,32 @@ impl MessageMetadata {
     /// Creates a metadata entry for a fixed-size message.
     /// The third parameter is deprecated and ignored.
     pub const fn new_fixed(rpc_id: u16, size: usize, _needs_auth: bool) -> Self {
-        Self { rpc_id, size: Size::Fixed(size) }
+        Self {
+            rpc_id,
+            size: Size::Fixed(size),
+        }
     }
 
     /// Creates a metadata entry for a dynamic-size message.
     /// The second parameter is deprecated and ignored.
     pub const fn new_dynamic(rpc_id: u16, _needs_auth: bool) -> Self {
-        Self { rpc_id, size: Size::Dynamic }
+        Self {
+            rpc_id,
+            size: Size::Dynamic,
+        }
     }
 
     /// Returns the RPC ID for this message.
     #[inline]
-    pub const fn rpc_id(&self) -> u16 { self.rpc_id }
+    pub const fn rpc_id(&self) -> u16 {
+        self.rpc_id
+    }
 
     /// Returns the size descriptor.
     #[inline]
-    pub const fn size(&self) -> Size { self.size }
+    pub const fn size(&self) -> Size {
+        self.size
+    }
 }
 
 #[cfg(test)]
@@ -78,4 +88,3 @@ mod tests {
         let _ = format!("{:?}", a);
     }
 }
-
