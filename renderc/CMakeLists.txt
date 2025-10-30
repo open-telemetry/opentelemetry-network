@@ -101,7 +101,7 @@ add_custom_command(
     ./io.opentelemetry.render/src/io/opentelemetry/render/generator/TransformBuilderGenerator.xtend
     ./io.opentelemetry.render/src/io/opentelemetry/render/generator/BpfGenerator.xtend
     ./io.opentelemetry.render/src/io/opentelemetry/render/generator/RustEncoderGenerator.xtend
-    ./io.opentelemetry.render/src/io/opentelemetry/render/generator/RustWireMessageGenerator.xtend
+    ./io.opentelemetry.render/src/io/opentelemetry/render/generator/RustMessageGenerator.xtend
     ./io.opentelemetry.render/src/io/opentelemetry/render/generator/RustCargoGenerator.xtend
     ./io.opentelemetry.render/src/io/opentelemetry/render/generator/WriterGenerator.xtend
     ./io.opentelemetry.render/src/io/opentelemetry/render/generator/SpanGenerator.xtend
