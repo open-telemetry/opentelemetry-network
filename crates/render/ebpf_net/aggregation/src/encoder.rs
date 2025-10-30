@@ -2,7 +2,6 @@
 #[allow(non_camel_case_types)]
 #[allow(non_snake_case)]
 #[allow(unused_variables)]
-
 #[allow(unused_imports)]
 use crate::JbBlob;
 
@@ -12,458 +11,474 @@ use core::slice;
 
 #[no_mangle]
 pub extern "C" fn ebpf_net_aggregation_encode_agg_root_start(
-  __dest: *mut u8,
-  __dest_len: u32,
-  __tstamp: u64,
-  _ref: u64
+    __dest: *mut u8,
+    __dest_len: u32,
+    __tstamp: u64,
+    _ref: u64,
 ) {
-  assert!(!__dest.is_null(), "dest must not be null");
+    assert!(!__dest.is_null(), "dest must not be null");
 
-  // Compute encoded length: fixed struct size + dynamic payload
-  let __consumed: u32 = 16 as u32;
+    // Compute encoded length: fixed struct size + dynamic payload
+    let __consumed: u32 = 16 as u32;
 
-  let __total_len = (8_u32).saturating_add(__consumed) as usize;
-  assert!(
-    __total_len == __dest_len as usize,
-    "dest len must exactly match computed encoded len"
-  );
+    let __total_len = (8_u32).saturating_add(__consumed) as usize;
+    assert!(
+        __total_len == __dest_len as usize,
+        "dest len must exactly match computed encoded len"
+    );
 
-  // Prepare destination and input slices up front
-  let __dst: &mut [u8] = unsafe { slice::from_raw_parts_mut(__dest, __dest_len as usize) };
+    // Prepare destination and input slices up front
+    let __dst: &mut [u8] = unsafe { slice::from_raw_parts_mut(__dest, __dest_len as usize) };
 
-  // Build fixed header as a stack struct using an initializer expression
-  let __wire: jb_aggregation__agg_root_start = jb_aggregation__agg_root_start {
-    _rpc_id: 461 as u16,
-    _ref
-  };
+    // Build fixed header as a stack struct using an initializer expression
+    let __wire: jb_aggregation__agg_root_start = jb_aggregation__agg_root_start {
+        _rpc_id: 461 as u16,
+        _ref,
+    };
 
-  // Copy timestamp and packed header (without struct tail padding)
-  let __fixed_len = 8usize + 16 as usize;
-  __dst[..8].copy_from_slice(&__tstamp.to_ne_bytes());
-  let __src_struct: &[u8] = unsafe { slice::from_raw_parts(&__wire as *const _ as *const u8, 16 as usize) };
-  __dst[8..__fixed_len].copy_from_slice(__src_struct);
+    // Copy timestamp and packed header (without struct tail padding)
+    let __fixed_len = 8usize + 16 as usize;
+    __dst[..8].copy_from_slice(&__tstamp.to_ne_bytes());
+    let __src_struct: &[u8] =
+        unsafe { slice::from_raw_parts(&__wire as *const _ as *const u8, 16 as usize) };
+    __dst[8..__fixed_len].copy_from_slice(__src_struct);
 
-  // Append dynamic payloads sequentially
+    // Append dynamic payloads sequentially
 }
 #[no_mangle]
 pub extern "C" fn ebpf_net_aggregation_encode_agg_root_end(
-  __dest: *mut u8,
-  __dest_len: u32,
-  __tstamp: u64,
-  _ref: u64
+    __dest: *mut u8,
+    __dest_len: u32,
+    __tstamp: u64,
+    _ref: u64,
 ) {
-  assert!(!__dest.is_null(), "dest must not be null");
+    assert!(!__dest.is_null(), "dest must not be null");
 
-  // Compute encoded length: fixed struct size + dynamic payload
-  let __consumed: u32 = 16 as u32;
+    // Compute encoded length: fixed struct size + dynamic payload
+    let __consumed: u32 = 16 as u32;
 
-  let __total_len = (8_u32).saturating_add(__consumed) as usize;
-  assert!(
-    __total_len == __dest_len as usize,
-    "dest len must exactly match computed encoded len"
-  );
+    let __total_len = (8_u32).saturating_add(__consumed) as usize;
+    assert!(
+        __total_len == __dest_len as usize,
+        "dest len must exactly match computed encoded len"
+    );
 
-  // Prepare destination and input slices up front
-  let __dst: &mut [u8] = unsafe { slice::from_raw_parts_mut(__dest, __dest_len as usize) };
+    // Prepare destination and input slices up front
+    let __dst: &mut [u8] = unsafe { slice::from_raw_parts_mut(__dest, __dest_len as usize) };
 
-  // Build fixed header as a stack struct using an initializer expression
-  let __wire: jb_aggregation__agg_root_end = jb_aggregation__agg_root_end {
-    _rpc_id: 462 as u16,
-    _ref
-  };
+    // Build fixed header as a stack struct using an initializer expression
+    let __wire: jb_aggregation__agg_root_end = jb_aggregation__agg_root_end {
+        _rpc_id: 462 as u16,
+        _ref,
+    };
 
-  // Copy timestamp and packed header (without struct tail padding)
-  let __fixed_len = 8usize + 16 as usize;
-  __dst[..8].copy_from_slice(&__tstamp.to_ne_bytes());
-  let __src_struct: &[u8] = unsafe { slice::from_raw_parts(&__wire as *const _ as *const u8, 16 as usize) };
-  __dst[8..__fixed_len].copy_from_slice(__src_struct);
+    // Copy timestamp and packed header (without struct tail padding)
+    let __fixed_len = 8usize + 16 as usize;
+    __dst[..8].copy_from_slice(&__tstamp.to_ne_bytes());
+    let __src_struct: &[u8] =
+        unsafe { slice::from_raw_parts(&__wire as *const _ as *const u8, 16 as usize) };
+    __dst[8..__fixed_len].copy_from_slice(__src_struct);
 
-  // Append dynamic payloads sequentially
+    // Append dynamic payloads sequentially
 }
 #[no_mangle]
 pub extern "C" fn ebpf_net_aggregation_encode_update_node(
-  __dest: *mut u8,
-  __dest_len: u32,
-  __tstamp: u64,
-  _ref: u64,
-  side: u8,
-  id: JbBlob,
-  az: JbBlob,
-  role: JbBlob,
-  version: JbBlob,
-  env: JbBlob,
-  ns: JbBlob,
-  node_type: u8,
-  address: JbBlob,
-  process: JbBlob,
-  container: JbBlob,
-  pod_name: JbBlob,
-  role_uid: JbBlob
+    __dest: *mut u8,
+    __dest_len: u32,
+    __tstamp: u64,
+    _ref: u64,
+    side: u8,
+    id: JbBlob,
+    az: JbBlob,
+    role: JbBlob,
+    version: JbBlob,
+    env: JbBlob,
+    ns: JbBlob,
+    node_type: u8,
+    address: JbBlob,
+    process: JbBlob,
+    container: JbBlob,
+    pod_name: JbBlob,
+    role_uid: JbBlob,
 ) {
-  assert!(!__dest.is_null(), "dest must not be null");
+    assert!(!__dest.is_null(), "dest must not be null");
 
-  // Compute encoded length: fixed struct size + dynamic payload
-  let mut __consumed: u32 = 34 as u32;
-  __consumed = __consumed.saturating_add(id.len as u32);
-  __consumed = __consumed.saturating_add(az.len as u32);
-  __consumed = __consumed.saturating_add(role.len as u32);
-  __consumed = __consumed.saturating_add(version.len as u32);
-  __consumed = __consumed.saturating_add(env.len as u32);
-  __consumed = __consumed.saturating_add(ns.len as u32);
-  __consumed = __consumed.saturating_add(address.len as u32);
-  __consumed = __consumed.saturating_add(process.len as u32);
-  __consumed = __consumed.saturating_add(container.len as u32);
-  __consumed = __consumed.saturating_add(pod_name.len as u32);
-  __consumed = __consumed.saturating_add(role_uid.len as u32);
-  assert!(__consumed <= 0xffff, "encoded len must fit in u16");
+    // Compute encoded length: fixed struct size + dynamic payload
+    let mut __consumed: u32 = 34 as u32;
+    __consumed = __consumed.saturating_add(id.len as u32);
+    __consumed = __consumed.saturating_add(az.len as u32);
+    __consumed = __consumed.saturating_add(role.len as u32);
+    __consumed = __consumed.saturating_add(version.len as u32);
+    __consumed = __consumed.saturating_add(env.len as u32);
+    __consumed = __consumed.saturating_add(ns.len as u32);
+    __consumed = __consumed.saturating_add(address.len as u32);
+    __consumed = __consumed.saturating_add(process.len as u32);
+    __consumed = __consumed.saturating_add(container.len as u32);
+    __consumed = __consumed.saturating_add(pod_name.len as u32);
+    __consumed = __consumed.saturating_add(role_uid.len as u32);
+    assert!(__consumed <= 0xffff, "encoded len must fit in u16");
 
-  let __total_len = (8_u32).saturating_add(__consumed) as usize;
-  assert!(
-    __total_len == __dest_len as usize,
-    "dest len must exactly match computed encoded len"
-  );
+    let __total_len = (8_u32).saturating_add(__consumed) as usize;
+    assert!(
+        __total_len == __dest_len as usize,
+        "dest len must exactly match computed encoded len"
+    );
 
-  // Prepare destination and input slices up front
-  let __dst: &mut [u8] = unsafe { slice::from_raw_parts_mut(__dest, __dest_len as usize) };
-  let __sl_id: &[u8] = unsafe { slice::from_raw_parts(id.buf as *const u8, id.len as usize) };
-  let __sl_az: &[u8] = unsafe { slice::from_raw_parts(az.buf as *const u8, az.len as usize) };
-  let __sl_role: &[u8] = unsafe { slice::from_raw_parts(role.buf as *const u8, role.len as usize) };
-  let __sl_version: &[u8] = unsafe { slice::from_raw_parts(version.buf as *const u8, version.len as usize) };
-  let __sl_env: &[u8] = unsafe { slice::from_raw_parts(env.buf as *const u8, env.len as usize) };
-  let __sl_ns: &[u8] = unsafe { slice::from_raw_parts(ns.buf as *const u8, ns.len as usize) };
-  let __sl_address: &[u8] = unsafe { slice::from_raw_parts(address.buf as *const u8, address.len as usize) };
-  let __sl_process: &[u8] = unsafe { slice::from_raw_parts(process.buf as *const u8, process.len as usize) };
-  let __sl_container: &[u8] = unsafe { slice::from_raw_parts(container.buf as *const u8, container.len as usize) };
-  let __sl_pod_name: &[u8] = unsafe { slice::from_raw_parts(pod_name.buf as *const u8, pod_name.len as usize) };
-  let __sl_role_uid: &[u8] = unsafe { slice::from_raw_parts(role_uid.buf as *const u8, role_uid.len as usize) };
+    // Prepare destination and input slices up front
+    let __dst: &mut [u8] = unsafe { slice::from_raw_parts_mut(__dest, __dest_len as usize) };
+    let __sl_id: &[u8] = unsafe { slice::from_raw_parts(id.buf as *const u8, id.len as usize) };
+    let __sl_az: &[u8] = unsafe { slice::from_raw_parts(az.buf as *const u8, az.len as usize) };
+    let __sl_role: &[u8] =
+        unsafe { slice::from_raw_parts(role.buf as *const u8, role.len as usize) };
+    let __sl_version: &[u8] =
+        unsafe { slice::from_raw_parts(version.buf as *const u8, version.len as usize) };
+    let __sl_env: &[u8] = unsafe { slice::from_raw_parts(env.buf as *const u8, env.len as usize) };
+    let __sl_ns: &[u8] = unsafe { slice::from_raw_parts(ns.buf as *const u8, ns.len as usize) };
+    let __sl_address: &[u8] =
+        unsafe { slice::from_raw_parts(address.buf as *const u8, address.len as usize) };
+    let __sl_process: &[u8] =
+        unsafe { slice::from_raw_parts(process.buf as *const u8, process.len as usize) };
+    let __sl_container: &[u8] =
+        unsafe { slice::from_raw_parts(container.buf as *const u8, container.len as usize) };
+    let __sl_pod_name: &[u8] =
+        unsafe { slice::from_raw_parts(pod_name.buf as *const u8, pod_name.len as usize) };
+    let __sl_role_uid: &[u8] =
+        unsafe { slice::from_raw_parts(role_uid.buf as *const u8, role_uid.len as usize) };
 
-  // Build fixed header as a stack struct using an initializer expression
-  let __wire: jb_aggregation__update_node = jb_aggregation__update_node {
-    _rpc_id: 463 as u16,
-    _len: __consumed as u16,
-    id: (__sl_id.len() as u16),
-    az: (__sl_az.len() as u16),
-    _ref,
-    role: (__sl_role.len() as u16),
-    version: (__sl_version.len() as u16),
-    env: (__sl_env.len() as u16),
-    ns: (__sl_ns.len() as u16),
-    address: (__sl_address.len() as u16),
-    process: (__sl_process.len() as u16),
-    container: (__sl_container.len() as u16),
-    pod_name: (__sl_pod_name.len() as u16),
-    side,
-    node_type
-  };
+    // Build fixed header as a stack struct using an initializer expression
+    let __wire: jb_aggregation__update_node = jb_aggregation__update_node {
+        _rpc_id: 463 as u16,
+        _len: __consumed as u16,
+        id: (__sl_id.len() as u16),
+        az: (__sl_az.len() as u16),
+        _ref,
+        role: (__sl_role.len() as u16),
+        version: (__sl_version.len() as u16),
+        env: (__sl_env.len() as u16),
+        ns: (__sl_ns.len() as u16),
+        address: (__sl_address.len() as u16),
+        process: (__sl_process.len() as u16),
+        container: (__sl_container.len() as u16),
+        pod_name: (__sl_pod_name.len() as u16),
+        side,
+        node_type,
+    };
 
-  // Copy timestamp and packed header (without struct tail padding)
-  let __fixed_len = 8usize + 34 as usize;
-  __dst[..8].copy_from_slice(&__tstamp.to_ne_bytes());
-  let __src_struct: &[u8] = unsafe { slice::from_raw_parts(&__wire as *const _ as *const u8, 34 as usize) };
-  __dst[8..__fixed_len].copy_from_slice(__src_struct);
+    // Copy timestamp and packed header (without struct tail padding)
+    let __fixed_len = 8usize + 34 as usize;
+    __dst[..8].copy_from_slice(&__tstamp.to_ne_bytes());
+    let __src_struct: &[u8] =
+        unsafe { slice::from_raw_parts(&__wire as *const _ as *const u8, 34 as usize) };
+    __dst[8..__fixed_len].copy_from_slice(__src_struct);
 
-  // Append dynamic payloads sequentially
-  let mut __off = __fixed_len;
-  if !__sl_id.is_empty() {
-    let __len = __sl_id.len();
-    let __dst_seg = &mut __dst[__off .. __off + __len];
-    __dst_seg.copy_from_slice(__sl_id);
-    __off += __len;
-  }
-  if !__sl_az.is_empty() {
-    let __len = __sl_az.len();
-    let __dst_seg = &mut __dst[__off .. __off + __len];
-    __dst_seg.copy_from_slice(__sl_az);
-    __off += __len;
-  }
-  if !__sl_role.is_empty() {
-    let __len = __sl_role.len();
-    let __dst_seg = &mut __dst[__off .. __off + __len];
-    __dst_seg.copy_from_slice(__sl_role);
-    __off += __len;
-  }
-  if !__sl_version.is_empty() {
-    let __len = __sl_version.len();
-    let __dst_seg = &mut __dst[__off .. __off + __len];
-    __dst_seg.copy_from_slice(__sl_version);
-    __off += __len;
-  }
-  if !__sl_env.is_empty() {
-    let __len = __sl_env.len();
-    let __dst_seg = &mut __dst[__off .. __off + __len];
-    __dst_seg.copy_from_slice(__sl_env);
-    __off += __len;
-  }
-  if !__sl_ns.is_empty() {
-    let __len = __sl_ns.len();
-    let __dst_seg = &mut __dst[__off .. __off + __len];
-    __dst_seg.copy_from_slice(__sl_ns);
-    __off += __len;
-  }
-  if !__sl_address.is_empty() {
-    let __len = __sl_address.len();
-    let __dst_seg = &mut __dst[__off .. __off + __len];
-    __dst_seg.copy_from_slice(__sl_address);
-    __off += __len;
-  }
-  if !__sl_process.is_empty() {
-    let __len = __sl_process.len();
-    let __dst_seg = &mut __dst[__off .. __off + __len];
-    __dst_seg.copy_from_slice(__sl_process);
-    __off += __len;
-  }
-  if !__sl_container.is_empty() {
-    let __len = __sl_container.len();
-    let __dst_seg = &mut __dst[__off .. __off + __len];
-    __dst_seg.copy_from_slice(__sl_container);
-    __off += __len;
-  }
-  if !__sl_pod_name.is_empty() {
-    let __len = __sl_pod_name.len();
-    let __dst_seg = &mut __dst[__off .. __off + __len];
-    __dst_seg.copy_from_slice(__sl_pod_name);
-    __off += __len;
-  }
-  if !__sl_role_uid.is_empty() {
-    let __len = __sl_role_uid.len();
-    let __dst_seg = &mut __dst[__off .. __off + __len];
-    __dst_seg.copy_from_slice(__sl_role_uid);
-    __off += __len;
-  }
+    // Append dynamic payloads sequentially
+    let mut __off = __fixed_len;
+    if !__sl_id.is_empty() {
+        let __len = __sl_id.len();
+        let __dst_seg = &mut __dst[__off..__off + __len];
+        __dst_seg.copy_from_slice(__sl_id);
+        __off += __len;
+    }
+    if !__sl_az.is_empty() {
+        let __len = __sl_az.len();
+        let __dst_seg = &mut __dst[__off..__off + __len];
+        __dst_seg.copy_from_slice(__sl_az);
+        __off += __len;
+    }
+    if !__sl_role.is_empty() {
+        let __len = __sl_role.len();
+        let __dst_seg = &mut __dst[__off..__off + __len];
+        __dst_seg.copy_from_slice(__sl_role);
+        __off += __len;
+    }
+    if !__sl_version.is_empty() {
+        let __len = __sl_version.len();
+        let __dst_seg = &mut __dst[__off..__off + __len];
+        __dst_seg.copy_from_slice(__sl_version);
+        __off += __len;
+    }
+    if !__sl_env.is_empty() {
+        let __len = __sl_env.len();
+        let __dst_seg = &mut __dst[__off..__off + __len];
+        __dst_seg.copy_from_slice(__sl_env);
+        __off += __len;
+    }
+    if !__sl_ns.is_empty() {
+        let __len = __sl_ns.len();
+        let __dst_seg = &mut __dst[__off..__off + __len];
+        __dst_seg.copy_from_slice(__sl_ns);
+        __off += __len;
+    }
+    if !__sl_address.is_empty() {
+        let __len = __sl_address.len();
+        let __dst_seg = &mut __dst[__off..__off + __len];
+        __dst_seg.copy_from_slice(__sl_address);
+        __off += __len;
+    }
+    if !__sl_process.is_empty() {
+        let __len = __sl_process.len();
+        let __dst_seg = &mut __dst[__off..__off + __len];
+        __dst_seg.copy_from_slice(__sl_process);
+        __off += __len;
+    }
+    if !__sl_container.is_empty() {
+        let __len = __sl_container.len();
+        let __dst_seg = &mut __dst[__off..__off + __len];
+        __dst_seg.copy_from_slice(__sl_container);
+        __off += __len;
+    }
+    if !__sl_pod_name.is_empty() {
+        let __len = __sl_pod_name.len();
+        let __dst_seg = &mut __dst[__off..__off + __len];
+        __dst_seg.copy_from_slice(__sl_pod_name);
+        __off += __len;
+    }
+    if !__sl_role_uid.is_empty() {
+        let __len = __sl_role_uid.len();
+        let __dst_seg = &mut __dst[__off..__off + __len];
+        __dst_seg.copy_from_slice(__sl_role_uid);
+        __off += __len;
+    }
 }
 #[no_mangle]
 pub extern "C" fn ebpf_net_aggregation_encode_update_tcp_metrics(
-  __dest: *mut u8,
-  __dest_len: u32,
-  __tstamp: u64,
-  _ref: u64,
-  direction: u8,
-  active_sockets: u32,
-  sum_retrans: u32,
-  sum_bytes: u64,
-  sum_srtt: u64,
-  sum_delivered: u64,
-  active_rtts: u32,
-  syn_timeouts: u32,
-  new_sockets: u32,
-  tcp_resets: u32
+    __dest: *mut u8,
+    __dest_len: u32,
+    __tstamp: u64,
+    _ref: u64,
+    direction: u8,
+    active_sockets: u32,
+    sum_retrans: u32,
+    sum_bytes: u64,
+    sum_srtt: u64,
+    sum_delivered: u64,
+    active_rtts: u32,
+    syn_timeouts: u32,
+    new_sockets: u32,
+    tcp_resets: u32,
 ) {
-  assert!(!__dest.is_null(), "dest must not be null");
+    assert!(!__dest.is_null(), "dest must not be null");
 
-  // Compute encoded length: fixed struct size + dynamic payload
-  let __consumed: u32 = 60 as u32;
+    // Compute encoded length: fixed struct size + dynamic payload
+    let __consumed: u32 = 60 as u32;
 
-  let __total_len = (8_u32).saturating_add(__consumed) as usize;
-  assert!(
-    __total_len == __dest_len as usize,
-    "dest len must exactly match computed encoded len"
-  );
+    let __total_len = (8_u32).saturating_add(__consumed) as usize;
+    assert!(
+        __total_len == __dest_len as usize,
+        "dest len must exactly match computed encoded len"
+    );
 
-  // Prepare destination and input slices up front
-  let __dst: &mut [u8] = unsafe { slice::from_raw_parts_mut(__dest, __dest_len as usize) };
+    // Prepare destination and input slices up front
+    let __dst: &mut [u8] = unsafe { slice::from_raw_parts_mut(__dest, __dest_len as usize) };
 
-  // Build fixed header as a stack struct using an initializer expression
-  let __wire: jb_aggregation__update_tcp_metrics = jb_aggregation__update_tcp_metrics {
-    _rpc_id: 465 as u16,
-    direction,
-    active_sockets,
-    sum_bytes,
-    sum_srtt,
-    sum_delivered,
-    _ref,
-    sum_retrans,
-    active_rtts,
-    syn_timeouts,
-    new_sockets,
-    tcp_resets
-  };
+    // Build fixed header as a stack struct using an initializer expression
+    let __wire: jb_aggregation__update_tcp_metrics = jb_aggregation__update_tcp_metrics {
+        _rpc_id: 465 as u16,
+        direction,
+        active_sockets,
+        sum_bytes,
+        sum_srtt,
+        sum_delivered,
+        _ref,
+        sum_retrans,
+        active_rtts,
+        syn_timeouts,
+        new_sockets,
+        tcp_resets,
+    };
 
-  // Copy timestamp and packed header (without struct tail padding)
-  let __fixed_len = 8usize + 60 as usize;
-  __dst[..8].copy_from_slice(&__tstamp.to_ne_bytes());
-  let __src_struct: &[u8] = unsafe { slice::from_raw_parts(&__wire as *const _ as *const u8, 60 as usize) };
-  __dst[8..__fixed_len].copy_from_slice(__src_struct);
+    // Copy timestamp and packed header (without struct tail padding)
+    let __fixed_len = 8usize + 60 as usize;
+    __dst[..8].copy_from_slice(&__tstamp.to_ne_bytes());
+    let __src_struct: &[u8] =
+        unsafe { slice::from_raw_parts(&__wire as *const _ as *const u8, 60 as usize) };
+    __dst[8..__fixed_len].copy_from_slice(__src_struct);
 
-  // Append dynamic payloads sequentially
+    // Append dynamic payloads sequentially
 }
 #[no_mangle]
 pub extern "C" fn ebpf_net_aggregation_encode_update_udp_metrics(
-  __dest: *mut u8,
-  __dest_len: u32,
-  __tstamp: u64,
-  _ref: u64,
-  direction: u8,
-  active_sockets: u32,
-  addr_changes: u32,
-  packets: u32,
-  bytes: u64,
-  drops: u32
+    __dest: *mut u8,
+    __dest_len: u32,
+    __tstamp: u64,
+    _ref: u64,
+    direction: u8,
+    active_sockets: u32,
+    addr_changes: u32,
+    packets: u32,
+    bytes: u64,
+    drops: u32,
 ) {
-  assert!(!__dest.is_null(), "dest must not be null");
+    assert!(!__dest.is_null(), "dest must not be null");
 
-  // Compute encoded length: fixed struct size + dynamic payload
-  let __consumed: u32 = 36 as u32;
+    // Compute encoded length: fixed struct size + dynamic payload
+    let __consumed: u32 = 36 as u32;
 
-  let __total_len = (8_u32).saturating_add(__consumed) as usize;
-  assert!(
-    __total_len == __dest_len as usize,
-    "dest len must exactly match computed encoded len"
-  );
+    let __total_len = (8_u32).saturating_add(__consumed) as usize;
+    assert!(
+        __total_len == __dest_len as usize,
+        "dest len must exactly match computed encoded len"
+    );
 
-  // Prepare destination and input slices up front
-  let __dst: &mut [u8] = unsafe { slice::from_raw_parts_mut(__dest, __dest_len as usize) };
+    // Prepare destination and input slices up front
+    let __dst: &mut [u8] = unsafe { slice::from_raw_parts_mut(__dest, __dest_len as usize) };
 
-  // Build fixed header as a stack struct using an initializer expression
-  let __wire: jb_aggregation__update_udp_metrics = jb_aggregation__update_udp_metrics {
-    _rpc_id: 466 as u16,
-    direction,
-    active_sockets,
-    bytes,
-    _ref,
-    addr_changes,
-    packets,
-    drops
-  };
+    // Build fixed header as a stack struct using an initializer expression
+    let __wire: jb_aggregation__update_udp_metrics = jb_aggregation__update_udp_metrics {
+        _rpc_id: 466 as u16,
+        direction,
+        active_sockets,
+        bytes,
+        _ref,
+        addr_changes,
+        packets,
+        drops,
+    };
 
-  // Copy timestamp and packed header (without struct tail padding)
-  let __fixed_len = 8usize + 36 as usize;
-  __dst[..8].copy_from_slice(&__tstamp.to_ne_bytes());
-  let __src_struct: &[u8] = unsafe { slice::from_raw_parts(&__wire as *const _ as *const u8, 36 as usize) };
-  __dst[8..__fixed_len].copy_from_slice(__src_struct);
+    // Copy timestamp and packed header (without struct tail padding)
+    let __fixed_len = 8usize + 36 as usize;
+    __dst[..8].copy_from_slice(&__tstamp.to_ne_bytes());
+    let __src_struct: &[u8] =
+        unsafe { slice::from_raw_parts(&__wire as *const _ as *const u8, 36 as usize) };
+    __dst[8..__fixed_len].copy_from_slice(__src_struct);
 
-  // Append dynamic payloads sequentially
+    // Append dynamic payloads sequentially
 }
 #[no_mangle]
 pub extern "C" fn ebpf_net_aggregation_encode_update_http_metrics(
-  __dest: *mut u8,
-  __dest_len: u32,
-  __tstamp: u64,
-  _ref: u64,
-  direction: u8,
-  active_sockets: u32,
-  sum_code_200: u32,
-  sum_code_400: u32,
-  sum_code_500: u32,
-  sum_code_other: u32,
-  sum_total_time_ns: u64,
-  sum_processing_time_ns: u64
+    __dest: *mut u8,
+    __dest_len: u32,
+    __tstamp: u64,
+    _ref: u64,
+    direction: u8,
+    active_sockets: u32,
+    sum_code_200: u32,
+    sum_code_400: u32,
+    sum_code_500: u32,
+    sum_code_other: u32,
+    sum_total_time_ns: u64,
+    sum_processing_time_ns: u64,
 ) {
-  assert!(!__dest.is_null(), "dest must not be null");
+    assert!(!__dest.is_null(), "dest must not be null");
 
-  // Compute encoded length: fixed struct size + dynamic payload
-  let __consumed: u32 = 48 as u32;
+    // Compute encoded length: fixed struct size + dynamic payload
+    let __consumed: u32 = 48 as u32;
 
-  let __total_len = (8_u32).saturating_add(__consumed) as usize;
-  assert!(
-    __total_len == __dest_len as usize,
-    "dest len must exactly match computed encoded len"
-  );
+    let __total_len = (8_u32).saturating_add(__consumed) as usize;
+    assert!(
+        __total_len == __dest_len as usize,
+        "dest len must exactly match computed encoded len"
+    );
 
-  // Prepare destination and input slices up front
-  let __dst: &mut [u8] = unsafe { slice::from_raw_parts_mut(__dest, __dest_len as usize) };
+    // Prepare destination and input slices up front
+    let __dst: &mut [u8] = unsafe { slice::from_raw_parts_mut(__dest, __dest_len as usize) };
 
-  // Build fixed header as a stack struct using an initializer expression
-  let __wire: jb_aggregation__update_http_metrics = jb_aggregation__update_http_metrics {
-    _rpc_id: 467 as u16,
-    direction,
-    active_sockets,
-    sum_total_time_ns,
-    sum_processing_time_ns,
-    _ref,
-    sum_code_200,
-    sum_code_400,
-    sum_code_500,
-    sum_code_other
-  };
+    // Build fixed header as a stack struct using an initializer expression
+    let __wire: jb_aggregation__update_http_metrics = jb_aggregation__update_http_metrics {
+        _rpc_id: 467 as u16,
+        direction,
+        active_sockets,
+        sum_total_time_ns,
+        sum_processing_time_ns,
+        _ref,
+        sum_code_200,
+        sum_code_400,
+        sum_code_500,
+        sum_code_other,
+    };
 
-  // Copy timestamp and packed header (without struct tail padding)
-  let __fixed_len = 8usize + 48 as usize;
-  __dst[..8].copy_from_slice(&__tstamp.to_ne_bytes());
-  let __src_struct: &[u8] = unsafe { slice::from_raw_parts(&__wire as *const _ as *const u8, 48 as usize) };
-  __dst[8..__fixed_len].copy_from_slice(__src_struct);
+    // Copy timestamp and packed header (without struct tail padding)
+    let __fixed_len = 8usize + 48 as usize;
+    __dst[..8].copy_from_slice(&__tstamp.to_ne_bytes());
+    let __src_struct: &[u8] =
+        unsafe { slice::from_raw_parts(&__wire as *const _ as *const u8, 48 as usize) };
+    __dst[8..__fixed_len].copy_from_slice(__src_struct);
 
-  // Append dynamic payloads sequentially
+    // Append dynamic payloads sequentially
 }
 #[no_mangle]
 pub extern "C" fn ebpf_net_aggregation_encode_update_dns_metrics(
-  __dest: *mut u8,
-  __dest_len: u32,
-  __tstamp: u64,
-  _ref: u64,
-  direction: u8,
-  active_sockets: u32,
-  requests_a: u32,
-  requests_aaaa: u32,
-  responses: u32,
-  timeouts: u32,
-  sum_total_time_ns: u64,
-  sum_processing_time_ns: u64
+    __dest: *mut u8,
+    __dest_len: u32,
+    __tstamp: u64,
+    _ref: u64,
+    direction: u8,
+    active_sockets: u32,
+    requests_a: u32,
+    requests_aaaa: u32,
+    responses: u32,
+    timeouts: u32,
+    sum_total_time_ns: u64,
+    sum_processing_time_ns: u64,
 ) {
-  assert!(!__dest.is_null(), "dest must not be null");
+    assert!(!__dest.is_null(), "dest must not be null");
 
-  // Compute encoded length: fixed struct size + dynamic payload
-  let __consumed: u32 = 48 as u32;
+    // Compute encoded length: fixed struct size + dynamic payload
+    let __consumed: u32 = 48 as u32;
 
-  let __total_len = (8_u32).saturating_add(__consumed) as usize;
-  assert!(
-    __total_len == __dest_len as usize,
-    "dest len must exactly match computed encoded len"
-  );
+    let __total_len = (8_u32).saturating_add(__consumed) as usize;
+    assert!(
+        __total_len == __dest_len as usize,
+        "dest len must exactly match computed encoded len"
+    );
 
-  // Prepare destination and input slices up front
-  let __dst: &mut [u8] = unsafe { slice::from_raw_parts_mut(__dest, __dest_len as usize) };
+    // Prepare destination and input slices up front
+    let __dst: &mut [u8] = unsafe { slice::from_raw_parts_mut(__dest, __dest_len as usize) };
 
-  // Build fixed header as a stack struct using an initializer expression
-  let __wire: jb_aggregation__update_dns_metrics = jb_aggregation__update_dns_metrics {
-    _rpc_id: 468 as u16,
-    direction,
-    active_sockets,
-    sum_total_time_ns,
-    sum_processing_time_ns,
-    _ref,
-    requests_a,
-    requests_aaaa,
-    responses,
-    timeouts
-  };
+    // Build fixed header as a stack struct using an initializer expression
+    let __wire: jb_aggregation__update_dns_metrics = jb_aggregation__update_dns_metrics {
+        _rpc_id: 468 as u16,
+        direction,
+        active_sockets,
+        sum_total_time_ns,
+        sum_processing_time_ns,
+        _ref,
+        requests_a,
+        requests_aaaa,
+        responses,
+        timeouts,
+    };
 
-  // Copy timestamp and packed header (without struct tail padding)
-  let __fixed_len = 8usize + 48 as usize;
-  __dst[..8].copy_from_slice(&__tstamp.to_ne_bytes());
-  let __src_struct: &[u8] = unsafe { slice::from_raw_parts(&__wire as *const _ as *const u8, 48 as usize) };
-  __dst[8..__fixed_len].copy_from_slice(__src_struct);
+    // Copy timestamp and packed header (without struct tail padding)
+    let __fixed_len = 8usize + 48 as usize;
+    __dst[..8].copy_from_slice(&__tstamp.to_ne_bytes());
+    let __src_struct: &[u8] =
+        unsafe { slice::from_raw_parts(&__wire as *const _ as *const u8, 48 as usize) };
+    __dst[8..__fixed_len].copy_from_slice(__src_struct);
 
-  // Append dynamic payloads sequentially
+    // Append dynamic payloads sequentially
 }
 #[no_mangle]
 pub extern "C" fn ebpf_net_aggregation_encode_pulse(
-  __dest: *mut u8,
-  __dest_len: u32,
-  __tstamp: u64) {
-  assert!(!__dest.is_null(), "dest must not be null");
+    __dest: *mut u8,
+    __dest_len: u32,
+    __tstamp: u64,
+) {
+    assert!(!__dest.is_null(), "dest must not be null");
 
-  // Compute encoded length: fixed struct size + dynamic payload
-  let __consumed: u32 = 2 as u32;
+    // Compute encoded length: fixed struct size + dynamic payload
+    let __consumed: u32 = 2 as u32;
 
-  let __total_len = (8_u32).saturating_add(__consumed) as usize;
-  assert!(
-    __total_len == __dest_len as usize,
-    "dest len must exactly match computed encoded len"
-  );
+    let __total_len = (8_u32).saturating_add(__consumed) as usize;
+    assert!(
+        __total_len == __dest_len as usize,
+        "dest len must exactly match computed encoded len"
+    );
 
-  // Prepare destination and input slices up front
-  let __dst: &mut [u8] = unsafe { slice::from_raw_parts_mut(__dest, __dest_len as usize) };
+    // Prepare destination and input slices up front
+    let __dst: &mut [u8] = unsafe { slice::from_raw_parts_mut(__dest, __dest_len as usize) };
 
-  // Build fixed header as a stack struct using an initializer expression
-  let __wire: jb_aggregation__pulse = jb_aggregation__pulse {
-    _rpc_id: 65535 as u16,
-  };
+    // Build fixed header as a stack struct using an initializer expression
+    let __wire: jb_aggregation__pulse = jb_aggregation__pulse {
+        _rpc_id: 65535 as u16,
+    };
 
-  // Copy timestamp and packed header (without struct tail padding)
-  let __fixed_len = 8usize + 2 as usize;
-  __dst[..8].copy_from_slice(&__tstamp.to_ne_bytes());
-  let __src_struct: &[u8] = unsafe { slice::from_raw_parts(&__wire as *const _ as *const u8, 2 as usize) };
-  __dst[8..__fixed_len].copy_from_slice(__src_struct);
+    // Copy timestamp and packed header (without struct tail padding)
+    let __fixed_len = 8usize + 2 as usize;
+    __dst[..8].copy_from_slice(&__tstamp.to_ne_bytes());
+    let __src_struct: &[u8] =
+        unsafe { slice::from_raw_parts(&__wire as *const _ as *const u8, 2 as usize) };
+    __dst[8..__fixed_len].copy_from_slice(__src_struct);
 
-  // Append dynamic payloads sequentially
+    // Append dynamic payloads sequentially
 }

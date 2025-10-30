@@ -17,9 +17,7 @@
 pub const AGGREGATION_HASH_SIZE: u32 = 16u32;
 
 #[allow(dead_code)]
-pub static G_ARRAY: [u8; 4] = [
-    0,9,0,0
-];
+pub static G_ARRAY: [u8; 4] = [0, 9, 0, 0];
 
 #[inline]
 #[allow(dead_code)]
