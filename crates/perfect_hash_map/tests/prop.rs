@@ -3,7 +3,7 @@
 //! match at the hashed slot). Each random operation is checked against both
 //! models and invariants are asserted after every step.
 
-use perfect_hash_map::{PerfectHashMap};
+use perfect_hash_map::PerfectHashMap;
 use proptest::prelude::*;
 
 // Simple shadow model mirroring PerfectHashMap behavior.
@@ -13,44 +13,79 @@ struct Shadow {
 }
 
 impl Shadow {
-    fn new(n: usize) -> Self { Self { slots: vec![None; n] } }
-    fn capacity(&self) -> usize { self.slots.len() }
-    fn hash(&self, seed: u32, k: u32) -> usize { ((k ^ seed) % (self.capacity() as u32)) as usize }
+    fn new(n: usize) -> Self {
+        Self {
+            slots: vec![None; n],
+        }
+    }
+    fn capacity(&self) -> usize {
+        self.slots.len()
+    }
+    fn hash(&self, seed: u32, k: u32) -> usize {
+        ((k ^ seed) % (self.capacity() as u32)) as usize
+    }
 
     fn insert(&mut self, seed: u32, key: u32, val: i32) -> Result<Option<i32>, u32> {
         let i = self.hash(seed, key);
         match &mut self.slots[i] {
-            None => { self.slots[i] = Some((key, val)); Ok(None) }
-            Some((k, v)) if *k == key => { Ok(Some(std::mem::replace(v, val))) }
+            None => {
+                self.slots[i] = Some((key, val));
+                Ok(None)
+            }
+            Some((k, v)) if *k == key => Ok(Some(std::mem::replace(v, val))),
             Some((k, _)) => Err(*k),
         }
     }
     fn try_insert(&mut self, seed: u32, key: u32, val: i32) -> Result<(), TryOutcome> {
         let i = self.hash(seed, key);
         match &mut self.slots[i] {
-            None => { self.slots[i] = Some((key, val)); Ok(()) }
+            None => {
+                self.slots[i] = Some((key, val));
+                Ok(())
+            }
             Some((k, _v)) if *k == key => Err(TryOutcome::Occupied),
             Some((k, _)) => Err(TryOutcome::Collision { existing_key: *k }),
         }
     }
     fn get(&self, seed: u32, key: u32) -> Option<i32> {
         let i = self.hash(seed, key);
-        match &self.slots[i] { Some((k, v)) if *k == key => Some(*v), _ => None }
+        match &self.slots[i] {
+            Some((k, v)) if *k == key => Some(*v),
+            _ => None,
+        }
     }
     fn get_mut_add(&mut self, seed: u32, key: u32, delta: i32) -> bool {
         let i = self.hash(seed, key);
-        match &mut self.slots[i] { Some((k, v)) if *k == key => { *v += delta; true }, _ => false }
+        match &mut self.slots[i] {
+            Some((k, v)) if *k == key => {
+                *v += delta;
+                true
+            }
+            _ => false,
+        }
     }
     fn remove(&mut self, seed: u32, key: u32) -> Option<i32> {
         let i = self.hash(seed, key);
-        match &mut self.slots[i] { Some((k, _)) if *k == key => self.slots[i].take().map(|(_, v)| v), _ => None }
+        match &mut self.slots[i] {
+            Some((k, _)) if *k == key => self.slots[i].take().map(|(_, v)| v),
+            _ => None,
+        }
     }
-    fn clear(&mut self) { for s in &mut self.slots { *s = None; } }
-    fn len(&self) -> usize { self.slots.iter().filter(|e| e.is_some()).count() }
+    fn clear(&mut self) {
+        for s in &mut self.slots {
+            *s = None;
+        }
+    }
+    fn len(&self) -> usize {
+        self.slots.iter().filter(|e| e.is_some()).count()
+    }
 }
 
 #[derive(Clone, Debug)]
-enum TryOutcome { Occupied, Collision { existing_key: u32 } }
+enum TryOutcome {
+    Occupied,
+    Collision { existing_key: u32 },
+}
 
 #[derive(Clone, Debug)]
 enum Op {
@@ -66,7 +101,10 @@ enum Op {
 /// asserting invariants after each step.
 #[test]
 fn prop_sequence_matches_shadow() {
-    let config = ProptestConfig { cases: 64, .. ProptestConfig::default() };
+    let config = ProptestConfig {
+        cases: 64,
+        ..ProptestConfig::default()
+    };
     proptest!(config, |(cap in 1usize..16, seed in any::<u32>(), ops in prop::collection::vec((any::<u8>(), any::<u32>(), any::<i32>()), 0..100))| {
         let hash = move |k: u32| (k ^ seed) % (cap as u32);
         let mut m = PerfectHashMap::new(cap, hash);
@@ -137,7 +175,10 @@ fn prop_sequence_matches_shadow() {
 /// After a random state is built, applying iter_mut with a transform updates all values as expected.
 #[test]
 fn prop_iter_mut_transform() {
-    let config = ProptestConfig { cases: 32, .. ProptestConfig::default() };
+    let config = ProptestConfig {
+        cases: 32,
+        ..ProptestConfig::default()
+    };
     proptest!(config, |(cap in 1usize..16, seed in any::<u32>(), pairs in prop::collection::vec((any::<u32>(), -1000i32..1000), 0..128))| {
         let hash = move |k: u32| (k ^ seed) % (cap as u32);
         let mut m = PerfectHashMap::new(cap, hash);

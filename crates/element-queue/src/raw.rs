@@ -67,7 +67,11 @@ impl ElementQueue {
     ///
     /// Safety: `data` must be a valid, writable pointer to at least
     /// `contig_size(n_elems, buf_len)` bytes with the expected layout.
-    pub unsafe fn new_from_contiguous(n_elems: u32, buf_len: u32, data: *mut u8) -> Result<Self, EqError> {
+    pub unsafe fn new_from_contiguous(
+        n_elems: u32,
+        buf_len: u32,
+        data: *mut u8,
+    ) -> Result<Self, EqError> {
         if data.is_null() {
             return Err(EqError::InvalidArg);
         }
@@ -144,20 +148,18 @@ impl<'q> WriteBatch<'q> {
             return Err(EqError::InvalidArg);
         }
         // Element ring full?
-        if self
-            .elem_tail
-            .get()
-            .wrapping_sub(self.q.elem_head)
-            >= (self.q.elem_mask + 1)
-        {
+        if self.elem_tail.get().wrapping_sub(self.q.elem_head) >= (self.q.elem_mask + 1) {
             return Err(EqError::NoSpace);
         }
 
         let buf_mask = self.q.buf_mask;
-        let buf_tail = ElementQueue::__next_offset_by_len(self.buf_tail.get(), buf_mask, aligned_len);
+        let buf_tail =
+            ElementQueue::__next_offset_by_len(self.buf_tail.get(), buf_mask, aligned_len);
 
         // Enough space in data buffer? Use wrapping arithmetic to mirror C semantics.
-        let used = buf_tail.wrapping_add(aligned_len).wrapping_sub(self.q.buf_head);
+        let used = buf_tail
+            .wrapping_add(aligned_len)
+            .wrapping_sub(self.q.buf_head);
         if used > buf_mask + 1 {
             return Err(EqError::NoSpace);
         }
@@ -214,7 +216,11 @@ impl ElementQueue {
         self.elem_tail = self.shared.get_elem_tail();
         // Acquire barrier: subsequent reads of elems/data happen-after.
         fence(Ordering::Acquire);
-        ReadBatch { elem_head: Cell::new(self.elem_head), buf_head: Cell::new(self.buf_head), q: self }
+        ReadBatch {
+            elem_head: Cell::new(self.elem_head),
+            buf_head: Cell::new(self.buf_head),
+            q: self,
+        }
     }
 }
 
@@ -231,8 +237,9 @@ impl<'q> ReadBatch<'q> {
         let len = self.peek_len()?;
 
         let aligned_len = (len + 7) & !7;
-        let offset = ElementQueue::__next_offset_by_len(self.buf_head.get(), self.q.buf_mask, aligned_len)
-            & self.q.buf_mask;
+        let offset =
+            ElementQueue::__next_offset_by_len(self.buf_head.get(), self.q.buf_mask, aligned_len)
+                & self.q.buf_mask;
         let start = offset as usize;
         let end = start + len as usize;
         Ok(&self.q.data_ref()[start..end])
@@ -258,7 +265,8 @@ impl<'q> ReadBatch<'q> {
     pub fn read(&self) -> Result<&[u8], EqError> {
         let len = self.peek_len()?;
         let aligned_len = (len + 7) & !7;
-        let offset = ElementQueue::__next_offset_by_len(self.buf_head.get(), self.q.buf_mask, aligned_len);
+        let offset =
+            ElementQueue::__next_offset_by_len(self.buf_head.get(), self.q.buf_mask, aligned_len);
         let start = (offset & self.q.buf_mask) as usize;
         let end = start + len as usize;
         // advance local heads
@@ -266,7 +274,6 @@ impl<'q> ReadBatch<'q> {
         self.buf_head.set(offset.wrapping_add(aligned_len));
         Ok(&self.q.data_ref()[start..end])
     }
-
 
     pub fn finish(self) -> &'q mut ElementQueue {
         // Commit local heads and publish to shared with release ordering

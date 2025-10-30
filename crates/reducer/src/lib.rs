@@ -196,12 +196,22 @@ fn parse_tsdb_format(s: &str) -> Result<TsdbFormat, String> {
 fn build_final_config(cli: &Cli) -> Result<FfiReducerConfig, String> {
     let mut cfg = default_config();
 
-    if let Some(v) = cli.port { cfg.telemetry_port = v; }
+    if let Some(v) = cli.port {
+        cfg.telemetry_port = v;
+    }
 
-    if let Some(v) = cli.num_ingest_shards { cfg.num_ingest_shards = v; }
-    if let Some(v) = cli.num_matching_shards { cfg.num_matching_shards = v; }
-    if let Some(v) = cli.num_aggregation_shards { cfg.num_aggregation_shards = v; }
-    if let Some(v) = cli.partitions_per_shard { cfg.partitions_per_shard = v; }
+    if let Some(v) = cli.num_ingest_shards {
+        cfg.num_ingest_shards = v;
+    }
+    if let Some(v) = cli.num_matching_shards {
+        cfg.num_matching_shards = v;
+    }
+    if let Some(v) = cli.num_aggregation_shards {
+        cfg.num_aggregation_shards = v;
+    }
+    if let Some(v) = cli.partitions_per_shard {
+        cfg.partitions_per_shard = v;
+    }
 
     cfg.enable_id_id |= cli.enable_id_id;
     cfg.enable_az_id |= cli.enable_az_id;
@@ -209,15 +219,25 @@ fn build_final_config(cli: &Cli) -> Result<FfiReducerConfig, String> {
 
     cfg.enable_otlp_grpc_metrics |= cli.enable_otlp_grpc_metrics;
     cfg.otlp_grpc_metrics_address = cli.otlp_grpc_metrics_address.clone();
-    if let Some(v) = cli.otlp_grpc_metrics_port { cfg.otlp_grpc_metrics_port = v; }
-    if let Some(v) = cli.otlp_grpc_batch_size { cfg.otlp_grpc_batch_size = v; }
+    if let Some(v) = cli.otlp_grpc_metrics_port {
+        cfg.otlp_grpc_metrics_port = v;
+    }
+    if let Some(v) = cli.otlp_grpc_batch_size {
+        cfg.otlp_grpc_batch_size = v;
+    }
     cfg.enable_otlp_grpc_metric_descriptions |= cli.enable_otlp_grpc_metric_descriptions;
 
     cfg.disable_prometheus_metrics |= cli.disable_prometheus_metrics;
     cfg.shard_prometheus_metrics |= cli.shard_prometheus_metrics;
-    if let Some(v) = &cli.prom_bind { cfg.prom_bind = v.clone(); }
-    if let Some(v) = cli.scrape_size_limit_bytes { cfg.scrape_size_limit_bytes = v; }
-    if let Some(v) = &cli.internal_prom_bind { cfg.internal_prom_bind = v.clone(); }
+    if let Some(v) = &cli.prom_bind {
+        cfg.prom_bind = v.clone();
+    }
+    if let Some(v) = cli.scrape_size_limit_bytes {
+        cfg.scrape_size_limit_bytes = v;
+    }
+    if let Some(v) = &cli.internal_prom_bind {
+        cfg.internal_prom_bind = v.clone();
+    }
 
     // stats limit mirrors scrape limit when not provided
     cfg.stats_scrape_size_limit_bytes = match cli.stats_scrape_size_limit_bytes {
@@ -240,18 +260,34 @@ fn build_final_config(cli: &Cli) -> Result<FfiReducerConfig, String> {
     cfg.enable_aws_enrichment |= cli.enable_aws_enrichment;
     cfg.enable_percentile_latencies |= cli.enable_percentile_latencies;
 
-    if let Some(v) = &cli.disable_metrics { cfg.disable_metrics = v.clone(); }
-    if let Some(v) = &cli.enable_metrics { cfg.enable_metrics = v.clone(); }
+    if let Some(v) = &cli.disable_metrics {
+        cfg.disable_metrics = v.clone();
+    }
+    if let Some(v) = &cli.enable_metrics {
+        cfg.enable_metrics = v.clone();
+    }
 
-    if let Some(v) = cli.index_dump_interval { cfg.index_dump_interval = v; }
+    if let Some(v) = cli.index_dump_interval {
+        cfg.index_dump_interval = v;
+    }
 
     // Logging whitelist pass-through (strings and all-flag)
     cfg.log_whitelist_all |= cli.log_whitelist_all;
-    if let Some(v) = &cli.log_whitelist_client_type { cfg.log_whitelist_client_type = v.clone(); }
-    if let Some(v) = &cli.log_whitelist_node_resolution_type { cfg.log_whitelist_node_resolution_type = v.clone(); }
-    if let Some(v) = &cli.log_whitelist_channel { cfg.log_whitelist_channel = v.clone(); }
-    if let Some(v) = &cli.log_whitelist_ingest { cfg.log_whitelist_ingest = v.clone(); }
-    if let Some(v) = &cli.log_whitelist_matching { cfg.log_whitelist_matching = v.clone(); }
+    if let Some(v) = &cli.log_whitelist_client_type {
+        cfg.log_whitelist_client_type = v.clone();
+    }
+    if let Some(v) = &cli.log_whitelist_node_resolution_type {
+        cfg.log_whitelist_node_resolution_type = v.clone();
+    }
+    if let Some(v) = &cli.log_whitelist_channel {
+        cfg.log_whitelist_channel = v.clone();
+    }
+    if let Some(v) = &cli.log_whitelist_ingest {
+        cfg.log_whitelist_ingest = v.clone();
+    }
+    if let Some(v) = &cli.log_whitelist_matching {
+        cfg.log_whitelist_matching = v.clone();
+    }
 
     Ok(cfg)
 }
@@ -276,10 +312,7 @@ fn print_config(cfg: &FfiReducerConfig) {
     println!("enable_id_id: {}", cfg.enable_id_id);
     println!("enable_az_id: {}", cfg.enable_az_id);
     println!("enable_flow_logs: {}", cfg.enable_flow_logs);
-    println!(
-        "enable_otlp_grpc_metrics: {}",
-        cfg.enable_otlp_grpc_metrics
-    );
+    println!("enable_otlp_grpc_metrics: {}", cfg.enable_otlp_grpc_metrics);
     println!(
         "otlp_grpc_metrics_address: {}",
         cfg.otlp_grpc_metrics_address
@@ -301,10 +334,7 @@ fn print_config(cfg: &FfiReducerConfig) {
     if cfg.scrape_size_limit_bytes == 0 {
         println!("scrape_size_limit_bytes: unlimited");
     } else {
-        println!(
-            "scrape_size_limit_bytes: {}",
-            cfg.scrape_size_limit_bytes
-        );
+        println!("scrape_size_limit_bytes: {}", cfg.scrape_size_limit_bytes);
     }
 
     if cfg.stats_scrape_size_limit_bytes == 0 {
@@ -327,7 +357,11 @@ fn print_config(cfg: &FfiReducerConfig) {
     );
     println!(
         "geoip_path: {}",
-        if cfg.geoip_path.is_empty() { "none" } else { &cfg.geoip_path }
+        if cfg.geoip_path.is_empty() {
+            "none"
+        } else {
+            &cfg.geoip_path
+        }
     );
     println!("enable_aws_enrichment: {}", cfg.enable_aws_enrichment);
     println!(
@@ -360,7 +394,9 @@ pub fn run_with_env_args() -> i32 {
         } else if cli.critical {
             set_level = Some(5);
         }
-        if let Some(code) = set_level { reducer_sys::ffi::otn_set_log_level(code); }
+        if let Some(code) = set_level {
+            reducer_sys::ffi::otn_set_log_level(code);
+        }
     }
 
     let cfg = match build_final_config(&cli) {
