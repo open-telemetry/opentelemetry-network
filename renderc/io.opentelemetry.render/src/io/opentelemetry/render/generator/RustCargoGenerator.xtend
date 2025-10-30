@@ -56,11 +56,6 @@ class RustCargoGenerator {
     # - staticlib: keeps support for direct C/C++ linking where needed.
     crate-type = ["rlib", "staticlib"]
 
-    [profile.release]
-    opt-level = 3
-    lto = true
-    codegen-units = 1
-
     [dependencies]
     render_parser = { workspace = true }
     '''
@@ -80,20 +75,14 @@ class RustCargoGenerator {
         pub len: u16,
     }
 
-    // Include generated modules from src/
+    // Modules use the standard Rust module system; files live under src/
     #[allow(dead_code)]
-    pub mod wire_messages {
-        include!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/wire_messages.rs"));
-    }
-
-    pub mod encoder {
-        include!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/encoder.rs"));
-    }
-
+    pub mod wire_messages;
     #[allow(dead_code)]
-    pub mod hash {
-        include!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/hash.rs"));
-    }
+    pub mod parsed_message;
+    pub mod encoder;
+    #[allow(dead_code)]
+    pub mod hash;
     '''
   }
 
@@ -109,11 +98,6 @@ class RustCargoGenerator {
     # Aggregator remains a staticlib for C++ consumers; Rust binaries
     # link per-app crates directly via rlib dependencies.
     crate-type = ["staticlib"]
-
-    [profile.release]
-    opt-level = 3
-    lto = true
-    codegen-units = 1
 
     [dependencies]
     «FOR a : apps»encoder_«pkg»_«a.name» = { path = "«a.name»" }
