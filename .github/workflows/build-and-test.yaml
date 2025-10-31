@@ -54,8 +54,8 @@ jobs:
     outputs:
       date: ${{ steps.date.outputs.date }}
 
-  cargo-tests:
-    name: cargo-tests
+  cargo-test:
+    name: cargo-test
     runs-on: ubuntu-24.04
     steps:
     - name: Check out the codebase
@@ -63,7 +63,7 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Run cargo tests for generated crates
+    - name: Run cargo test
       env:
         PASS: ${{ secrets.DOCKER_PASSWORD }}
       run: |
@@ -76,7 +76,7 @@ jobs:
         --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/home/user/src,readonly" \
         --env EBPF_NET_SRC_ROOT=/home/user/src \
         $BENV_IMAGE \
-        ./build.sh cargo-tests
+        ./build.sh cargo-test
 
   build-reducer:
     name: build-reducer
