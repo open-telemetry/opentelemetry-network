@@ -25,8 +25,8 @@ void BlobCollector::collect(
 
   switch (type) {
   default:
-    // TODO: this should be saved in appropriate storage, akin to minidumps
-    //       for now just log so we can tune the parser
+    // TODO: this should be saved in appropriate storage.
+    //       For now just log so we can tune the parser
     LOG::warn("collected blob `{}` (subtype={} metadata={}): ```{}```", to_string(type), subtype, metadata, blob);
     break;
   }
