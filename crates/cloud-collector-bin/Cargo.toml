@@ -1,0 +1,12 @@
+[package]
+name = "cloud-collector-bin"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+cloud-collector-sys = { path = "../cloud-collector-sys" }
+
+[[bin]]
+name = "cloud-collector"
+path = "src/main.rs"
+

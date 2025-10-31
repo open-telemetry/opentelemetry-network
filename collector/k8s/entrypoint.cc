@@ -30,7 +30,7 @@
 using ::grpc::Server;
 using ::grpc::ServerBuilder;
 
-void run_uv_loop(channel::ReconnectingChannel *channel, uv_loop_t *loop)
+static void run_uv_loop(channel::ReconnectingChannel *channel, uv_loop_t *loop)
 {
   for (;;) {
     channel->start_connect();
@@ -38,7 +38,7 @@ void run_uv_loop(channel::ReconnectingChannel *channel, uv_loop_t *loop)
   }
 }
 
-int main(int argc, char *argv[])
+static int k8s_relay_run(int argc, char **argv)
 {
   ::uv_loop_t loop;
   if (auto const error = ::uv_loop_init(&loop)) {
@@ -129,3 +129,9 @@ int main(int argc, char *argv[])
   // Above function should never return.
   return EXIT_FAILURE;
 }
+
+extern "C" int otn_k8s_relay_main(int argc, const char **argv)
+{
+  return k8s_relay_run(argc, const_cast<char **>(argv));
+}
+

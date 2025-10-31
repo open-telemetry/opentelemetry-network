@@ -12,15 +12,22 @@ endif()
 if(NOT DEFINED RUST_BIN_TARGET_DIR)
   message(FATAL_ERROR "RUST_BIN_TARGET_DIR not provided to cargo_build_rust.cmake")
 endif()
+if(NOT DEFINED RUST_PACKAGE)
+  message(FATAL_ERROR "RUST_PACKAGE not provided to cargo_build_rust.cmake")
+endif()
 
-# Read the CMake-generated link command for the kernel-collector C++ target
+# Read the CMake-generated link command for the dummy/existing C++ target
 file(READ "${LINK_FILE}" LINK_CONTENT)
 get_filename_component(LINK_DIR "${LINK_FILE}" DIRECTORY)
+# Derive the target binary directory (two levels up from CMakeFiles/<target>.dir)
+get_filename_component(_cmakefiles_dir "${LINK_DIR}" DIRECTORY)
+get_filename_component(TARGET_BIN_DIR "${_cmakefiles_dir}" DIRECTORY)
 
 # Seed library search paths with known build output dirs and system dirs
 set(SEARCH_DIRS
   "${BIN_DIR}/collector/kernel"
   "${BIN_DIR}/collector"
+  "${TARGET_BIN_DIR}"
   "${BIN_DIR}/render"
   "${BIN_DIR}/channel"
   "${BIN_DIR}/config"
@@ -115,7 +122,7 @@ execute_process(
     OTN_LINK_SEARCH=${OTN_LINK_SEARCH}
     OTN_LINK_LIBS=${OTN_LINK_LIBS_ESC}
     OTN_LINK_ARGS=${OTN_LINK_ARGS_ESC}
-    cargo build --release --package kernel-collector-bin --manifest-path ${PROJ_DIR}/Cargo.toml
+    cargo build --release --package ${RUST_PACKAGE} --manifest-path ${PROJ_DIR}/Cargo.toml
   WORKING_DIRECTORY ${PROJ_DIR}
   RESULT_VARIABLE CARGO_RES
   OUTPUT_VARIABLE CARGO_OUT

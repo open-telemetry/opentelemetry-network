@@ -313,7 +313,7 @@ class SpanGenerator {
 
     #include "containers.h"
     «FOR remote_app : app.remoteApps»
-    #include "../«remote_app.name»/writer.h"
+    #include <generated/«remote_app.pkg.name»/«remote_app.name»/writer.h>
     «ENDFOR»
 
     #include <functional>
