@@ -1,0 +1,12 @@
+[package]
+name = "render_parser"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+thiserror = "1"
+perfect_hash_map = { path = "../perfect_hash_map" }
+
+[features]
+default = []
+

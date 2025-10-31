@@ -60,6 +60,9 @@ class RustCargoGenerator {
     opt-level = 3
     lto = true
     codegen-units = 1
+
+    [dependencies]
+    render_parser = { workspace = true }
     '''
   }
 

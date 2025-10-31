@@ -1,0 +1,12 @@
+[package]
+name = "k8s-relay-bin"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+k8s-relay-sys = { path = "../k8s-relay-sys" }
+
+[[bin]]
+name = "k8s-relay"
+path = "src/main.rs"
+

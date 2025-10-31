@@ -136,9 +136,9 @@ class WriterGenerator {
     '''
     «generatedCodeWarning()»
     #pragma once
-
-    #include "parsed_message.h"
-    #include "wire_message.h"
+    
+    #include <generated/«app.pkg.name»/«app.name»/parsed_message.h>
+    #include <generated/«app.pkg.name»/«app.name»/wire_message.h>
 
     #include <channel/ibuffered_writer.h>
     #include <platform/types.h>
