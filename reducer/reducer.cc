@@ -94,8 +94,6 @@ void Reducer::shutdown()
 
 void Reducer::init_config()
 {
-  global_otlp_grpc_batch_size = config_.otlp_grpc_batch_size;
-
   reducer::aggregation::AggCore::set_id_id_enabled(config_.enable_id_id);
   reducer::aggregation::AggCore::set_az_id_enabled(config_.enable_az_id);
   reducer::aggregation::AggCore::set_flow_logs_enabled(config_.enable_flow_logs);
