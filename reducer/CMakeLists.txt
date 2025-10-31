@@ -3,34 +3,11 @@
 
 add_subdirectory(util)
 
-# Reducer executable
-#
-add_executable(
-  reducer
-    main.cc
-)
-target_link_libraries(
-  reducer
-    reducerlib
-    libuv-static
-    static-executable
-    spdlog
-)
-install(
-  TARGETS
-    reducer
-  RUNTIME
-  DESTINATION ${CMAKE_INSTALL_BINOIR}
-  COMPONENT reducer
-)
-
-harden_executable(reducer)
-strip_binary(reducer)
-
 # Reducer library
 #
 add_library(
   reducerlib
+    entrypoint.cc
     reducer.cc
     reducer_config.cc
     core.cc
@@ -83,7 +60,7 @@ target_link_libraries(
     json
     lz4_decompressor
     breakpad_client
-    libgeoip_wrapper
+    geoip_wrapper
     absl::flat_hash_map
     absl::flat_hash_set
     absl::node_hash_map
@@ -151,6 +128,21 @@ lint_shell_script_bundle(
     health_check.sh
 )
 
+# Rust binary integration
+include(rust_main)
+set(REDUCER_LINK_LIBRARIES
+    reducerlib
+    libuv-static
+    spdlog
+)
+add_rust_main(
+  TARGET           reducer
+  STRIPPED_TARGET  reducer-stripped
+  PACKAGE          reducer-bin
+  BIN_NAME         reducer
+  LINK_LIBS        ${REDUCER_LINK_LIBRARIES}
+)
+
 # Docker image
 #
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
@@ -160,8 +152,6 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
     OUTPUT_OF
       reducer-scripts
       reducer-stripped
-    ARTIFACTS_OF
-      reducer
     BINARIES
       debug-info.conf
     DEPENDENCY_OF

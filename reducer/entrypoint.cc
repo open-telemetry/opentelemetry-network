@@ -11,7 +11,7 @@
 #include <util/args_parser.h>
 #include <util/signal_handler.h>
 
-int main(int argc, char *argv[])
+static int reducer_run(int argc, char **argv)
 {
   uv_loop_t loop;
   CHECK_UV(uv_loop_init(&loop));
@@ -232,4 +232,9 @@ int main(int argc, char *argv[])
   reducer.startup();
 
   return 0;
+}
+
+extern "C" int otn_reducer_main(int argc, const char **argv)
+{
+  return reducer_run(argc, const_cast<char **>(argv));
 }
