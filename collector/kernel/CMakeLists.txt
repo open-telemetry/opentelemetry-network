@@ -116,52 +116,15 @@ target_compile_options(agentlib PRIVATE -fPIC)
 add_dependencies(agentlib generate_bpf_skeleton)
 
 ################################################################################
-# Rust binary integration (optional developer target)
+# Rust binary integration (generalized)
 #
-# Build the Rust kernel-collector binary via Cargo with link hints passed
-# through environment variables. This target does not install anything and
-# does not write into the source tree.
-
-set(RUST_BIN_TARGET_DIR "${CMAKE_BINARY_DIR}/target")
-set(RUST_BIN_PATH        "${RUST_BIN_TARGET_DIR}/release/kernel-collector")
-
-# Build the Rust binary by invoking a CMake script that computes link hints
-# from the C++ target's link line and forwards them to Cargo via env vars.
-set(LINK_FILE "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/kernel-collector-legacy.dir/link.txt")
-
-add_custom_command(
-  OUTPUT "${RUST_BIN_PATH}"
-  COMMAND ${CMAKE_COMMAND}
-    -DLINK_FILE=${LINK_FILE}
-    -DBIN_DIR=${CMAKE_BINARY_DIR}
-    -DPROJ_DIR=${PROJECT_SOURCE_DIR}
-    -DRUST_BIN_TARGET_DIR=${RUST_BIN_TARGET_DIR}
-    -P ${CMAKE_CURRENT_LIST_DIR}/cargo_build_rust.cmake
-  DEPENDS 
-    ${KERNEL_COLLECTOR_LINK_LIBRARIES}
-  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-  VERBATIM
-)
-
-add_custom_target(
-  kernel-collector
-  DEPENDS "${RUST_BIN_PATH}"
-)
-
-add_custom_command(
-  OUTPUT ${RUST_BIN_PATH}-stripped
-  COMMAND ${CMAKE_SOURCE_DIR}/dev/strip-symbols.sh ${RUST_BIN_PATH}
-  DEPENDS ${RUST_BIN_PATH}
-  VERBATIM
-)
-add_custom_target(
-  kernel-collector-stripped
-  DEPENDS "${RUST_BIN_PATH}-stripped"
-)
-set_property(
-  TARGET kernel-collector-stripped
-  PROPERTY
-    "OUTPUT" "${RUST_BIN_PATH}-stripped"
+include(rust_main)
+add_rust_main(
+  TARGET           kernel-collector
+  STRIPPED_TARGET  kernel-collector-stripped
+  PACKAGE          kernel-collector-bin
+  BIN_NAME         kernel-collector
+  LINK_LIBS        ${KERNEL_COLLECTOR_LINK_LIBRARIES}
 )
 
 add_dependencies(collectors kernel-collector)

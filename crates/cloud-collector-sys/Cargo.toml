@@ -1,0 +1,13 @@
+[package]
+name = "cloud-collector-sys"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "cloud_collector_sys"
+path = "src/lib.rs"
+
+[dependencies]
+encoder_ebpf_net_ingest = { path = "../render/ebpf_net/ingest" }
+encoder_ebpf_net_cloud_collector = { path = "../render/ebpf_net/cloud_collector" }
+
