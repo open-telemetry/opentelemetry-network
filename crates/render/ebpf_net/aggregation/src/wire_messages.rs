@@ -13,6 +13,13 @@
     pub _ref: u64,
   }
 
+  impl jb_aggregation__agg_root_start {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(461u16, 16, true)
+    }
+  }
+
   impl Default for jb_aggregation__agg_root_start {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -42,6 +49,13 @@
   pub struct jb_aggregation__agg_root_end {
     pub _rpc_id: u16,
     pub _ref: u64,
+  }
+
+  impl jb_aggregation__agg_root_end {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(462u16, 16, true)
+    }
   }
 
   impl Default for jb_aggregation__agg_root_end {
@@ -86,6 +100,13 @@
     pub pod_name: u16,
     pub side: u8,
     pub node_type: u8,
+  }
+
+  impl jb_aggregation__update_node {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_dynamic(463u16, true)
+    }
   }
 
   impl Default for jb_aggregation__update_node {
@@ -142,6 +163,13 @@
     pub tcp_resets: u32,
   }
 
+  impl jb_aggregation__update_tcp_metrics {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(465u16, 60, true)
+    }
+  }
+
   impl Default for jb_aggregation__update_tcp_metrics {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -189,6 +217,13 @@
     pub drops: u32,
   }
 
+  impl jb_aggregation__update_udp_metrics {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(466u16, 36, true)
+    }
+  }
+
   impl Default for jb_aggregation__update_udp_metrics {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -232,6 +267,13 @@
     pub sum_code_400: u32,
     pub sum_code_500: u32,
     pub sum_code_other: u32,
+  }
+
+  impl jb_aggregation__update_http_metrics {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(467u16, 48, true)
+    }
   }
 
   impl Default for jb_aggregation__update_http_metrics {
@@ -281,6 +323,13 @@
     pub timeouts: u32,
   }
 
+  impl jb_aggregation__update_dns_metrics {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(468u16, 48, true)
+    }
+  }
+
   impl Default for jb_aggregation__update_dns_metrics {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -319,6 +368,13 @@
     pub _rpc_id: u16,
   }
 
+  impl jb_aggregation__pulse {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(65535u16, 2, true)
+    }
+  }
+
   impl Default for jb_aggregation__pulse {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -342,4 +398,18 @@
       assert_eq!(offset_of!(jb_aggregation__pulse, _rpc_id), 0);
     }
   }
+
+#[inline]
+pub fn all_message_metadata() -> ::std::vec::Vec<render_parser::MessageMetadata> {
+  ::std::vec![
+    jb_aggregation__agg_root_start::metadata(),
+    jb_aggregation__agg_root_end::metadata(),
+    jb_aggregation__update_node::metadata(),
+    jb_aggregation__update_tcp_metrics::metadata(),
+    jb_aggregation__update_udp_metrics::metadata(),
+    jb_aggregation__update_http_metrics::metadata(),
+    jb_aggregation__update_dns_metrics::metadata(),
+    jb_aggregation__pulse::metadata(),
+  ]
+}
 

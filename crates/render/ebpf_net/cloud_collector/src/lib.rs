@@ -19,3 +19,8 @@ pub mod wire_messages {
 pub mod encoder {
     include!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/encoder.rs"));
 }
+
+#[allow(dead_code)]
+pub mod hash {
+    include!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/hash.rs"));
+}

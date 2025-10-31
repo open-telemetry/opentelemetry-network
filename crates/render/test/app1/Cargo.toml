@@ -1,5 +1,5 @@
 [package]
-name = "encoder_ebpf_net_aggregation"
+name = "encoder_test_app1"
 version = "0.1.0"
 edition = "2021"
 

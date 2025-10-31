@@ -14,6 +14,13 @@
     pub pid: u32,
   }
 
+  impl jb_ingest__pid_info {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(301u16, 24, true)
+    }
+  }
+
   impl Default for jb_ingest__pid_info {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -45,6 +52,13 @@
     pub _rpc_id: u16,
     pub comm: [u8; 16],
     pub pid: u32,
+  }
+
+  impl jb_ingest__pid_close_info {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(306u16, 24, true)
+    }
   }
 
   impl Default for jb_ingest__pid_close_info {
@@ -79,6 +93,13 @@
     pub comm: [u8; 16],
     pub pid: u32,
     pub cgroup: u64,
+  }
+
+  impl jb_ingest__pid_info_create_deprecated {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(393u16, 32, true)
+    }
   }
 
   impl Default for jb_ingest__pid_info_create_deprecated {
@@ -118,6 +139,13 @@
     pub comm: [u8; 16],
   }
 
+  impl jb_ingest__pid_info_create {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_dynamic(546u16, true)
+    }
+  }
+
   impl Default for jb_ingest__pid_info_create {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -154,6 +182,13 @@
     pub cgroup: u64,
   }
 
+  impl jb_ingest__pid_cgroup_move {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(397u16, 16, true)
+    }
+  }
+
   impl Default for jb_ingest__pid_cgroup_move {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -185,6 +220,13 @@
     pub _rpc_id: u16,
     pub comm: [u8; 16],
     pub pid: u32,
+  }
+
+  impl jb_ingest__pid_set_comm {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(399u16, 24, true)
+    }
   }
 
   impl Default for jb_ingest__pid_set_comm {
@@ -220,6 +262,13 @@
     pub pid: u32,
   }
 
+  impl jb_ingest__pid_set_cmdline {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_dynamic(547u16, true)
+    }
+  }
+
   impl Default for jb_ingest__pid_set_cmdline {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -250,6 +299,13 @@
   pub struct jb_ingest__tracked_process_start {
     pub _rpc_id: u16,
     pub _ref: u64,
+  }
+
+  impl jb_ingest__tracked_process_start {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(500u16, 16, true)
+    }
   }
 
   impl Default for jb_ingest__tracked_process_start {
@@ -283,6 +339,13 @@
     pub _ref: u64,
   }
 
+  impl jb_ingest__tracked_process_end {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(501u16, 16, true)
+    }
+  }
+
   impl Default for jb_ingest__tracked_process_end {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -313,6 +376,13 @@
     pub _rpc_id: u16,
     pub tgid: u32,
     pub _ref: u64,
+  }
+
+  impl jb_ingest__set_tgid {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(502u16, 16, true)
+    }
   }
 
   impl Default for jb_ingest__set_tgid {
@@ -348,6 +418,13 @@
     pub _ref: u64,
   }
 
+  impl jb_ingest__set_cgroup {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(503u16, 24, true)
+    }
+  }
+
   impl Default for jb_ingest__set_cgroup {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -379,6 +456,13 @@
     pub _rpc_id: u16,
     pub _len: u16,
     pub _ref: u64,
+  }
+
+  impl jb_ingest__set_command {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_dynamic(504u16, true)
+    }
   }
 
   impl Default for jb_ingest__set_command {
@@ -414,6 +498,13 @@
     pub tgid: u64,
     pub _ref: u64,
     pub exit_code: i32,
+  }
+
+  impl jb_ingest__pid_exit {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(517u16, 28, true)
+    }
   }
 
   impl Default for jb_ingest__pid_exit {
@@ -452,6 +543,13 @@
     pub cgroup_parent: u64,
   }
 
+  impl jb_ingest__cgroup_create_deprecated {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(394u16, 88, true)
+    }
+  }
+
   impl Default for jb_ingest__cgroup_create_deprecated {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -487,6 +585,13 @@
     pub cgroup_parent: u64,
   }
 
+  impl jb_ingest__cgroup_create {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(544u16, 280, true)
+    }
+  }
+
   impl Default for jb_ingest__cgroup_create {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -518,6 +623,13 @@
   pub struct jb_ingest__cgroup_close {
     pub _rpc_id: u16,
     pub cgroup: u64,
+  }
+
+  impl jb_ingest__cgroup_close {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(395u16, 16, true)
+    }
   }
 
   impl Default for jb_ingest__cgroup_close {
@@ -558,6 +670,13 @@
     pub container_name: u16,
     pub task_family: u16,
     pub task_version: u16,
+  }
+
+  impl jb_ingest__container_metadata {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_dynamic(396u16, true)
+    }
   }
 
   impl Default for jb_ingest__container_metadata {
@@ -602,6 +721,13 @@
     pub cgroup: u64,
   }
 
+  impl jb_ingest__pod_name {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_dynamic(410u16, true)
+    }
+  }
+
   impl Default for jb_ingest__pod_name {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -637,6 +763,13 @@
     pub group_name: u16,
     pub cgroup: u64,
     pub task_name: u16,
+  }
+
+  impl jb_ingest__nomad_metadata {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_dynamic(508u16, true)
+    }
   }
 
   impl Default for jb_ingest__nomad_metadata {
@@ -679,6 +812,13 @@
     pub pod_uid: u16,
   }
 
+  impl jb_ingest__k8s_metadata {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_dynamic(512u16, true)
+    }
+  }
+
   impl Default for jb_ingest__k8s_metadata {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -716,6 +856,13 @@
     pub port: u16,
     pub protocol: u8,
     pub cgroup: u64,
+  }
+
+  impl jb_ingest__k8s_metadata_port {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_dynamic(513u16, true)
+    }
   }
 
   impl Default for jb_ingest__k8s_metadata_port {
@@ -757,6 +904,13 @@
     pub memory_soft_limit: u64,
     pub total_memory_limit: i64,
     pub memory_swappiness: u8,
+  }
+
+  impl jb_ingest__container_resource_limits_deprecated {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(514u16, 41, true)
+    }
   }
 
   impl Default for jb_ingest__container_resource_limits_deprecated {
@@ -804,6 +958,13 @@
     pub memory_swappiness: u8,
   }
 
+  impl jb_ingest__container_resource_limits {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(518u16, 45, true)
+    }
+  }
+
   impl Default for jb_ingest__container_resource_limits {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -844,6 +1005,13 @@
     pub cgroup: u64,
   }
 
+  impl jb_ingest__container_annotation {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_dynamic(538u16, true)
+    }
+  }
+
   impl Default for jb_ingest__container_annotation {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -876,6 +1044,13 @@
     pub _rpc_id: u16,
     pub pid: u32,
     pub sk: u64,
+  }
+
+  impl jb_ingest__new_sock_info {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(302u16, 16, true)
+    }
   }
 
   impl Default for jb_ingest__new_sock_info {
@@ -913,6 +1088,13 @@
     pub src: u32,
     pub tx_rx: u32,
     pub sport: u16,
+  }
+
+  impl jb_ingest__set_state_ipv4 {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(303u16, 26, true)
+    }
   }
 
   impl Default for jb_ingest__set_state_ipv4 {
@@ -956,6 +1138,13 @@
     pub src: [u8; 16],
   }
 
+  impl jb_ingest__set_state_ipv6 {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(304u16, 50, true)
+    }
+  }
+
   impl Default for jb_ingest__set_state_ipv6 {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -995,6 +1184,13 @@
     pub diff_bytes: u64,
     pub diff_retrans: u32,
     pub max_srtt: u32,
+  }
+
+  impl jb_ingest__socket_stats {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(326u16, 32, true)
+    }
   }
 
   impl Default for jb_ingest__socket_stats {
@@ -1037,6 +1233,13 @@
     pub dport: u16,
   }
 
+  impl jb_ingest__nat_remapping {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(360u16, 22, true)
+    }
+  }
+
   impl Default for jb_ingest__nat_remapping {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -1072,6 +1275,13 @@
     pub sk: u64,
   }
 
+  impl jb_ingest__close_sock_info {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(308u16, 16, true)
+    }
+  }
+
   impl Default for jb_ingest__close_sock_info {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -1101,6 +1311,13 @@
   pub struct jb_ingest__syn_timeout {
     pub _rpc_id: u16,
     pub sk: u64,
+  }
+
+  impl jb_ingest__syn_timeout {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(398u16, 16, true)
+    }
   }
 
   impl Default for jb_ingest__syn_timeout {
@@ -1136,6 +1353,13 @@
     pub sk: u64,
     pub latency_ns: u64,
     pub client_server: u8,
+  }
+
+  impl jb_ingest__http_response {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(401u16, 25, true)
+    }
   }
 
   impl Default for jb_ingest__http_response {
@@ -1174,6 +1398,13 @@
     pub sk: u64,
   }
 
+  impl jb_ingest__tcp_reset {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(519u16, 16, true)
+    }
+  }
+
   impl Default for jb_ingest__tcp_reset {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -1204,6 +1435,13 @@
   pub struct jb_ingest__process_steady_state {
     pub _rpc_id: u16,
     pub time: u64,
+  }
+
+  impl jb_ingest__process_steady_state {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(307u16, 16, true)
+    }
   }
 
   impl Default for jb_ingest__process_steady_state {
@@ -1237,6 +1475,13 @@
     pub time: u64,
   }
 
+  impl jb_ingest__socket_steady_state {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(309u16, 16, true)
+    }
+  }
+
   impl Default for jb_ingest__socket_steady_state {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -1268,6 +1513,13 @@
     pub major: u32,
     pub minor: u32,
     pub patch: u32,
+  }
+
+  impl jb_ingest__version_info {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(310u16, 16, false)
+    }
   }
 
   impl Default for jb_ingest__version_info {
@@ -1306,6 +1558,13 @@
     pub instance_id: u16,
   }
 
+  impl jb_ingest__set_node_info {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_dynamic(415u16, true)
+    }
+  }
+
   impl Default for jb_ingest__set_node_info {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -1341,6 +1600,13 @@
     pub key: u16,
   }
 
+  impl jb_ingest__set_config_label {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_dynamic(416u16, true)
+    }
+  }
+
   impl Default for jb_ingest__set_config_label {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -1372,6 +1638,13 @@
     pub _rpc_id: u16,
     pub retcode: u8,
     pub az: [u8; 16],
+  }
+
+  impl jb_ingest__set_availability_zone_deprecated {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(321u16, 19, true)
+    }
   }
 
   impl Default for jb_ingest__set_availability_zone_deprecated {
@@ -1407,6 +1680,13 @@
     pub role: [u8; 64],
   }
 
+  impl jb_ingest__set_iam_role_deprecated {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(322u16, 67, true)
+    }
+  }
+
   impl Default for jb_ingest__set_iam_role_deprecated {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -1438,6 +1718,13 @@
     pub _rpc_id: u16,
     pub retcode: u8,
     pub id: [u8; 17],
+  }
+
+  impl jb_ingest__set_instance_id_deprecated {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(323u16, 20, true)
+    }
   }
 
   impl Default for jb_ingest__set_instance_id_deprecated {
@@ -1473,6 +1760,13 @@
     pub val: [u8; 17],
   }
 
+  impl jb_ingest__set_instance_type_deprecated {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(324u16, 20, true)
+    }
+  }
+
   impl Default for jb_ingest__set_instance_type_deprecated {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -1505,6 +1799,13 @@
     pub _len: u16,
     pub total_dn_len: u16,
     pub ips: u16,
+  }
+
+  impl jb_ingest__dns_response_fake {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_dynamic(325u16, true)
+    }
   }
 
   impl Default for jb_ingest__dns_response_fake {
@@ -1543,6 +1844,13 @@
     pub ipv4_addrs: u16,
   }
 
+  impl jb_ingest__dns_response_dep_a_deprecated {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_dynamic(391u16, true)
+    }
+  }
+
   impl Default for jb_ingest__dns_response_dep_a_deprecated {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -1578,6 +1886,13 @@
     pub val: [u8; 40],
   }
 
+  impl jb_ingest__set_config_label_deprecated {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(327u16, 62, true)
+    }
+  }
+
   impl Default for jb_ingest__set_config_label_deprecated {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -1609,6 +1924,13 @@
     pub _rpc_id: u16,
     pub tenant: [u8; 20],
     pub api_key: [u8; 64],
+  }
+
+  impl jb_ingest__api_key {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(352u16, 86, false)
+    }
   }
 
   impl Default for jb_ingest__api_key {
@@ -1644,6 +1966,13 @@
     pub addr: u32,
   }
 
+  impl jb_ingest__private_ipv4_addr {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(353u16, 28, true)
+    }
+  }
+
   impl Default for jb_ingest__private_ipv4_addr {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -1675,6 +2004,13 @@
     pub _rpc_id: u16,
     pub addr: [u8; 16],
     pub vpc_id: [u8; 22],
+  }
+
+  impl jb_ingest__ipv6_addr {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(354u16, 40, true)
+    }
   }
 
   impl Default for jb_ingest__ipv6_addr {
@@ -1711,6 +2047,13 @@
     pub private_addr: u32,
   }
 
+  impl jb_ingest__public_to_private_ipv4 {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(355u16, 32, true)
+    }
+  }
+
   impl Default for jb_ingest__public_to_private_ipv4 {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -1744,6 +2087,13 @@
     pub time: u64,
   }
 
+  impl jb_ingest__metadata_complete {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(356u16, 16, true)
+    }
+  }
+
   impl Default for jb_ingest__metadata_complete {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -1773,6 +2123,13 @@
   pub struct jb_ingest__bpf_lost_samples {
     pub _rpc_id: u16,
     pub count: u64,
+  }
+
+  impl jb_ingest__bpf_lost_samples {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(357u16, 16, true)
+    }
   }
 
   impl Default for jb_ingest__bpf_lost_samples {
@@ -1810,6 +2167,13 @@
     pub owner_uid: u16,
     pub owner_kind: u8,
     pub is_host_network: u8,
+  }
+
+  impl jb_ingest__pod_new_legacy {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_dynamic(358u16, true)
+    }
   }
 
   impl Default for jb_ingest__pod_new_legacy {
@@ -1854,6 +2218,13 @@
     pub ns: u16,
     pub owner_kind: u8,
     pub is_host_network: u8,
+  }
+
+  impl jb_ingest__pod_new_legacy2 {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_dynamic(414u16, true)
+    }
   }
 
   impl Default for jb_ingest__pod_new_legacy2 {
@@ -1902,6 +2273,13 @@
     pub is_host_network: u8,
   }
 
+  impl jb_ingest__pod_new_with_name {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_dynamic(515u16, true)
+    }
+  }
+
   impl Default for jb_ingest__pod_new_with_name {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -1942,6 +2320,13 @@
     pub uid: u16,
   }
 
+  impl jb_ingest__pod_container_legacy {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_dynamic(400u16, true)
+    }
+  }
+
   impl Default for jb_ingest__pod_container_legacy {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -1975,6 +2360,13 @@
     pub uid: u16,
     pub container_id: u16,
     pub container_name: u16,
+  }
+
+  impl jb_ingest__pod_container {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_dynamic(494u16, true)
+    }
   }
 
   impl Default for jb_ingest__pod_container {
@@ -2011,6 +2403,13 @@
     pub _len: u16,
   }
 
+  impl jb_ingest__pod_delete {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_dynamic(359u16, true)
+    }
+  }
+
   impl Default for jb_ingest__pod_delete {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -2040,6 +2439,13 @@
   pub struct jb_ingest__pod_resync {
     pub _rpc_id: u16,
     pub resync_count: u64,
+  }
+
+  impl jb_ingest__pod_resync {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(390u16, 16, true)
+    }
   }
 
   impl Default for jb_ingest__pod_resync {
@@ -2073,6 +2479,13 @@
     pub duration: u64,
   }
 
+  impl jb_ingest__span_duration_info {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(351u16, 16, true)
+    }
+  }
+
   impl Default for jb_ingest__span_duration_info {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -2101,6 +2514,13 @@
   #[derive(Copy, Clone)]
   pub struct jb_ingest__heartbeat {
     pub _rpc_id: u16,
+  }
+
+  impl jb_ingest__heartbeat {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(392u16, 2, true)
+    }
   }
 
   impl Default for jb_ingest__heartbeat {
@@ -2132,6 +2552,13 @@
     pub _rpc_id: u16,
     pub _len: u16,
     pub collector_type: u8,
+  }
+
+  impl jb_ingest__connect {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_dynamic(548u16, false)
+    }
   }
 
   impl Default for jb_ingest__connect {
@@ -2167,6 +2594,13 @@
     pub client_type: u8,
   }
 
+  impl jb_ingest__health_check {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_dynamic(409u16, false)
+    }
+  }
+
   impl Default for jb_ingest__health_check {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -2198,6 +2632,13 @@
     pub _rpc_id: u16,
     pub _len: u16,
     pub log_level: u8,
+  }
+
+  impl jb_ingest__log_message {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_dynamic(411u16, true)
+    }
   }
 
   impl Default for jb_ingest__log_message {
@@ -2242,6 +2683,13 @@
     pub cpu_idle: u16,
   }
 
+  impl jb_ingest__agent_resource_usage {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(412u16, 54, true)
+    }
+  }
+
   impl Default for jb_ingest__agent_resource_usage {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -2283,6 +2731,13 @@
     pub cloud_platform: u16,
   }
 
+  impl jb_ingest__cloud_platform {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(413u16, 4, true)
+    }
+  }
+
   impl Default for jb_ingest__cloud_platform {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -2314,6 +2769,13 @@
     pub _len: u16,
     pub os: u8,
     pub flavor: u8,
+  }
+
+  impl jb_ingest__os_info_deprecated {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_dynamic(419u16, true)
+    }
   }
 
   impl Default for jb_ingest__os_info_deprecated {
@@ -2352,6 +2814,13 @@
     pub flavor: u8,
   }
 
+  impl jb_ingest__os_info {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_dynamic(545u16, true)
+    }
+  }
+
   impl Default for jb_ingest__os_info {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -2386,6 +2855,13 @@
     pub source: u8,
   }
 
+  impl jb_ingest__kernel_headers_source {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(420u16, 3, true)
+    }
+  }
+
   impl Default for jb_ingest__kernel_headers_source {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -2415,6 +2891,13 @@
   pub struct jb_ingest__entrypoint_error {
     pub _rpc_id: u16,
     pub error: u8,
+  }
+
+  impl jb_ingest__entrypoint_error {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(491u16, 3, true)
+    }
   }
 
   impl Default for jb_ingest__entrypoint_error {
@@ -2447,6 +2930,13 @@
     pub _rpc_id: u16,
   }
 
+  impl jb_ingest__bpf_compiled {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(492u16, 2, true)
+    }
+  }
+
   impl Default for jb_ingest__bpf_compiled {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -2474,6 +2964,13 @@
   #[derive(Copy, Clone)]
   pub struct jb_ingest__begin_telemetry {
     pub _rpc_id: u16,
+  }
+
+  impl jb_ingest__begin_telemetry {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(493u16, 2, true)
+    }
   }
 
   impl Default for jb_ingest__begin_telemetry {
@@ -2504,6 +3001,13 @@
   pub struct jb_ingest__cloud_platform_account_info {
     pub _rpc_id: u16,
     pub _len: u16,
+  }
+
+  impl jb_ingest__cloud_platform_account_info {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_dynamic(495u16, true)
+    }
   }
 
   impl Default for jb_ingest__cloud_platform_account_info {
@@ -2538,6 +3042,13 @@
     pub detail: u16,
   }
 
+  impl jb_ingest__collector_health {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(496u16, 6, true)
+    }
+  }
+
   impl Default for jb_ingest__collector_health {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -2569,6 +3080,13 @@
     pub _rpc_id: u16,
     pub clock_ticks_per_second: u64,
     pub memory_page_bytes: u64,
+  }
+
+  impl jb_ingest__system_wide_process_settings {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(498u16, 24, true)
+    }
   }
 
   impl Default for jb_ingest__system_wide_process_settings {
@@ -2606,6 +3124,13 @@
     pub subtype: u64,
   }
 
+  impl jb_ingest__collect_blob {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_dynamic(511u16, true)
+    }
+  }
+
   impl Default for jb_ingest__collect_blob {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -2638,6 +3163,13 @@
   pub struct jb_ingest__report_cpu_cores {
     pub _rpc_id: u16,
     pub cpu_core_count: u32,
+  }
+
+  impl jb_ingest__report_cpu_cores {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(536u16, 8, true)
+    }
   }
 
   impl Default for jb_ingest__report_cpu_cores {
@@ -2674,6 +3206,13 @@
     pub arg0: u64,
     pub arg1: u64,
     pub arg2: u64,
+  }
+
+  impl jb_ingest__bpf_log {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_dynamic(537u16, true)
+    }
   }
 
   impl Default for jb_ingest__bpf_log {
@@ -2713,6 +3252,13 @@
     pub ip: u128,
   }
 
+  impl jb_ingest__aws_network_interface_start {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(406u16, 32, true)
+    }
+  }
+
   impl Default for jb_ingest__aws_network_interface_start {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -2743,6 +3289,13 @@
   pub struct jb_ingest__aws_network_interface_end {
     pub _rpc_id: u16,
     pub _ref: u64,
+  }
+
+  impl jb_ingest__aws_network_interface_end {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(407u16, 16, true)
+    }
   }
 
   impl Default for jb_ingest__aws_network_interface_end {
@@ -2784,6 +3337,13 @@
     pub ip_owner_id: [u8; 18],
     pub vpc_id: [u8; 22],
     pub az: [u8; 16],
+  }
+
+  impl jb_ingest__network_interface_info_deprecated {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_dynamic(408u16, true)
+    }
   }
 
   impl Default for jb_ingest__network_interface_info_deprecated {
@@ -2837,6 +3397,13 @@
     pub private_dns_name: u16,
   }
 
+  impl jb_ingest__network_interface_info {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_dynamic(417u16, true)
+    }
+  }
+
   impl Default for jb_ingest__network_interface_info {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -2881,6 +3448,13 @@
     pub laddr: [u8; 16],
   }
 
+  impl jb_ingest__udp_new_socket {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(328u16, 28, true)
+    }
+  }
+
   impl Default for jb_ingest__udp_new_socket {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -2916,6 +3490,13 @@
     pub sk_id: u32,
     pub packets: u32,
     pub bytes: u32,
+  }
+
+  impl jb_ingest__udp_stats_addr_unchanged {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(330u16, 16, true)
+    }
   }
 
   impl Default for jb_ingest__udp_stats_addr_unchanged {
@@ -2955,6 +3536,13 @@
     pub bytes: u32,
     pub raddr: u32,
     pub is_rx: u8,
+  }
+
+  impl jb_ingest__udp_stats_addr_changed_v4 {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(341u16, 21, true)
+    }
   }
 
   impl Default for jb_ingest__udp_stats_addr_changed_v4 {
@@ -2998,6 +3586,13 @@
     pub raddr: [u8; 16],
   }
 
+  impl jb_ingest__udp_stats_addr_changed_v6 {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(350u16, 33, true)
+    }
+  }
+
   impl Default for jb_ingest__udp_stats_addr_changed_v6 {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -3039,6 +3634,13 @@
     pub ipv4_addrs: u16,
   }
 
+  impl jb_ingest__dns_response_dep_b {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_dynamic(402u16, true)
+    }
+  }
+
   impl Default for jb_ingest__dns_response_dep_b {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -3078,6 +3680,13 @@
     pub total_dn_len: u16,
   }
 
+  impl jb_ingest__dns_timeout {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_dynamic(403u16, true)
+    }
+  }
+
   impl Default for jb_ingest__dns_timeout {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -3111,6 +3720,13 @@
     pub _rpc_id: u16,
     pub sk_id: u32,
     pub drops: u32,
+  }
+
+  impl jb_ingest__udp_stats_drops_changed {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(405u16, 12, true)
+    }
   }
 
   impl Default for jb_ingest__udp_stats_drops_changed {
@@ -3151,6 +3767,13 @@
     pub client_server: u8,
   }
 
+  impl jb_ingest__dns_response {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_dynamic(418u16, true)
+    }
+  }
+
   impl Default for jb_ingest__dns_response {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -3188,6 +3811,13 @@
     pub sk_id: u32,
   }
 
+  impl jb_ingest__udp_destroy_socket {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(329u16, 8, true)
+    }
+  }
+
   impl Default for jb_ingest__udp_destroy_socket {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -3218,6 +3848,13 @@
     pub _rpc_id: u16,
   }
 
+  impl jb_ingest__pulse {
+    #[inline]
+    pub fn metadata() -> render_parser::MessageMetadata {
+      render_parser::MessageMetadata::new_fixed(65535u16, 2, true)
+    }
+  }
+
   impl Default for jb_ingest__pulse {
     #[inline]
     fn default() -> Self { unsafe { core::mem::zeroed() } }
@@ -3241,4 +3878,101 @@
       assert_eq!(offset_of!(jb_ingest__pulse, _rpc_id), 0);
     }
   }
+
+#[inline]
+pub fn all_message_metadata() -> ::std::vec::Vec<render_parser::MessageMetadata> {
+  ::std::vec![
+    jb_ingest__pid_info::metadata(),
+    jb_ingest__pid_close_info::metadata(),
+    jb_ingest__pid_info_create_deprecated::metadata(),
+    jb_ingest__pid_info_create::metadata(),
+    jb_ingest__pid_cgroup_move::metadata(),
+    jb_ingest__pid_set_comm::metadata(),
+    jb_ingest__pid_set_cmdline::metadata(),
+    jb_ingest__tracked_process_start::metadata(),
+    jb_ingest__tracked_process_end::metadata(),
+    jb_ingest__set_tgid::metadata(),
+    jb_ingest__set_cgroup::metadata(),
+    jb_ingest__set_command::metadata(),
+    jb_ingest__pid_exit::metadata(),
+    jb_ingest__cgroup_create_deprecated::metadata(),
+    jb_ingest__cgroup_create::metadata(),
+    jb_ingest__cgroup_close::metadata(),
+    jb_ingest__container_metadata::metadata(),
+    jb_ingest__pod_name::metadata(),
+    jb_ingest__nomad_metadata::metadata(),
+    jb_ingest__k8s_metadata::metadata(),
+    jb_ingest__k8s_metadata_port::metadata(),
+    jb_ingest__container_resource_limits_deprecated::metadata(),
+    jb_ingest__container_resource_limits::metadata(),
+    jb_ingest__container_annotation::metadata(),
+    jb_ingest__new_sock_info::metadata(),
+    jb_ingest__set_state_ipv4::metadata(),
+    jb_ingest__set_state_ipv6::metadata(),
+    jb_ingest__socket_stats::metadata(),
+    jb_ingest__nat_remapping::metadata(),
+    jb_ingest__close_sock_info::metadata(),
+    jb_ingest__syn_timeout::metadata(),
+    jb_ingest__http_response::metadata(),
+    jb_ingest__tcp_reset::metadata(),
+    jb_ingest__process_steady_state::metadata(),
+    jb_ingest__socket_steady_state::metadata(),
+    jb_ingest__version_info::metadata(),
+    jb_ingest__set_node_info::metadata(),
+    jb_ingest__set_config_label::metadata(),
+    jb_ingest__set_availability_zone_deprecated::metadata(),
+    jb_ingest__set_iam_role_deprecated::metadata(),
+    jb_ingest__set_instance_id_deprecated::metadata(),
+    jb_ingest__set_instance_type_deprecated::metadata(),
+    jb_ingest__dns_response_fake::metadata(),
+    jb_ingest__dns_response_dep_a_deprecated::metadata(),
+    jb_ingest__set_config_label_deprecated::metadata(),
+    jb_ingest__api_key::metadata(),
+    jb_ingest__private_ipv4_addr::metadata(),
+    jb_ingest__ipv6_addr::metadata(),
+    jb_ingest__public_to_private_ipv4::metadata(),
+    jb_ingest__metadata_complete::metadata(),
+    jb_ingest__bpf_lost_samples::metadata(),
+    jb_ingest__pod_new_legacy::metadata(),
+    jb_ingest__pod_new_legacy2::metadata(),
+    jb_ingest__pod_new_with_name::metadata(),
+    jb_ingest__pod_container_legacy::metadata(),
+    jb_ingest__pod_container::metadata(),
+    jb_ingest__pod_delete::metadata(),
+    jb_ingest__pod_resync::metadata(),
+    jb_ingest__span_duration_info::metadata(),
+    jb_ingest__heartbeat::metadata(),
+    jb_ingest__connect::metadata(),
+    jb_ingest__health_check::metadata(),
+    jb_ingest__log_message::metadata(),
+    jb_ingest__agent_resource_usage::metadata(),
+    jb_ingest__cloud_platform::metadata(),
+    jb_ingest__os_info_deprecated::metadata(),
+    jb_ingest__os_info::metadata(),
+    jb_ingest__kernel_headers_source::metadata(),
+    jb_ingest__entrypoint_error::metadata(),
+    jb_ingest__bpf_compiled::metadata(),
+    jb_ingest__begin_telemetry::metadata(),
+    jb_ingest__cloud_platform_account_info::metadata(),
+    jb_ingest__collector_health::metadata(),
+    jb_ingest__system_wide_process_settings::metadata(),
+    jb_ingest__collect_blob::metadata(),
+    jb_ingest__report_cpu_cores::metadata(),
+    jb_ingest__bpf_log::metadata(),
+    jb_ingest__aws_network_interface_start::metadata(),
+    jb_ingest__aws_network_interface_end::metadata(),
+    jb_ingest__network_interface_info_deprecated::metadata(),
+    jb_ingest__network_interface_info::metadata(),
+    jb_ingest__udp_new_socket::metadata(),
+    jb_ingest__udp_stats_addr_unchanged::metadata(),
+    jb_ingest__udp_stats_addr_changed_v4::metadata(),
+    jb_ingest__udp_stats_addr_changed_v6::metadata(),
+    jb_ingest__dns_response_dep_b::metadata(),
+    jb_ingest__dns_timeout::metadata(),
+    jb_ingest__udp_stats_drops_changed::metadata(),
+    jb_ingest__dns_response::metadata(),
+    jb_ingest__udp_destroy_socket::metadata(),
+    jb_ingest__pulse::metadata(),
+  ]
+}
 
