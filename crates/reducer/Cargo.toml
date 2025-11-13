@@ -1,0 +1,12 @@
+[package]
+name = "reducer"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "reducer"
+path = "src/lib.rs"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+reducer-sys = { workspace = true }

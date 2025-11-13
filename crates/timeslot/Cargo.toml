@@ -1,0 +1,13 @@
+[package]
+name = "timeslot"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+description = "Fast approximate division utilities for time-based slotting"
+
+[lib]
+name = "timeslot"
+path = "src/lib.rs"
+
+[dependencies]
+

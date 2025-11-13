@@ -1,5 +1,4 @@
 fn main() {
-    let code = reducer_sys::run_with_args(std::env::args_os());
+    let code = reducer::run_with_env_args();
     std::process::exit(code);
 }
-

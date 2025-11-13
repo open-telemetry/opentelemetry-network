@@ -19,6 +19,7 @@ target_link_libraries(
   cloud_agentlib
   PUBLIC
     signal_handler 
+    render_ebpf_net_cloud_collector
 )
 
 set(CLOUD_COLLECTOR_LINK_LIBRARIES

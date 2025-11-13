@@ -67,11 +67,14 @@ static int cloud_collector_run(int argc, char **argv)
 
   auto &intake_config_handler = parser.new_handler<config::IntakeConfig::ArgsHandler>();
 
-  SignalManager &signal_manager = parser.new_handler<SignalManager>(loop, "cloud-collector");
+  SignalManager signal_manager(loop, "cloud-collector");
 
   if (auto result = parser.process(argc, argv); !result.has_value()) {
     return result.error();
   }
+
+  // Initialize minimal signal handler behavior (ignore SIGPIPE, disable core dumps)
+  signal_manager.handle();
 
   if (ec2_poll_interval_ms.Get() == 0) {
     LOG::error("--ec2-poll-interval-ms cannot be 0");
@@ -125,4 +128,3 @@ extern "C" int otn_cloud_collector_main(int argc, const char **argv)
 {
   return cloud_collector_run(argc, const_cast<char **>(argv));
 }
-

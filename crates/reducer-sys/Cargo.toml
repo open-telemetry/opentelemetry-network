@@ -8,6 +8,7 @@ name = "reducer_sys"
 path = "src/lib.rs"
 
 [dependencies]
+cxx = "1"
 encoder_ebpf_net_ingest = { path = "../render/ebpf_net/ingest" }
 encoder_ebpf_net_matching = { path = "../render/ebpf_net/matching" }
 encoder_ebpf_net_aggregation = { path = "../render/ebpf_net/aggregation" }

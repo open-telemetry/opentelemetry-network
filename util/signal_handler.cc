@@ -6,16 +6,15 @@
 #include <util/log.h>
 #include <util/log_formatters.h>
 
+#include <cassert>
 #include <csignal>
+#include <cstdlib>
 #include <stdexcept>
 #include <sys/resource.h>
 
 // Minimal SignalManager implementation without Breakpad/minidump support.
 
-SignalManager::SignalManager(cli::ArgsParser & /*parser*/, ::uv_loop_t &loop, std::string_view /*product*/)
-    : loop_(loop)
-{
-}
+SignalManager::SignalManager(::uv_loop_t &loop, std::string_view /*product*/) : loop_(loop) {}
 
 void SignalManager::handle()
 {
@@ -88,4 +87,3 @@ void SignalManager::SignalHandler::on_signal()
 
   ::exit(-handler_.signum);
 }
-
