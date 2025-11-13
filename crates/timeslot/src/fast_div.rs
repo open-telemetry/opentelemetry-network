@@ -78,6 +78,19 @@
 //! [1] https://www.agner.org/optimize/instruction_tables.pdf
 //! [2] https://cdrdv2-public.intel.com/671110/325383-sdm-vol-2abcd.pdf
 
+//! Remainder via low bits.
+//!
+//! For a number `x`, the low `S` bits of `(x * M)` represent the fixed-point
+//! fractional part (with denominator `2^S`) of `x / D` when `M = 2^S / D`.
+//! Thus, an approximate remainder can be computed as:
+//!   rem ~= (D * ((x * M) & (2^S - 1))) >> S
+//!
+//! The multiplication by `D` may overflow 64-bit arithmetic. However, `D`
+//! fits in 64 bits and `((x * M) & (2^S - 1))` fits in `S` bits which is not
+//! more than `64 - B` bits (by construction). We therefore perform the
+//! multiplication in Rust `u128` and then shift right by `S`. The final result
+//! lies in `[0, D)` and fits in `u64`.
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct FastDiv {
     mul: u32,
@@ -141,6 +154,25 @@ impl FastDiv {
     pub fn divide_u64(&self, x: u64) -> u32 {
         ((x.wrapping_mul(self.mul as u64)) >> self.shift) as u32
     }
+
+    /// Approximates the remainder of `x` divided by `d` using the fixed-point
+    /// low-`S` bits of `(x * M)`.
+    ///
+    /// Computes: `((d as u128) * (((x * M) & (2^S - 1)) as u128)) >> S`.
+    /// The multiply is done in `u128` to avoid overflow; the result is then
+    /// narrowed to `u64`, which is safe because it is less than `d`.
+    pub fn remainder(&self, x: u64, d: u64) -> u64 {
+        debug_assert!(self.shift < 64, "shift must be < 64");
+        let s = self.shift;
+        // Low S bits of (x * M)
+        let xm = x.wrapping_mul(self.mul as u64);
+        let mask = if s == 0 { 0 } else { (1u64 << s) - 1 };
+        let frac = xm & mask;
+
+        // Multiply in 128-bit to avoid overflow, then shift back by S.
+        let prod = (d as u128) * (frac as u128);
+        (prod >> s) as u64
+    }
 }
 
 #[cfg(test)]
@@ -170,5 +202,19 @@ mod tests {
         let da = fd.divide_u64(a);
         let db = fd.divide_u64(b);
         assert!(db >= da);
+    }
+
+    #[test]
+    fn remainder_power_of_two_exact_ratio() {
+        // Choose D = 2^13, and pick S so that M = 2^(S-13) fits in u32 exactly.
+        // Here: S=44 -> M=2^31.
+        let d: u64 = 1u64 << 13;
+        let fd = FastDiv::from_mul_shift(1u32 << 31, 44);
+
+        // For exact M=2^S/D, the remainder should be exact.
+        let xs = [0u64, 1, d - 1, d, d + 1, (1u64 << 40) + 12345];
+        for &x in &xs {
+            assert_eq!(fd.remainder(x, d), x % d);
+        }
     }
 }
