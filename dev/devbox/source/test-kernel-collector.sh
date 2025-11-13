@@ -10,11 +10,8 @@ ingest_dump_file='ingest.render.raw'
 host_data_mount_path="$(pwd)/data-$(basename "$0" .sh)"
 container_data_mount_path="/hostfs/data"
 
-minidump_dir="minidump"
-
 mkdir -p "${host_data_mount_path}"
 touch "${host_data_mount_path}/${bpf_src_export_file}"
-mkdir -p "${host_data_mount_path}/${minidump_dir}"
 
 docker_args=( \
   --env EBPF_NET_HOST_DIR="/hostfs"
@@ -27,7 +24,6 @@ docker_args=( \
   --volume /var/run/docker.sock:/var/run/docker.sock
   --env EBPF_NET_KERNEL_HEADERS_AUTO_FETCH="true"
   --env EBPF_NET_EXPORT_BPF_SRC_FILE="${container_data_mount_path}/${bpf_src_export_file}"
-  --env EBPF_NET_MINIDUMP_DIR="${container_data_mount_path}/${minidump_dir}"
   --volume "${host_data_mount_path}:${container_data_mount_path}"
 )
 

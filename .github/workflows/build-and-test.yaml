@@ -910,7 +910,6 @@ jobs:
             --volume /var/run/docker.sock:/var/run/docker.sock \
             --env EBPF_NET_KERNEL_HEADERS_AUTO_FETCH="true" \
             --env EBPF_NET_EXPORT_BPF_SRC_FILE="/hostfs/data/bpf.src.c" \
-            --env EBPF_NET_MINIDUMP_DIR="/hostfs/data/minidump" \
             --volume "$(pwd)/data:/hostfs/data" \
             localhost:5000/kernel-collector-test \
             --log-console

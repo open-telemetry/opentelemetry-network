@@ -5,10 +5,7 @@
 
 #pragma once
 
-#include <scheduling/timer.h>
 #include <util/args_parser.h>
-
-#include <client/linux/handler/exception_handler.h> /* google breakpad */
 
 #include <uv.h>
 
@@ -29,24 +26,7 @@ struct SignalManager : cli::ArgsParser::Handler {
 private:
   ::uv_loop_t &loop() { return loop_; }
 
-  void setup_breakpad();
-  void handle_minidump();
-
   ::uv_loop_t &loop_;
-
-  std::string product_;
-  std::string module_name_;
-  std::string module_id_;
-
-  cli::ArgsParser::FlagProxy disable_crash_report_;
-  std::string minidump_dir_;
-  cli::ArgsParser::ArgProxy<std::string> minidump_path_;
-  google_breakpad::MinidumpDescriptor breakpad_descriptor_;
-  std::optional<google_breakpad::ExceptionHandler> breakpad_exception_handler_;
-#ifndef NDEBUG
-  cli::ArgsParser::FlagProxy crash_;
-  cli::ArgsParser::ArgProxy<std::chrono::seconds::rep> schedule_crash_;
-#endif
 
   struct SignalHandler {
     SignalHandler(SignalManager &manager, std::function<void()> on_signal, int signal_number);
@@ -66,8 +46,4 @@ private:
   };
 
   std::list<SignalHandler> signals_;
-
-#ifndef NDEBUG
-  std::unique_ptr<scheduling::Timer> crash_timer_;
-#endif
 };
