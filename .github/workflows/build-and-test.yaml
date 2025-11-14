@@ -137,7 +137,7 @@ jobs:
         docker rm registry
 
     - name: Upload reducer container
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
       with:
         name: reducer-container
         path: container-exports/reducer.tar
@@ -203,7 +203,7 @@ jobs:
         docker rm registry
 
     - name: Upload kernel collector container
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
       with:
         name: kernel-collector-container
         path: container-exports/kernel-collector.tar
@@ -269,7 +269,7 @@ jobs:
         docker rm registry
 
     - name: Upload kernel-collector-test container
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
       with:
         name: kernel-collector-test-container
         path: container-exports/kernel-collector-test.tar
@@ -494,13 +494,13 @@ jobs:
         fetch-depth: 0
 
     - name: Download reducer container
-      uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
+      uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
       with:
         name: reducer-container
         path: ./container-exports
 
     - name: Download kernel-collector container
-      uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
+      uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
       with:
         name: kernel-collector-container
         path: ./container-exports
@@ -641,7 +641,7 @@ jobs:
 
     - name: Upload OpenTelemetry JSONL
       if: always()
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
       with:
         name: e2e-otel-jsonl
         path: |
@@ -683,7 +683,7 @@ jobs:
         fetch-depth: 0
 
     - name: Download kernel-collector container
-      uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
+      uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
       with:
         name: kernel-collector-container
         path: ./container-exports
@@ -831,13 +831,13 @@ jobs:
         fetch-depth: 0
 
     - name: Download reducer container
-      uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
+      uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
       with:
         name: reducer-container
         path: ./container-exports
 
     - name: Download kernel-collector-test container
-      uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
+      uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
       with:
         name: kernel-collector-test-container
         path: ./container-exports
@@ -929,7 +929,7 @@ jobs:
 
     - name: Upload kernel-collector dumps
       if: always()
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
       with:
         name: kernel-collector-dumps-${{ matrix.kernel }}
         path: |
