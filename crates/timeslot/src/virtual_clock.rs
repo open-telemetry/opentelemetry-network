@@ -65,11 +65,14 @@ impl VirtualClock {
 
     /// Adds `n` additional inputs.
     pub fn add_inputs(&mut self, n: usize) {
-        self.inputs.resize_with(self.inputs.len() + n, Default::default);
+        self.inputs
+            .resize_with(self.inputs.len() + n, Default::default);
     }
 
     /// Returns the current number of inputs this clock has.
-    pub fn n_inputs(&self) -> usize { self.inputs.len() }
+    pub fn n_inputs(&self) -> usize {
+        self.inputs.len()
+    }
 
     /// Returns whether the specified input is current with this clock.
     /// Current means that the input timeslot equals the clock's timeslot.
@@ -117,10 +120,14 @@ impl VirtualClock {
     }
 
     /// Duration of time slots, in timestamp units.
-    pub fn timeslot_duration(&self) -> f64 { self.timeslot_duration }
+    pub fn timeslot_duration(&self) -> f64 {
+        self.timeslot_duration
+    }
 
     /// Current timeslot, or None if not yet initialized.
-    pub fn current_timeslot(&self) -> Option<Timeslot> { self.current_timeslot }
+    pub fn current_timeslot(&self) -> Option<Timeslot> {
+        self.current_timeslot
+    }
 
     /// Advances this clock's timeslot, if possible. Returns `true` if advanced.
     pub fn advance(&mut self) -> bool {
@@ -262,7 +269,10 @@ mod tests {
 
         assert!(clock.can_update(0));
         assert!(!clock.can_update(1));
-        assert_eq!(clock.update(1, timestamp + ts_step), Err(UpdateError::NotPermitted));
+        assert_eq!(
+            clock.update(1, timestamp + ts_step),
+            Err(UpdateError::NotPermitted)
+        );
 
         // advance input 0 and the clock
         assert_eq!(clock.update(0, timestamp + ts_step), Ok(()));
@@ -281,8 +291,14 @@ mod tests {
         clock.add_inputs(2);
         let ts_step = clock.timeslot_duration().ceil() as u64;
 
-        assert_eq!(clock.update(0, ts_step * (TIMESLOT_MIN as u64 + 42)), Ok(()));
-        assert_eq!(clock.update(1, ts_step * (TIMESLOT_MIN as u64 + 43)), Ok(()));
+        assert_eq!(
+            clock.update(0, ts_step * (TIMESLOT_MIN as u64 + 42)),
+            Ok(())
+        );
+        assert_eq!(
+            clock.update(1, ts_step * (TIMESLOT_MIN as u64 + 43)),
+            Ok(())
+        );
         assert_eq!(clock.advance(), false);
 
         assert!(clock.current_timeslot().is_some());
@@ -296,8 +312,14 @@ mod tests {
         let ts_step = clock.timeslot_duration().ceil() as u64;
 
         let timeslot_mid = TIMESLOT_MAX / 2;
-        assert_eq!(clock.update(0, ts_step * ((timeslot_mid - 10) as u64)), Ok(()));
-        assert_eq!(clock.update(1, ts_step * ((timeslot_mid + 10) as u64)), Ok(()));
+        assert_eq!(
+            clock.update(0, ts_step * ((timeslot_mid - 10) as u64)),
+            Ok(())
+        );
+        assert_eq!(
+            clock.update(1, ts_step * ((timeslot_mid + 10) as u64)),
+            Ok(())
+        );
         assert_eq!(clock.advance(), false);
 
         assert!(clock.current_timeslot().is_some());
@@ -311,7 +333,10 @@ mod tests {
         let ts_step = clock.timeslot_duration().ceil() as u64;
 
         assert_eq!(clock.update(0, ts_step * (TIMESLOT_MAX as u64)), Ok(()));
-        assert_eq!(clock.update(1, ts_step * ((TIMESLOT_MAX as u64) + 1)), Ok(()));
+        assert_eq!(
+            clock.update(1, ts_step * ((TIMESLOT_MAX as u64) + 1)),
+            Ok(())
+        );
         assert_eq!(clock.advance(), false);
 
         assert!(clock.current_timeslot().is_some());
@@ -325,8 +350,14 @@ mod tests {
         let ts_step = clock.timeslot_duration().ceil() as u64;
         let timeslot_mid = TIMESLOT_MAX / 2;
 
-        assert_eq!(clock.update(0, ts_step * ((timeslot_mid + 10) as u64)), Ok(()));
-        assert_eq!(clock.update(1, ts_step * ((TIMESLOT_MAX as u64) + 1)), Ok(()));
+        assert_eq!(
+            clock.update(0, ts_step * ((timeslot_mid + 10) as u64)),
+            Ok(())
+        );
+        assert_eq!(
+            clock.update(1, ts_step * ((TIMESLOT_MAX as u64) + 1)),
+            Ok(())
+        );
         assert_eq!(clock.advance(), false);
 
         assert!(clock.current_timeslot().is_some());
@@ -340,8 +371,14 @@ mod tests {
         let ts_step = clock.timeslot_duration().ceil() as u64;
         let timeslot_mid = TIMESLOT_MAX / 2;
 
-        assert_eq!(clock.update(0, ts_step * ((timeslot_mid - 10) as u64)), Ok(()));
-        assert_eq!(clock.update(1, ts_step * ((TIMESLOT_MAX as u64) + 1)), Ok(()));
+        assert_eq!(
+            clock.update(0, ts_step * ((timeslot_mid - 10) as u64)),
+            Ok(())
+        );
+        assert_eq!(
+            clock.update(1, ts_step * ((TIMESLOT_MAX as u64) + 1)),
+            Ok(())
+        );
         assert_eq!(clock.advance(), false);
 
         assert!(clock.current_timeslot().is_some());

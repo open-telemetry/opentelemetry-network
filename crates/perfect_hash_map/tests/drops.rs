@@ -4,15 +4,19 @@
 use std::cell::Cell;
 use std::rc::Rc;
 
-use perfect_hash_map::{PerfectHashMap, HashFn};
+use perfect_hash_map::{HashFn, PerfectHashMap};
 
-fn phash(k: u32) -> u32 { k % 8 }
+fn phash(k: u32) -> u32 {
+    k % 8
+}
 
 #[derive(Debug)]
 struct DropCounter(Rc<Cell<usize>>);
 
 impl Drop for DropCounter {
-    fn drop(&mut self) { self.0.set(self.0.get() + 1); }
+    fn drop(&mut self) {
+        self.0.set(self.0.get() + 1);
+    }
 }
 
 /// Replacement drops the old value exactly once.
@@ -63,4 +67,3 @@ fn drop_on_map_drop() {
     // Map dropped, both values dropped
     assert_eq!(count.get(), 2);
 }
-
