@@ -45,9 +45,6 @@ add_library(
     matching/k8s_pod_span.cc
     matching/k8s_container_span.cc
     aggregation/agg_core.cc
-    aggregation/agg_root_span.cc
-    aggregation/tsdb_encoder.cc
-    aggregation/percentile_latencies.cc
     logging/logging_core.cc
     logging/logger_span.cc
     logging/core_stats_span.cc

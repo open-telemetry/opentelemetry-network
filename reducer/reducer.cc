@@ -154,7 +154,6 @@ void Reducer::init_config()
 void Reducer::init_cores()
 {
   const size_t num_stat_writers = 1; // one for the logging core
-  const size_t num_prom_metric_writers = config_.num_aggregation_shards * config_.partitions_per_shard;
 
   if (config_.enable_otlp_grpc_metrics) {
     stats_publisher_ = std::make_unique<reducer::OtlpGrpcPublisher>(
@@ -169,27 +168,8 @@ void Reducer::init_cores()
         config_.stats_scrape_size_limit_bytes);
   }
 
-  if (!config_.disable_prometheus_metrics) {
-    prom_metrics_publisher_ = std::make_unique<reducer::PrometheusPublisher>(
-        config_.shard_prometheus_metrics ? reducer::PrometheusPublisher::PORT_RANGE : reducer::PrometheusPublisher::SINGLE_PORT,
-        num_prom_metric_writers,
-        config_.prom_bind,
-        num_prom_metric_writers,
-        config_.scrape_size_limit_bytes);
-  }
-
-  if (config_.enable_otlp_grpc_metrics) {
-    otlp_metrics_publisher_ = std::make_unique<reducer::OtlpGrpcPublisher>(
-        config_.num_aggregation_shards,
-        std::string(config_.otlp_grpc_metrics_address + ":" + std::to_string(config_.otlp_grpc_metrics_port)));
-  }
-
   // index of the next stat writer thread to make a writer for
   size_t stat_writer_num = 0;
-  // index of the next prom metrics writer
-  size_t prom_metric_writer_num = 0;
-  // index of the next otlp metrics writer
-  size_t otlp_metric_writer_num = 0;
 
   auto initial_timestamp = monotonic() + get_boot_time();
 
@@ -209,19 +189,6 @@ void Reducer::init_cores()
 
   agg_cores_.reserve(config_.num_aggregation_shards);
   for (size_t shard = 0; shard < config_.num_aggregation_shards; ++shard) {
-    std::vector<reducer::Publisher::WriterPtr> prom_metric_writers;
-    if (prom_metrics_publisher_) {
-      prom_metric_writers.reserve(config_.partitions_per_shard);
-      for (size_t i = 0; i < config_.partitions_per_shard; ++i) {
-        prom_metric_writers.emplace_back(prom_metrics_publisher_->make_writer(prom_metric_writer_num++));
-      }
-    }
-
-    reducer::Publisher::WriterPtr otlp_metric_writer;
-    if (otlp_metrics_publisher_) {
-      otlp_metric_writer = otlp_metrics_publisher_->make_writer(otlp_metric_writer_num++);
-    }
-
     std::string otlp_endpoint;
     if (config_.enable_otlp_grpc_metrics) {
       otlp_endpoint = std::string(config_.otlp_grpc_metrics_address + ":" + std::to_string(config_.otlp_grpc_metrics_port));
@@ -230,13 +197,6 @@ void Reducer::init_cores()
     auto agg_core = std::make_unique<reducer::aggregation::AggCore>(
         matching_to_aggregation_queues_,
         aggregation_to_logging_queues_,
-        prom_metrics_publisher_,
-        std::move(prom_metric_writers),
-        otlp_metrics_publisher_,
-        std::move(otlp_metric_writer),
-        config_.enable_percentile_latencies,
-        config_.scrape_metrics_tsdb_format,
-        disabled_metrics,
         shard,
         initial_timestamp,
         otlp_endpoint,
@@ -266,7 +226,6 @@ void Reducer::init_cores()
 
   // all writers created
   ASSUME(stat_writer_num == num_stat_writers);
-  ASSUME(!prom_metrics_publisher_ || prom_metric_writer_num == num_prom_metric_writers);
 }
 
 void Reducer::start_threads()

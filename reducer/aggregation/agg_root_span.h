@@ -1,32 +1,19 @@
 /*
- * Copyright The OpenTelemetry Authors
- * SPDX-License-Identifier: Apache-2.0
+ * Temporary stub while AggregationCore runs in Rust.
+ * Render-generated aggregation spans include this header to define AggRootSpan.
  */
-
 #pragma once
 
 #include <generated/ebpf_net/aggregation/span_base.h>
 
-namespace reducer::aggregation {
+namespace reducer {
+namespace aggregation {
 
+// Minimal stub: inherit default no-op handlers so generated code can link.
 class AggRootSpan : public ::ebpf_net::aggregation::AggRootSpanBase {
 public:
-  AggRootSpan();
-  ~AggRootSpan();
-
-  void update_node(::ebpf_net::aggregation::weak_refs::agg_root span_ref, u64 timestamp, jsrv_aggregation__update_node *msg);
-
-  void update_tcp_metrics(
-      ::ebpf_net::aggregation::weak_refs::agg_root span_ref, u64 timestamp, jsrv_aggregation__update_tcp_metrics *msg);
-
-  void update_udp_metrics(
-      ::ebpf_net::aggregation::weak_refs::agg_root span_ref, u64 timestamp, jsrv_aggregation__update_udp_metrics *msg);
-
-  void update_http_metrics(
-      ::ebpf_net::aggregation::weak_refs::agg_root span_ref, u64 timestamp, jsrv_aggregation__update_http_metrics *msg);
-
-  void update_dns_metrics(
-      ::ebpf_net::aggregation::weak_refs::agg_root span_ref, u64 timestamp, jsrv_aggregation__update_dns_metrics *msg);
+  AggRootSpan() = default;
 };
 
-} // namespace reducer::aggregation
+} // namespace aggregation
+} // namespace reducer
