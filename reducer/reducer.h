@@ -33,8 +33,6 @@ private:
   ReducerConfig &config_;
 
   std::unique_ptr<reducer::Publisher> stats_publisher_;
-  std::unique_ptr<reducer::Publisher> prom_metrics_publisher_;
-  std::unique_ptr<reducer::Publisher> otlp_metrics_publisher_;
 
   reducer::RpcQueueMatrix ingest_to_matching_queues_;
   reducer::RpcQueueMatrix ingest_to_logging_queues_;
