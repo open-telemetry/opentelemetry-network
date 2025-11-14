@@ -24,6 +24,8 @@
 
 #include <stdexcept>
 
+#include <reducer/util/thread_ops.h>
+
 namespace reducer::aggregation {
 
 bool AggCore::node_ip_field_disabled_ = false;
@@ -79,10 +81,21 @@ AggCore::AggCore(
       aggregation_to_logging_stats_(shard_num, "aggregation", "logging", aggregation_to_logging_queues),
       disabled_metrics_(disabled_metrics),
       core_stats_(index_.core_stats.alloc()),
-      agg_core_stats_(index_.agg_core_stats.alloc())
+      agg_core_stats_(index_.agg_core_stats.alloc()),
+      rust_core_([&] {
+        auto readers = matching_to_aggregation_queues.make_readers(shard_num);
+        std::vector<reducer_agg::EqView> eqs;
+        eqs.reserve(readers.size());
+        for (auto &q : readers) {
+          reducer_agg::EqView v;
+          v.data = reinterpret_cast<uint8_t *>(q.shared);
+          v.n_elems = q.elem_mask + 1;
+          v.buf_len = q.buf_mask + 1;
+          eqs.push_back(v);
+        }
+        return reducer_agg::aggregation_core_new(eqs, static_cast<uint32_t>(shard_num));
+      }())
 {
-  add_rpc_clients(matching_to_aggregation_queues.make_readers(shard_num), ClientType::matching, matching_to_aggregation_stats_);
-
   if (enable_percentile_latencies)
     p_latencies_ = std::make_unique<PercentileLatencies>();
 }
@@ -228,6 +241,22 @@ void AggCore::write_internal_stats()
 #endif // ENABLE_CODE_TIMING
 
   dump_internal_state(std::chrono::milliseconds{time_ns / (1000 * 1000)});
+}
+
+void AggCore::run()
+{
+  set_self_thread_name(fmt::format("{}_{}", app_name(), shard_num())).on_error([this](auto const &error) {
+    LOG::warn("unable to set name for {} core thread {}: {}", app_name(), shard_num(), error);
+  });
+
+  // Delegate to Rust AggregationCore until stop
+  rust_core_->aggregation_core_run();
+}
+
+void AggCore::stop_async()
+{
+  // Cooperative stop for the Rust core
+  rust_core_->aggregation_core_stop();
 }
 
 } // namespace reducer::aggregation

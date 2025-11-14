@@ -10,3 +10,8 @@ path = "src/lib.rs"
 [dependencies]
 clap = { version = "4", features = ["derive"] }
 reducer-sys = { workspace = true }
+element-queue = { path = "../element-queue" }
+timeslot = { path = "../timeslot" }
+render_parser = { workspace = true }
+encoder_ebpf_net_aggregation = { path = "../render/ebpf_net/aggregation" }
+cxx = "1"

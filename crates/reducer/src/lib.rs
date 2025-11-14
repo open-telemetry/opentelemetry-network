@@ -4,6 +4,9 @@ use clap::Parser;
 
 use reducer_sys::ffi::{ReducerConfig as FfiReducerConfig, TsdbFormat};
 
+mod aggregation_core;
+pub mod ffi;
+
 #[derive(Parser, Debug)]
 #[command(name = "reducer", about = "OpenTelemetry eBPF Reducer")]
 struct Cli {
