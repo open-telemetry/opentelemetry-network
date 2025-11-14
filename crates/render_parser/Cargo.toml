@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-thiserror = "1"
+thiserror = "2"
 perfect_hash_map = { path = "../perfect_hash_map" }
 
 [features]
