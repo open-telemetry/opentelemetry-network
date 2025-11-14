@@ -9,6 +9,7 @@
 #include <reducer/constants.h>
 #include <reducer/internal_metrics_encoder.h>
 #include <reducer/internal_stats.h>
+#include <reducer/otlp_grpc_formatter.h>
 #include <reducer/rpc_queue_matrix.h>
 
 #include <common/constants.h>
@@ -65,7 +66,9 @@ AggCore::AggCore(
     TsdbFormat metrics_tsdb_format,
     DisabledMetrics disabled_metrics,
     size_t shard_num,
-    u64 initial_timestamp)
+    u64 initial_timestamp,
+    std::string otlp_endpoint,
+    bool disable_node_ip_field)
     : CoreBase(
           "aggregation",
           shard_num,
@@ -93,7 +96,14 @@ AggCore::AggCore(
           v.buf_len = q.buf_mask + 1;
           eqs.push_back(v);
         }
-        return reducer_agg::aggregation_core_new(eqs, static_cast<uint32_t>(shard_num));
+        return reducer_agg::aggregation_core_new(
+            eqs,
+            static_cast<uint32_t>(shard_num),
+            id_id_enabled_,
+            az_id_enabled_,
+            otlp_endpoint,
+            disable_node_ip_field,
+            reducer::OtlpGrpcFormatter::metric_description_field_enabled());
       }())
 {
   if (enable_percentile_latencies)
