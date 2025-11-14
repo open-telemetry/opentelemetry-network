@@ -12,6 +12,7 @@ pub mod ffi;
 mod internal_events;
 mod metrics;
 mod otlp_encoding;
+mod queue_handler;
 
 #[derive(Parser, Debug)]
 #[command(name = "reducer", about = "OpenTelemetry eBPF Reducer")]
