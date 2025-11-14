@@ -6,9 +6,9 @@ toolchain go1.24.6
 
 require (
 	google.golang.org/grpc v1.74.2
-	k8s.io/api v0.33.3
-	k8s.io/apimachinery v0.33.3
-	k8s.io/client-go v0.33.3
+	k8s.io/api v0.34.2
+	k8s.io/apimachinery v0.34.2
+	k8s.io/client-go v0.34.2
 )
 
 require (
