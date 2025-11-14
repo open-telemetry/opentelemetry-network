@@ -17,9 +17,7 @@
 pub const LOGGING_HASH_SIZE: u32 = 64u32;
 
 #[allow(dead_code)]
-pub static G_ARRAY: [u8; 16] = [
-    1,4,0,0,4,3,3,4,2,3,2,2,1,0,0,0
-];
+pub static G_ARRAY: [u8; 16] = [1, 4, 0, 0, 4, 3, 3, 4, 2, 3, 2, 2, 1, 0, 0, 0];
 
 #[inline]
 #[allow(dead_code)]

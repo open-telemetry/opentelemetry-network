@@ -17,9 +17,7 @@
 pub const CLOUD_COLLECTOR_HASH_SIZE: u32 = 4u32;
 
 #[allow(dead_code)]
-pub static G_ARRAY: [u8; 2] = [
-    0,2
-];
+pub static G_ARRAY: [u8; 2] = [0, 2];
 
 #[inline]
 #[allow(dead_code)]

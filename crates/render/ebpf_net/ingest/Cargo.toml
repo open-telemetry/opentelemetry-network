@@ -10,10 +10,5 @@ edition = "2021"
 # - staticlib: keeps support for direct C/C++ linking where needed.
 crate-type = ["rlib", "staticlib"]
 
-[profile.release]
-opt-level = 3
-lto = true
-codegen-units = 1
-
 [dependencies]
 render_parser = { workspace = true }
