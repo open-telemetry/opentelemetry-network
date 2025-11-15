@@ -125,8 +125,8 @@ jobs:
           docker pull localhost:5000/reducer
           docker pull localhost:5000/kernel-collector  
           docker pull localhost:5000/cloud-collector
-          docker pull localhost:5000/k8s-watcher
-          docker pull localhost:5000/k8s-relay
+          # k8s-collector replaces watcher+relay
+          docker pull localhost:5000/k8s-collector
       - name: Build packages
         run: |
           docker run -t --rm \
@@ -177,8 +177,7 @@ jobs:
             reducer
             kernel-collector
             cloud-collector
-            k8s-watcher
-            k8s-relay
+            k8s-collector
           )
 
           # strip potential "https://" prefix and trailing slashes from docker registry
