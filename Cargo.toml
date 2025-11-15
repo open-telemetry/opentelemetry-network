@@ -24,6 +24,8 @@ members = [
   "crates/render/ebpf_net/kernel_collector",
   "crates/render/ebpf_net/logging",
   "crates/render/ebpf_net/matching",
+  "crates/k8s-collector",
+  "crates/k8s-collector-bin",
 ]
 
 [workspace.dependencies]

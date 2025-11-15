@@ -276,8 +276,8 @@ jobs:
         if-no-files-found: error
         retention-days: 1
 
-  build-k8s-relay:
-    name: build-k8s-relay
+  build-k8s-collector:
+    name: build-k8s-collector
     runs-on: ubuntu-24.04
     steps:
     - name: Check out the codebase
@@ -294,11 +294,11 @@ jobs:
     - name: Setup ccache
       uses: hendrikmuhs/ccache-action@v1.2
       with:
-        key: ccache-build-k8s-relay
+        key: ccache-build-k8s-collector
         max-size: 1G
         verbose: 2
 
-    - name: build k8s-relay
+    - name: build k8s-collector
       run: |
         echo "github.workspace = ${{ github.workspace }}"
         docker pull $BENV_IMAGE
@@ -315,7 +315,7 @@ jobs:
         --env EBPF_NET_SRC_ROOT=/home/user/src \
         --env CCACHE_DIR=/ccache \
         $BENV_IMAGE \
-        ./build.sh k8s-relay
+        ./build.sh k8s-collector
 
   build-cloud-collector:
     name: build-cloud-collector
@@ -357,47 +357,6 @@ jobs:
         --env CCACHE_DIR=/ccache \
         $BENV_IMAGE \
         ./build.sh cloud-collector
-
-  build-k8s-watcher:
-    name: build-k8s-watcher
-    runs-on: ubuntu-24.04
-    steps:
-    - name: Check out the codebase
-      uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
-      with:
-        fetch-depth: 0
-
-    - name: Cache and install ccache
-      uses: awalsh128/cache-apt-pkgs-action@latest
-      with:
-        packages: ccache
-        version: 1.0
-
-    - name: Setup ccache
-      uses: hendrikmuhs/ccache-action@v1.2
-      with:
-        key: ccache-build-k8s-watcher
-        max-size: 1G
-        verbose: 2
-
-    - name: build k8s-watcher
-      run: |
-        echo "github.workspace = ${{ github.workspace }}"
-        docker pull $BENV_IMAGE
-        git submodule update  --init --recursive ext/
-        # Ensure ccache directory is writable inside container
-        mkdir -p "${{ github.workspace }}/.ccache"
-        chmod -R 777 "${{ github.workspace }}/.ccache" || true
-
-        docker run -t \
-        --rm \
-        --mount "type=bind,source=${{ github.workspace }}/.ccache,destination=/ccache" \
-        --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
-        --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/home/user/src,readonly" \
-        --env EBPF_NET_SRC_ROOT=/home/user/src \
-        --env CCACHE_DIR=/ccache \
-        $BENV_IMAGE \
-        ./build.sh k8s-watcher
 
   build-run-unit-tests:
     name: build-run-unit-tests
