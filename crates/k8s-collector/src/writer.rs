@@ -20,7 +20,7 @@ use tokio_util::io::SyncIoBridge;
 enum Sink<W: AsyncWrite + Unpin + Send + 'static> {
     Uncompressed(W),
     Compressed {
-        encoder: lz4_flex::frame::FrameEncoder<SyncIoBridge<W>>,
+        encoder: Box<lz4_flex::frame::FrameEncoder<SyncIoBridge<W>>>,
     },
 }
 
@@ -49,7 +49,9 @@ impl<W: AsyncWrite + Unpin + Send + 'static> Writer<W> {
                 // Switch to compressed mode where the encoder writes directly to the inner sink
                 let bridge = SyncIoBridge::new(w);
                 let encoder = lz4_flex::frame::FrameEncoder::new(bridge);
-                self.sink = Some(Sink::Compressed { encoder });
+                self.sink = Some(Sink::Compressed {
+                    encoder: Box::new(encoder),
+                });
                 Ok(())
             }
             Sink::Compressed { mut encoder } => {
@@ -143,7 +145,7 @@ mod tests {
     fn flush_visibility_compressed_prop() {
         // Property-based: first flush exposes the uncompressed handshake (a),
         // subsequent flushes append to the persistent LZ4 frame (b then b+c).
-        let _ = proptest::proptest!(|(a in "[ -~]{0,64}", b in "[ -~]{0,64}", c in "[ -~]{0,64}")| {
+        proptest::proptest!(|(a in "[ -~]{0,64}", b in "[ -~]{0,64}", c in "[ -~]{0,64}")| {
             let buf = Arc::new(Mutex::new(Vec::new()));
             let sink = TestSink(buf.clone());
             let rt = tokio::runtime::Runtime::new().unwrap();

@@ -116,9 +116,8 @@ mod tests {
         assert!(evs.next().is_none());
         // Another delete should not surface the old deletes anymore, they are dropped
         let mut evs2 = t.handle(Event::Delete(30));
-        match evs2.next() {
-            Some(_) => panic!("expected event - queue should be empty"),
-            None => (),
+        if evs2.next().is_some() {
+            panic!("expected event - queue should be empty");
         }
         assert!(evs2.next().is_none());
     }
