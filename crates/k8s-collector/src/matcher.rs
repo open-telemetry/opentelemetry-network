@@ -207,6 +207,37 @@ impl Matcher {
         out
     }
 
+    /// Produce a human-readable snapshot of the current matcher state.
+    ///
+    /// Intended for use in tests and debugging to help understand mismatches
+    /// between the pod/owner Stores and emitted events during resync.
+    pub fn debug_snapshot(&self) -> String {
+        use std::fmt::Write;
+
+        let mut out = String::new();
+
+        let _ = writeln!(out, "Matcher debug snapshot:");
+        let _ = writeln!(out, "  epoch={}", self.epoch);
+        let _ = writeln!(out, "  live_pods={:?}", self.live_pods);
+        let _ = writeln!(
+            out,
+            "  waiting_by_owner keys={:?}",
+            self.waiting_by_owner.keys()
+        );
+
+        let _ = writeln!(out, "  owners_store:");
+        for owner in self.owners.state().into_iter().map(|a| (*a).clone()) {
+            let _ = writeln!(out, "    {:?}", owner);
+        }
+
+        let _ = writeln!(out, "  pods_store:");
+        for pod in self.pods.state().into_iter().map(|a| (*a).clone()) {
+            let _ = writeln!(out, "    {:?}", pod);
+        }
+
+        out
+    }
+
     /// Attempt to emit `PodNew` (+containers) for the given pod when resolvable.
     ///
     fn try_emit_pod(&mut self, p: PodMeta) -> Vec<RenderEvent> {

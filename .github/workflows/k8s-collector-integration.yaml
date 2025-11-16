@@ -1,0 +1,82 @@
+name: k8s-collector-integration
+
+on:
+  workflow_call:
+  push:
+    branches:
+      - main
+  pull_request:
+    paths:
+      - "crates/k8s-collector/**"
+      - ".github/workflows/k8s-collector-integration.yaml"
+
+jobs:
+  build-k8s-collector-tests:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out the codebase
+        uses: actions/checkout@v4
+
+      - name: Cache Rust build
+        uses: Swatinem/rust-cache@v2
+        with:
+          prefix-key: k8s-collector-integration-${{ runner.os }}
+
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+
+      - name: Build k8s-collector integration tests (no-run)
+        run: |
+          cargo test -p k8s-collector --tests --release --no-run
+
+      - name: Collect k8s-collector integration test binary
+        run: |
+          set -euxo pipefail
+          BIN=$(find target/release/deps -maxdepth 1 -type f -executable -name 'integration_test-*' | head -n 1)
+          test -n "$BIN" || { echo "k8s-collector integration test binary not found"; exit 1; }
+          cp "$BIN" k8s-collector-integration
+          chmod +x k8s-collector-integration
+
+      - name: Upload k8s-collector integration binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: k8s-collector-integration
+          path: k8s-collector-integration
+          if-no-files-found: error
+
+  k8s-collector-e2e:
+    needs: build-k8s-collector-tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Check out the codebase
+        uses: actions/checkout@v4
+
+      - name: Set up kind cluster
+        uses: helm/kind-action@v1.10.0
+        with:
+          version: v0.30.0
+          cluster_name: k8s-collector-e2e
+
+      - name: Download k8s-collector integration binary
+        uses: actions/download-artifact@v4
+        with:
+          name: k8s-collector-integration
+          path: ./
+
+      - name: Prepare test binary
+        run: |
+          chmod +x ./k8s-collector-integration || true
+
+      - name: Run k8s-collector integration tests
+        env:
+          RUST_LOG: info
+        run: |
+          for i in {1..10}; do
+            echo "k8s-collector integration test run ${i}/10"
+            ./k8s-collector-integration --include-ignored --nocapture --test-threads=1 || exit 1
+          done
