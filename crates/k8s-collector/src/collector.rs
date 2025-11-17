@@ -8,7 +8,7 @@ use std::pin::Pin;
 
 use futures_util::{Stream, StreamExt};
 use log::{error, info, warn};
-use tokio::time::{sleep, Duration};
+use tokio::time::{sleep, Duration, interval};
 
 use crate::config::Config;
 use crate::convert_to_meta::{job_to_owner, pod_to_meta, rs_to_owner};
@@ -266,29 +266,50 @@ pub async fn run(cfg: Config) -> Result<(), crate::Error> {
             continue 'reconnect;
         }
 
+        let mut heartbeat = interval(Duration::from_secs(5));
+
         // Inner loop: forward events until connection drops or the pipeline fails
         'connection: loop {
-            match pipeline.next_messages().await {
-                Ok(events) => {
-                    for ev in events {
-                        let buf = encode::encode(&ev, timestamp());
-                        if let Err(err) = writer.send(&buf).await {
-                            // Connection dropped; break to reconnect.
-                            warn!(
-                                "k8s-collector: send to reducer failed during event forwarding: {err}; reconnecting"
-                            );
-                            break 'connection;
+            tokio::select! {
+                res = pipeline.next_messages() => {
+                    match res {
+                        Ok(events) => {
+                            for ev in events {
+                                let buf = encode::encode(&ev, timestamp());
+                                if let Err(err) = writer.send(&buf).await {
+                                    // Connection dropped; break to reconnect.
+                                    warn!(
+                                        "k8s-collector: send to reducer failed during event forwarding: {err}; reconnecting"
+                                    );
+                                    break 'connection;
+                                }
+                            }
+                            if let Err(err) = writer.flush().await {
+                                warn!("k8s-collector: flush after event batch failed: {err}; reconnecting");
+                                break 'connection;
+                            }
+                        }
+                        Err(e) => {
+                            // Fatal pipeline error (e.g., watcher stream terminated): propagate up.
+                            error!("collector pipeline failed: {e}");
+                            return Err(e);
                         }
                     }
-                    if let Err(err) = writer.flush().await {
-                        warn!("k8s-collector: flush after event batch failed: {err}; reconnecting");
+                }
+                _ = heartbeat.tick() => {
+                    let buf = encode::encode_heartbeat(timestamp());
+                    if let Err(err) = writer.send(&buf).await {
+                        warn!(
+                            "k8s-collector: send to reducer failed during heartbeat: {err}; reconnecting"
+                        );
                         break 'connection;
                     }
-                }
-                Err(e) => {
-                    // Fatal pipeline error (e.g., watcher stream terminated): propagate up.
-                    error!("collector pipeline failed: {e}");
-                    return Err(e);
+                    if let Err(err) = writer.flush().await {
+                        warn!(
+                            "k8s-collector: flush after heartbeat failed: {err}; reconnecting"
+                        );
+                        break 'connection;
+                    }
                 }
             }
         }
