@@ -52,6 +52,16 @@ extern "C" {
         resync_count: u64,
     );
 }
+extern "C" {
+    fn ebpf_net_ingest_encode_version_info(
+        dest: *mut u8,
+        dest_len: u32,
+        tstamp: u64,
+        major: u32,
+        minor: u32,
+        patch: u32,
+    );
+}
 
 /// Construct a `JbBlob` view from a Rust `&str`.
 fn as_blob(s: &str) -> JbBlob {
@@ -165,4 +175,21 @@ pub fn encode(event: &RenderEvent, tstamp: u64) -> Vec<u8> {
             buf
         }
     }
+}
+
+/// Encode a `version_info` handshake message.
+pub fn encode_version_info(major: u32, minor: u32, patch: u32, tstamp: u64) -> Vec<u8> {
+    let len = 8 + 16;
+    let mut buf = vec![0u8; len];
+    unsafe {
+        ebpf_net_ingest_encode_version_info(
+            buf.as_mut_ptr(),
+            buf.len() as u32,
+            tstamp,
+            major,
+            minor,
+            patch,
+        );
+    }
+    buf
 }
