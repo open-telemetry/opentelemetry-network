@@ -1118,6 +1118,7 @@ dependencies = [
  "encoder_ebpf_net_ingest",
  "env_logger",
  "futures-util",
+ "hostname",
  "k8s-openapi",
  "kube",
  "log",

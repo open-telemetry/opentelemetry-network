@@ -210,6 +210,8 @@ pub async fn run(cfg: Config) -> Result<(), crate::Error> {
 
     let mut pipeline = Collector::new(cfg.clone()).await?;
 
+    let hostname = collector_hostname();
+
     let addr = std::net::SocketAddr::new(
         cfg.intake_host
             .parse()
@@ -234,18 +236,8 @@ pub async fn run(cfg: Config) -> Result<(), crate::Error> {
             }
         };
         let mut writer = Writer::new(stream);
-
-        // Protocol handshake: first message must be version_info, sent
-        // uncompressed, to negotiate compression with the reducer.
-        let (major, minor, patch) = collector_version();
-        let ver_buf = encode::encode_version_info(major, minor, patch, timestamp());
-        if let Err(err) = writer.send(&ver_buf).await {
-            warn!("k8s-collector: failed to send version_info to reducer: {err}; reconnecting");
-            sleep(Duration::from_secs(1)).await;
-            continue 'reconnect;
-        }
-        if let Err(err) = writer.flush().await {
-            warn!("k8s-collector: flush after version_info send failed: {err}; reconnecting");
+        if let Err(err) = perform_handshake(&mut writer, &hostname).await {
+            warn!("k8s-collector: handshake with reducer failed: {err}; reconnecting");
             sleep(Duration::from_secs(1)).await;
             continue 'reconnect;
         }
@@ -322,6 +314,38 @@ fn collector_version() -> (u32, u32, u32) {
     let minor = parse("EBPF_NET_MINOR_VERSION").unwrap_or(11);
     let patch = parse("EBPF_NET_PATCH_VERSION").unwrap_or(0);
     (major, minor, patch)
+}
+
+fn collector_hostname() -> String {
+    if let Ok(h) = std::env::var("K8S_COLLECTOR_HOSTNAME") {
+        return h;
+    }
+    match hostname::get() {
+        Ok(name) => name.to_string_lossy().into_owned(),
+        Err(_) => "k8s-collector".to_string(),
+    }
+}
+
+async fn perform_handshake<W>(writer: &mut Writer<W>, hostname: &str) -> std::io::Result<()>
+where
+    W: tokio::io::AsyncWrite + Unpin + Send + 'static,
+{
+    // First message: uncompressed version_info to negotiate compression and
+    // pass the minimum accepted version check on the reducer.
+    let (major, minor, patch) = collector_version();
+    let ver_buf = encode::encode_version_info(major, minor, patch, timestamp());
+    writer.send(&ver_buf).await?;
+    writer.flush().await?;
+
+    // Second message: connect as a k8s collector with hostname. This
+    // authenticates the connection and enables handlers for k8s pod messages.
+    //
+    // ClientType::k8s = 3 (see common/client_type.h).
+    let connect_buf = encode::encode_connect(3, hostname, timestamp());
+    writer.send(&connect_buf).await?;
+    writer.flush().await?;
+
+    Ok(())
 }
 
 /// Current UNIX time in nanoseconds.
