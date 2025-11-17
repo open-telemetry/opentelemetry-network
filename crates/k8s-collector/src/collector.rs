@@ -208,9 +208,16 @@ impl Collector {
 pub async fn run(cfg: Config) -> Result<(), crate::Error> {
     use tokio::net::TcpStream;
 
+    let (major, minor, patch) = collector_version();
+    info!(
+        "Starting k8s-collector version {}.{}.{}",
+        major, minor, patch
+    );
+
     let mut pipeline = Collector::new(cfg.clone()).await?;
 
     let hostname = collector_hostname();
+    info!("Hostname: {}", hostname);
 
     let addr = std::net::SocketAddr::new(
         cfg.intake_host
@@ -221,6 +228,7 @@ pub async fn run(cfg: Config) -> Result<(), crate::Error> {
 
     'reconnect: loop {
         // Connect
+        info!("k8s-collector: connecting to reducer at {}", addr);
         let stream = match TcpStream::connect(addr).await {
             Ok(s) => {
                 info!("k8s-collector: connected to reducer at {}", addr);
