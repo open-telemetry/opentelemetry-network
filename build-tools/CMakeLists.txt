@@ -119,7 +119,6 @@ build_directory(curl DEPENDS base openssl)
 build_directory(libuv DEPENDS base)
 build_directory(aws_sdk DEPENDS base openssl curl)
 build_directory(cpp_misc DEPENDS base)
-build_directory(go DEPENDS base)
 build_directory(grpc_cpp DEPENDS base abseil_cpp openssl)
 build_directory(gcp_cpp DEPENDS base openssl curl grpc_cpp)
 build_directory(abseil_cpp DEPENDS base)
@@ -137,7 +136,6 @@ build_directory(
     libuv
     aws_sdk
     cpp_misc
-    go
     grpc_cpp
     abseil_cpp
     libmaxminddb
