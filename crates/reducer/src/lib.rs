@@ -6,7 +6,12 @@ use reducer_sys::ffi::{ReducerConfig as FfiReducerConfig, TsdbFormat};
 
 mod aggregation_core;
 pub mod aggregation_framework;
+mod aggregation_message_handler;
+mod aggregator;
 pub mod ffi;
+mod internal_events;
+mod metrics;
+mod otlp_encoding;
 
 #[derive(Parser, Debug)]
 #[command(name = "reducer", about = "OpenTelemetry eBPF Reducer")]

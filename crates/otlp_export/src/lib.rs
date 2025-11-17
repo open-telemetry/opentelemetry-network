@@ -1,9 +1,9 @@
 #![allow(clippy::new_without_default)]
 
 #[cxx::bridge]
-mod ffi {
+pub mod ffi {
     /// Lightweight key/value label representation.
-    #[derive(Debug)]
+    #[derive(Debug, Clone)]
     pub struct Label {
         pub key: String,
         pub value: String,
@@ -132,7 +132,7 @@ struct PendingMetric {
     value: PointValue,
 }
 
-fn otlp_publisher_new(endpoint: &str) -> Box<Publisher> {
+pub fn otlp_publisher_new(endpoint: &str) -> Box<Publisher> {
     // Resolve endpoint: accept full URL or host:port and default to http with no path for gRPC.
     let endpoint_resolved = normalize_grpc_endpoint(endpoint);
 
@@ -165,7 +165,7 @@ fn otlp_publisher_new(endpoint: &str) -> Box<Publisher> {
 }
 
 impl Publisher {
-    fn publish_metric_u64(
+    pub fn publish_metric_u64(
         &mut self,
         name: &str,
         unit: &str,
@@ -196,7 +196,7 @@ impl Publisher {
         self.buffered_bytes = self.buffered_bytes.saturating_add(approx);
     }
 
-    fn publish_metric_f64(
+    pub fn publish_metric_f64(
         &mut self,
         name: &str,
         unit: &str,
@@ -229,7 +229,7 @@ impl Publisher {
 }
 
 impl Publisher {
-    fn publish_flow_log(
+    pub fn publish_flow_log(
         &mut self,
         _labels: &Vec<Label>,
         _timestamp_unix_nano: i64,
@@ -249,7 +249,7 @@ impl Publisher {
         self.buffered_bytes = self.buffered_bytes.saturating_add(128);
     }
 
-    fn flush(&mut self) {
+    pub fn flush(&mut self) {
         if self.buf.is_empty() {
             return;
         }
@@ -443,12 +443,12 @@ impl Publisher {
         self.buffered_bytes = 0;
     }
 
-    fn shutdown(&mut self) {
+    pub fn shutdown(&mut self) {
         self.flush();
         // Nothing else to shutdown for the exporter.
     }
 
-    fn stats(&self) -> PublisherStats {
+    pub fn stats(&self) -> PublisherStats {
         PublisherStats {
             bytes_sent: self.bytes_sent,
             bytes_failed: self.bytes_failed,

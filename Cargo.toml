@@ -31,3 +31,4 @@ render_parser = { path = "crates/render_parser" }
 otlp_export = { path = "crates/otlp_export" }
 reducer = { path = "crates/reducer" }
 reducer-sys = { path = "crates/reducer-sys" }
+rc-hashmap = { version = "0.1" }
