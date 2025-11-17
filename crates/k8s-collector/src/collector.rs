@@ -7,7 +7,7 @@
 use std::pin::Pin;
 
 use futures_util::{stream, Stream, StreamExt};
-use log::{error, warn};
+use log::{error, info, warn};
 use tokio::time::{sleep, Duration};
 
 use crate::config::Config;
@@ -191,11 +191,18 @@ pub async fn run(cfg: Config) -> Result<(), crate::Error> {
         cfg.intake_port,
     );
 
-    loop {
+    'reconnect: loop {
         // Connect
         let stream = match TcpStream::connect(addr).await {
-            Ok(s) => s,
-            Err(_) => {
+            Ok(s) => {
+                info!("k8s-collector: connected to reducer at {}", addr);
+                s
+            }
+            Err(err) => {
+                warn!(
+                    "k8s-collector: failed to connect to reducer at {}: {err}; retrying in 1s",
+                    addr
+                );
                 sleep(Duration::from_secs(1)).await;
                 continue;
             }
@@ -205,12 +212,18 @@ pub async fn run(cfg: Config) -> Result<(), crate::Error> {
         // New epoch on connect
         for ev in pipeline.start_new_epoch() {
             let buf = encode::encode(&ev, timestamp());
-            if let Err(_e) = writer.send(&buf).await {
+            if let Err(err) = writer.send(&buf).await {
                 // Connection failed while sending epoch; restart outer loop
-                continue;
+                warn!("k8s-collector: failed to send epoch event to reducer: {err}; reconnecting");
+                sleep(Duration::from_secs(1)).await;
+                continue 'reconnect;
             }
         }
-        let _ = writer.flush().await;
+        if let Err(err) = writer.flush().await {
+            warn!("k8s-collector: flush after epoch send failed: {err}; reconnecting");
+            sleep(Duration::from_secs(1)).await;
+            continue 'reconnect;
+        }
 
         // Inner loop: forward events until connection drops or the pipeline fails
         'connection: loop {
@@ -218,12 +231,18 @@ pub async fn run(cfg: Config) -> Result<(), crate::Error> {
                 Ok(events) => {
                     for ev in events {
                         let buf = encode::encode(&ev, timestamp());
-                        if let Err(_e) = writer.send(&buf).await {
+                        if let Err(err) = writer.send(&buf).await {
                             // Connection dropped; break to reconnect.
+                            warn!(
+                                "k8s-collector: send to reducer failed during event forwarding: {err}; reconnecting"
+                            );
                             break 'connection;
                         }
                     }
-                    let _ = writer.flush().await;
+                    if let Err(err) = writer.flush().await {
+                        warn!("k8s-collector: flush after event batch failed: {err}; reconnecting");
+                        break 'connection;
+                    }
                 }
                 Err(e) => {
                     // Fatal pipeline error (e.g., watcher stream terminated): propagate up.
