@@ -3,6 +3,10 @@ name = "k8s-collector-bin"
 version = "0.1.0"
 edition = "2021"
 
+[[bin]]
+name = "k8s-collector"
+path = "src/main.rs"
+
 [dependencies]
 clap = { version = "4", features = ["derive"] }
 k8s-collector = { path = "../k8s-collector" }
