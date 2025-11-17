@@ -6,9 +6,9 @@
 
 use std::pin::Pin;
 
-use futures_util::{Stream, StreamExt};
+use futures_util::{future, Stream, StreamExt};
 use log::{error, info, warn};
-use tokio::time::{sleep, Duration, interval};
+use tokio::time::{interval, sleep, Duration, Instant};
 
 use crate::config::Config;
 use crate::convert_to_meta::{job_to_owner, pod_to_meta, rs_to_owner};
@@ -267,13 +267,16 @@ pub async fn run(cfg: Config) -> Result<(), crate::Error> {
         }
 
         let mut heartbeat = interval(Duration::from_secs(5));
+        let mut flush_deadline: Option<Instant> = None;
 
         // Inner loop: forward events until connection drops or the pipeline fails
         'connection: loop {
+            let flush_deadline_opt = flush_deadline;
             tokio::select! {
                 res = pipeline.next_messages() => {
                     match res {
                         Ok(events) => {
+                            let had_events = !events.is_empty();
                             for ev in events {
                                 let buf = encode::encode(&ev, timestamp());
                                 if let Err(err) = writer.send(&buf).await {
@@ -284,9 +287,8 @@ pub async fn run(cfg: Config) -> Result<(), crate::Error> {
                                     break 'connection;
                                 }
                             }
-                            if let Err(err) = writer.flush().await {
-                                warn!("k8s-collector: flush after event batch failed: {err}; reconnecting");
-                                break 'connection;
+                            if had_events && flush_deadline.is_none() {
+                                flush_deadline = Some(Instant::now() + Duration::from_millis(100));
                             }
                         }
                         Err(e) => {
@@ -310,6 +312,22 @@ pub async fn run(cfg: Config) -> Result<(), crate::Error> {
                         );
                         break 'connection;
                     }
+                    flush_deadline = None;
+                }
+                _ = async {
+                    if let Some(deadline) = flush_deadline_opt {
+                        tokio::time::sleep_until(deadline).await;
+                    } else {
+                        future::pending::<()>().await;
+                    }
+                } => {
+                    if let Err(err) = writer.flush().await {
+                        warn!(
+                            "k8s-collector: flush after flush-deadline failed: {err}; reconnecting"
+                        );
+                        break 'connection;
+                    }
+                    flush_deadline = None;
                 }
             }
         }
