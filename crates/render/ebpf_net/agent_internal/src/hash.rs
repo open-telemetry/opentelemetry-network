@@ -17,9 +17,7 @@
 pub const AGENT_INTERNAL_HASH_SIZE: u32 = 64u32;
 
 #[allow(dead_code)]
-pub static G_ARRAY: [u8; 8] = [
-    1,0,0,1,0,0,1,1
-];
+pub static G_ARRAY: [u8; 8] = [1, 0, 0, 1, 0, 0, 1, 1];
 
 #[inline]
 #[allow(dead_code)]
