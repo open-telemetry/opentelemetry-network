@@ -1,7 +1,7 @@
 //! Pod↔Owner matching engine.
 //!
-//! Maintains external kube reflectors Stores for owners and pods, correlates
-//! pods with their
+//! Maintains external kube reflectors Stores for owners (ReplicaSets and Jobs)
+//! and pods, correlates pods with their
 //! effective owners, and produces normalized render events:
 //! - Emit PodNew(+containers) when a pod is resolvable and has an IP
 //! - Emit PodContainer updates for subsequent Apply on live pods
@@ -10,9 +10,12 @@
 //!
 //! Design notes:
 //! - Stores are provided externally to `Matcher` and are fed by kube reflectors.
-//!   `Init`/`InitApply`/`InitDone` are handled by the reflector writer; on
-//!   `InitDone`, `Store::state()` exposes the new snapshot. `Matcher` uses this
-//!   snapshot in `start_new_epoch()` to re-emit resolvable pods.
+//!   ReplicaSet and Job owners use separate Stores so that independent
+//!   re-initialization (`Init`/`InitApply`/`InitDone`) of their watcher streams
+//!   cannot clobber each other's snapshot state.
+//!   On `InitDone`, `Store::state()` for each owner Store exposes its new
+//!   snapshot; `Matcher` uses the combined view in `start_new_epoch()` to
+//!   re-emit resolvable pods.
 //! - `Lookup` is implemented for `PodMeta` and `OwnerMeta` so `Store` keys by
 //!   UID as a cluster-scoped identifier. We construct `ObjectRef` keys via
 //!   small helpers (`pod_ref`, `owner_ref`) and use `Store::get` for O(1)
@@ -91,7 +94,8 @@ impl Lookup for OwnerMeta {
 
 pub struct Matcher {
     epoch: u64,
-    owners: Store<OwnerMeta>,
+    rs_owners: Store<OwnerMeta>,
+    job_owners: Store<OwnerMeta>,
     waiting_by_owner: HashMap<String, Vec<String>>, // owner uid -> pod uids
     pods: Store<PodMeta>,
     live_pods: HashSet<String>,
@@ -99,10 +103,18 @@ pub struct Matcher {
 
 impl Matcher {
     /// Create a new matcher with the provided Stores.
-    pub fn new(owners: Store<OwnerMeta>, pods: Store<PodMeta>) -> Self {
+    ///
+    /// `rs_owners` and `job_owners` are kept separate to avoid cross-talk
+    /// between independently re-initialized ReplicaSet and Job watcher streams.
+    pub fn new(
+        rs_owners: Store<OwnerMeta>,
+        job_owners: Store<OwnerMeta>,
+        pods: Store<PodMeta>,
+    ) -> Self {
         Self {
             epoch: 0,
-            owners,
+            rs_owners,
+            job_owners,
             waiting_by_owner: HashMap::new(),
             pods,
             live_pods: HashSet::new(),
@@ -117,6 +129,21 @@ impl Matcher {
     /// Helper: build an ObjectRef for an Owner by UID (cluster-scoped key)
     fn owner_ref(uid: &str) -> ObjectRef<OwnerMeta> {
         ObjectRef::<OwnerMeta>::new(uid)
+    }
+
+    /// Helper: look up an owner meta by UID across ReplicaSet and Job Stores.
+    fn get_owner_meta(&self, uid: &str) -> Option<OwnerMeta> {
+        self.rs_owners
+            .get(&Self::owner_ref(uid))
+            .or_else(|| self.job_owners.get(&Self::owner_ref(uid)))
+            .as_deref()
+            .cloned()
+    }
+
+    /// Helper: check whether an owner UID exists in any owner Store.
+    fn owner_exists(&self, uid: &str) -> bool {
+        self.rs_owners.get(&Self::owner_ref(uid)).is_some()
+            || self.job_owners.get(&Self::owner_ref(uid)).is_some()
     }
 
     /// Handle a single Owner event and return any resulting render events.
@@ -143,7 +170,7 @@ impl Matcher {
                 let mut out = Vec::new();
                 let keys: Vec<String> = self.waiting_by_owner.keys().cloned().collect();
                 for owner_uid in keys {
-                    if self.owners.get(&Self::owner_ref(&owner_uid)).is_some() {
+                    if self.owner_exists(&owner_uid) {
                         if let Some(pods) = self.waiting_by_owner.remove(&owner_uid) {
                             for puid in pods {
                                 if let Some(p) =
@@ -225,8 +252,13 @@ impl Matcher {
             self.waiting_by_owner.keys()
         );
 
-        let _ = writeln!(out, "  owners_store:");
-        for owner in self.owners.state().into_iter().map(|a| (*a).clone()) {
+        let _ = writeln!(out, "  rs_owners_store:");
+        for owner in self.rs_owners.state().into_iter().map(|a| (*a).clone()) {
+            let _ = writeln!(out, "    {:?}", owner);
+        }
+
+        let _ = writeln!(out, "  job_owners_store:");
+        for owner in self.job_owners.state().into_iter().map(|a| (*a).clone()) {
             let _ = writeln!(out, "    {:?}", owner);
         }
 
@@ -260,7 +292,7 @@ impl Matcher {
         }
 
         // Owner is RS/Job: check if owner info is known and possibly escalate
-        if let Some(om) = self.owners.get(&Self::owner_ref(&owner.uid)).as_deref() {
+        if let Some(om) = self.get_owner_meta(&owner.uid) {
             let escalated = match &om.controller {
                 Some(ctrl) if matches!(ctrl.kind, OwnerKind::Deployment | OwnerKind::CronJob) => {
                     ctrl.clone()
@@ -288,23 +320,30 @@ mod tests {
 
     struct Harness {
         m: Matcher,
-        owners_w: kube::runtime::reflector::store::Writer<OwnerMeta>,
+        rs_owners_w: kube::runtime::reflector::store::Writer<OwnerMeta>,
+        job_owners_w: kube::runtime::reflector::store::Writer<OwnerMeta>,
         pods_w: kube::runtime::reflector::store::Writer<PodMeta>,
     }
 
     impl Harness {
         fn new() -> Self {
-            let (owners_store, owners_w) = store::store::<OwnerMeta>();
+            let (rs_owners_store, rs_owners_w) = store::store::<OwnerMeta>();
+            let (job_owners_store, job_owners_w) = store::store::<OwnerMeta>();
             let (pods_store, pods_w) = store::store::<PodMeta>();
-            let m = Matcher::new(owners_store, pods_store);
+            let m = Matcher::new(rs_owners_store, job_owners_store, pods_store);
             Self {
                 m,
-                owners_w,
+                rs_owners_w,
+                job_owners_w,
                 pods_w,
             }
         }
-        fn handle_owner(&mut self, ev: Event<OwnerMeta>) -> Vec<RenderEvent> {
-            self.owners_w.apply_watcher_event(&ev);
+        fn handle_rs_owner(&mut self, ev: Event<OwnerMeta>) -> Vec<RenderEvent> {
+            self.rs_owners_w.apply_watcher_event(&ev);
+            self.m.handle_owner(ev)
+        }
+        fn handle_job_owner(&mut self, ev: Event<OwnerMeta>) -> Vec<RenderEvent> {
+            self.job_owners_w.apply_watcher_event(&ev);
             self.m.handle_owner(ev)
         }
         fn handle_pod(&mut self, ev: Event<PodMeta>) -> Vec<RenderEvent> {
@@ -356,7 +395,7 @@ mod tests {
             Some(ref_kind(OwnerKind::ReplicaSet, "r1", "rs")),
         )));
         assert!(events.is_empty());
-        let out = h.handle_owner(Event::Apply(rs_owner(
+        let out = h.handle_rs_owner(Event::Apply(rs_owner(
             "r1",
             Some(ref_kind(OwnerKind::Deployment, "d1", "dep")),
         )));
@@ -383,7 +422,7 @@ mod tests {
     // The pod should be emitted immediately using escalated owner when applicable.
     fn owner_first_then_pod_emits_immediately() {
         let mut h = Harness::new();
-        let _ = h.handle_owner(Event::Apply(rs_owner(
+        let _ = h.handle_rs_owner(Event::Apply(rs_owner(
             "r2",
             Some(ref_kind(OwnerKind::Deployment, "d2", "dep")),
         )));
@@ -413,12 +452,12 @@ mod tests {
     #[test]
     fn initdone_starts_epoch_and_emits_resolvable() {
         let mut h = Harness::new();
-        let _ = h.handle_owner(Event::InitApply(rs_owner(
+        let _ = h.handle_rs_owner(Event::InitApply(rs_owner(
             "r3",
             Some(ref_kind(OwnerKind::Deployment, "d3", "dep")),
         )));
         // Complete owner init to swap snapshot into the owner Store
-        let _ = h.handle_owner(Event::InitDone);
+        let _ = h.handle_rs_owner(Event::InitDone);
         let _ = h.handle_pod(Event::InitApply(pod(
             "p3",
             "10.0.0.3",
@@ -485,7 +524,7 @@ mod tests {
     fn job_cronjob_escalation() {
         let mut h = Harness::new();
         // pod owned by Job j1 but owner meta has controller CronJob c1
-        let _ = h.handle_owner(Event::Apply(rs_owner(
+        let _ = h.handle_job_owner(Event::Apply(rs_owner(
             "j1",
             Some(ref_kind(OwnerKind::CronJob, "c1", "cj")),
         )));
@@ -515,7 +554,7 @@ mod tests {
     // Deleting a live pod should produce a PodDelete event and clear its state.
     fn delete_emits_pod_delete_when_live() {
         let mut h = Harness::new();
-        let _ = h.handle_owner(Event::Apply(rs_owner(
+        let _ = h.handle_rs_owner(Event::Apply(rs_owner(
             "r4",
             Some(ref_kind(OwnerKind::Deployment, "d4", "dep")),
         )));
@@ -551,7 +590,7 @@ mod tests {
             "ro",
             Some(ref_kind(OwnerKind::Deployment, "dep", "dep")),
         ))) {
-            let _ = h.handle_owner(e);
+            let _ = h.handle_rs_owner(e);
         }
         // Owner Delete retained (no events forwarded)
         assert!(owner_tomb
@@ -599,7 +638,7 @@ mod tests {
             .next()
             .is_none());
         // Owner Apply arrives -> should emit pod despite pending delete
-        let out = h.handle_owner(Event::Apply(rs_owner(
+        let out = h.handle_rs_owner(Event::Apply(rs_owner(
             "ro2",
             Some(ref_kind(OwnerKind::Deployment, "dep2", "dep")),
         )));
