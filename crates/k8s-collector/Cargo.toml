@@ -17,6 +17,7 @@ serde_json = "1"
 encoder_ebpf_net_ingest = { path = "../render/ebpf_net/ingest" }
 lz4_flex = { version = "0.11", features = ["frame"] }
 tokio-util = { version = "0.7", features = ["io-util"] }
+hostname = "0.4"
 
 [dev-dependencies]
 k8s-openapi = { version = "0.26", features = ["v1_30"] }

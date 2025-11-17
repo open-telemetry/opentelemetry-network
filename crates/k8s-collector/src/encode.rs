@@ -62,6 +62,15 @@ extern "C" {
         patch: u32,
     );
 }
+extern "C" {
+    fn ebpf_net_ingest_encode_connect(
+        dest: *mut u8,
+        dest_len: u32,
+        tstamp: u64,
+        collector_type: u8,
+        hostname: JbBlob,
+    );
+}
 
 /// Construct a `JbBlob` view from a Rust `&str`.
 fn as_blob(s: &str) -> JbBlob {
@@ -189,6 +198,26 @@ pub fn encode_version_info(major: u32, minor: u32, patch: u32, tstamp: u64) -> V
             major,
             minor,
             patch,
+        );
+    }
+    buf
+}
+
+/// Encode a `connect` message identifying this collector.
+///
+/// `collector_type` is the numeric `ClientType` enum value (e.g., 3 for k8s
+/// collectors; see `common/client_type.h`).
+pub fn encode_connect(collector_type: u8, hostname: &str, tstamp: u64) -> Vec<u8> {
+    let consumed = 5u32 + hostname.len() as u32;
+    let len = 8 + consumed as usize;
+    let mut buf = vec![0u8; len];
+    unsafe {
+        ebpf_net_ingest_encode_connect(
+            buf.as_mut_ptr(),
+            buf.len() as u32,
+            tstamp,
+            collector_type,
+            as_blob(hostname),
         );
     }
     buf
