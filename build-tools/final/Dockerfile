@@ -5,7 +5,6 @@ ARG base_IMAGE_TAG
 ARG libuv_IMAGE_TAG
 ARG aws_sdk_IMAGE_TAG
 ARG cpp_misc_IMAGE_TAG
-ARG go_IMAGE_TAG
 ARG libmaxminddb_IMAGE_TAG
 ARG opentelemetry_IMAGE_TAG
 ARG libbpf_IMAGE_TAG
@@ -15,7 +14,6 @@ FROM $base_IMAGE_TAG as build-main
 FROM $libuv_IMAGE_TAG as build-libuv
 FROM $aws_sdk_IMAGE_TAG as build-aws-sdk
 FROM $cpp_misc_IMAGE_TAG as build-cpp-misc
-FROM $go_IMAGE_TAG as build-go
 FROM $libmaxminddb_IMAGE_TAG as build-libmaxminddb
 FROM $opentelemetry_IMAGE_TAG as build-opentelemetry
 FROM $libbpf_IMAGE_TAG as build-libbpf
@@ -131,10 +129,6 @@ COPY --from=build-libmaxminddb $HOME/install /install
 COPY --from=build-opentelemetry $HOME/install /install
 COPY --from=build-libbpf $HOME/install /install
 #gen:dep-copy
-
-COPY --from=build-go $HOME/go/bin /usr/local/go/bin
-COPY --from=build-go $HOME/go/src /usr/local/go/src
-COPY --from=build-go $HOME/go/pkg /usr/local/go/pkg
 
 ARG BENV_UNMINIMIZE=false
 RUN (which unminimize && $BENV_UNMINIMIZE && (yes | sudo unminimize)) || true
