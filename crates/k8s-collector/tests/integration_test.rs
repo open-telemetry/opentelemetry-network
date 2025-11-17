@@ -391,7 +391,10 @@ where
                     remaining,
                     collector.debug_snapshot()
                 );
-                bail!("tokio timeout waiting for collector.next_messages(): {}", elapsed);
+                bail!(
+                    "tokio timeout waiting for collector.next_messages(): {}",
+                    elapsed
+                );
             }
         };
         if batch.is_empty() {
@@ -412,6 +415,26 @@ where
 #[ignore]
 async fn test_k8s_collector_end_to_end_e2e() -> anyhow::Result<()> {
     init_test_logger();
+
+    // Use a per-run suffix to ensure that resource names are unique across test
+    // invocations, so we never accidentally match pods from a previous run.
+    let run_suffix = {
+        use std::time::{SystemTime, UNIX_EPOCH};
+        let nanos = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_nanos();
+        let hex = format!("{:x}", nanos);
+        // Take the last 6 hex chars to keep names short but unique-enough.
+        hex.chars()
+            .rev()
+            .take(6)
+            .collect::<String>()
+            .chars()
+            .rev()
+            .collect::<String>()
+    };
+    info!("k8s-collector e2e: using run suffix {}", run_suffix);
 
     // Skip the test if no kubeconfig is available; this environment
     // does not guarantee a Kubernetes cluster.
@@ -446,27 +469,36 @@ async fn test_k8s_collector_end_to_end_e2e() -> anyhow::Result<()> {
     let cronjobs: Api<CronJob> = Api::namespaced(client.clone(), namespace);
     let replicasets: Api<ReplicaSet> = Api::namespaced(client.clone(), namespace);
 
-    // Best-effort cleanup from previous runs.
-    let _ = delete_if_exists(&deployments, "kc-e2e-pre-deploy").await;
-    let _ = delete_if_exists(&deployments, "kc-e2e-new-deploy").await;
-    let _ = delete_if_exists(&cronjobs, "kc-e2e-pre-cron").await;
-    let _ = delete_if_exists(&cronjobs, "kc-e2e-new-cron").await;
-    let _ = delete_if_exists(&jobs, "kc-e2e-pre-job").await;
-    let _ = delete_if_exists(&jobs, "kc-e2e-new-job").await;
-    let _ = delete_if_exists(&replicasets, "kc-e2e-pre-rs").await;
+    // Per-run resource names with a unique suffix to avoid collisions
+    // between test invocations.
+    let pre_deploy_name = format!("kc-e2e-pre-deploy-{}", run_suffix);
+    let pre_cron_name = format!("kc-e2e-pre-cron-{}", run_suffix);
+    let pre_job_name = format!("kc-e2e-pre-job-{}", run_suffix);
+    let pre_rs_name = format!("kc-e2e-pre-rs-{}", run_suffix);
+    let new_deploy_name = format!("kc-e2e-new-deploy-{}", run_suffix);
+    let new_cron_name = format!("kc-e2e-new-cron-{}", run_suffix);
+    let new_job_name = format!("kc-e2e-new-job-{}", run_suffix);
+
+    // Best-effort cleanup from previous runs with the same naming pattern.
+    let _ = delete_if_exists(&deployments, &pre_deploy_name).await;
+    let _ = delete_if_exists(&deployments, &new_deploy_name).await;
+    let _ = delete_if_exists(&cronjobs, &pre_cron_name).await;
+    let _ = delete_if_exists(&cronjobs, &new_cron_name).await;
+    let _ = delete_if_exists(&jobs, &pre_job_name).await;
+    let _ = delete_if_exists(&jobs, &new_job_name).await;
+    let _ = delete_if_exists(&replicasets, &pre_rs_name).await;
     info!("k8s-collector e2e: completed pre-test cleanup of prior resources");
 
     // Pre-existing Deployment and CronJob+Job before the collector starts.
-    let pre_deploy = create_sleep_deployment(&client, namespace, "kc-e2e-pre-deploy").await?;
-    let pre_cron = create_cronjob(&client, namespace, "kc-e2e-pre-cron").await?;
-    let _pre_job =
-        create_job_with_cron_owner(&client, namespace, &pre_cron, "kc-e2e-pre-job").await?;
-    let pre_rs = create_replicaset(&client, namespace, "kc-e2e-pre-rs").await?;
+    let pre_deploy = create_sleep_deployment(&client, namespace, &pre_deploy_name).await?;
+    let pre_cron = create_cronjob(&client, namespace, &pre_cron_name).await?;
+    let _pre_job = create_job_with_cron_owner(&client, namespace, &pre_cron, &pre_job_name).await?;
+    let pre_rs = create_replicaset(&client, namespace, &pre_rs_name).await?;
 
     // Wait for their pods to be running and capture UIDs.
     let pre_deploy_pod = wait_for_pod_running_by_label(
         &pods,
-        "k8s-collector-e2e=kc-e2e-pre-deploy",
+        &format!("k8s-collector-e2e={}", pre_deploy_name),
         Duration::from_secs(120),
     )
     .await?;
@@ -479,7 +511,7 @@ async fn test_k8s_collector_end_to_end_e2e() -> anyhow::Result<()> {
 
     let pre_cron_pod = wait_for_pod_running_by_label(
         &pods,
-        "k8s-collector-e2e=kc-e2e-pre-job",
+        &format!("k8s-collector-e2e={}", pre_job_name),
         Duration::from_secs(120),
     )
     .await?;
@@ -491,7 +523,7 @@ async fn test_k8s_collector_end_to_end_e2e() -> anyhow::Result<()> {
     let pre_cron_pod_name = pre_cron_pod.name_any();
     let pre_rs_pod = wait_for_pod_running_by_label(
         &pods,
-        "k8s-collector-e2e=kc-e2e-pre-rs",
+        &format!("k8s-collector-e2e={}", pre_rs_name),
         Duration::from_secs(120),
     )
     .await?;
@@ -565,14 +597,13 @@ async fn test_k8s_collector_end_to_end_e2e() -> anyhow::Result<()> {
 
     // Create new Deployment and CronJob+Job while collector is running.
     info!("k8s-collector e2e: creating new Deployment and CronJob/Job resources");
-    let new_deploy = create_sleep_deployment(&client, namespace, "kc-e2e-new-deploy").await?;
-    let new_cron = create_cronjob(&client, namespace, "kc-e2e-new-cron").await?;
-    let _new_job =
-        create_job_with_cron_owner(&client, namespace, &new_cron, "kc-e2e-new-job").await?;
+    let new_deploy = create_sleep_deployment(&client, namespace, &new_deploy_name).await?;
+    let new_cron = create_cronjob(&client, namespace, &new_cron_name).await?;
+    let _new_job = create_job_with_cron_owner(&client, namespace, &new_cron, &new_job_name).await?;
 
     let new_deploy_pod = wait_for_pod_running_by_label(
         &pods,
-        "k8s-collector-e2e=kc-e2e-new-deploy",
+        &format!("k8s-collector-e2e={}", new_deploy_name),
         Duration::from_secs(120),
     )
     .await?;
@@ -585,7 +616,7 @@ async fn test_k8s_collector_end_to_end_e2e() -> anyhow::Result<()> {
 
     let new_cron_pod = wait_for_pod_running_by_label(
         &pods,
-        "k8s-collector-e2e=kc-e2e-new-job",
+        &format!("k8s-collector-e2e={}", new_job_name),
         Duration::from_secs(120),
     )
     .await?;
@@ -720,12 +751,12 @@ async fn test_k8s_collector_end_to_end_e2e() -> anyhow::Result<()> {
     }
 
     // Best-effort cleanup.
-    let _ = delete_if_exists(&deployments, "kc-e2e-pre-deploy").await;
-    let _ = delete_if_exists(&deployments, "kc-e2e-new-deploy").await;
-    let _ = delete_if_exists(&cronjobs, "kc-e2e-pre-cron").await;
-    let _ = delete_if_exists(&cronjobs, "kc-e2e-new-cron").await;
-    let _ = delete_if_exists(&jobs, "kc-e2e-pre-job").await;
-    let _ = delete_if_exists(&jobs, "kc-e2e-new-job").await;
+    let _ = delete_if_exists(&deployments, &pre_deploy_name).await;
+    let _ = delete_if_exists(&deployments, &new_deploy_name).await;
+    let _ = delete_if_exists(&cronjobs, &pre_cron_name).await;
+    let _ = delete_if_exists(&cronjobs, &new_cron_name).await;
+    let _ = delete_if_exists(&jobs, &pre_job_name).await;
+    let _ = delete_if_exists(&jobs, &new_job_name).await;
 
     Ok(())
 }
