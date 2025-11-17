@@ -15,7 +15,7 @@ pub mod raw;
 
 // Re-export for backwards-compatibility with the previous single-module layout.
 pub use layout::{contig_size, ElementQueueShared};
-pub use raw::{EqError, ElementQueue, ReadBatch, WriteBatch};
+pub use raw::{ElementQueue, EqError, ReadBatch, WriteBatch};
 
 /// Owned contiguous storage for an element queue, similar to MemElementQueueStorage.
 pub struct MemElementQueueStorage {
@@ -33,12 +33,22 @@ impl MemElementQueueStorage {
         // Initialize shared header
         let ptr = buf.as_mut_ptr() as *mut u8;
         (ptr as *mut ElementQueueShared).init_zero();
-        Self { buf, n_elems, buf_len }
+        Self {
+            buf,
+            n_elems,
+            buf_len,
+        }
     }
 
-    pub fn n_elems(&self) -> u32 { self.n_elems }
-    pub fn buf_len(&self) -> u32 { self.buf_len }
-    pub fn data_ptr(&self) -> *mut u8 { self.buf.as_ptr() as *mut u8 }
+    pub fn n_elems(&self) -> u32 {
+        self.n_elems
+    }
+    pub fn buf_len(&self) -> u32 {
+        self.buf_len
+    }
+    pub fn data_ptr(&self) -> *mut u8 {
+        self.buf.as_ptr() as *mut u8
+    }
 
     pub fn make_queue(&self) -> Result<ElementQueue, EqError> {
         // Safety: `self.buf` is contiguous and has the expected layout
@@ -65,7 +75,10 @@ mod tests {
         let n_elems = 8u32;
         let buf_len = 64u32;
         let size = contig_size(n_elems, buf_len);
-        assert_eq!(size, core::mem::size_of::<ElementQueueShared>() + (n_elems as usize) * 4 + buf_len as usize);
+        assert_eq!(
+            size,
+            core::mem::size_of::<ElementQueueShared>() + (n_elems as usize) * 4 + buf_len as usize
+        );
     }
 
     #[test]
