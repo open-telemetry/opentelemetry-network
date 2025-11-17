@@ -71,6 +71,9 @@ extern "C" {
         hostname: JbBlob,
     );
 }
+extern "C" {
+    fn ebpf_net_ingest_encode_heartbeat(dest: *mut u8, dest_len: u32, tstamp: u64);
+}
 
 /// Construct a `JbBlob` view from a Rust `&str`.
 fn as_blob(s: &str) -> JbBlob {
@@ -219,6 +222,16 @@ pub fn encode_connect(collector_type: u8, hostname: &str, tstamp: u64) -> Vec<u8
             collector_type,
             as_blob(hostname),
         );
+    }
+    buf
+}
+
+/// Encode a `heartbeat` message.
+pub fn encode_heartbeat(tstamp: u64) -> Vec<u8> {
+    let len = 8 + 2;
+    let mut buf = vec![0u8; len];
+    unsafe {
+        ebpf_net_ingest_encode_heartbeat(buf.as_mut_ptr(), buf.len() as u32, tstamp);
     }
     buf
 }
