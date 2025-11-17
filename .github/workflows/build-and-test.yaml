@@ -303,6 +303,11 @@ jobs:
         echo "github.workspace = ${{ github.workspace }}"
         docker pull $BENV_IMAGE
         git submodule update  --init --recursive ext/
+        
+        # Start local registry for the build process
+        docker run -d -p 5000:5000 --name registry docker.io/library/registry:2
+        
+        # Build k8s-collector with registry access
         # Ensure ccache directory is writable inside container
         mkdir -p "${{ github.workspace }}/.ccache"
         chmod -R 777 "${{ github.workspace }}/.ccache" || true
@@ -314,8 +319,27 @@ jobs:
         --mount "type=bind,source=$(git rev-parse --show-toplevel),destination=/home/user/src,readonly" \
         --env EBPF_NET_SRC_ROOT=/home/user/src \
         --env CCACHE_DIR=/ccache \
+        --network host \
+        --privileged \
         $BENV_IMAGE \
-        ./build.sh k8s-collector
+        ./build.sh k8s-collector-docker-registry
+        
+        # Export k8s-collector container
+        mkdir -p container-exports
+        docker pull localhost:5000/k8s-collector
+        docker save localhost:5000/k8s-collector > container-exports/k8s-collector.tar
+        
+        # Clean up registry
+        docker stop registry
+        docker rm registry
+
+    - name: Upload k8s-collector container
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      with:
+        name: k8s-collector-container
+        path: container-exports/k8s-collector.tar
+        if-no-files-found: error
+        retention-days: 1
 
   build-cloud-collector:
     name: build-cloud-collector
@@ -443,7 +467,7 @@ jobs:
 
   e2e-otel-jsonl:
     name: e2e-otel-jsonl
-    needs: [build-reducer, build-kernel-collector]
+    needs: [build-reducer, build-kernel-collector, build-k8s-collector]
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
@@ -451,6 +475,12 @@ jobs:
       uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
       with:
         fetch-depth: 0
+
+    - name: Set up kind cluster
+      uses: helm/kind-action@v1.10.0
+      with:
+        version: v0.30.0
+        cluster_name: e2e-kind
 
     - name: Download reducer container
       uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
@@ -464,11 +494,18 @@ jobs:
         name: kernel-collector-container
         path: ./container-exports
 
+    - name: Download k8s-collector container
+      uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
+      with:
+        name: k8s-collector-container
+        path: ./container-exports
+
     - name: Load images and prepare config/output
       run: |
         set -euxo pipefail
         docker load < container-exports/reducer.tar
         docker load < container-exports/kernel-collector.tar
+        docker load < container-exports/k8s-collector.tar
 
         mkdir -p e2e-out
         # ensure otelcol (which runs non-root) can write here regardless of uid mapping
@@ -571,15 +608,99 @@ jobs:
         sleep 15
         docker logs --tail 50 kernel-collector-e2e || true
 
+    - name: Start k8s collector
+      run: |
+        set -euxo pipefail
+        KUBECONFIG_PATH="${KUBECONFIG:-$HOME/.kube/config}"
+        if [ ! -f "${KUBECONFIG_PATH}" ]; then
+          echo "KUBECONFIG not found at ${KUBECONFIG_PATH}"
+          ls -la "${HOME}" || true
+          ls -la "${HOME}/.kube" || true
+          exit 1
+        fi
+
+        echo "Using kubeconfig at ${KUBECONFIG_PATH}"
+        kubectl config current-context || true
+
+        K8S_COLLECTOR_ID=$(docker run -d \
+          --name k8s-collector-e2e \
+          --network host \
+          --env EBPF_NET_INTAKE_HOST="127.0.0.1" \
+          --env EBPF_NET_INTAKE_PORT="8000" \
+          --env RUST_LOG="info" \
+          --env KUBECONFIG="/kubeconfig" \
+          --volume "${KUBECONFIG_PATH}:/kubeconfig:ro" \
+          localhost:5000/k8s-collector)
+        echo "k8s-collector started: ${K8S_COLLECTOR_ID}"
+        # allow it to connect and start watching
+        sleep 10
+        docker logs --tail 100 k8s-collector-e2e || true
+
     - name: Generate traffic and wait for collection
       run: |
         set -euxo pipefail
-        # Generate some egress HTTP traffic on the host
-        for i in $(seq 1 10); do
-          wget -qO- https://opentelemetry.io >/dev/null || true
-          sleep 1
-        done
-        # Allow time for metrics to propagate and be exported
+        # Deploy Kubernetes traffic generator in the kind cluster
+        KUBECONFIG_PATH="${KUBECONFIG:-$HOME/.kube/config}"
+        if [ ! -f "${KUBECONFIG_PATH}" ]; then
+          echo "KUBECONFIG not found at ${KUBECONFIG_PATH}"
+          ls -la "${HOME}" || true
+          ls -la "${HOME}/.kube" || true
+          exit 1
+        fi
+
+        kubectl create namespace e2e-kind || true
+
+        cat > e2e-kind-traffic.yaml <<'EOF'
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: e2e-wget
+          namespace: e2e-kind
+          labels:
+            app: e2e-wget
+            e2e-role: traffic
+        spec:
+          replicas: 10
+          selector:
+            matchLabels:
+              app: e2e-wget
+          template:
+            metadata:
+              labels:
+                app: e2e-wget
+                e2e-role: traffic
+            spec:
+              containers:
+              - name: wget
+                image: busybox:1.36
+                command:
+                  - /bin/sh
+                  - -c
+                  - |
+                    echo "e2e-wget: starting in pod $(hostname)"
+                    echo "e2e-wget: uname: $(uname -a || echo 'uname failed')"
+                    echo "e2e-wget: /etc/resolv.conf:"
+                    cat /etc/resolv.conf || echo "e2e-wget: unable to read /etc/resolv.conf"
+                    echo "e2e-wget: testing DNS for example.com"
+                    nslookup example.com || echo "e2e-wget: nslookup example.com failed (command may be missing)"
+                    TARGET_URL="http://example.com"
+                    echo "e2e-wget: running wget to ${TARGET_URL}"
+                    if wget --timeout=15 --tries=3 -O /dev/null "${TARGET_URL}"; then
+                      echo "e2e-wget: wget succeeded"
+                    else
+                      ec=$?
+                      echo "e2e-wget: wget failed with exit code ${ec}"
+                    fi
+                    echo "e2e-wget: finished, sleeping"
+                    # keep the pod running long enough that it does not restart during the test
+                    sleep 600
+        EOF
+
+        kubectl apply -f e2e-kind-traffic.yaml
+        kubectl -n e2e-kind rollout status deploy/e2e-wget --timeout=180s
+        kubectl -n e2e-kind get pods -o wide || true
+
+        # Allow time for metrics to propagate and be exported through collectors
         sleep 60
 
     - name: Stop services and collect logs
@@ -587,9 +708,12 @@ jobs:
       run: |
         set -euxo pipefail
         docker ps || true
+        docker logs --tail 200 k8s-collector-e2e || true
         docker logs --tail 200 kernel-collector-e2e || true
         docker logs --tail 200 reducer-e2e || true
         docker logs --tail 200 otelcol-e2e || true
+        docker stop k8s-collector-e2e || true
+        docker rm k8s-collector-e2e || true
         docker stop kernel-collector-e2e || true
         docker stop reducer-e2e || true
         docker stop otelcol-e2e || true
@@ -607,6 +731,49 @@ jobs:
           e2e-out/*
         if-no-files-found: warn
         retention-days: 7
+
+    - name: Show tcp.bytes metrics from JSONL
+      if: always()
+      run: |
+        set +e
+        if [ ! -f e2e-out/otel.jsonl ]; then
+          echo "e2e-out/otel.jsonl not found; skipping tcp.bytes display"
+          exit 0
+        fi
+
+        if ! command -v jq >/dev/null 2>&1; then
+          echo "jq not found; attempting to install"
+          sudo apt-get update && sudo apt-get install -y jq || true
+        fi
+
+        if ! command -v jq >/dev/null 2>&1; then
+          echo "jq still not available; skipping tcp.bytes display"
+          exit 0
+        fi
+
+        echo "=== tcp.bytes metrics (pretty-printed) ==="
+        jq '
+          .resourceMetrics[]?
+          | .scopeMetrics[]?
+          | .metrics[]?
+          | select(.name == "tcp.bytes")
+        ' e2e-out/otel.jsonl || true
+
+    - name: Show wget pod logs
+      if: always()
+      run: |
+        set +e
+        KUBECONFIG_PATH="${KUBECONFIG:-$HOME/.kube/config}"
+        if [ ! -f "${KUBECONFIG_PATH}" ]; then
+          echo "KUBECONFIG not found; skipping wget pod logs"
+          exit 0
+        fi
+
+        echo "=== e2e-kind namespace pods ==="
+        kubectl -n e2e-kind get pods -o wide || true
+
+        echo "=== e2e-wget pod logs (tail) ==="
+        kubectl -n e2e-kind logs -l app=e2e-wget --tail=100 || true
 
   run-kernel-collector-simple-tests:
     name: run-kernel-collector-simple-tests
