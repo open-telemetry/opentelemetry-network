@@ -13,11 +13,15 @@ add_custom_target(docker-registry)
 ################
 
 function(build_custom_docker_image IMAGE_NAME)
-  cmake_parse_arguments(ARG "" "DOCKERFILE_PATH;OUT_DIR" "ARGS;IMAGE_TAGS;FILES;BINARIES;DIRECTORIES;DEPENDS;OUTPUT_OF;ARTIFACTS_OF;DOCKER_REGISTRY;DEPENDENCY_OF" ${ARGN})
+  cmake_parse_arguments(ARG "" "DOCKERFILE_PATH;DOCKERFILE_NAME;OUT_DIR" "ARGS;IMAGE_TAGS;FILES;BINARIES;DIRECTORIES;DEPENDS;OUTPUT_OF;ARTIFACTS_OF;DOCKER_REGISTRY;DEPENDENCY_OF" ${ARGN})
 
   # Dockerfile's directory defaults to the one containing CMakeLists.txt
   if (NOT DEFINED ARG_DOCKERFILE_PATH)
     set(ARG_DOCKERFILE_PATH "${CMAKE_CURRENT_SOURCE_DIR}")
+  endif()
+
+  if (NOT DEFINED ARG_DOCKERFILE_NAME)
+    set(ARG_DOCKERFILE_NAME "Dockerfile")
   endif()
 
   if (NOT DEFINED ARG_IMAGE_TAGS)
@@ -109,7 +113,7 @@ function(build_custom_docker_image IMAGE_NAME)
     WORKING_DIRECTORY
       "${out_path}"
     COMMAND
-      ${CMAKE_COMMAND} -E copy_if_different ${ARG_DOCKERFILE_PATH}/Dockerfile ${out_path}
+      ${CMAKE_COMMAND} -E copy_if_different ${ARG_DOCKERFILE_PATH}/${ARG_DOCKERFILE_NAME} ${out_path}
   )
 
   if (DEFINED FILES_LIST)
@@ -163,8 +167,8 @@ function(build_custom_docker_image IMAGE_NAME)
       # rootless networking helpers (pasta/slirp4netns) inside nested CI
       # containers. This improves reliability of podman builds in GitHub
       # Actions and similar environments.
-      COMMAND
-        podman build --network host -t "${IMAGE_NAME}" ${DOCKER_ARGS} .
+    COMMAND
+        podman build --network host -t "${IMAGE_NAME}" ${DOCKER_ARGS} -f "${ARG_DOCKERFILE_NAME}" .
     )
   endif()
 
