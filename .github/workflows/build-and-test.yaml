@@ -707,7 +707,14 @@ jobs:
       if: always()
       run: |
         set -euxo pipefail
+        mkdir -p e2e-logs || true
         docker ps || true
+        # Capture full container logs to files for later inspection
+        docker logs k8s-collector-e2e > e2e-logs/k8s-collector-e2e.log 2>&1 || true
+        docker logs kernel-collector-e2e > e2e-logs/kernel-collector-e2e.log 2>&1 || true
+        docker logs reducer-e2e > e2e-logs/reducer-e2e.log 2>&1 || true
+        docker logs otelcol-e2e > e2e-logs/otelcol-e2e.log 2>&1 || true
+        # Also emit a short tail to the job logs for quick debugging
         docker logs --tail 200 k8s-collector-e2e || true
         docker logs --tail 200 kernel-collector-e2e || true
         docker logs --tail 200 reducer-e2e || true
@@ -729,6 +736,16 @@ jobs:
         name: e2e-otel-jsonl
         path: |
           e2e-out/*
+        if-no-files-found: warn
+        retention-days: 7
+
+    - name: Upload e2e container logs
+      if: always()
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      with:
+        name: e2e-container-logs
+        path: |
+          e2e-logs/*
         if-no-files-found: warn
         retention-days: 7
 
