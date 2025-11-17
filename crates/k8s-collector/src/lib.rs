@@ -28,6 +28,10 @@ use crate::config::Config;
 pub enum Error {
     #[error("collector stopped")]
     Stopped,
+    #[error("failed to initialize Kubernetes client: {0}")]
+    KubeInit(String),
+    #[error("failed to initialize Tokio runtime: {0}")]
+    RuntimeInit(String),
 }
 
 /// Convenience runner used by the binary: runs the layered pipeline with kube watchers.
@@ -37,6 +41,6 @@ pub enum Error {
 /// Errors indicate runtime initialization failure or fatal errors in the
 /// orchestrated tasks.
 pub fn run_with_config(cfg: Config) -> Result<(), Error> {
-    let rt = tokio::runtime::Runtime::new().map_err(|_| Error::Stopped)?;
+    let rt = tokio::runtime::Runtime::new().map_err(|e| Error::RuntimeInit(e.to_string()))?;
     rt.block_on(async move { collector::run(cfg).await })
 }

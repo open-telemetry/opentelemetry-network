@@ -63,7 +63,7 @@ impl Collector {
     pub async fn new(cfg: Config) -> Result<Self, crate::Error> {
         let client = Client::try_default()
             .await
-            .map_err(|_| crate::Error::Stopped)?;
+            .map_err(|e| crate::Error::KubeInit(e.to_string()))?;
         Ok(Self::with_client(cfg, client))
     }
 
