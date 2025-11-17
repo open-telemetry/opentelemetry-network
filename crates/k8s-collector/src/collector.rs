@@ -209,6 +209,21 @@ pub async fn run(cfg: Config) -> Result<(), crate::Error> {
         };
         let mut writer = Writer::new(stream);
 
+        // Protocol handshake: first message must be version_info, sent
+        // uncompressed, to negotiate compression with the reducer.
+        let (major, minor, patch) = collector_version();
+        let ver_buf = encode::encode_version_info(major, minor, patch, timestamp());
+        if let Err(err) = writer.send(&ver_buf).await {
+            warn!("k8s-collector: failed to send version_info to reducer: {err}; reconnecting");
+            sleep(Duration::from_secs(1)).await;
+            continue 'reconnect;
+        }
+        if let Err(err) = writer.flush().await {
+            warn!("k8s-collector: flush after version_info send failed: {err}; reconnecting");
+            sleep(Duration::from_secs(1)).await;
+            continue 'reconnect;
+        }
+
         // New epoch on connect
         for ev in pipeline.start_new_epoch() {
             let buf = encode::encode(&ev, timestamp());
@@ -270,6 +285,17 @@ fn map_kube_event<K, T>(
         KEvent::InitApply(obj) => vec![Event::InitApply(f(obj))],
         KEvent::InitDone => vec![Event::InitDone],
     })
+}
+
+fn collector_version() -> (u32, u32, u32) {
+    fn parse(name: &str) -> Option<u32> {
+        std::env::var(name).ok()?.parse().ok()
+    }
+
+    let major = parse("EBPF_NET_MAJOR_VERSION").unwrap_or(0);
+    let minor = parse("EBPF_NET_MINOR_VERSION").unwrap_or(11);
+    let patch = parse("EBPF_NET_PATCH_VERSION").unwrap_or(0);
+    (major, minor, patch)
 }
 
 /// Current UNIX time in nanoseconds.
