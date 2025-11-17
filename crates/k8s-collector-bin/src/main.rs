@@ -73,6 +73,10 @@ fn print_config(cfg: &Config) {
 }
 
 fn main() {
+    // Initialize logging for the collector binary.
+    let _ = env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info"))
+        .try_init();
+
     let cli = Cli::parse();
     let cfg = match build_config(&cli) {
         Ok(c) => c,

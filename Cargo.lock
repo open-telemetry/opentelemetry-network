@@ -1136,6 +1136,7 @@ name = "k8s-collector-bin"
 version = "0.1.0"
 dependencies = [
  "clap",
+ "env_logger",
  "k8s-collector",
  "k8s-openapi",
 ]
