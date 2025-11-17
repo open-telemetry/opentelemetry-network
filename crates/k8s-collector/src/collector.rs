@@ -6,7 +6,7 @@
 
 use std::pin::Pin;
 
-use futures_util::{stream, Stream, StreamExt};
+use futures_util::{Stream, StreamExt};
 use log::{error, info, warn};
 use tokio::time::{sleep, Duration};
 
@@ -45,13 +45,16 @@ type OwnerStream = Pin<
 /// exposing a `next_messages` API that yields batches of `RenderEvent`s.
 pub struct Collector {
     pod_stream: PodStream,
-    owner_stream: OwnerStream,
+    rs_owner_stream: OwnerStream,
+    job_owner_stream: OwnerStream,
 
-    owners_writer: reflector::store::Writer<OwnerMeta>,
+    rs_owners_writer: reflector::store::Writer<OwnerMeta>,
+    job_owners_writer: reflector::store::Writer<OwnerMeta>,
     pods_writer: reflector::store::Writer<PodMeta>,
 
     matcher: Matcher,
-    owner_tomb: TombstoneAdapter<OwnerMeta>,
+    rs_owner_tomb: TombstoneAdapter<OwnerMeta>,
+    job_owner_tomb: TombstoneAdapter<OwnerMeta>,
     pod_tomb: TombstoneAdapter<PodMeta>,
 }
 
@@ -79,22 +82,25 @@ impl Collector {
             watcher::watcher(rs_api, wc.clone()).map(|e| map_kube_event(e, rs_to_owner));
         let job_stream = watcher::watcher(job_api, wc).map(|e| map_kube_event(e, job_to_owner));
 
-        let owner_stream = stream::select(rs_stream, job_stream);
-
-        let (owners_store, owners_writer) = reflector::store::store::<OwnerMeta>();
+        let (rs_owners_store, rs_owners_writer) = reflector::store::store::<OwnerMeta>();
+        let (job_owners_store, job_owners_writer) = reflector::store::store::<OwnerMeta>();
         let (pods_store, pods_writer) = reflector::store::store::<PodMeta>();
-        let matcher = Matcher::new(owners_store, pods_store);
+        let matcher = Matcher::new(rs_owners_store, job_owners_store, pods_store);
 
-        let owner_tomb = TombstoneAdapter::new(cfg.delete_ttl, cfg.delete_capacity);
+        let rs_owner_tomb = TombstoneAdapter::new(cfg.delete_ttl, cfg.delete_capacity);
+        let job_owner_tomb = TombstoneAdapter::new(cfg.delete_ttl, cfg.delete_capacity);
         let pod_tomb = TombstoneAdapter::new(cfg.delete_ttl, cfg.delete_capacity);
 
         Self {
             pod_stream: Box::pin(pod_stream),
-            owner_stream: Box::pin(owner_stream),
-            owners_writer,
+            rs_owner_stream: Box::pin(rs_stream),
+            job_owner_stream: Box::pin(job_stream),
+            rs_owners_writer,
+            job_owners_writer,
             pods_writer,
             matcher,
-            owner_tomb,
+            rs_owner_tomb,
+            job_owner_tomb,
             pod_tomb,
         }
     }
@@ -130,12 +136,32 @@ impl Collector {
                         }
                     }
                 }
-                ev = self.owner_stream.next() => {
+                ev = self.rs_owner_stream.next() => {
                     match ev {
                         Some(Ok(events)) => {
                             for e in events {
-                                for fwd in self.owner_tomb.handle(e) {
-                                    self.owners_writer.apply_watcher_event(&fwd);
+                                for fwd in self.rs_owner_tomb.handle(e) {
+                                    self.rs_owners_writer.apply_watcher_event(&fwd);
+                                    out.extend(self.matcher.handle_owner(fwd));
+                                }
+                            }
+                        }
+                        Some(Err(err)) => {
+                            warn!("owner watcher error: {err:?}; will retry on next tick");
+                            continue;
+                        }
+                        None => {
+                            error!("owner watcher stream terminated unexpectedly");
+                            return Err(crate::Error::Stopped);
+                        }
+                    }
+                }
+                ev = self.job_owner_stream.next() => {
+                    match ev {
+                        Some(Ok(events)) => {
+                            for e in events {
+                                for fwd in self.job_owner_tomb.handle(e) {
+                                    self.job_owners_writer.apply_watcher_event(&fwd);
                                     out.extend(self.matcher.handle_owner(fwd));
                                 }
                             }

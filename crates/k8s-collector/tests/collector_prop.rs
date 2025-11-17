@@ -15,32 +15,47 @@ use proptest::prelude::*;
 /// - Matcher, which produces RenderEvents.
 struct PipelineHarness {
     matcher: Matcher,
-    owners_writer: store::Writer<OwnerMeta>,
+    rs_owners_writer: store::Writer<OwnerMeta>,
+    job_owners_writer: store::Writer<OwnerMeta>,
     pods_writer: store::Writer<PodMeta>,
-    owner_tomb: TombstoneAdapter<OwnerMeta>,
+    rs_owner_tomb: TombstoneAdapter<OwnerMeta>,
+    job_owner_tomb: TombstoneAdapter<OwnerMeta>,
     pod_tomb: TombstoneAdapter<PodMeta>,
 }
 
 impl PipelineHarness {
     fn new() -> Self {
-        let (owners_store, owners_writer) = store::store::<OwnerMeta>();
+        let (rs_owners_store, rs_owners_writer) = store::store::<OwnerMeta>();
+        let (job_owners_store, job_owners_writer) = store::store::<OwnerMeta>();
         let (pods_store, pods_writer) = store::store::<PodMeta>();
-        let matcher = Matcher::new(owners_store, pods_store);
-        let owner_tomb = TombstoneAdapter::new(Duration::from_secs(0), 1024);
+        let matcher = Matcher::new(rs_owners_store, job_owners_store, pods_store);
+        let rs_owner_tomb = TombstoneAdapter::new(Duration::from_secs(0), 1024);
+        let job_owner_tomb = TombstoneAdapter::new(Duration::from_secs(0), 1024);
         let pod_tomb = TombstoneAdapter::new(Duration::from_secs(0), 1024);
         Self {
             matcher,
-            owners_writer,
+            rs_owners_writer,
+            job_owners_writer,
             pods_writer,
-            owner_tomb,
+            rs_owner_tomb,
+            job_owner_tomb,
             pod_tomb,
         }
     }
 
-    fn apply_owner(&mut self, ev: Event<OwnerMeta>) -> Vec<RenderEvent> {
+    fn apply_rs_owner(&mut self, ev: Event<OwnerMeta>) -> Vec<RenderEvent> {
         let mut out = Vec::new();
-        for fwd in self.owner_tomb.handle(ev) {
-            self.owners_writer.apply_watcher_event(&fwd);
+        for fwd in self.rs_owner_tomb.handle(ev) {
+            self.rs_owners_writer.apply_watcher_event(&fwd);
+            out.extend(self.matcher.handle_owner(fwd));
+        }
+        out
+    }
+
+    fn apply_job_owner(&mut self, ev: Event<OwnerMeta>) -> Vec<RenderEvent> {
+        let mut out = Vec::new();
+        for fwd in self.job_owner_tomb.handle(ev) {
+            self.job_owners_writer.apply_watcher_event(&fwd);
             out.extend(self.matcher.handle_owner(fwd));
         }
         out
@@ -261,13 +276,29 @@ fn prop_collector_matches_pod_model() {
 
                     if owners_first {
                         for owner in owners_meta.iter().cloned() {
-                            owner_events.extend(harness.apply_owner(Event::Apply(owner)));
+                            match scenario {
+                                OwnerScenario::ReplicaSetOnly | OwnerScenario::ReplicaSetWithDeployment => {
+                                    owner_events.extend(harness.apply_rs_owner(Event::Apply(owner)));
+                                }
+                                OwnerScenario::JobOnly | OwnerScenario::JobWithCronJob => {
+                                    owner_events.extend(harness.apply_job_owner(Event::Apply(owner)));
+                                }
+                                OwnerScenario::NoOwner => {}
+                            }
                         }
                         pod_events.extend(harness.apply_pod(Event::Apply(pod_meta)));
                     } else {
                         pod_events.extend(harness.apply_pod(Event::Apply(pod_meta)));
                         for owner in owners_meta.iter().cloned() {
-                            owner_events.extend(harness.apply_owner(Event::Apply(owner)));
+                            match scenario {
+                                OwnerScenario::ReplicaSetOnly | OwnerScenario::ReplicaSetWithDeployment => {
+                                    owner_events.extend(harness.apply_rs_owner(Event::Apply(owner)));
+                                }
+                                OwnerScenario::JobOnly | OwnerScenario::JobWithCronJob => {
+                                    owner_events.extend(harness.apply_job_owner(Event::Apply(owner)));
+                                }
+                                OwnerScenario::NoOwner => {}
+                            }
                         }
                     }
 
@@ -393,13 +424,22 @@ fn prop_collector_matches_pod_model() {
                     // - PodNew for exactly the live pods in the model.
                     model.epoch = model.epoch.wrapping_add(1);
 
-                    let mut owners_snapshot: Vec<OwnerMeta> = Vec::new();
+                    let mut rs_owners_snapshot: Vec<OwnerMeta> = Vec::new();
+                    let mut job_owners_snapshot: Vec<OwnerMeta> = Vec::new();
                     for mp in model.pods.values() {
                         if !mp.present {
                             continue;
                         }
                         let (_owner_ref, owners_meta, _effective_owner) = mp.scenario.build_for_pod(mp.pod_id);
-                        owners_snapshot.extend(owners_meta);
+                        match mp.scenario {
+                            OwnerScenario::ReplicaSetOnly | OwnerScenario::ReplicaSetWithDeployment => {
+                                rs_owners_snapshot.extend(owners_meta);
+                            }
+                            OwnerScenario::JobOnly | OwnerScenario::JobWithCronJob => {
+                                job_owners_snapshot.extend(owners_meta);
+                            }
+                            OwnerScenario::NoOwner => {}
+                        }
                     }
 
                     let mut pods_snapshot: Vec<PodMeta> = Vec::new();
@@ -413,11 +453,18 @@ fn prop_collector_matches_pod_model() {
                     }
 
                     let mut epoch_events: Vec<RenderEvent> = Vec::new();
-                    epoch_events.extend(harness.apply_owner(Event::Init));
-                    for owner in owners_snapshot.into_iter() {
-                        epoch_events.extend(harness.apply_owner(Event::InitApply(owner)));
+                    // RS owners re-init
+                    epoch_events.extend(harness.apply_rs_owner(Event::Init));
+                    for owner in rs_owners_snapshot.into_iter() {
+                        epoch_events.extend(harness.apply_rs_owner(Event::InitApply(owner)));
                     }
-                    epoch_events.extend(harness.apply_owner(Event::InitDone));
+                    epoch_events.extend(harness.apply_rs_owner(Event::InitDone));
+                    // Job owners re-init
+                    epoch_events.extend(harness.apply_job_owner(Event::Init));
+                    for owner in job_owners_snapshot.into_iter() {
+                        epoch_events.extend(harness.apply_job_owner(Event::InitApply(owner)));
+                    }
+                    epoch_events.extend(harness.apply_job_owner(Event::InitDone));
                     epoch_events.extend(harness.apply_pod(Event::Init));
                     for pod_meta in pods_snapshot.into_iter() {
                         epoch_events.extend(harness.apply_pod(Event::InitApply(pod_meta)));
