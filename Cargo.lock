@@ -994,6 +994,7 @@ dependencies = [
  "cxx",
  "element-queue",
  "encoder_ebpf_net_aggregation",
+ "proptest",
  "reducer-sys",
  "render_parser",
  "timeslot",

@@ -5,6 +5,7 @@ use clap::Parser;
 use reducer_sys::ffi::{ReducerConfig as FfiReducerConfig, TsdbFormat};
 
 mod aggregation_core;
+pub mod aggregation_framework;
 pub mod ffi;
 
 #[derive(Parser, Debug)]

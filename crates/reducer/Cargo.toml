@@ -15,3 +15,6 @@ timeslot = { path = "../timeslot" }
 render_parser = { workspace = true }
 encoder_ebpf_net_aggregation = { path = "../render/ebpf_net/aggregation" }
 cxx = "1"
+
+[dev-dependencies]
+proptest = "1"
