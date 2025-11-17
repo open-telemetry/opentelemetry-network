@@ -15,6 +15,15 @@ members = [
   "crates/otlp_export",
   "crates/element-queue",
   "crates/timeslot",
+  # Render encoders (ebpf_net)
+  "crates/render/ebpf_net",
+  "crates/render/ebpf_net/agent_internal",
+  "crates/render/ebpf_net/aggregation",
+  "crates/render/ebpf_net/cloud_collector",
+  "crates/render/ebpf_net/ingest",
+  "crates/render/ebpf_net/kernel_collector",
+  "crates/render/ebpf_net/logging",
+  "crates/render/ebpf_net/matching",
 ]
 
 [workspace.dependencies]
