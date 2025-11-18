@@ -39,6 +39,14 @@ install(
   COMPONENT reducer
 )
 
+get_target_property(REDUCER_BIN reducer-stripped OUTPUT)
+install(
+  PROGRAMS ${REDUCER_BIN}
+  DESTINATION ${CMAKE_INSTALL_BINDIR}
+  RENAME reducer
+  COMPONENT reducer
+)
+
 
 ################################################################################
 # Kernel Collector
@@ -78,6 +86,14 @@ install(
   COMPONENT kernel-collector
 )
 
+get_target_property(KERNEL_COLLECTOR_BIN kernel-collector-stripped OUTPUT)
+install(
+  PROGRAMS ${KERNEL_COLLECTOR_BIN}
+  DESTINATION ${CMAKE_INSTALL_BINDIR}
+  RENAME kernel-collector
+  COMPONENT kernel-collector
+)
+
 
 ################################################################################
 # Cloud Collector
@@ -111,6 +127,14 @@ install(
     cloud-collector/cloud-collector.args
     cloud-collector/cloud-collector.yaml
   DESTINATION ${CONFIG_DIR}
+  COMPONENT cloud-collector
+)
+
+get_target_property(CLOUD_COLLECTOR_BIN cloud-collector-stripped OUTPUT)
+install(
+  PROGRAMS ${CLOUD_COLLECTOR_BIN}
+  DESTINATION ${CMAKE_INSTALL_BINDIR}
+  RENAME cloud-collector
   COMPONENT cloud-collector
 )
 

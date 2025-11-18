@@ -161,6 +161,8 @@ add_rust_main(
   LINK_LIBS        ${REDUCER_LINK_LIBRARIES}
 )
 
+add_dependencies(pipeline reducer-stripped)
+
 # Docker image
 #
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")

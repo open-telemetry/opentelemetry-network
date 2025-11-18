@@ -127,7 +127,7 @@ add_rust_main(
   LINK_LIBS        ${KERNEL_COLLECTOR_LINK_LIBRARIES}
 )
 
-add_dependencies(collectors kernel-collector)
+add_dependencies(collectors kernel-collector kernel-collector-stripped)
 
 ################################################################################
 # libbpf skeleton
