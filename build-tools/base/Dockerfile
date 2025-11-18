@@ -12,8 +12,6 @@ RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selectio
 ENV BENV_BASE_IMAGE_DISTRO=${BENV_BASE_IMAGE_DISTRO}
 ENV BENV_BASE_IMAGE_VERSION=${BENV_BASE_IMAGE_VERSION}
 
-ARG GO_VERSION="1.21.0"
-
 # Package definitions
 ARG PKG_CORE="wget curl git gnupg bc aptitude netcat-openbsd sudo"
 ARG PKG_TEXT="xxd sed ripgrep less jq"
@@ -64,14 +62,6 @@ RUN apt-get -y update && \
     apt-get upgrade -y --no-install-recommends && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
-
-# Recent version of Go
-WORKDIR /usr/local
-RUN case $(uname -m) in \
-     x86_64) curl -L "https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz" | tar -xz ;; \
-     aarch64) curl -L "https://go.dev/dl/go${GO_VERSION}.linux-arm64.tar.gz" | tar -xz  ;; \
-   esac
-# recommended: add PATH=$PATH:/usr/local/go/bin to ~/.bashrc
 
 ################ ENVIRONMENT ################
 ARG UNAME=user
