@@ -5,6 +5,14 @@ LABEL org.label-schema.description="OpenTelemetry Network Kubernetes metadata co
 LABEL org.label-schema.vcs-url="https://github.com/open-telemetry/opentelemetry-network"
 LABEL org.label-schema.schema-version="1.0"
 
+# Embed the collector version so the binary can report it in handshakes.
+ARG EBPF_NET_MAJOR_VERSION
+ARG EBPF_NET_MINOR_VERSION
+ARG EBPF_NET_PATCH_VERSION
+ENV EBPF_NET_MAJOR_VERSION=${EBPF_NET_MAJOR_VERSION} \
+    EBPF_NET_MINOR_VERSION=${EBPF_NET_MINOR_VERSION} \
+    EBPF_NET_PATCH_VERSION=${EBPF_NET_PATCH_VERSION}
+
 COPY srv /srv
 WORKDIR /srv
 
@@ -16,4 +24,3 @@ RUN if [ ! -e /srv/k8s-collector ]; then \
  && ln -sf /srv/k8s-collector /srv/k8s-watcher
 
 ENTRYPOINT ["/srv/k8s-collector"]
-

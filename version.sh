@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
@@ -6,11 +6,24 @@
 set -e
 
 # -----
-# Major and minor versions influence customer vetting processes and level
-# of perceived trust in an implementation -- please discuss before bumping these.
-export EBPF_NET_MAJOR_VERSION='0'
-export EBPF_NET_MINOR_VERSION='11'
-export EBPF_NET_PATCH_VERSION='0'
+# Version: read from VERSION file in the same directory as this script.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
+VERSION_FILE="${SCRIPT_DIR}/VERSION"
+
+if [[ ! -f "$VERSION_FILE" ]]; then
+  echo "ERROR: VERSION file not found at '${VERSION_FILE}'. Please create it with the current semantic version (e.g. 0.12.0)." >&2
+  # Allow failure whether the script is sourced or executed.
+  return 1 2>/dev/null || exit 1
+fi
+
+EBPF_NET_VERSION="$(tr -d '\n' < "$VERSION_FILE")"
+
+EBPF_NET_MAJOR_VERSION="${EBPF_NET_VERSION%%.*}"
+EBPF_NET_MINOR_VERSION="${EBPF_NET_VERSION#*.}"
+EBPF_NET_MINOR_VERSION="${EBPF_NET_MINOR_VERSION%%.*}"
+EBPF_NET_PATCH_VERSION="${EBPF_NET_VERSION##*.}"
+
+export EBPF_NET_MAJOR_VERSION EBPF_NET_MINOR_VERSION EBPF_NET_PATCH_VERSION
 
 # -----
 # Build number is incremented automatically, so we can release directly from
