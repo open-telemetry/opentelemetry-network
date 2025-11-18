@@ -34,9 +34,34 @@ on:
         required: false
         type: boolean
         default: false
+  workflow_call:
+    inputs:
+      release_type:
+        description: "Release type"
+        required: true
+        type: string
+      ref:
+        description: "Tag, branch or SHA to checkout"
+        required: true
+        type: string
+      image_prefix:
+        description: "Prefix to use for destination image name"
+        required: false
+        type: string
+        default: "opentelemetry-ebpf-"
+      additional_tag:
+        description: "Additional tag to use when pushing to docker repository"
+        required: false
+        type: string
+      dry_run:
+        description: "Build everything but don't actually push to repository"
+        required: false
+        type: boolean
+        default: false
 
 permissions:
-  contents: read
+  # Allow this workflow (and reusable callers) to create releases
+  contents: write
 
 env:
   BENV_IMAGE: ${{ vars.BENV_IMAGE || 'docker.io/otel/opentelemetry-network-build-tools' }}
@@ -44,7 +69,9 @@ env:
   DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
   DOCKER_REGISTRY: ${{ vars.DOCKER_REGISTRY }}
   DOCKER_NAMESPACE: ${{ vars.DOCKER_NAMESPACE }}
-  IMAGE_PREFIX: ${{ inputs.image_prefix }}
+  IMAGE_PREFIX: ${{ inputs.image_prefix || 'opentelemetry-ebpf-' }}
+  RELEASE_TYPE: ${{ inputs.release_type || 'public' }}
+  DRY_RUN: ${{ inputs.dry_run && 'true' || 'false' }}
 
 jobs:
   build-and-release:
@@ -75,7 +102,7 @@ jobs:
           git_short_hash=$(git rev-parse --short=8 HEAD)
           short_version_number="${EBPF_NET_MAJOR_VERSION}.${EBPF_NET_MINOR_VERSION}"
           full_version_number="${EBPF_NET_MAJOR_VERSION}.${EBPF_NET_MINOR_VERSION}.${EBPF_NET_PATCH_VERSION}"
-          if [[ "${{ inputs.release_type }}" == "public" ]]; then
+          if [[ "${RELEASE_TYPE}" == "public" ]]; then
             github_tag=v${full_version_number}
           else
             github_tag=v${full_version_number}-${git_short_hash}
@@ -89,8 +116,9 @@ jobs:
         run: |
           echo "github.workspace = ${{ github.workspace }}"
           echo "github.ref = ${{ github.ref }}"
-          echo "inputs.image_prefix = ${{ inputs.image_prefix }}"
-          echo "inputs.dry_run = ${{ inputs.dry_run }}"
+          echo "release_type = ${RELEASE_TYPE}"
+          echo "image_prefix = ${IMAGE_PREFIX}"
+          echo "dry_run = ${DRY_RUN}"
           echo "git_short_hash = ${git_short_hash}"
           echo "short_version_number = ${short_version_number}"
           echo "full_version_number = ${full_version_number}"
@@ -145,11 +173,10 @@ jobs:
             out/opentelemetry-ebpf-*.deb
       - name: Upload packages to Release
         uses: softprops/action-gh-release@5be0e66d93ac7ed76da52eca8bb058f665c3a5fe
-        if: ${{ !inputs.dry_run }}
+        if: ${{ env.DRY_RUN != 'true' }}
         with:
           tag_name: ${{ env.github_tag }}
-          target_commitish: ${{ inputs.ref }}
-          prerelease: ${{ inputs.release_type != 'public' }}
+          prerelease: ${{ env.RELEASE_TYPE != 'public' }}
           files: |
             out/opentelemetry-ebpf-*.rpm
             out/opentelemetry-ebpf-*.deb
@@ -157,7 +184,7 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE/src
 
-          if [[ "${{ inputs.release_type }}" == "public" ]]; then
+          if [[ "${RELEASE_TYPE}" == "public" ]]; then
             tags=(
               latest
               latest-v${short_version_number}
@@ -189,7 +216,7 @@ jobs:
 
             for tag in ${tags[@]}; do
               docker tag localhost:5000/$image ${image_path}:${tag}
-              if [[ "${{ inputs.dry_run }}" == "false" ]]; then
+              if [[ "${DRY_RUN}" == "false" ]]; then
                 docker push ${image_path}:${tag}
               fi
             done

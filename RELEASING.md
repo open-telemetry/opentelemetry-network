@@ -1,23 +1,33 @@
 # Making a public release
 Public builds are those intended to be used by the general audience.
 
-## Release procedure:
-1. Choose a commit on the main branch and tag it with the appropriate version tag (vMAJOR.MINOR.PATCH). Confirm that the version tag matches the version numbers in the version.sh file. Push that tag to the main repository (git push –tags).
-1. Go to the project's Releases page (https://github.com/open-telemetry/opentelemetry-network/releases) and create a new draft release. Use the tag created in step 1. Use the existing naming convention for the new release name.
-1. Navigate to https://github.com/open-telemetry/opentelemetry-network/actions/workflows/build-and-release.yaml and click the "Run workflow" button.
-
-   Select public for the release type and make sure that the image prefix is correct (should be opentelemetry-ebpf-). Use the version tag created in step 1.
-1. Download built packages by downloading the packages artifact produced during the workflow run in step 3.
-
-   Upload RPM and DEB packages for the reducer, kernel collector and cloud collector into the GitHub release (edit the release, drop RPMs and DEBs into Attach binaries by dropping them here or selecting them rectangle).
-1. Bump the version number in the version.sh file and get that change merged to the main repository.
-1. On the docker repository (https://hub.docker.com/r/otel/), confirm that the following images are tagged with new tags (latest, latest-vMAJOR.MINOR, vMAJOR.MINOR.PATCH):
+## Release procedure (Release Please)
+1. Ensure that changes on `main` use Conventional Commit messages so Release Please can determine the correct next version.
+1. Wait for the `release-please` workflow to open a Release PR, or trigger it manually from https://github.com/open-telemetry/opentelemetry-network/actions/workflows/release-please.yml.
+1. Review the Release PR:
+   - Confirm that `VERSION` and `CHANGELOG.md` are updated as expected.
+   - Make any edits you need to the release notes in the PR description.
+1. Merge the Release PR.
+1. Once merged, Release Please will:
+   - Create a Git tag `vMAJOR.MINOR.PATCH`.
+   - Publish a GitHub Release with the generated release notes.
+1. The `build-and-release` workflow will run automatically on the `release.published` event:
+   - It checks out the release tag, builds RPM/DEB packages and container images, and uploads the RPM/DEB packages to the existing GitHub Release.
+   - It pushes container images to the configured registry with tags:
+     - `latest`
+     - `latest-vMAJOR.MINOR`
+     - `vMAJOR.MINOR.PATCH`
+1. Verify the published GitHub Release at https://github.com/open-telemetry/opentelemetry-network/releases and confirm the assets.
+1. On the Docker registry (for example https://hub.docker.com/r/otel/), confirm that the following images are tagged with the new tags:
     * opentelemetry-ebpf-reducer
     * opentelemetry-ebpf-kernel-collector
     * opentelemetry-ebpf-cloud-collector
     * opentelemetry-ebpf-k8s-watcher
     * opentelemetry-ebpf-k8s-relay
-1. Publish the new GitHub release.
+
+If needed, you can still trigger the `build-and-release` workflow manually from
+https://github.com/open-telemetry/opentelemetry-network/actions/workflows/build-and-release.yaml
+with `release_type: public` to rebuild artifacts for an existing tag.
 
 
 ## Unofficial builds
