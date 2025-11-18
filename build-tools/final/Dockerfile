@@ -78,11 +78,6 @@ RUN case $(uname -m) in \
 # gradle
 RUN sudo wget https://services.gradle.org/distributions/gradle-8.14.3-bin.zip -O /usr/local/lib/gradle.zip
 
-# swagger-codegen-cli, used to build the API docs
-RUN sudo wget \
-  https://repo1.maven.org/maven2/io/swagger/swagger-codegen-cli/2.4.12/swagger-codegen-cli-2.4.12.jar \
-  -O /usr/local/lib/swagger-codegen-cli.jar
-
 # Rust toolchain for building Rust components
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --profile minimal --default-toolchain ${RUST_TOOLCHAIN} && \
     . "$HOME/.cargo/env" && \
