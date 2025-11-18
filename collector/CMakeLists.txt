@@ -15,7 +15,7 @@ add_rust_main(
   LINK_LIBS        versions
 )
 
-add_dependencies(collectors k8s-collector)
+add_dependencies(collectors k8s-collector k8s-collector-stripped)
 
 build_custom_docker_image(
   k8s-collector

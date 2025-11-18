@@ -60,7 +60,7 @@ add_rust_main(
   LINK_LIBS        ${CLOUD_COLLECTOR_LINK_LIBRARIES}
 )
 
-add_dependencies(collectors cloud-collector)
+add_dependencies(collectors cloud-collector cloud-collector-stripped)
 
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
   build_custom_docker_image(
