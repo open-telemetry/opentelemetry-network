@@ -465,6 +465,59 @@ jobs:
         $BENV_IMAGE \
         ./build.sh --debug --asan unit_tests test
 
+  build-deb-rpm:
+    name: build-deb-rpm
+    runs-on: ubuntu-24.04
+    steps:
+    - name: Check out the codebase
+      uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+      with:
+        fetch-depth: 0
+
+    - name: Cache and install ccache
+      uses: awalsh128/cache-apt-pkgs-action@latest
+      with:
+        packages: ccache
+        version: 1.0
+
+    - name: Setup ccache
+      uses: hendrikmuhs/ccache-action@v1.2
+      with:
+        key: ccache-build-packages
+        max-size: 1G
+        verbose: 2
+
+    - name: Build RPM/DEB packages
+      run: |
+        # Prepare output and ccache directories
+        mkdir -p "${{ github.workspace }}/out"
+        mkdir -p "${{ github.workspace }}/.ccache"
+        # Ensure the build container user (uid 1000) can write here
+        sudo chown -R 1000:1000 "${{ github.workspace }}/out" || true
+        chmod -R 777 "${{ github.workspace }}/.ccache" || true
+
+        docker pull $BENV_IMAGE
+        git submodule update --init --recursive ext/
+
+        # Configure and build the project into /home/user/out
+        docker run -t --rm \
+          --mount "type=bind,source=${{ github.workspace }}/.ccache,destination=/ccache" \
+          --mount "type=bind,source=${{ github.workspace }},destination=/home/user/src,readonly" \
+          --mount "type=bind,source=${{ github.workspace }}/out,destination=/home/user/out" \
+          --env EBPF_NET_SRC_ROOT=/home/user/src \
+          --env CCACHE_DIR=/ccache \
+          $BENV_IMAGE \
+          ./build.sh pipeline
+
+        # Run CPack in the configured build directory
+        docker run -t --rm \
+          --mount "type=bind,source=${{ github.workspace }},destination=/home/user/src,readonly" \
+          --mount "type=bind,source=${{ github.workspace }}/out,destination=/home/user/out" \
+          --env EBPF_NET_SRC_ROOT=/home/user/src \
+          --workdir /home/user/out \
+          $BENV_IMAGE \
+          cpack -G 'RPM;DEB'
+
   e2e-otel-jsonl:
     name: e2e-otel-jsonl
     needs: [build-reducer, build-kernel-collector, build-k8s-collector]
