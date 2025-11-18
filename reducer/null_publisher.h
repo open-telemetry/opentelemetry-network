@@ -47,9 +47,6 @@ public:
 
   ~Writer();
 
-  void write(ExportLogsServiceRequest &request) override;
-  void write(ExportMetricsServiceRequest &request) override;
-
   // Writes provided stream's content.
   void write(std::stringstream &ss) override;
 

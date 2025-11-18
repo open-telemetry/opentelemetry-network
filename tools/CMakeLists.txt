@@ -55,5 +55,3 @@ add_tool_executable(
     render_pipeline
     wire_msg_to_json
 )
-
-add_subdirectory(otlp-to-prom)

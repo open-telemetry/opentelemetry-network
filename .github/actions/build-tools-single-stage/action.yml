@@ -76,12 +76,11 @@ runs:
         DEPS["libmaxminddb"]="base"
         DEPS["libbpf"]="base"
         DEPS["aws_sdk"]="base"
-        DEPS["opentelemetry"]="base"
-        DEPS["final"]="base libuv aws_sdk cpp_misc libmaxminddb opentelemetry libbpf"
+        DEPS["final"]="base libuv aws_sdk cpp_misc libmaxminddb libbpf"
         
         # Compute direct hashes for all directories upfront
         declare -A DIRECT_HASHES
-        ALL_DIRS="base libuv cpp_misc libmaxminddb libbpf aws_sdk opentelemetry final"
+        ALL_DIRS="base libuv cpp_misc libmaxminddb libbpf aws_sdk final"
         
         echo "Computing direct hashes..." >&2
         for dir in $ALL_DIRS; do
@@ -245,7 +244,6 @@ runs:
         BUILD_ARGS="${BUILD_ARGS} --build-arg libmaxminddb_IMAGE_TAG=${{ steps.compute-recursive-tags.outputs.libmaxminddb_IMAGE_TAG }}"
         BUILD_ARGS="${BUILD_ARGS} --build-arg libbpf_IMAGE_TAG=${{ steps.compute-recursive-tags.outputs.libbpf_IMAGE_TAG }}"
         BUILD_ARGS="${BUILD_ARGS} --build-arg aws_sdk_IMAGE_TAG=${{ steps.compute-recursive-tags.outputs.aws_sdk_IMAGE_TAG }}"
-        BUILD_ARGS="${BUILD_ARGS} --build-arg opentelemetry_IMAGE_TAG=${{ steps.compute-recursive-tags.outputs.opentelemetry_IMAGE_TAG }}"
         BUILD_ARGS="${BUILD_ARGS} --build-arg final_IMAGE_TAG=${{ steps.compute-recursive-tags.outputs.final_IMAGE_TAG }}"
         
         # Add environment-specific build args if they exist

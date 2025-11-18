@@ -5,14 +5,13 @@
 
 #pragma once
 
-#include <otlp/otlp_grpc_client.h>
 #include <platform/types.h>
-#include <util/log.h>
 
 #include <generated/ebpf_net/aggregation/auto_handles.h>
 
 #include <chrono>
 #include <iosfwd>
+#include <iostream>
 #include <memory>
 #include <string_view>
 
@@ -41,20 +40,6 @@ public:
     virtual void write(std::string_view prefix, std::string_view labels, std::string_view suffix)
     {
       std::cerr << "Publisher::Writer::write(prefix, labels, suffix) not supported" << std::endl;
-      std::abort();
-    }
-
-    // Writes provided ExportLogsServiceRequest.
-    virtual void write(ExportLogsServiceRequest &request)
-    {
-      std::cerr << "Publisher::Writer::write(ExportLogsServiceRequest) not supported" << std::endl;
-      std::abort();
-    }
-
-    // Writes provided ExportMetricsServiceRequest.
-    virtual void write(ExportMetricsServiceRequest &request)
-    {
-      std::cerr << "Publisher::Writer::write(ExportMetricsServiceRequest) not supported" << std::endl;
       std::abort();
     }
 

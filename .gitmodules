@@ -13,9 +13,6 @@
 [submodule "build-tools/aws_sdk/aws-sdk-cpp"]
 	path = build-tools/aws_sdk/aws-sdk-cpp
 	url = https://github.com/aws/aws-sdk-cpp
-[submodule "build-tools/opentelemetry/opentelemetry-proto"]
-	path = build-tools/opentelemetry/opentelemetry-proto
-	url = https://github.com/open-telemetry/opentelemetry-proto.git
 [submodule "build-tools/cpp_misc/json"]
 	path = build-tools/cpp_misc/json
 	url = https://github.com/nlohmann/json.git
