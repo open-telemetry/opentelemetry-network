@@ -86,7 +86,7 @@ AggCore::AggCore(
 void AggCore::run()
 {
   set_self_thread_name(fmt::format("{}_{}", app_name(), shard_num())).on_error([this](auto const &error) {
-    LOG::warn("unable to set name for {} core thread {}: {}", app_name(), shard_num(), error);
+    LOG::warn("unable to set name for {} core thread {}: {}", app_name(), shard_num(), static_cast<int>(error));
   });
 
   // Delegate to Rust AggregationCore until stop

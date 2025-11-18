@@ -167,27 +167,6 @@ jobs:
           ref: ${{ env.REF }}
           force_rebuild: ${{ env.FORCE_REBUILD }}
 
-  build-opentelemetry:
-    name: Build opentelemetry image
-    runs-on: ${{ inputs.runner }}
-    needs: [build-base]
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
-        with:
-          ref: ${{ env.REF }}
-
-      - name: Build and push opentelemetry image
-        uses: ./.github/actions/build-tools-single-stage/
-        with:
-          directory: opentelemetry
-          arch: ${{ inputs.arch }}
-          registry: ${{ env.CACHE_REGISTRY }}
-          registry_username: ${{ github.actor }}
-          registry_password: ${{ secrets.GITHUB_TOKEN }}
-          ref: ${{ env.REF }}
-          force_rebuild: ${{ env.FORCE_REBUILD }}
-
   build-final:
     name: Build final image
     runs-on: ${{ inputs.runner }}
@@ -197,7 +176,6 @@ jobs:
       build-aws-sdk,
       build-cpp-misc,
       build-libmaxminddb,
-      build-opentelemetry,
       build-libbpf
     ]
     outputs:

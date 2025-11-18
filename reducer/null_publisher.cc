@@ -29,9 +29,6 @@ NullPublisher::Writer::Writer(size_t thread_num, std::string const &server_addre
 
 NullPublisher::Writer::~Writer() {}
 
-void NullPublisher::Writer::write(ExportLogsServiceRequest &request) {}
-void NullPublisher::Writer::write(ExportMetricsServiceRequest &request) {}
-
 void NullPublisher::Writer::write(std::stringstream &ss) {}
 
 void NullPublisher::Writer::write(std::string_view prefix, std::string_view labels, std::string_view suffix) {}

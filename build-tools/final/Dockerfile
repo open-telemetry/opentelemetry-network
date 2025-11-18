@@ -6,7 +6,6 @@ ARG libuv_IMAGE_TAG
 ARG aws_sdk_IMAGE_TAG
 ARG cpp_misc_IMAGE_TAG
 ARG libmaxminddb_IMAGE_TAG
-ARG opentelemetry_IMAGE_TAG
 ARG libbpf_IMAGE_TAG
 #gen:dep-arg
 
@@ -15,7 +14,6 @@ FROM $libuv_IMAGE_TAG as build-libuv
 FROM $aws_sdk_IMAGE_TAG as build-aws-sdk
 FROM $cpp_misc_IMAGE_TAG as build-cpp-misc
 FROM $libmaxminddb_IMAGE_TAG as build-libmaxminddb
-FROM $opentelemetry_IMAGE_TAG as build-opentelemetry
 FROM $libbpf_IMAGE_TAG as build-libbpf
 #gen:dep-from
 
@@ -126,7 +124,6 @@ COPY --from=build-libuv $HOME/install /install
 COPY --from=build-aws-sdk $HOME/install /install
 COPY --from=build-cpp-misc $HOME/install /install
 COPY --from=build-libmaxminddb $HOME/install /install
-COPY --from=build-opentelemetry $HOME/install /install
 COPY --from=build-libbpf $HOME/install /install
 #gen:dep-copy
 
