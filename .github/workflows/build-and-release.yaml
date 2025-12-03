@@ -60,8 +60,8 @@ on:
         default: false
 
 permissions:
-  # Allow this workflow (and reusable callers) to create releases
   contents: write
+  packages: write
 
 env:
   BENV_IMAGE: ${{ vars.BENV_IMAGE || 'docker.io/otel/opentelemetry-network-build-tools' }}
@@ -74,11 +74,48 @@ env:
   DRY_RUN: ${{ inputs.dry_run && 'true' || 'false' }}
 
 jobs:
-  build-and-release:
-    permissions:
-      contents: write # required for creating releases
-    name: Build and release
+  compute-version:
+    name: Compute version
     runs-on: ubuntu-24.04
+    outputs:
+      git_short_hash: ${{ steps.version.outputs.git_short_hash }}
+      short_version_number: ${{ steps.version.outputs.short_version_number }}
+      full_version_number: ${{ steps.version.outputs.full_version_number }}
+      github_tag: ${{ steps.version.outputs.github_tag }}
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        with:
+          ref: ${{ inputs.ref }}
+          fetch-depth: 0
+      - name: Compute version numbers
+        id: version
+        run: |
+          source ./version.sh
+          git_short_hash=$(git rev-parse --short=8 HEAD)
+          short_version_number="${EBPF_NET_MAJOR_VERSION}.${EBPF_NET_MINOR_VERSION}"
+          full_version_number="${EBPF_NET_MAJOR_VERSION}.${EBPF_NET_MINOR_VERSION}.${EBPF_NET_PATCH_VERSION}"
+          if [[ "${RELEASE_TYPE}" == "public" ]]; then
+            github_tag=v${full_version_number}
+          else
+            github_tag=v${full_version_number}-${git_short_hash}
+          fi
+          echo "git_short_hash=${git_short_hash}" >> "$GITHUB_OUTPUT"
+          echo "short_version_number=${short_version_number}" >> "$GITHUB_OUTPUT"
+          echo "full_version_number=${full_version_number}" >> "$GITHUB_OUTPUT"
+          echo "github_tag=${github_tag}" >> "$GITHUB_OUTPUT"
+
+  build-per-arch:
+    name: Build ${{ matrix.arch }} artifacts
+    needs: compute-version
+    strategy:
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
     steps:
       - name: Checkout sources
         uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
@@ -91,41 +128,6 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE/src
           git submodule update --init --recursive ext/
-      - name: Compute version numbers
-        run: |
-          # sets environment variables for use in later steps.
-          # see https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#setting-an-environment-variable
-
-          cd $GITHUB_WORKSPACE/src
-          source ./version.sh
-
-          git_short_hash=$(git rev-parse --short=8 HEAD)
-          short_version_number="${EBPF_NET_MAJOR_VERSION}.${EBPF_NET_MINOR_VERSION}"
-          full_version_number="${EBPF_NET_MAJOR_VERSION}.${EBPF_NET_MINOR_VERSION}.${EBPF_NET_PATCH_VERSION}"
-          if [[ "${RELEASE_TYPE}" == "public" ]]; then
-            github_tag=v${full_version_number}
-          else
-            github_tag=v${full_version_number}-${git_short_hash}
-          fi
-
-          echo "git_short_hash=${git_short_hash}" >> "$GITHUB_ENV"
-          echo "short_version_number=${short_version_number}" >> "$GITHUB_ENV"
-          echo "full_version_number=${full_version_number}" >> "$GITHUB_ENV"
-          echo "github_tag=${github_tag}" >> "$GITHUB_ENV"
-      - name: Output build information
-        run: |
-          echo "github.workspace = ${{ github.workspace }}"
-          echo "github.ref = ${{ github.ref }}"
-          echo "release_type = ${RELEASE_TYPE}"
-          echo "image_prefix = ${IMAGE_PREFIX}"
-          echo "dry_run = ${DRY_RUN}"
-          echo "git_short_hash = ${git_short_hash}"
-          echo "short_version_number = ${short_version_number}"
-          echo "full_version_number = ${full_version_number}"
-          echo "github_tag = ${github_tag}"
-      - name: Log-in to container registry
-        run: |
-          docker login --username="$DOCKER_USERNAME" --password-stdin $DOCKER_REGISTRY <<< "$DOCKER_PASSWORD"
       - name: Fetch build environment
         run: |
           docker pull $BENV_IMAGE
@@ -135,10 +137,7 @@ jobs:
           sudo chown -R 1000:1000 $GITHUB_WORKSPACE/out
       - name: Build artifacts
         run: |
-          # Start local registry for the build process
           docker run -d -p 5000:5000 --name registry docker.io/library/registry:2
-          
-          # Build all containers and push to local registry
           docker run -t --rm \
             --mount "type=bind,source=/var/run/docker.sock,destination=/var/run/docker.sock" \
             --mount "type=bind,source=$GITHUB_WORKSPACE/src,destination=/home/user/src,readonly" \
@@ -148,12 +147,9 @@ jobs:
             --privileged \
             $BENV_IMAGE \
             ./build.sh pipeline-docker-registry
-            
-          # Pull images from local registry to make them available for docker tag/push
           docker pull localhost:5000/reducer
           docker pull localhost:5000/kernel-collector  
           docker pull localhost:5000/cloud-collector
-          # k8s-collector replaces watcher+relay
           docker pull localhost:5000/k8s-collector
       - name: Build packages
         run: |
@@ -164,66 +160,90 @@ jobs:
             --workdir /home/user/out \
             $BENV_IMAGE \
             cpack -G 'RPM;DEB'
-      - name: Upload packages to GitHub Action artifacts
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
-        with:
-          name: packages
-          path: |
-            out/opentelemetry-ebpf-*.rpm
-            out/opentelemetry-ebpf-*.deb
-      - name: Upload packages to Release
-        uses: softprops/action-gh-release@5be0e66d93ac7ed76da52eca8bb058f665c3a5fe
-        if: ${{ env.DRY_RUN != 'true' }}
-        with:
-          tag_name: ${{ env.github_tag }}
-          prerelease: ${{ env.RELEASE_TYPE != 'public' }}
-          files: |
-            out/opentelemetry-ebpf-*.rpm
-            out/opentelemetry-ebpf-*.deb
-      - name: Push to container registry
+      - name: Log-in to container registry
         run: |
-          cd $GITHUB_WORKSPACE/src
-
-          if [[ "${RELEASE_TYPE}" == "public" ]]; then
-            tags=(
-              latest
-              latest-v${short_version_number}
-              v${full_version_number}
-            )
-          else
-            tags=(
-              v${full_version_number}-${git_short_hash}
-            )
-          fi
-
-          if [[ "${{ inputs.additional_tag }}" != "" ]]; then
-            tags=(${tags[@]} "${{ inputs.additional_tag }}")
-          fi
-
-          images=(
-            reducer
-            kernel-collector
-            cloud-collector
-            k8s-collector
-          )
-
-          # strip potential "https://" prefix and trailing slashes from docker registry
+          docker login --username="$DOCKER_USERNAME" --password-stdin $DOCKER_REGISTRY <<< "$DOCKER_PASSWORD"
+      - name: Tag and push arch-specific images
+        run: |
           docker_registry=$(sed -e 's,^https://,,' -e 's,/*$,,' <<< $DOCKER_REGISTRY)
-
+          images=(reducer kernel-collector cloud-collector k8s-collector)
           for image in ${images[@]}; do
             image_name="${IMAGE_PREFIX}${image}"
             image_path="${docker_registry}/${DOCKER_NAMESPACE}/${image_name}"
+            docker tag localhost:5000/$image ${image_path}:${{ matrix.arch }}-${{ needs.compute-version.outputs.git_short_hash }}
+            if [[ "${DRY_RUN}" == "false" ]]; then
+              docker push ${image_path}:${{ matrix.arch }}-${{ needs.compute-version.outputs.git_short_hash }}
+            fi
+          done
+          docker stop registry || true
+          docker rm registry || true
+      - name: Upload packages
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        with:
+          name: packages-${{ matrix.arch }}
+          path: |
+            out/opentelemetry-ebpf-*.rpm
+            out/opentelemetry-ebpf-*.deb
 
+  create-manifests:
+    name: Create multi-arch manifests
+    needs: [compute-version, build-per-arch]
+    runs-on: ubuntu-24.04
+    if: ${{ inputs.dry_run != true }}
+    steps:
+      - name: Log-in to container registry
+        run: |
+          docker login --username="$DOCKER_USERNAME" --password-stdin $DOCKER_REGISTRY <<< "$DOCKER_PASSWORD"
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Create and push multi-arch manifests
+        run: |
+          docker_registry=$(sed -e 's,^https://,,' -e 's,/*$,,' <<< $DOCKER_REGISTRY)
+          git_short_hash="${{ needs.compute-version.outputs.git_short_hash }}"
+          short_version="${{ needs.compute-version.outputs.short_version_number }}"
+          full_version="${{ needs.compute-version.outputs.full_version_number }}"
+          
+          if [[ "${RELEASE_TYPE}" == "public" ]]; then
+            tags=(latest latest-v${short_version} v${full_version})
+          else
+            tags=(v${full_version}-${git_short_hash})
+          fi
+          
+          if [[ "${{ inputs.additional_tag }}" != "" ]]; then
+            tags=(${tags[@]} "${{ inputs.additional_tag }}")
+          fi
+          
+          images=(reducer kernel-collector cloud-collector k8s-collector)
+          
+          for image in ${images[@]}; do
+            image_name="${IMAGE_PREFIX}${image}"
+            image_path="${docker_registry}/${DOCKER_NAMESPACE}/${image_name}"
+            amd64_tag="${image_path}:amd64-${git_short_hash}"
+            arm64_tag="${image_path}:arm64-${git_short_hash}"
+            
             for tag in ${tags[@]}; do
-              docker tag localhost:5000/$image ${image_path}:${tag}
-              if [[ "${DRY_RUN}" == "false" ]]; then
-                docker push ${image_path}:${tag}
-              fi
+              docker buildx imagetools create --tag "${image_path}:${tag}" \
+                "${amd64_tag}" \
+                "${arm64_tag}"
+              echo "Created multi-arch manifest: ${image_path}:${tag}"
             done
           done
 
-          # Clean up local registry
-          docker stop registry || true
-          docker rm registry || true
-
-          docker images --no-trunc
+  upload-release:
+    name: Upload release artifacts
+    needs: [compute-version, build-per-arch]
+    runs-on: ubuntu-24.04
+    if: ${{ inputs.dry_run != true }}
+    steps:
+      - name: Download all packages
+        uses: actions/download-artifact@v4
+        with:
+          pattern: packages-*
+          merge-multiple: true
+          path: packages
+      - name: Upload packages to Release
+        uses: softprops/action-gh-release@5be0e66d93ac7ed76da52eca8bb058f665c3a5fe
+        with:
+          tag_name: ${{ needs.compute-version.outputs.github_tag }}
+          prerelease: ${{ env.RELEASE_TYPE != 'public' }}
+          files: packages/*
