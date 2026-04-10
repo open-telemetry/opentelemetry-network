@@ -42,7 +42,7 @@ For more information about the maintainer role, see the [community repository](h
 
 ### Approvers
 
-- [Samiur Arif](https://github.com/samiura), Sumo Logic
+- [Samiur Arif](https://github.com/samiura), Netbox Labs
 - Actively seeking approvers to review pull requests
 
 For more information about the approver role, see the [community repository](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#approver).
