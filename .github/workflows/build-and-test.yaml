@@ -88,13 +88,13 @@ jobs:
         fetch-depth: 0
 
     - name: Cache and install ccache
-      uses: awalsh128/cache-apt-pkgs-action@latest
+      uses: awalsh128/cache-apt-pkgs-action@553a35bb8ebd9fcabcb1c9451aa4c98e1b4ca8a9 # latest
       with:
         packages: ccache
         version: 1.0
 
     - name: Setup ccache
-      uses: hendrikmuhs/ccache-action@v1.2
+      uses: hendrikmuhs/ccache-action@5ebbd400eff9e74630f759d94ddd7b6c26299639 # v1.2
       with:
         key: ccache-build-reducer
         max-size: 1G
@@ -154,13 +154,13 @@ jobs:
         fetch-depth: 0
 
     - name: Cache and install ccache
-      uses: awalsh128/cache-apt-pkgs-action@latest
+      uses: awalsh128/cache-apt-pkgs-action@553a35bb8ebd9fcabcb1c9451aa4c98e1b4ca8a9 # latest
       with:
         packages: ccache
         version: 1.0
 
     - name: Setup ccache
-      uses: hendrikmuhs/ccache-action@v1.2
+      uses: hendrikmuhs/ccache-action@5ebbd400eff9e74630f759d94ddd7b6c26299639 # v1.2
       with:
         key: ccache-build-kernel-collector
         max-size: 1G
@@ -220,13 +220,13 @@ jobs:
         fetch-depth: 0
 
     - name: Cache and install ccache
-      uses: awalsh128/cache-apt-pkgs-action@latest
+      uses: awalsh128/cache-apt-pkgs-action@553a35bb8ebd9fcabcb1c9451aa4c98e1b4ca8a9 # latest
       with:
         packages: ccache
         version: 1.0
 
     - name: Setup ccache
-      uses: hendrikmuhs/ccache-action@v1.2
+      uses: hendrikmuhs/ccache-action@5ebbd400eff9e74630f759d94ddd7b6c26299639 # v1.2
       with:
         key: ccache-build-kernel-collector-test
         max-size: 1G
@@ -286,13 +286,13 @@ jobs:
         fetch-depth: 0
 
     - name: Cache and install ccache
-      uses: awalsh128/cache-apt-pkgs-action@latest
+      uses: awalsh128/cache-apt-pkgs-action@553a35bb8ebd9fcabcb1c9451aa4c98e1b4ca8a9 # latest
       with:
         packages: ccache
         version: 1.0
 
     - name: Setup ccache
-      uses: hendrikmuhs/ccache-action@v1.2
+      uses: hendrikmuhs/ccache-action@5ebbd400eff9e74630f759d94ddd7b6c26299639 # v1.2
       with:
         key: ccache-build-k8s-collector
         max-size: 1G
@@ -351,13 +351,13 @@ jobs:
         fetch-depth: 0
 
     - name: Cache and install ccache
-      uses: awalsh128/cache-apt-pkgs-action@latest
+      uses: awalsh128/cache-apt-pkgs-action@553a35bb8ebd9fcabcb1c9451aa4c98e1b4ca8a9 # latest
       with:
         packages: ccache
         version: 1.0
 
     - name: Setup ccache
-      uses: hendrikmuhs/ccache-action@v1.2
+      uses: hendrikmuhs/ccache-action@5ebbd400eff9e74630f759d94ddd7b6c26299639 # v1.2
       with:
         key: ccache-build-cloud-collector
         max-size: 1G
@@ -392,13 +392,13 @@ jobs:
         fetch-depth: 0
     
     - name: Cache and install ccache
-      uses: awalsh128/cache-apt-pkgs-action@latest
+      uses: awalsh128/cache-apt-pkgs-action@553a35bb8ebd9fcabcb1c9451aa4c98e1b4ca8a9 # latest
       with:
         packages: ccache
         version: 1.0
 
     - name: Setup ccache
-      uses: hendrikmuhs/ccache-action@v1.2
+      uses: hendrikmuhs/ccache-action@5ebbd400eff9e74630f759d94ddd7b6c26299639 # v1.2
       with:
         key: ccache-build-run-unit-tests
         max-size: 1G
@@ -434,13 +434,13 @@ jobs:
         fetch-depth: 0
 
     - name: Cache and install ccache
-      uses: awalsh128/cache-apt-pkgs-action@latest
+      uses: awalsh128/cache-apt-pkgs-action@553a35bb8ebd9fcabcb1c9451aa4c98e1b4ca8a9 # latest
       with:
         packages: ccache
         version: 1.0
 
     - name: Setup ccache
-      uses: hendrikmuhs/ccache-action@v1.2
+      uses: hendrikmuhs/ccache-action@5ebbd400eff9e74630f759d94ddd7b6c26299639 # v1.2
       with:
         key: ccache-build-run-unit-tests-asan-debug
         max-size: 1G
@@ -475,13 +475,13 @@ jobs:
         fetch-depth: 0
 
     - name: Cache and install ccache
-      uses: awalsh128/cache-apt-pkgs-action@latest
+      uses: awalsh128/cache-apt-pkgs-action@553a35bb8ebd9fcabcb1c9451aa4c98e1b4ca8a9 # latest
       with:
         packages: ccache
         version: 1.0
 
     - name: Setup ccache
-      uses: hendrikmuhs/ccache-action@v1.2
+      uses: hendrikmuhs/ccache-action@5ebbd400eff9e74630f759d94ddd7b6c26299639 # v1.2
       with:
         key: ccache-build-packages
         max-size: 1G
@@ -530,7 +530,7 @@ jobs:
         fetch-depth: 0
 
     - name: Set up kind cluster
-      uses: helm/kind-action@v1.10.0
+      uses: helm/kind-action@0025e74a8c7512023d06dc019c617aa3cf561fde # v1.10.0
       with:
         version: v0.30.0
         cluster_name: e2e-kind
@@ -885,14 +885,14 @@ jobs:
         path: ./container-exports
 
     - name: Cache and install LVH host dependencies
-      uses: awalsh128/cache-apt-pkgs-action@latest
+      uses: awalsh128/cache-apt-pkgs-action@553a35bb8ebd9fcabcb1c9451aa4c98e1b4ca8a9 # latest
       with:
         # Match LVH action.yaml dependency_list exactly
         packages: cpu-checker qemu-system-x86 libvirt-daemon-system libvirt-clients bridge-utils virtinst virt-manager
         version: lvh-deps-1
 
     - name: Run kernel collector simple tests on ${{ matrix.description }}
-      uses: yonch/little-vm-helper@main
+      uses: yonch/little-vm-helper@f2aa2b657a2d6efaddf34793989b5fcdbaad10d6 # main
       with:
         test-name: kernel-collector-simple-test-${{ matrix.kernel }}
         image: 'complexity-test'
@@ -1039,14 +1039,14 @@ jobs:
         path: ./container-exports
 
     - name: Cache and install LVH host dependencies
-      uses: awalsh128/cache-apt-pkgs-action@latest
+      uses: awalsh128/cache-apt-pkgs-action@553a35bb8ebd9fcabcb1c9451aa4c98e1b4ca8a9 # latest
       with:
         # Match LVH action.yaml dependency_list exactly
         packages: cpu-checker qemu-system-x86 libvirt-daemon-system libvirt-clients bridge-utils virtinst virt-manager
         version: lvh-deps-1
 
     - name: Run kernel collector tests on ${{ matrix.description }}
-      uses: yonch/little-vm-helper@main
+      uses: yonch/little-vm-helper@f2aa2b657a2d6efaddf34793989b5fcdbaad10d6 # main
       with:
         test-name: kernel-collector-test-${{ matrix.kernel }}
         image: 'complexity-test'
