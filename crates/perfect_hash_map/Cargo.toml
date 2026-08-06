@@ -13,4 +13,4 @@ path = "src/lib.rs"
 default = []
 
 [dev-dependencies]
-proptest = "1.4"
+proptest = "=1.9.0"
