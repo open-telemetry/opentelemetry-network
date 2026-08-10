@@ -7,13 +7,19 @@
   "packageRules": [
     {
       "groupName": "all patch versions",
-      "matchUpdateTypes": ["patch"],
+      "matchUpdateTypes": ["digest", "patch"],
       "schedule": ["before 8am every weekday"]
     },
     {
       "matchUpdateTypes": ["minor", "major"],
       "schedule": ["before 8am on Monday"]
-    }
+    },
+    {
+      groupName: "infra [minor]",
+      matchCategories: ["ci", "docker"],
+      matchUpdateTypes: ["minor"],
+      schedule: ["before 8am on Monday"],
+    },
   ],
   "labels": [
     "dependencies"
