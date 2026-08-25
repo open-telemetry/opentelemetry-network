@@ -5,20 +5,21 @@ on:
     branches: [ main ]
   workflow_dispatch: {}
 
-permissions:
-  contents: write
-  pull-requests: write
+permissions: {}
 
 jobs:
   release-please:
     runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      pull-requests: write
     outputs:
       release_created: ${{ steps.release.outputs.release_created }}
       tag_name: ${{ steps.release.outputs.tag_name }}
     steps:
       - name: Run Release Please
         id: release
-        uses: googleapis/release-please-action@v4
+        uses: googleapis/release-please-action@5c625bfb5d1ff62eadeeb3772007f7f66fdcf071 # v4.4.1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           config-file: release-please-config.json
@@ -27,6 +28,8 @@ jobs:
   build-and-release:
     needs: release-please
     if: ${{ needs.release-please.outputs.release_created == 'true' }}
+    permissions:
+      contents: write
     uses: ./.github/workflows/build-and-release.yaml
     with:
       release_type: public
@@ -35,4 +38,6 @@ jobs:
       image_prefix: opentelemetry-ebpf-
       additional_tag: ''
       dry_run: false
-    secrets: inherit
+    secrets:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}

@@ -57,16 +57,20 @@ runs:
       with:
         ref: ${{ inputs.ref }}
         fetch-depth: 0
+        persist-credentials: false
 
     - name: Compute recursive tags for all directories
       id: compute-recursive-tags
       shell: bash
       env:
         DOCKER_TAG_PREFIX: ${{ github.repository_owner }}/
+        INPUTS_DIRECTORY: ${{ inputs.directory }}
+        INPUTS_ARCH: ${{ inputs.arch }}
+        INPUTS_REGISTRY: ${{ inputs.registry }}
       run: |
-        DIRECTORY="build-tools/${{ inputs.directory }}"
-        BASE_DIRECTORY="${{ inputs.directory }}"
-        ARCH="${{ inputs.arch }}"
+        DIRECTORY="build-tools/${INPUTS_DIRECTORY}"
+        BASE_DIRECTORY="${INPUTS_DIRECTORY}"
+        ARCH="${INPUTS_ARCH}"
         
         # Define dependency mapping based on CMakeLists.txt
         declare -A DEPS
@@ -164,7 +168,7 @@ runs:
         
         # Create image tag
         IMAGE_TAG="${{ github.repository_owner }}/opentelemetry-network-build-tools-cache:${BASE_DIRECTORY}-${ARCH}-${RECURSIVE_HASH}"
-        FULL_IMAGE_TAG="${{ inputs.registry }}/${IMAGE_TAG}"
+        FULL_IMAGE_TAG="${INPUTS_REGISTRY}/${IMAGE_TAG}"
         
         echo "image-tag=${IMAGE_TAG}" >> $GITHUB_OUTPUT
         echo "full-image-tag=${FULL_IMAGE_TAG}" >> $GITHUB_OUTPUT
@@ -181,7 +185,7 @@ runs:
           if [[ "$dir" != "$BASE_DIRECTORY" ]]; then
             dir_hash=$(compute_recursive_hash "$dir")
             dir_image_tag="${{ github.repository_owner }}/opentelemetry-network-build-tools-cache:${dir}-${ARCH}-${dir_hash}"
-            dir_full_tag="${{ inputs.registry }}/${dir_image_tag}"
+            dir_full_tag="${INPUTS_REGISTRY}/${dir_image_tag}"
             
             # Export as environment variable for use in build args
             export "${dir}_IMAGE_TAG=${dir_full_tag}"
@@ -195,9 +199,9 @@ runs:
       id: check-exists
       shell: bash
       run: |
-        FULL_IMAGE_TAG="${{ steps.compute-recursive-tags.outputs.full-image-tag }}"
+        FULL_IMAGE_TAG="${STEPS_COMPUTE_RECURSIVE_TAGS_OUTPUTS_FULL_IMAGE_TAG}"
         
-        if [[ "${{ inputs.force_rebuild }}" == "true" ]]; then
+        if [[ "${INPUTS_FORCE_REBUILD}" == "true" ]]; then
           echo "exists=false" >> $GITHUB_OUTPUT
           echo "Force rebuild enabled - will rebuild ${FULL_IMAGE_TAG} regardless of registry state"
         elif docker manifest inspect "${FULL_IMAGE_TAG}" >/dev/null 2>&1; then
@@ -207,16 +211,21 @@ runs:
           echo "exists=false" >> $GITHUB_OUTPUT
           echo "Image ${FULL_IMAGE_TAG} does not exist in registry"
         fi
+      env:
+        STEPS_COMPUTE_RECURSIVE_TAGS_OUTPUTS_FULL_IMAGE_TAG: ${{ steps.compute-recursive-tags.outputs.full-image-tag }}
+        INPUTS_FORCE_REBUILD: ${{ inputs.force_rebuild }}
 
     - name: Initialize directory submodules
       if: steps.check-exists.outputs.exists == 'false'
       shell: bash
       run: |
-        DIRECTORY="build-tools/${{ inputs.directory }}"
+        DIRECTORY="build-tools/${INPUTS_DIRECTORY}"
         echo "Initializing submodules for directory: ${DIRECTORY}"
         
         # Initialize submodules for the specific directory path  
         git submodule update --init --recursive -- "${DIRECTORY}/"
+      env:
+        INPUTS_DIRECTORY: ${{ inputs.directory }}
 
 
     - name: Log in to Container Registry
@@ -231,20 +240,20 @@ runs:
       if: steps.check-exists.outputs.exists == 'false'
       shell: bash
       run: |
-        DIRECTORY="build-tools/${{ inputs.directory }}"
-        FULL_IMAGE_TAG="${{ steps.compute-recursive-tags.outputs.full-image-tag }}"
+        DIRECTORY="build-tools/${INPUTS_DIRECTORY}"
+        FULL_IMAGE_TAG="${STEPS_COMPUTE_RECURSIVE_TAGS_OUTPUTS_FULL_IMAGE_TAG}"
         
         # Start building the docker command
         BUILD_ARGS="--build-arg NPROC=$(nproc)"
         
         # Add all dependency image tags as build args using outputs from compute-recursive-tags step
-        BUILD_ARGS="${BUILD_ARGS} --build-arg base_IMAGE_TAG=${{ steps.compute-recursive-tags.outputs.base_IMAGE_TAG }}"
-        BUILD_ARGS="${BUILD_ARGS} --build-arg libuv_IMAGE_TAG=${{ steps.compute-recursive-tags.outputs.libuv_IMAGE_TAG }}"
-        BUILD_ARGS="${BUILD_ARGS} --build-arg cpp_misc_IMAGE_TAG=${{ steps.compute-recursive-tags.outputs.cpp_misc_IMAGE_TAG }}"
-        BUILD_ARGS="${BUILD_ARGS} --build-arg libmaxminddb_IMAGE_TAG=${{ steps.compute-recursive-tags.outputs.libmaxminddb_IMAGE_TAG }}"
-        BUILD_ARGS="${BUILD_ARGS} --build-arg libbpf_IMAGE_TAG=${{ steps.compute-recursive-tags.outputs.libbpf_IMAGE_TAG }}"
-        BUILD_ARGS="${BUILD_ARGS} --build-arg aws_sdk_IMAGE_TAG=${{ steps.compute-recursive-tags.outputs.aws_sdk_IMAGE_TAG }}"
-        BUILD_ARGS="${BUILD_ARGS} --build-arg final_IMAGE_TAG=${{ steps.compute-recursive-tags.outputs.final_IMAGE_TAG }}"
+        BUILD_ARGS="${BUILD_ARGS} --build-arg base_IMAGE_TAG=${STEPS_COMPUTE_RECURSIVE_TAGS_OUTPUTS_BASE_IMAGE_TAG}"
+        BUILD_ARGS="${BUILD_ARGS} --build-arg libuv_IMAGE_TAG=${STEPS_COMPUTE_RECURSIVE_TAGS_OUTPUTS_LIBUV_IMAGE_TAG}"
+        BUILD_ARGS="${BUILD_ARGS} --build-arg cpp_misc_IMAGE_TAG=${STEPS_COMPUTE_RECURSIVE_TAGS_OUTPUTS_CPP_MISC_IMAGE_TAG}"
+        BUILD_ARGS="${BUILD_ARGS} --build-arg libmaxminddb_IMAGE_TAG=${STEPS_COMPUTE_RECURSIVE_TAGS_OUTPUTS_LIBMAXMINDDB_IMAGE_TAG}"
+        BUILD_ARGS="${BUILD_ARGS} --build-arg libbpf_IMAGE_TAG=${STEPS_COMPUTE_RECURSIVE_TAGS_OUTPUTS_LIBBPF_IMAGE_TAG}"
+        BUILD_ARGS="${BUILD_ARGS} --build-arg aws_sdk_IMAGE_TAG=${STEPS_COMPUTE_RECURSIVE_TAGS_OUTPUTS_AWS_SDK_IMAGE_TAG}"
+        BUILD_ARGS="${BUILD_ARGS} --build-arg final_IMAGE_TAG=${STEPS_COMPUTE_RECURSIVE_TAGS_OUTPUTS_FINAL_IMAGE_TAG}"
         
         # Add environment-specific build args if they exist
         if [ -n "${BENV_BASE_IMAGE_DISTRO}" ]; then
@@ -273,3 +282,13 @@ runs:
         # Always push intermediate builds to cache registry (dry_run only affects final Docker Hub push)
         echo "Pushing image to cache registry: ${FULL_IMAGE_TAG}"
         docker push "${FULL_IMAGE_TAG}"
+      env:
+        INPUTS_DIRECTORY: ${{ inputs.directory }}
+        STEPS_COMPUTE_RECURSIVE_TAGS_OUTPUTS_FULL_IMAGE_TAG: ${{ steps.compute-recursive-tags.outputs.full-image-tag }}
+        STEPS_COMPUTE_RECURSIVE_TAGS_OUTPUTS_BASE_IMAGE_TAG: ${{ steps.compute-recursive-tags.outputs.base_IMAGE_TAG }}
+        STEPS_COMPUTE_RECURSIVE_TAGS_OUTPUTS_LIBUV_IMAGE_TAG: ${{ steps.compute-recursive-tags.outputs.libuv_IMAGE_TAG }}
+        STEPS_COMPUTE_RECURSIVE_TAGS_OUTPUTS_CPP_MISC_IMAGE_TAG: ${{ steps.compute-recursive-tags.outputs.cpp_misc_IMAGE_TAG }}
+        STEPS_COMPUTE_RECURSIVE_TAGS_OUTPUTS_LIBMAXMINDDB_IMAGE_TAG: ${{ steps.compute-recursive-tags.outputs.libmaxminddb_IMAGE_TAG }}
+        STEPS_COMPUTE_RECURSIVE_TAGS_OUTPUTS_LIBBPF_IMAGE_TAG: ${{ steps.compute-recursive-tags.outputs.libbpf_IMAGE_TAG }}
+        STEPS_COMPUTE_RECURSIVE_TAGS_OUTPUTS_AWS_SDK_IMAGE_TAG: ${{ steps.compute-recursive-tags.outputs.aws_sdk_IMAGE_TAG }}
+        STEPS_COMPUTE_RECURSIVE_TAGS_OUTPUTS_FINAL_IMAGE_TAG: ${{ steps.compute-recursive-tags.outputs.final_IMAGE_TAG }}

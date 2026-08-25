@@ -10,7 +10,6 @@ on:
 
 permissions:
   contents: read
-  packages: write
 
 jobs:
   context:
@@ -20,6 +19,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        with:
+          persist-credentials: false
       - name: Get short SHA
         id: s
         run: echo "s=$(git rev-parse --short=7 ${{ github.sha }})" >> "$GITHUB_OUTPUT"
@@ -36,7 +37,6 @@ jobs:
       ref: ${{ github.ref }}
       force_rebuild: false
       cache_registry: ghcr.io
-    secrets: inherit
 
   build-arm64:
     needs: context
@@ -50,7 +50,6 @@ jobs:
       ref: ${{ github.ref }}
       force_rebuild: false
       cache_registry: ghcr.io
-    secrets: inherit
 
   manifest:
     needs: [context, build-amd64, build-arm64]

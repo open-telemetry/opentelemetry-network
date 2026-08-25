@@ -58,10 +58,14 @@ on:
         required: false
         type: boolean
         default: false
+    secrets:
+      DOCKER_USERNAME:
+        required: true
+      DOCKER_PASSWORD:
+        required: true
 
 permissions:
-  contents: write
-  packages: write
+  contents: read
 
 env:
   BENV_IMAGE: ${{ vars.BENV_IMAGE || 'docker.io/otel/opentelemetry-network-build-tools' }}
@@ -88,6 +92,7 @@ jobs:
         with:
           ref: ${{ inputs.ref }}
           fetch-depth: 0
+          persist-credentials: false
       - name: Compute version numbers
         id: version
         run: |
@@ -124,6 +129,7 @@ jobs:
           fetch-depth: 0
           submodules: false
           path: src
+          persist-credentials: false
       - name: Checkout ext/ submodules
         run: |
           cd $GITHUB_WORKSPACE/src
@@ -170,13 +176,16 @@ jobs:
           for image in ${images[@]}; do
             image_name="${IMAGE_PREFIX}${image}"
             image_path="${docker_registry}/${DOCKER_NAMESPACE}/${image_name}"
-            docker tag localhost:5000/$image ${image_path}:${{ matrix.arch }}-${{ needs.compute-version.outputs.git_short_hash }}
+            docker tag "localhost:5000/${image}" "${image_path}:${MATRIX_ARCH}-${GIT_SHORT_HASH}"
             if [[ "${DRY_RUN}" == "false" ]]; then
-              docker push ${image_path}:${{ matrix.arch }}-${{ needs.compute-version.outputs.git_short_hash }}
+              docker push "${image_path}:${MATRIX_ARCH}-${GIT_SHORT_HASH}"
             fi
           done
           docker stop registry || true
           docker rm registry || true
+        env:
+          MATRIX_ARCH: ${{ matrix.arch }}
+          GIT_SHORT_HASH: ${{ needs.compute-version.outputs.git_short_hash }}
       - name: Upload packages
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
@@ -195,13 +204,13 @@ jobs:
         run: |
           docker login --username="$DOCKER_USERNAME" --password-stdin $DOCKER_REGISTRY <<< "$DOCKER_PASSWORD"
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
       - name: Create and push multi-arch manifests
         run: |
           docker_registry=$(sed -e 's,^https://,,' -e 's,/*$,,' <<< $DOCKER_REGISTRY)
-          git_short_hash="${{ needs.compute-version.outputs.git_short_hash }}"
-          short_version="${{ needs.compute-version.outputs.short_version_number }}"
-          full_version="${{ needs.compute-version.outputs.full_version_number }}"
+          git_short_hash="${NEEDS_COMPUTE_VERSION_OUTPUTS_GIT_SHORT_HASH}"
+          short_version="${NEEDS_COMPUTE_VERSION_OUTPUTS_SHORT_VERSION_NUMBER}"
+          full_version="${NEEDS_COMPUTE_VERSION_OUTPUTS_FULL_VERSION_NUMBER}"
           
           if [[ "${RELEASE_TYPE}" == "public" ]]; then
             tags=(latest latest-v${short_version} v${full_version})
@@ -209,8 +218,8 @@ jobs:
             tags=(v${full_version}-${git_short_hash})
           fi
           
-          if [[ "${{ inputs.additional_tag }}" != "" ]]; then
-            tags=(${tags[@]} "${{ inputs.additional_tag }}")
+          if [[ "${INPUTS_ADDITIONAL_TAG}" != "" ]]; then
+            tags=(${tags[@]} "${INPUTS_ADDITIONAL_TAG}")
           fi
           
           images=(reducer kernel-collector cloud-collector k8s-collector)
@@ -228,22 +237,39 @@ jobs:
               echo "Created multi-arch manifest: ${image_path}:${tag}"
             done
           done
+        env:
+          NEEDS_COMPUTE_VERSION_OUTPUTS_GIT_SHORT_HASH: ${{ needs.compute-version.outputs.git_short_hash }}
+          NEEDS_COMPUTE_VERSION_OUTPUTS_SHORT_VERSION_NUMBER: ${{ needs.compute-version.outputs.short_version_number }}
+          NEEDS_COMPUTE_VERSION_OUTPUTS_FULL_VERSION_NUMBER: ${{ needs.compute-version.outputs.full_version_number }}
+          INPUTS_ADDITIONAL_TAG: ${{ inputs.additional_tag }}
 
   upload-release:
     name: Upload release artifacts
     needs: [compute-version, build-per-arch]
     runs-on: ubuntu-24.04
     if: ${{ inputs.dry_run != true }}
+    permissions:
+      contents: write
     steps:
       - name: Download all packages
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           pattern: packages-*
           merge-multiple: true
           path: packages
       - name: Upload packages to Release
-        uses: softprops/action-gh-release@5be0e66d93ac7ed76da52eca8bb058f665c3a5fe
-        with:
-          tag_name: ${{ needs.compute-version.outputs.github_tag }}
-          prerelease: ${{ env.RELEASE_TYPE != 'public' }}
-          files: packages/*
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG_NAME: ${{ needs.compute-version.outputs.github_tag }}
+          PRERELEASE: ${{ env.RELEASE_TYPE != 'public' }}
+        run: |
+          if gh release view "${TAG_NAME}" >/dev/null 2>&1; then
+            gh release edit "${TAG_NAME}" --prerelease="${PRERELEASE}"
+            gh release upload "${TAG_NAME}" packages/* --clobber
+          else
+            release_args=("${TAG_NAME}" --title "${TAG_NAME}" --notes "")
+            if [[ "${PRERELEASE}" == "true" ]]; then
+              release_args+=(--prerelease)
+            fi
+            gh release create "${release_args[@]}" packages/*
+          fi
