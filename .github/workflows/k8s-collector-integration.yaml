@@ -57,7 +57,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up kind cluster
-        uses: helm/kind-action@v1.10.0
+        uses: helm/kind-action@06c1ae10762d3b9c1644e7fe69596ae519e015a2 # v1.15.0
         with:
           version: v0.30.0
           cluster_name: k8s-collector-e2e
